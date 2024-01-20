@@ -22,4 +22,14 @@ Route::middleware('api')->group(function () {
         Route::get('top-menus', [\App\Http\Controllers\Common\CommonController::class, 'TopMenus'])->name('顶部导航栏');
         Route::get('info', [\App\Http\Controllers\Common\CommonController::class, 'info'])->name('SEO信息');
     });
+
+    // index控制器(首页)
+    Route::prefix('index')->group(function () {
+        Route::get('news-product', [\App\Http\Controllers\IndexController::class, 'NewsProduct'])->name('最新报告');
+        Route::get('recommend-product', [\App\Http\Controllers\IndexController::class, 'RecommendProduct'])->name('推荐报告');
+        Route::get('recommend-news', [\App\Http\Controllers\IndexController::class, 'RecommendNews'])->name('行业新闻');
+        Route::get('partners', [\App\Http\Controllers\IndexController::class, 'partners'])->name('合作伙伴');
+        Route::get('office', [\App\Http\Controllers\IndexController::class, 'office'])->name('办公室');
+    });
+
 });

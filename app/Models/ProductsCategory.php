@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models;
-use Illuminate\Database\Eloquent\Model;
-class ProductsCategory extends Model
+use App\Models\Base;
+class ProductsCategory extends Base
 {
 }

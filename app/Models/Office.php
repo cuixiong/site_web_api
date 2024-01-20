@@ -2,7 +2,7 @@
 
 namespace App\Models;
 use App\Models\Base;
-class Menu extends Base
+class Office extends Base
 {
 
 }
