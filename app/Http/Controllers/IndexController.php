@@ -5,10 +5,10 @@ use App\Models\News;
 use App\Models\Office;
 use App\Models\Partner;
 use App\Models\Products;
-use Illuminate\Routing\Controller as BaseController;
 use App\Models\ProductsDescription;
+use App\Http\Controllers\Controller;
 
-class IndexController extends BaseController
+class IndexController extends Controller
 {
     // 最新报告
     public function NewsProduct()

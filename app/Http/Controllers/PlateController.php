@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\PlateValue;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller as BaseController;
-class PlateController extends BaseController
+use App\Http\Controllers\Controller;
+class PlateController extends Controller
 {
     // 获取页面板块信息
     public function PlateValue(Request $request){
