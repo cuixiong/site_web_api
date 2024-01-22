@@ -21,6 +21,7 @@ Route::middleware('api')->group(function () {
     Route::prefix('common')->group(function () {
         Route::get('top-menus', [\App\Http\Controllers\Common\CommonController::class, 'TopMenus'])->name('顶部导航栏');
         Route::get('info', [\App\Http\Controllers\Common\CommonController::class, 'info'])->name('SEO信息');
+        Route::get('bottom-menus', [\App\Http\Controllers\Common\CommonController::class, 'BottomMenus'])->name('底部导航');
     });
 
     // index控制器(首页)
@@ -32,4 +33,8 @@ Route::middleware('api')->group(function () {
         Route::get('office', [\App\Http\Controllers\IndexController::class, 'office'])->name('办公室');
     });
 
+    // Plate控制器(页面板块)
+    Route::prefix('plate')->group(function () {
+        Route::get('plate-value', [\App\Http\Controllers\PlateController::class, 'PlateValue'])->name('页面板块子级的值');
+    });
 });

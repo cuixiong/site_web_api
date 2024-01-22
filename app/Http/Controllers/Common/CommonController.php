@@ -59,4 +59,26 @@ class CommonController extends Controller
         $data = $result ? $result : [];
         ReturnJson(true, '', $data);
     }
+
+    /**
+     * 底部导航
+     */
+    public function BottomMenus()
+    {
+        $menus = Menu::where('status',1)
+        ->whereIn('type',[2,3])
+        ->select([
+            'id',
+            'link',
+            'name',
+            'banner_title',
+            'banner_short_title',
+            'parent_id'
+        ])
+        ->get();
+        $menus = $this->MenusTree($menus->toArray());
+        return ReturnJson(TRUE,'', $menus);
+    }
+
+    
 }
