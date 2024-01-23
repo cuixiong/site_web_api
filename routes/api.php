@@ -37,4 +37,9 @@ Route::middleware('api')->group(function () {
     Route::prefix('plate')->group(function () {
         Route::get('plate-value', [\App\Http\Controllers\PlateController::class, 'PlateValue'])->name('页面板块子级的值');
     });
+
+    // Product控制器(报告)
+    Route::prefix('product')->group(function () {
+        Route::get('list', [\App\Http\Controllers\ProductController::class, 'list'])->name('报告列表');;
+    });
 });

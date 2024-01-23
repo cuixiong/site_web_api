@@ -11,7 +11,7 @@ use App\Http\Controllers\Controller;
 class IndexController extends Controller
 {
     // 最新报告
-    public function NewsProduct()
+    public function NewsProduct(Request $request)
     {
         $list = Products::where('status', 1)
                 ->select([
@@ -33,7 +33,7 @@ class IndexController extends Controller
         ReturnJson(true,'',$list);
     }
     // 推荐报告
-    public function RecommendProduct()
+    public function RecommendProduct(Request $request)
     {
         $list = Products::where('status', 1)
                 ->select([
@@ -57,7 +57,7 @@ class IndexController extends Controller
     }
 
     // 行业新闻
-    public function RecommendNews()
+    public function RecommendNews(Request $request)
     {
         $list = News::where('status', 1)
                 ->select([
@@ -76,7 +76,7 @@ class IndexController extends Controller
         ReturnJson(true,'',$list);
     }
     // 合作伙伴
-    public function partners()
+    public function partners(Request $request)
     {
         $list = Partner::where('status', 1)
                 ->select([
@@ -90,7 +90,7 @@ class IndexController extends Controller
         ReturnJson(true,'',$list);
     }
     // 办公室
-    public function office()
+    public function office(Request $request)
     {
         $list = Office::where('status', 1)
         ->select([
