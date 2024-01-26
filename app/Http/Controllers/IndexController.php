@@ -5,7 +5,6 @@ use App\Models\News;
 use App\Models\Office;
 use App\Models\Partner;
 use App\Models\Products;
-use App\Models\ProductsDescription;
 use App\Http\Controllers\Controller;
 use App\Models\ProductDescription;
 use App\Models\ProductsCategory;
@@ -30,7 +29,7 @@ class IndexController extends Controller
                 ->orderBy('id', 'desc')
                 ->limit(6)->get();
         foreach ($list as $key => &$value) {
-            $description = (new ProductsDescription(date('Y')))->where('product_id',$value->id)->value('description');
+            $description = (new ProductDescription(date('Y',strtotime($value['published_date']))))->where('product_id',$value->id)->value('description');
             $value['description'] = substr($description,0,255);
         }
         ReturnJson(true,'',$list);
