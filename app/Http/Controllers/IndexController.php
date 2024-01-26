@@ -44,7 +44,6 @@ class IndexController extends Controller
                 'link',
             ])
             ->orderBy('sort','asc')
-            ->where('show_home',1)
             ->limit(4)
             ->get()
             ->toArray();
@@ -97,7 +96,7 @@ class IndexController extends Controller
                     ->where('category_id',$category['id'])
                     ->where('show_home',1)
                     ->where('id','<>',$firstProduct['id'])
-                    ->orderBy(['order' => SORT_ASC])
+                    ->orderBy('sort','asc')
                     ->limit(4)
                     ->get()
                     ->toArray();
