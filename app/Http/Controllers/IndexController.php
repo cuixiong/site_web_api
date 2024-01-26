@@ -44,6 +44,8 @@ class IndexController extends Controller
                 'link',
             ])
             ->orderBy('sort','asc')
+            ->where('show_home',1)
+            ->limit(4)
             ->get()
             ->toArray();
 
@@ -73,7 +75,7 @@ class IndexController extends Controller
                         'published_date',
                     ])
                     ->where('category_id',$category['id'])
-                    ->where('show_home',1)
+                    ->where('show_recommend',1)
                     ->orderBy('sort','asc')
                     ->first();
 
@@ -88,12 +90,12 @@ class IndexController extends Controller
                     $data[$index]['firstProduct'] = $firstProduct;
                     $otherProducts = Products::select([
                         'name',
-                        'keyword',
+                        'keywords',
                         'id',
                         'url'
                     ])
                     ->where('category_id',$category['id'])
-                    ->where('show_home',1)
+                    ->where('show_recommend',1)
                     ->where('id','<>',$firstProduct['id'])
                     ->orderBy('sort','asc')
                     ->limit(4)
