@@ -119,15 +119,6 @@ class ProductController extends Controller
         $product = Products::where(['id' => $product_id, 'status' => 1])->select('id')->first();
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
 
-        // 未知代码-2024-1-26
-        // $validate = self::controllerLimit([
-        //     [
-        //         'funciton' => Yii::$app->requestedRoute,
-        //         'time_limit' => 60,
-        //         'try_times' => $this->count()['robotsView'] ?? 200,
-        //     ],
-        // ], Yii::$app->requestedRoute);
-
         if (!empty($product)) {
                 $product_desc = (new Products)->from('product_routine as p')->select([
                 'p.name',
@@ -275,10 +266,11 @@ class ProductController extends Controller
 
             ReturnJson(true,'',$product_desc);
         } else {
-            $product_desc = Products::find()->select(['id', 'url', 'published_date'])
+            $product_desc = Products::select(['id', 'url', 'published_date'])
                 ->where(['url' => $url,'status'=>1])
-                ->orderBy(['published_date' => SORT_DESC, 'id' => SORT_DESC])
-                ->find();
+                ->orderBy('published_date','desc')
+                ->orderBy('id','desc')
+                ->first();
             unset($product_desc->published_date);
             if (!empty($product_desc)) {
                 ReturnJson(true,'',$product_desc);
@@ -286,5 +278,70 @@ class ProductController extends Controller
                 ReturnJson(false,'请求失败');
             }
         }
+    }
+
+    // 相关报告
+    public function Relevant(Request $request)
+    {
+        $product_id = $request->product_id ?? '';
+        if (empty($product_id)) {
+            ReturnJson(false,'产品ID不允许为空！',[]);
+        }
+        $product = Products::select(['keywords','published_date'])->where('id',$product_id)->first()->toArray(); //根据详情页这份报告的关键词匹配到其它报告（同一个关键词的一些报告，除了自己，其它报告就是相关报告）
+        $start_time = date('Y-01-01 00:00:00', strtotime($product['published_date']));
+        $end_time = date('Y-12-31 23:59:59', strtotime($product['published_date']));
+        $products = Products::from('product_routine as product')
+            ->select([
+                'product.name',
+                'product.english_name',
+                'product.keywords',
+                'product.id',
+                'product.url',
+                'product.price',
+                'product.published_date',
+                'category.thumb',
+                'category.name as category_name',
+            ])
+            ->leftJoin('product_category as category','category.id','=','product.category_id')
+            ->where('product.keywords',$product['keywords'])
+            ->where('product.id','<>',$product_id)
+            ->where('product.published_date','between',[strtotime($start_time), strtotime($end_time)]) // 只取与这份报告同年份的两份报告数据
+            ->limit(2)
+            ->get()->toArray();
+
+        $data = [];
+        foreach ($products as $index => $product) {
+            $data[$index]['thumb'] = $product['thumb'];
+            $data[$index]['name'] = $product['name'];
+            $data[$index]['keywords'] = $product['keywords'];
+            $data[$index]['english_name'] = $product['english_name'];
+            $suffix = date('Y', strtotime($product['published_date']));
+            $data[$index]['description'] = (new ProductDescription($suffix))->where('product_id',$product['id'])->value('description');
+            $data[$index]['description'] = $data[$index]['description'] ? $data[$index]['description'] : '';
+            $data[$index]['id'] = $product['id'];
+            $data[$index]['url'] = $product['url'];
+            $data[$index]['category_name'] = $product['category_name'];
+            $data[$index]['published_date'] = $product['published_date'] ? date('Y-m-d', strtotime($product['published_date'])) : '';
+            // 这里的代码可以复用 开始
+            $prices = [];
+            // $languages = PriceLanguage::find()->select(['id', 'language'])->asArray()->all();
+            // if (!empty($languages) && is_array($languages)) {
+            //     foreach ($languages as $languageIndex => $language) {
+            //         $priceEditions = PriceEdition::find()->select(['id', 'edition', 'rule', 'notice'])->where(['language_id' => $language['id']])->asArray()->all();
+            //         $prices[$languageIndex]['language'] = $language['language'];
+            //         if (!empty($priceEditions) && is_array($priceEditions)) {
+            //             foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
+            //                 $prices[$languageIndex]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
+            //                 $prices[$languageIndex]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+            //                 $prices[$languageIndex]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
+            //                 $prices[$languageIndex]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $product['price']) . ";");
+            //             }
+            //         }
+            //     }
+            // }
+            // 这里的代码可以复用 结束
+            $data[$index]['prices'] = $prices;
+        }
+        ReturnJson(true,'获取成功',$data);
     }
 }

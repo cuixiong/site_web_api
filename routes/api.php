@@ -42,5 +42,6 @@ Route::middleware('api')->group(function () {
     Route::prefix('product')->group(function () {
         Route::get('list', [\App\Http\Controllers\ProductController::class, 'List'])->name('报告列表');
         Route::get('description', [\App\Http\Controllers\ProductController::class, 'Description'])->name('报告详情');
+        Route::get('relevant', [\App\Http\Controllers\ProductController::class, 'Relevant'])->name('相关报告');
     });
 });
