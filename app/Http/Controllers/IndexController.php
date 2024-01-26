@@ -45,6 +45,7 @@ class IndexController extends Controller
             ])
             ->orderBy('sort','asc')
             ->where('show_home',1)
+            ->where('pid',0)
             ->limit(4)
             ->get()
             ->toArray();
