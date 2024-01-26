@@ -7,6 +7,7 @@ use App\Models\Partner;
 use App\Models\Products;
 use App\Models\ProductsDescription;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 
 class IndexController extends Controller
 {

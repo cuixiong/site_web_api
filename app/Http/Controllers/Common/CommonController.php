@@ -17,7 +17,7 @@ class CommonController extends Controller
                     ->select(['id','link','name','banner_title','banner_short_title','parent_id'])
                     ->get();
         $menus = $this->MenusTree($menus->toArray());
-        return ReturnJson(TRUE,'', $menus);
+        ReturnJson(TRUE,'', $menus);
     }
 
     /**
@@ -63,7 +63,7 @@ class CommonController extends Controller
     /**
      * 底部导航
      */
-    public function BottomMenus()
+    public function BottomMenus(Request $request)
     {
         $menus = Menu::where('status',1)
         ->whereIn('type',[2,3])
@@ -77,7 +77,7 @@ class CommonController extends Controller
         ])
         ->get();
         $menus = $this->MenusTree($menus->toArray());
-        return ReturnJson(TRUE,'', $menus);
+        ReturnJson(TRUE,'', $menus);
     }
 
     
