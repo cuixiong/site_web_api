@@ -40,6 +40,7 @@ Route::middleware('api')->group(function () {
 
     // Product控制器(报告)
     Route::prefix('product')->group(function () {
-        Route::get('list', [\App\Http\Controllers\ProductController::class, 'list'])->name('报告列表');;
+        Route::get('list', [\App\Http\Controllers\ProductController::class, 'List'])->name('报告列表');
+        Route::get('description', [\App\Http\Controllers\ProductController::class, 'Description'])->name('报告详情');
     });
 });

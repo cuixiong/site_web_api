@@ -12,7 +12,7 @@ use App\Models\SystemValue;
 class ProductController extends Controller
 {
     // 获取报告列表信息
-    public function list(Request $request){
+    public function List(Request $request){
         $page = $request->page ? intval($request->page) : 1; // 页码
         $pageSize = $request->pageSize ? intval($request->pageSize) : 10; // 每页显示数量
         $category_id = $request->category_id ?? 0; // 分类ID
@@ -108,14 +108,15 @@ class ProductController extends Controller
 
 
     // 报告详情
-    public function description(Request $request)
+    public function Description(Request $request)
     {
         $product_id = $request->product_id;
         $url = $request->url;
         if (empty($product_id)) {
             ReturnJson(false,'产品ID不允许为空！',[]);
         }
-        $product = Products::where(['id' => $product_id, 'status' => 1])->select('id')->find();
+        
+        $product = Products::where(['id' => $product_id, 'status' => 1])->select('id')->first();
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
 
         // 未知代码-2024-1-26
@@ -128,7 +129,7 @@ class ProductController extends Controller
         // ], Yii::$app->requestedRoute);
 
         if (!empty($product)) {
-                $product_desc = Products::alias('p')->select([
+                $product_desc = (new Products)->alias('p')->select([
                 'p.name',
                 'p.english_name',
                 'cate.thumb',
