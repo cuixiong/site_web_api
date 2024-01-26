@@ -9,7 +9,7 @@ function ReturnJson($code,$message = '请求成功',$data = []){
     header('Access-Control-Allow-Origin: *'); // 允许所有源进行跨域访问
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE'); // 允许使用的HTTP方法
     header('Access-Control-Max-Age: 86400'); // 最大缓存时间（单位为秒）
-    header('Access-Control-Allow-Headers: Content-Type, Authorization'); // 允许自定义的HTTP头部字段
+    header('Access-Control-Allow-Headers: Content-Type:application/json; charset=UTF-8, Authorization'); // 允许自定义的HTTP头部字段
     $code = ($code === TRUE) ? "200" : $code;
     $code = ($code === FALSE) ? 'B001' : $code;
     $html = json_encode(
