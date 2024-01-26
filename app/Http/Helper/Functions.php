@@ -12,11 +12,12 @@ function ReturnJson($code,$message = '请求成功',$data = []){
     header('Access-Control-Allow-Headers: Content-Type, Authorization'); // 允许自定义的HTTP头部字段
     $code = ($code === TRUE) ? "200" : $code;
     $code = ($code === FALSE) ? 'B001' : $code;
-    echo json_encode(
+    $html = json_encode(
         [
             'code' => $code,
             'msg' => $message,
             'data' => $data
-        ]);
+        ],JSON_UNESCAPED_UNICODE);
+    echo $html;
     exit;
 }
