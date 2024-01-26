@@ -103,4 +103,11 @@ class ProductController extends Controller
         ];
         ReturnJson(true,'请求成功',$data);
     }
+
+
+    // 报告详情
+    public function description(Request $request)
+    {
+        
+    }
 }
