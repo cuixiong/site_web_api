@@ -44,7 +44,6 @@ class IndexController extends Controller
                 'link',
             ])
             ->orderBy('sort','asc')
-            ->limit(4)
             ->get()
             ->toArray();
 
