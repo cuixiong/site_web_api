@@ -7,6 +7,8 @@ use App\Models\Partner;
 use App\Models\Products;
 use App\Models\ProductsDescription;
 use App\Http\Controllers\Controller;
+use App\Models\ProductDescription;
+use App\Models\ProductsCategory;
 use Illuminate\Http\Request;
 
 class IndexController extends Controller
@@ -36,25 +38,80 @@ class IndexController extends Controller
     // 推荐报告
     public function RecommendProduct(Request $request)
     {
-        $list = Products::where('status', 1)
-                ->select([
-                    'id',
-                    'thumb',
-                    'name',
-                    'published_date',
-                    'price',
-                    'url'
-                ])
-                ->where('show_recommend',1) // 推荐报告
-                ->orderBy('sort', 'desc')
-                ->orderBy('published_date', 'desc')
-                ->orderBy('id', 'desc')
-                ->limit(6)->get();
-        foreach ($list as $key => &$value) {
-            $description = (new ProductsDescription(date('Y')))->where('product_id',$value->id)->value('description');
-            $value['description'] = substr($description,0,255);
+        $categories = ProductsCategory::select([
+                'id',
+                'name',
+                'link',
+            ])
+            ->orderBy('sort','asc')
+            ->where('show_home',1)
+            ->limit(4)
+            ->get()
+            ->toArray();
+
+        $data = [];
+        if (!empty($categories) && is_array($categories)) {
+            foreach ($categories as $index => $category) {
+                $data[$index]['category'] = [
+                    'id' => $category['id'],
+                    'name' => $category['name'],
+                    'url' => $category['link'],
+                ];
+
+                $keywords = Products::where('category_id',$category['id'])->limit(5)->pluck('keywords');
+                if (!empty($keywords)) {
+                    $data[$index]['keywords'] = $keywords;
+                } else {
+                    continue;
+                }
+
+                $firstProduct = Products::select([
+                        'name',
+                        'keywords',
+                        'price',
+                        'id',
+                        'url',
+                        'category_id',
+                        'published_date',
+                    ])
+                    ->where('category_id',$category['id'])
+                    ->where('show_home',1)
+                    ->orderBy('sort','asc')
+                    ->first();
+
+                if (!empty($firstProduct)) {
+                    $thumb = ProductsCategory::where('id',$firstProduct['category_id'])->value('thumb');
+                    $firstProduct['thumb'] = $thumb;
+                    $firstProduct['description'] = (new ProductDescription(date('Y',strtotime($firstProduct['published_date']))))
+                                                    ->where('product_id',$firstProduct['id'])
+                                                    ->value('description');
+                }
+                if (!empty($firstProduct)) {
+                    $data[$index]['firstProduct'] = $firstProduct;
+                    $otherProducts = Products::select([
+                        'name',
+                        'keyword',
+                        'id',
+                        'url'
+                    ])
+                    ->where('category_id',$category['id'])
+                    ->where('show_home',1)
+                    ->where('id','<>',$firstProduct['id'])
+                    ->orderBy(['order' => SORT_ASC])
+                    ->limit(4)
+                    ->get()
+                    ->toArray();
+                } else {
+                    $data[$index]['firstProduct'] = [];
+                }
+                if (!empty($otherProducts)) {
+                    $data[$index]['otherProducts'] = $otherProducts;
+                } else {
+                    $data[$index]['otherProducts'] = [];
+                }
+            }
         }
-        ReturnJson(true,'',$list);
+        ReturnJson(true,'success',$data);
     }
 
     // 行业新闻

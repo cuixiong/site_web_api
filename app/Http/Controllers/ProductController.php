@@ -129,12 +129,12 @@ class ProductController extends Controller
         // ], Yii::$app->requestedRoute);
 
         if (!empty($product)) {
-                $product_desc = (new Products)->alias('p')->select([
+                $product_desc = (new Products)->from('product_routine as p')->select([
                 'p.name',
                 'p.english_name',
                 'cate.thumb',
                 'p.id',
-                'FROM_UNIXTIME(p.published_date,"%Y-%m-%d") as published_date',
+                'p.published_date',
                 'cate.name as category',
                 'cate.keyword_suffix',
                 'cate.product_tag',
@@ -143,15 +143,15 @@ class ProductController extends Controller
 
                 'p.url',
                 'p.category_id',
-                'p.keyword',
+                'p.keywords',
                 'p.price',
                 'p.discount_type',
-                'p.discount_value',
-                'p.discount_end',
-            ])->leftJoin(['cate' => ProductsCategory::tableName()], 'cate.id = p.category_id')
-                ->where(['p.id' => $product_id])->andWhere(['p.`status`' => 1])
-                ->limit(1)
-                ->find();
+                'p.discount_amount',
+                'p.discount_time_end',
+            ])->leftJoin('product_category as cate','cate.id','=', 'p.category_id')
+                ->where(['p.id' => $product_id])
+                ->where('p.status',1)
+                ->first();
 
             $suffix = date('Y', strtotime($product_desc['published_date']));
             // $tableName = ProductDescription::getTableName($suffix);// 2024-1-26 去掉
@@ -163,7 +163,7 @@ class ProductController extends Controller
                 'tables_and_figures',
                 'tables_and_figures_en',
                 'companies_mentioned',
-            ])->where(['product_id' => $product_id])->limit(1)->find();
+            ])->where(['product_id' => $product_id])->first();
 
             if ($description === null) {
                 $description = [];
