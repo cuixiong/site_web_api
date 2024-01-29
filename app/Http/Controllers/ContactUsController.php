@@ -38,7 +38,7 @@ class ContactUsController extends Controller
     public function Dictionary(Request $request)
     {
         $result = [];
-        $result['buy_time'] = DictionaryValue::GetDicOptions('buy_time'); // 购买时间
+        $result['buy_time'] = DictionaryValue::GetDicOptions('Buy_Time'); // 购买时间
         ReturnJson(true, '',$result);
     }
 }
