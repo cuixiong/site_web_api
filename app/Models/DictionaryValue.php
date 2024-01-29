@@ -19,6 +19,6 @@ class DictionaryValue extends Base
                 }
             }
         }
-        return $list;
+        return $result;
     }
 }
