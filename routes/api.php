@@ -44,4 +44,10 @@ Route::middleware('api')->group(function () {
         Route::get('description', [\App\Http\Controllers\ProductController::class, 'Description'])->name('报告详情');
         Route::get('relevant', [\App\Http\Controllers\ProductController::class, 'Relevant'])->name('相关报告');
     });
+
+    // ContactUs控制器(联系我们)
+    Route::prefix('contact-us')->group(function () {
+        Route::get('add', [\App\Http\Controllers\ContactUsController::class, 'Add'])->name('新增数据');
+        Route::get('dictionary', [\App\Http\Controllers\ContactUsController::class, 'Dictionary'])->name('字典数据');
+    });
 });
