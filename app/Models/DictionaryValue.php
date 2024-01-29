@@ -10,11 +10,12 @@ class DictionaryValue extends Base
     public static function GetDicOptions($code)
     {
         $list = Redis::hGetAll('dictionary_'.$code);
+        $result = [];
         if($list){
-            foreach ($list as &$map) {
+            foreach ($list as $map) {
                 $map = json_decode($map,true);
-                if($map['status'] == 0){
-                    unset($map);
+                if($map['status'] == 1){
+                    $result[] = ['value' => $map['value'],'label' => $map['name']];
                 }
             }
         }
