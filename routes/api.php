@@ -47,7 +47,14 @@ Route::middleware('api')->group(function () {
 
     // ContactUs控制器(联系我们)
     Route::prefix('contact-us')->group(function () {
-        Route::get('add', [\App\Http\Controllers\ContactUsController::class, 'Add'])->name('新增数据');
+        Route::post('add', [\App\Http\Controllers\ContactUsController::class, 'Add'])->name('新增数据');
         Route::get('dictionary', [\App\Http\Controllers\ContactUsController::class, 'Dictionary'])->name('字典数据');
     });
+
+    // User控制器(用户模块)
+    Route::post('login', [\App\Http\Controllers\UserController::class, 'Login'])->name('账号登陆');
+    Route::post('register', [\App\Http\Controllers\UserController::class, 'Register'])->name('账号注册');
+    Route::post('reset-register-email', [\App\Http\Controllers\UserController::class, 'ResetPasswordEmail'])->name('忘记密码:发送邮箱');
+    Route::post('do-reset-register', [\App\Http\Controllers\UserController::class, 'DoResetPassword'])->name('忘记密码:修改密码');
+    Route::post('check-email', [\App\Http\Controllers\UserController::class, 'CheckEmail'])->name('验证邮箱');
 });

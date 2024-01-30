@@ -2,6 +2,7 @@
 
 namespace App\Models;
 use App\Models\Base;
-class User extends Base
+class Email extends Base
 {
+
 }
