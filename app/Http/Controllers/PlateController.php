@@ -13,8 +13,7 @@ class PlateController extends Controller
         if(empty($id)){
             ReturnJson(false,'ID不允许为空');
         }
-        $data = PlateValue::where('id',$id)
-                ->where('status',1)
+        $data = PlateValue::where('status',1)
                 ->select([
                     'title',
                     'short_title',
@@ -23,9 +22,8 @@ class PlateController extends Controller
                     'image',
                     'icon',
                     'content',
-                ])
-                ->get()
-                ->toArray();
+                ])->find($id);
+        $data = $data ? $data : [];
         ReturnJson(true,'请求成功',$data);
     }
 }
