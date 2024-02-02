@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PlateValue;
+use App\Models\Plate;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 class PlateController extends Controller
@@ -13,7 +13,7 @@ class PlateController extends Controller
         if(empty($id)){
             ReturnJson(false,'ID不允许为空');
         }
-        $data = PlateValue::where('status',1)
+        $data = Plate::where('status',1)
                 ->select([
                     'title',
                     'short_title',
