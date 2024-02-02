@@ -23,7 +23,7 @@ class PlateController extends Controller
                     'image',
                     'icon',
                     'content',
-                ])->find($id);
+                ])->get();
         $data = $data ? $data : [];
         ReturnJson(true,'请求成功',$data);
     }
