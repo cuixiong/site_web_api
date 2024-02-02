@@ -14,6 +14,7 @@ class PlateController extends Controller
             ReturnJson(false,'ID不允许为空');
         }
         $data = Plate::where('status',1)
+                ->where('parent_id',$id)
                 ->select([
                     'title',
                     'short_title',

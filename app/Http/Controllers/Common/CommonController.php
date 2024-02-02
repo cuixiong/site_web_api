@@ -80,5 +80,5 @@ class CommonController extends Controller
         ReturnJson(TRUE,'', $menus);
     }
 
-    
+    public function
 }
