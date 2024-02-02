@@ -13,7 +13,7 @@ class PlateController extends Controller
         if(empty($id)){
             ReturnJson(false,'ID不允许为空');
         }
-        $data = PlateValue::where('parent_id',$id)
+        $data = PlateValue::where('id',$id)
                 ->where('status',1)
                 ->select([
                     'title',
