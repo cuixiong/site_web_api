@@ -18,7 +18,6 @@ class PlateController extends Controller
                 ->select([
                     'title',
                     'short_title',
-                    'link',
                     'alias',
                     'image',
                     'icon',
