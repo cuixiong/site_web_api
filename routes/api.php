@@ -22,6 +22,7 @@ Route::middleware('api')->group(function () {
         Route::get('top-menus', [\App\Http\Controllers\Common\CommonController::class, 'TopMenus'])->name('顶部导航栏');
         Route::get('info', [\App\Http\Controllers\Common\CommonController::class, 'info'])->name('SEO信息');
         Route::get('bottom-menus', [\App\Http\Controllers\Common\CommonController::class, 'BottomMenus'])->name('底部导航');
+        Route::get('control-page', [\App\Http\Controllers\Common\CommonController::class, 'ControlPage'])->name('页面JS操作设置');
     });
 
     // index控制器(首页)
@@ -36,6 +37,7 @@ Route::middleware('api')->group(function () {
     // Plate控制器(页面板块)
     Route::prefix('plate')->group(function () {
         Route::get('plate-value', [\App\Http\Controllers\PlateController::class, 'PlateValue'])->name('页面板块子级的值');
+        Route::get('form', [\App\Http\Controllers\PlateController::class, 'form'])->name('页面板块（包含父级和子级）');
     });
 
     // Product控制器(报告)
@@ -49,6 +51,11 @@ Route::middleware('api')->group(function () {
     Route::prefix('contact-us')->group(function () {
         Route::post('add', [\App\Http\Controllers\ContactUsController::class, 'Add'])->name('新增数据');
         Route::get('dictionary', [\App\Http\Controllers\ContactUsController::class, 'Dictionary'])->name('字典数据');
+    });
+
+    // System控制器(网站设置)
+    Route::prefix('system')->group(function () {
+        Route::get('get-children', [\App\Http\Controllers\SystemController::class, 'GetChildren'])->name('通过父级ID获取子级数据列表');
     });
 
     // User控制器(用户模块)

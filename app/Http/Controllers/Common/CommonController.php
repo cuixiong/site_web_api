@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Common;
 use App\Http\Controllers\Controller;
 use App\Models\Menu;
 use App\Models\ProductsCategory;
+use App\Models\SystemValue;
 use Illuminate\Http\Request;
 class CommonController extends Controller
 {
@@ -65,20 +66,53 @@ class CommonController extends Controller
      */
     public function BottomMenus(Request $request)
     {
-        $menus = Menu::where('status',1)
-        ->whereIn('type',[2,3])
-        ->select([
+        $frontMenus = Menu::select([
             'id',
-            'link',
-            'name',
-            'banner_title',
-            'banner_short_title',
-            'parent_id'
+            'name'
         ])
-        ->get();
-        $menus = $this->MenusTree($menus->toArray());
-        ReturnJson(TRUE,'', $menus);
+        ->where('parent_id',0)
+        ->whereIn('type',[2,3])
+        ->where('status',1)
+        ->orderBy('type','DESC')
+        ->orderBy('sort','ASC')
+        ->get()
+        ->toArray();
+        foreach ($frontMenus as $key => $frontMenu) {
+            $sonMenus = Menu::select([
+                    'id',
+                    'name',
+                    'link',
+                ])
+                ->where('parent_id',$frontMenu['id'])
+                ->whereIn('type',[2,3])
+                ->where('status',1)
+                ->orderBy('sort','ASC')
+                ->get()
+                ->toArray();
+            $frontMenus[$key]['menus'] = $sonMenus;
+        }
+        ReturnJson(TRUE,'', $frontMenus);
     }
 
-    // public function
+    /**
+     * 报告设置
+     * 打开新标签页、能否用F12键、能否用鼠标右键、复制【报告详情】页内容的控制开关
+     */
+    public function ControlPage(Request $request)
+    {
+        $id = $request->id;
+        if(empty($id)){
+            ReturnJson(false,'ID不允许为空');
+        }
+        $data = SystemValue::where('parent_id',$id)
+                ->where('status',1)
+                ->select(['key','value'])
+                ->get()
+                ->toArray();
+        $result = [];
+        foreach ($data as $key => &$value) {
+            $result[$value['key']] = intval($value['value']);
+        }
+        ReturnJson(true,'',$result);
+    }
 }

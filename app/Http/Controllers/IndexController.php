@@ -171,4 +171,15 @@ class IndexController extends Controller
         ->get();
         ReturnJson(true,'',$list);
     }
+
+    /**
+     * 首页底部提示语
+     */
+    public function WebpageOrientation(Request $request)
+    {
+        $id = $request->id;
+        if(empty($id)){
+            ReturnJson(false,'ID不能为空！');
+        }
+    }
 }
