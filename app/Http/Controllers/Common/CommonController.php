@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Common;
 use App\Http\Controllers\Controller;
+use App\Models\Link;
 use App\Models\Menu;
 use App\Models\ProductsCategory;
 use App\Models\SystemValue;
@@ -114,5 +115,17 @@ class CommonController extends Controller
             $result[$value['key']] = intval($value['value']);
         }
         ReturnJson(true,'',$result);
+    }
+
+    /**
+     * 友情链接
+     */
+    public function Link(Request $request){
+        $link = Link::where('status',1)
+                ->select(['name','link'])
+                ->orderBy('sort','ASC')
+                ->get()
+                ->toArray();
+        ReturnJson(true,'',$link);
     }
 }

@@ -23,6 +23,7 @@ Route::middleware('api')->group(function () {
         Route::get('info', [\App\Http\Controllers\Common\CommonController::class, 'info'])->name('SEO信息');
         Route::get('bottom-menus', [\App\Http\Controllers\Common\CommonController::class, 'BottomMenus'])->name('底部导航');
         Route::get('control-page', [\App\Http\Controllers\Common\CommonController::class, 'ControlPage'])->name('页面JS操作设置');
+        Route::get('link', [\App\Http\Controllers\Common\CommonController::class, 'Link'])->name('友情链接');
     });
 
     // index控制器(首页)
@@ -56,6 +57,11 @@ Route::middleware('api')->group(function () {
     // System控制器(网站设置)
     Route::prefix('system')->group(function () {
         Route::get('get-children', [\App\Http\Controllers\SystemController::class, 'GetChildren'])->name('通过父级ID获取子级数据列表');
+    });
+
+    // System控制器(网站设置)
+    Route::prefix('page')->group(function () {
+        Route::get('get', [\App\Http\Controllers\PageController::class, 'Get'])->name('单页面内容');
     });
 
     // User控制器(用户模块)
