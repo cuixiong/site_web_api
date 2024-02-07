@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-class XunSearchProductCommand extends Command
+class XunSearchCommand extends Command
 {
     protected $ExchangeName; // exchange name
     protected $QueueName = 'xunsearch_'; // queue name
@@ -122,10 +122,15 @@ class XunSearchProductCommand extends Command
         $channel = $this->channel;
         return function (AMQPMessage $message) use ($channel) {
             $data = json_decode($message->body, true);
+            file_put_contents('./log.txt', $data['id'] . ' ' . $data['action'] . "\n", FILE_APPEND);
             if($data['action'] == 'update'){
                 $res = (new XunSearch())->update($data['id']);
-            } else {
+            } else if($data['action'] == 'add') {
                 $res = (new XunSearch())->add($data['id']);
+            } else if($data['action'] == 'delete') {
+                $res = (new XunSearch())->delete($data['id']);
+            } else {
+                $res = false;
             }
             if($res === true){
                 $channel->basic_ack($message->delivery_info['delivery_tag']);
@@ -144,7 +149,7 @@ class XunSearchProductCommand extends Command
         $this->initChannel();// initialization channel
         $this->channel->basic_qos(null, 1, null); // Receive only one unconfirmed message at a time
         $callback = $this->CallFuncBack();
-        $this->channel->basic_consume($this->QueueName.config('SITE_NAME',''), '', false, false, false, false, $callback);
+        $this->channel->basic_consume($this->QueueName.env('SITE_NAME',''), '', false, false, false, false, $callback);
         while (true) {
             $this->channel->wait();
         }

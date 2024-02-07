@@ -97,7 +97,7 @@ class ProductController extends Controller
         }
 
         $data = [
-            'products' => $products ? $products : [],
+            'products' => isset($products) && !empty($products) ? $products : [],
             "page" => intVal($page),
             "pageSize" => intVal($pageSize),
             "count" => intVal($count),
