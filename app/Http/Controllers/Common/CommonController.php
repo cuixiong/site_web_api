@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Common;
 use App\Http\Controllers\Controller;
 use App\Models\Link;
 use App\Models\Menu;
+use App\Models\PlateValue;
 use App\Models\ProductsCategory;
 use App\Models\SystemValue;
 use Illuminate\Http\Request;
@@ -127,5 +128,17 @@ class CommonController extends Controller
                 ->get()
                 ->toArray();
         ReturnJson(true,'',$link);
+    }
+
+    // 购买流程
+    public function PurchaseProcess(Request $request)
+    {
+        $id = $request->parentId;
+        if(empty($id)){
+            ReturnJson(false,'ID不允许为空');
+        }
+        $res = PlateValue::where('parent_id',$id)->select(['id','title','link'])->first();
+        $res = $res ? $res : [];
+        ReturnJson(true,'',$res);
     }
 }

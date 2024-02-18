@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\News;
 use App\Models\ProductDescription;
 use App\Models\Products;
 use App\Models\ProductsCategory;
@@ -155,34 +156,35 @@ class ProductController extends Controller
                 'tables_and_figures_en',
                 'companies_mentioned',
             ])->where(['product_id' => $product_id])->first();
-
             if ($description === null) {
                 $description = [];
                 $description['description'] = '';
                 $description['table_of_content'] = '';
                 $description['tables_and_figures'] = '';
                 $description['companies_mentioned'] = '';
+                $description['description_en'] = '';
+                $description['tables_and_figures_en'] = '';
             }
 
             $desc = [];
-            if (!empty($product_desc) && is_array($product_desc)) {
+            // var_dump($product_desc);die;
+            if (!empty($product_desc) && !empty($description)) {
 
                 $description['description'] = str_replace(['<pre>', '</pre>'], '', $description['description']);
                 $_description = $this->setDescriptionLinebreak($description['description']);
                 $_description_en = $this->setDescriptionLinebreak($description['description_en']);
-                $desc['description'] = $_description;
-                $desc['description_en'] = $_description_en;
-                $desc['table_of_content'] = $this->titleToDeep2($description['table_of_content']);
-                $desc['table_of_content_en'] = $this->titleToDeep2($description['table_of_content_en']);
-                $desc['table_of_content2'] = $this->titleToDeep($_description, $description['table_of_content']);
-                $desc['table_of_catalogue'] = $desc['table_of_content2']['topTitles'];
-                $desc['tables_and_figures'] = str_replace(['<pre>', '</pre>'], '', $description['tables_and_figures']);
-                $desc['tables_and_figures_en'] = str_replace(['<pre>', '</pre>'], '', $description['tables_and_figures_en']);
-                $desc['companies_mentioned'] = str_replace(['<pre>', '</pre>'], '', $description['companies_mentioned']);
+                $product_desc['description'] = $_description;
+                $product_desc['description_en'] = $_description_en;
+                // $desc['table_of_content'] = $this->titleToDeep2($description['table_of_content']);
+                // $desc['table_of_content_en'] = $this->titleToDeep2($description['table_of_content_en']);
+                $product_desc['table_of_content2'] = $this->titleToDeep($_description, $description['table_of_content']);
+                $product_desc['table_of_catalogue'] = $product_desc['table_of_content2'];
+                $product_desc['tables_and_figures'] = str_replace(['<pre>', '</pre>'], '', $description['tables_and_figures']);
+                $product_desc['tables_and_figures_en'] = str_replace(['<pre>', '</pre>'], '', $description['tables_and_figures_en']);
+                $product_desc['companies_mentioned'] = str_replace(['<pre>', '</pre>'], '', $description['companies_mentioned']);
 
-                $serviceMethod = SystemValue::select(['name key', 'value'])->where(['key' => 'Service', 'status' => 1])->find();
-                $desc['serviceMethod'] = $serviceMethod ?? '';
-                $product_desc = array_merge($product_desc, $desc);
+                $serviceMethod = SystemValue::select(['name as key', 'value'])->where(['key' => 'Service', 'status' => 1])->first();
+                $product_desc['serviceMethod'] = $serviceMethod ?? '';
             }
             // 这里的代码可以复用 开始
             $prices = [];
@@ -343,5 +345,122 @@ class ProductController extends Controller
             $data[$index]['prices'] = $prices;
         }
         ReturnJson(true,'获取成功',$data);
+    }
+
+    // 更多资讯
+    public function News(Request $request)
+    {
+        $data = [];
+        $data = News::select([
+            'id',
+            'title',
+            'url',
+            'category_id as type'
+        ])
+            ->where(['status' => 1])
+            ->orderBy('created_at','desc')
+            ->limit(8)
+            ->get()
+            ->toArray();
+        ReturnJson(true,'获取成功',$data);
+    }
+
+    /**
+     * 商品摘要添加换行符
+     * @param  description 摘要
+     * @return  result 处理后的表格目录(含标题、摘要),以及一级目录数组
+     */
+    public function setDescriptionLinebreak($description)
+    {
+        $result = [];
+        if (!empty($description)) {
+            $descriptionArray = explode("\n", $description);
+            foreach ($descriptionArray as $index => $row) {
+                //清除多余换行
+                $row = trim($row, "\n");
+                $row = trim($row, "\r");
+                $row = trim($row, "\r\n");
+                //判断是否换行
+                if(!empty($row) && strpos($row, ' ') === 0){
+                    $row = "&nbsp;&nbsp;&nbsp;&nbsp;".trim($row);
+                }
+                if (!empty($row) && strpos($row, ' ') === 0 && ($index + 1) != count($descriptionArray) && strpos($descriptionArray[$index + 1], ' ') !== 0) {
+                    // $row = "&nbsp;&nbsp;".trim($row);
+                    $result[] = $row;
+                    $result[] = "<br />";
+                }elseif (!empty($row) && strrpos($row, '。') && strpos($row, '（')!==0) {
+                    $result[] = $row;
+                    $result[] = "<br />";
+                } elseif ($row == "\n" || $row == "\r" || $row == "\r\n") {
+                    // $descriptionArray[$index] = ""; //清除多余换行
+                } elseif (!empty($row)) {
+                    $result[] = $row;
+                }
+            }
+        }
+        return $result;
+    }
+
+        /**
+     * 分割表格目录
+     * @param  name 报告名称
+     * @param  description 摘要
+     * @param  toc 表格目录
+     * @return  result 处理后的表格目录(含标题、摘要),以及一级目录数组
+     */
+    public function titleToDeep($toc)
+    {
+        // $pattern = '/ {0,}(?<!\.)\d{1,2}\.{0,1}\d{0,2}\.{0,1}\d{0,2} .{0,}\n/';
+        // $pattern = '/(( {0,}(?<!\.)\d{1,2}\.{0,1}\d{0,2}\.{0,1}\d{0,2})|(第(.{0,6}|\d{1,2})章)|( {0,}(?<!\.).{3,6})) .{0,}\n/';
+        $pattern = '/(( {0,}(?<!\.)\d{1,2}(\.\d{1,2}){0,3})|(第(.{0,6}|\d{1,2})章)|( {0,}(?<!\.).{3,6}))( |\t).{0,}\n/u';
+        $result = [];
+        $match = [];
+
+        try {
+            preg_match_all($pattern, $toc, $match);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return '';
+        }
+        // $numPattern = '/ {0,}(?<!\.)\d{1,2}\.{0,1}\d{0,2}\.{0,1}\d{0,2} /';
+        $numPattern = '/ {0,}(?<!\.)\d{1,2}(\.\d{1,2}){0,3}( |\t)/';
+        if (is_array($match) && count($match) > 0 && count($match[0]) > 0) {
+            $count = 0;
+            foreach ($match[0] as $key => $value) {
+                try {
+                    preg_match_all($numPattern, $value, $numMatch);
+                } catch (\Throwable $th) {
+                    continue;
+                    //throw $th;
+                }
+
+                $num = str_replace(' ', '', $numMatch[0][0]);
+                $value = trim($value, "\r\n");
+                $value = trim($value, "\r");
+                $value = trim($value, " ");
+                if (!empty($value) && strpos($num, ".") === false) {
+                    $count = $count + 1;
+                    $result[$count] = ['id' => $count, 'title' => trim($value, "\n"), 'content' => ''];
+                    // preg_match('/(?<!.)\d{1,2} /', trim($value, "\n"), $matchTitle);
+                    preg_match('/(?<!.)\d{1,2}( |\t)/', trim($value, "\n"), $matchTitle);
+                    $value = trim($value, "\r\n");
+                    $value = trim($value, "\n");
+                    $result[$count]['content'] .= '<span style="line-height:28px;font-size:16px;color:#333;font-weight:600;">' . trim($value, "\n") . '</span><br />';
+                } else {
+                    if (!isset($result[$count])) {
+                        continue;
+                    }
+                    $value = trim($value, "\r\n");
+                    $value = trim($value, "\n");
+                    $space = '';
+                    $str_count = substr_count($num, '.') ?? 0;
+                    for ($i = 0; $i < $str_count; $i++) {
+                        $space .= '    ';
+                    }
+                    $result[$count]['content'] .= $space . trim(str_replace("\n", "<br />", $value), "\n") . "<br />";
+                }
+            }
+        }
+        return $result;
     }
 }
