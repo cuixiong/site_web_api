@@ -137,7 +137,7 @@ class CommonController extends Controller
         if(empty($id)){
             ReturnJson(false,'ID不允许为空');
         }
-        $res = PlateValue::where('parent_id',$id)->select(['id','title','link'])->first();
+        $res = PlateValue::where('parent_id',$id)->where('status',1)->select(['id','title','link'])->get()->toArray();
         $res = $res ? $res : [];
         ReturnJson(true,'',$res);
     }
