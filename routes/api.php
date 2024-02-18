@@ -25,6 +25,7 @@ Route::middleware('api')->group(function () {
         Route::get('control-page', [\App\Http\Controllers\Common\CommonController::class, 'ControlPage'])->name('页面JS操作设置');
         Route::get('link', [\App\Http\Controllers\Common\CommonController::class, 'Link'])->name('友情链接');
         Route::get('purchase-process', [\App\Http\Controllers\Common\CommonController::class, 'PurchaseProcess'])->name('购买流程');
+        Route::get('product-tag', [\App\Http\Controllers\Common\CommonController::class, 'ProductTag'])->name('产品标签');
     });
 
     // index控制器(首页)
@@ -48,6 +49,7 @@ Route::middleware('api')->group(function () {
         Route::get('description', [\App\Http\Controllers\ProductController::class, 'Description'])->name('报告详情');
         Route::get('relevant', [\App\Http\Controllers\ProductController::class, 'Relevant'])->name('相关报告');
         Route::get('news', [\App\Http\Controllers\ProductController::class, 'News'])->name('更多资讯');
+        Route::get('filters', [\App\Http\Controllers\ProductController::class, 'Filters'])->name('筛选条件');
     });
 
     // ContactUs控制器(联系我们)

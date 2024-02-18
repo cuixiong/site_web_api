@@ -141,4 +141,35 @@ class CommonController extends Controller
         $res = $res ? $res : [];
         ReturnJson(true,'',$res);
     }
+
+    /**
+     * 产品标签
+     */
+    public function ProductTag(Request $request)
+    {
+        $category_id = $request->category_id;
+        if(!empty($category_id)){ // 某个行业分类的全部标签
+            $tags = ProductsCategory::select('product_tag')->where(['id'=>$category_id])->value('product_tag');
+            if(!empty($tags)){
+                $data = explode(',', $tags);
+            }else{
+                $data = [];
+            }
+        }else{ // 全部行业分类的全部标签
+            $tags = ProductsCategory::select('product_tag')->pluck();
+            $result = '';
+            $separator = ''; // 分隔符
+            $tags = Array_filter($tags);
+            if(!empty($tags) && is_array($tags)){
+                foreach($tags as $tag){
+                    $result .= $separator . $tag;
+                    $separator = ',';
+                }
+                $data = explode(',', $result);
+            }else{
+                $data = [];
+            }
+        }
+        ReturnJson(true,'',$data);
+    }
 }

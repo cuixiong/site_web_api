@@ -463,4 +463,30 @@ class ProductController extends Controller
         }
         return $result;
     }
+
+    /**
+     * 筛选条件
+     */
+    public function Filters(Request $request)
+    {
+        $industry_id = $request->industry_id;
+        $model = new ProductsCategory();
+        if (!empty($industry_id)) {
+            $model = $model->where('industry_id',$industry_id);
+        }
+        $data = ProductsCategory::select([
+                'id',
+                'name',
+                'link',
+            ])
+            ->where('status',1)
+            ->get()
+            ->toArray();
+        array_unshift($data, [
+            'id' => '0',
+            'name' => '全部',
+            'link' => '',
+        ]);
+        ReturnJson(true, '', $data);
+    }
 }
