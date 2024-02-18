@@ -156,7 +156,7 @@ class CommonController extends Controller
                 $data = [];
             }
         }else{ // 全部行业分类的全部标签
-            $tags = ProductsCategory::select('product_tag')->pluck();
+            $tags = ProductsCategory::where('status',1)->pluck('product_tag')->toArray();
             $result = '';
             $separator = ''; // 分隔符
             $tags = Array_filter($tags);
