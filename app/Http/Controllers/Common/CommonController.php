@@ -187,8 +187,7 @@ class CommonController extends Controller
         $xunsearch = new XunSearch();
         $res = $xunsearch->search($keyword);
         if($res){
-            $data = $res->data;
-            ReturnJson(true,'',$data);
+            ReturnJson(true,'',$res);
         }else{
             ReturnJson(false,'查询失败');
         }
