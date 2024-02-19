@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Helper\XunSearch;
 use App\Models\News;
 use App\Models\ProductDescription;
 use App\Models\Products;
@@ -18,39 +19,9 @@ class ProductController extends Controller
         $pageSize = $request->pageSize ? intval($request->pageSize) : 10; // 每页显示数量
         $category_id = $request->category_id ?? 0; // 分类ID
         $keyword = trim($request->keyword) ?? null;// 搜索关键词
-        // $query = Query();
-        $query = Products::where(['status' => 1])
-            ->select([
-                'name',
-                'english_name',
-                'published_date',
-                'keywords',
-                'id',
-                'url',
-                'price',
-                'discount_type',
-                'discount_amount',
-                'category_id',
-            ]);
-        // 分类ID
-        if($category_id){
-            $query = $query->where('category_id', $category_id);
-        }
-        // 关键词
-        if($keyword){
-            $query = $query->where(function($query) use ($keyword){
-                $query->where('name', 'like', '%'.$keyword.'%');
-                // ->orWhere('description', 'like', '%'.$keyword.'%');
-            });
-        }
-        // 获取当前复合条件的总数量
-        $count = $query->count();
-
-        // 排序 显示发布时间 》 排序 》 id
-        $query = $query->orderBy('published_date','desc')->orderBy('sort','asc');
-        // 分页
-        $offset = ($page -1) * $pageSize;
-        $result = $query->offset($offset)->limit($pageSize)->get()->toArray();
+        $res = $this->GetProductResult($page, $pageSize, $category_id, $keyword);
+        $result = $res['list'];
+        $count = $res['count'];
         if ($result) {
             $products = [];
             foreach ($result as $key => $value) {
@@ -96,7 +67,6 @@ class ProductController extends Controller
                 $products[$key]['url'] = $value['url'];
             }
         }
-
         $data = [
             'products' => isset($products) && !empty($products) ? $products : [],
             "page" => intVal($page),
@@ -105,6 +75,59 @@ class ProductController extends Controller
             'pageCount' => ceil($count / $pageSize),
         ];
         ReturnJson(true,'请求成功',$data);
+    }
+
+    /**
+     * 搜索产品数据
+     */
+    private function GetProductResult($page,$pageSize,$keyword = '',$category_id = 0)
+    {
+        try {
+            // xunsearch 搜索
+            $where = [];
+            if ($keyword) {
+                $where['keyword'] = $keyword;
+            }
+            if ($category_id) {
+                $where['category_id'] = $category_id;
+            }
+            $res = (new XunSearch())->GetList($page,$pageSize,$where);
+            return $res;
+        } catch (\Exception $e) {
+            // mysql 搜索
+            $query = Products::where(['status' => 1])
+            ->select([
+                'name',
+                'english_name',
+                'published_date',
+                'keywords',
+                'id',
+                'url',
+                'price',
+                'discount_type',
+                'discount_amount',
+                'category_id',
+            ]);
+            // 分类ID
+            if($category_id){
+                $query = $query->where('category_id', $category_id);
+            }
+            // 关键词
+            if($keyword){
+                $query = $query->where(function($query) use ($keyword){
+                    $query->where('name', 'like', '%'.$keyword.'%');
+                });
+            }
+            // 获取当前复合条件的总数量
+            $count = $query->count();
+
+            // 排序 显示发布时间 》 排序 》 id
+            $query = $query->orderBy('published_date','desc')->orderBy('sort','asc');
+            // 分页
+            $offset = ($page -1) * $pageSize;
+            $res = $query->offset($offset)->limit($pageSize)->get()->toArray();
+            return ['list' => $res, 'count' => $count];
+        }
     }
 
 
@@ -146,7 +169,6 @@ class ProductController extends Controller
                 ->first();
 
             $suffix = date('Y', strtotime($product_desc['published_date']));
-            // $tableName = ProductDescription::getTableName($suffix);// 2024-1-26 去掉
             $description = (new ProductDescription($suffix))::select([
                 'description',
                 'description_en',
@@ -167,7 +189,6 @@ class ProductController extends Controller
             }
 
             $desc = [];
-            // var_dump($product_desc);die;
             if (!empty($product_desc) && !empty($description)) {
 
                 $description['description'] = str_replace(['<pre>', '</pre>'], '', $description['description']);
@@ -188,23 +209,6 @@ class ProductController extends Controller
             }
             // 这里的代码可以复用 开始
             $prices = [];
-            // $languages = PriceLanguage::find()->select(['id', 'language'])->asArray()->all();
-            // if (!empty($languages) && is_array($languages)) {
-            //     foreach ($languages as $index => $language) {
-            //         $priceEditions = PriceEdition::find()->select(['id', 'edition', 'rule', 'notice'])->where(['language_id' => $language['id']])->asArray()->all();
-            //         $prices[$index]['language'] = $language['language'];
-            //         if (!empty($priceEditions) && is_array($priceEditions)) {
-            //             foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
-            //                 $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
-            //                 $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
-            //                 $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
-            //                 $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $product_desc['price']) . ";");
-            //             }
-            //         }
-            //     }
-            // }
-            // echo '<pre>';print_r($prices);exit;
-            // 这里的代码可以复用 结束
             $product_desc['prices'] = $prices;
             $product_desc['description'] = $product_desc['description'];
             $product_desc['url'] = $product_desc['url'];
@@ -401,7 +405,7 @@ class ProductController extends Controller
         return $result;
     }
 
-        /**
+    /**
      * 分割表格目录
      * @param  name 报告名称
      * @param  description 摘要
@@ -410,8 +414,6 @@ class ProductController extends Controller
      */
     public function titleToDeep($toc)
     {
-        // $pattern = '/ {0,}(?<!\.)\d{1,2}\.{0,1}\d{0,2}\.{0,1}\d{0,2} .{0,}\n/';
-        // $pattern = '/(( {0,}(?<!\.)\d{1,2}\.{0,1}\d{0,2}\.{0,1}\d{0,2})|(第(.{0,6}|\d{1,2})章)|( {0,}(?<!\.).{3,6})) .{0,}\n/';
         $pattern = '/(( {0,}(?<!\.)\d{1,2}(\.\d{1,2}){0,3})|(第(.{0,6}|\d{1,2})章)|( {0,}(?<!\.).{3,6}))( |\t).{0,}\n/u';
         $result = [];
         $match = [];

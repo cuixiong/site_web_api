@@ -90,6 +90,43 @@ class XunSearch {
     }
 
     /**
+     * 搜索列表数据
+     */
+    public function GetList($page,$pageSize,$where = []){
+        $search = $this->xs->search;
+        foreach ($where as $key => $value) {
+            if($key != 'keyword'){
+                $search->setQuery($key.':'.$value);
+            } else {
+                $search->setQuery($value);
+            }
+        }
+        // 表示先以 published_date 反序、再以 sort 正序
+        $sorts = array('published_date' => false, 'sort' => true);
+        // 设置搜索排序
+        $search->setMultiSort($sorts);
+        // 设置返回结果为 5 条，但要先跳过 15 条，即第 16～20 条。
+        $search->setLimit($pageSize, $pageSize * ($page - 1));
+        $docs = $search->search();
+        $count = $search->count();
+        $products = [];
+        if(!empty($docs)){
+            foreach ($docs as $key => $doc) {
+                $product = [];
+                foreach ($doc as $key2 => $value2) {
+                    $product[$key2] = $value2;
+                }
+                $products[] = $product;
+            }
+        }
+        $data = [
+            'list' => $products,
+            'count' => $count,
+        ];
+        return $data;
+    }
+
+    /**
      * 获取产品数据
      */
     private function GetProductData($id)
