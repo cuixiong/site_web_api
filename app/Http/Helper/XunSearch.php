@@ -133,7 +133,7 @@ class XunSearch {
     {
         $data = Products::where('id',$id)->first()->toArray();
         $ini = [
-            "pid" => $data['id'],
+            "id" => $data['id'],
             "name" => $data['name'],
             "english_name" => $data['english_name'],
             "thumb" => $data['thumb'],
