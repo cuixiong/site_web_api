@@ -191,14 +191,13 @@ class ProductController extends Controller
 
             $desc = [];
             if (!empty($product_desc) && !empty($description)) {
-
                 $description['description'] = str_replace(['<pre>', '</pre>'], '', $description['description']);
                 $_description = $this->setDescriptionLinebreak($description['description']);
                 $_description_en = $this->setDescriptionLinebreak($description['description_en']);
                 $product_desc['description'] = $_description;
                 $product_desc['description_en'] = $_description_en;
-                $desc['table_of_content'] = $this->titleToDeep($description['table_of_content']);
-                $desc['table_of_content_en'] = $this->titleToDeep($description['table_of_content_en']);
+                $product_desc['table_of_content'] = $this->titleToDeep($description['table_of_content']);
+                $product_desc['table_of_content_en'] = $this->titleToDeep($description['table_of_content_en']);
                 $product_desc['table_of_content2'] = $this->titleToDeep($_description, $description['table_of_content']);
                 $product_desc['table_of_catalogue'] = $product_desc['table_of_content2'];
                 $product_desc['tables_and_figures'] = str_replace(['<pre>', '</pre>'], '', $description['tables_and_figures']);
