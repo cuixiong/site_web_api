@@ -169,7 +169,7 @@ class ProductController extends Controller
                 ->first();
 
             $suffix = date('Y', strtotime($product_desc['published_date']));
-            $description = (new ProductDescription($suffix))::select([
+            $description = (new ProductDescription($suffix))->select([
                 'description',
                 'description_en',
                 'table_of_content',
@@ -177,7 +177,8 @@ class ProductController extends Controller
                 'tables_and_figures',
                 'tables_and_figures_en',
                 'companies_mentioned',
-            ])->where(['product_id' => $product_id])->first();
+            ])->where('product_id',$product_id)->first();
+
             if ($description === null) {
                 $description = [];
                 $description['description'] = '';
@@ -196,8 +197,8 @@ class ProductController extends Controller
                 $_description_en = $this->setDescriptionLinebreak($description['description_en']);
                 $product_desc['description'] = $_description;
                 $product_desc['description_en'] = $_description_en;
-                // $desc['table_of_content'] = $this->titleToDeep2($description['table_of_content']);
-                // $desc['table_of_content_en'] = $this->titleToDeep2($description['table_of_content_en']);
+                $desc['table_of_content'] = $this->titleToDeep($description['table_of_content']);
+                $desc['table_of_content_en'] = $this->titleToDeep($description['table_of_content_en']);
                 $product_desc['table_of_content2'] = $this->titleToDeep($_description, $description['table_of_content']);
                 $product_desc['table_of_catalogue'] = $product_desc['table_of_content2'];
                 $product_desc['tables_and_figures'] = str_replace(['<pre>', '</pre>'], '', $description['tables_and_figures']);
