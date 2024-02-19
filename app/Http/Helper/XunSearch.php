@@ -66,8 +66,14 @@ class XunSearch {
      */
     public function search($keyword)
     {
-        $index = $this->xs->index;
-        return $index->search($keyword);
+        $search = $this->xs->search;
+        $docs = $search->search($keyword);
+        $count = $search->count($keyword);
+        $data = [
+            'docs' => $docs,
+            'count' => $count
+        ];
+        return $data;
     }
 
     /**
