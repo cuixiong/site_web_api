@@ -69,9 +69,12 @@ class XunSearch {
         $search = $this->xs->search;
         $docs = $search->search($keyword);
         $count = $search->count($keyword);
+        $all_cunt = $search->count();
         $data = [
             'docs' => $docs,
-            'count' => $count
+            'count' => $count,
+            'keyword' => $keyword,
+            'all_cunt' => $all_cunt,
         ];
         return $data;
     }
