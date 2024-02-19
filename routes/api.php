@@ -26,6 +26,7 @@ Route::middleware('api')->group(function () {
         Route::get('link', [\App\Http\Controllers\Common\CommonController::class, 'Link'])->name('友情链接');
         Route::get('purchase-process', [\App\Http\Controllers\Common\CommonController::class, 'PurchaseProcess'])->name('购买流程');
         Route::get('product-tag', [\App\Http\Controllers\Common\CommonController::class, 'ProductTag'])->name('产品标签');
+        Route::get('test-xunsearc', [\App\Http\Controllers\Common\CommonController::class, 'TestXunSearch'])->name('讯搜测速接口');
     });
 
     // index控制器(首页)

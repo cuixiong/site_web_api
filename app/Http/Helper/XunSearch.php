@@ -60,6 +60,16 @@ class XunSearch {
     }
 
     /**
+     * 搜索索引
+     */
+    public function search($keyword)
+    {
+        $xs = new XS('/www/wwwroot/yadmin/admin/Modules/Site/Config/xunsearch/product.ini');
+        $index = $xs->index;
+        return $index->search($keyword);
+    }
+
+    /**
      * 获取产品数据
      */
     private function GetProductData($id)

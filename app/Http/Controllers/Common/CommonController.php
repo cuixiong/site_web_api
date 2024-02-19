@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Common;
 use App\Http\Controllers\Controller;
+use App\Http\Helper\XunSearch;
 use App\Models\Link;
 use App\Models\Menu;
 use App\Models\PlateValue;
@@ -171,5 +172,25 @@ class CommonController extends Controller
             }
         }
         ReturnJson(true,'',$data);
+    }
+
+    /**
+     * 测试
+     * 讯搜测试搜索
+     */
+    public function TestXunSearch(Request $request)
+    {
+        $keyword = $request->keyword;
+        if(empty($keyword)){
+            ReturnJson(false,'关键字不允许为空');
+        }
+        $xunsearch = new XunSearch();
+        $res = $xunsearch->search($keyword);
+        if($res){
+            $data = $res->data;
+            ReturnJson(true,'',$data);
+        }else{
+            ReturnJson(false,'查询失败');
+        }
     }
 }
