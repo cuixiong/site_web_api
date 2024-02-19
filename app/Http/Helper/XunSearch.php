@@ -10,13 +10,18 @@ use XS;
 use XSDocument;
 
 class XunSearch {
+    public $xs;
+    public function __construct()
+    {
+        $this->xs = new XS('/www/wwwroot/yapi.qyrdata.com/wwwroot/config/xunsearch/product.ini');
+    }
     /**
      * 新增文档
      */
     public function add($id)
     {
-        $x = new XS('/www/wwwroot/yadmin/admin/Modules/Site/Config/xunsearch/product.ini');
-        $index = $x->index;
+        
+        $index = $this->xs->index;
         $ini = $this->GetProductData($id);
         $doc = new XSDocument();
         $doc->setFields($ini);
@@ -29,8 +34,7 @@ class XunSearch {
      */
     public function delete($id)
     {
-        $x = new XS('/www/wwwroot/yadmin/admin/Modules/Site/Config/xunsearch/product.ini');
-        $index = $x->index;
+        $index = $this->xs->index;
         $index->delete($id);
         return true;
     }
@@ -40,8 +44,7 @@ class XunSearch {
      */
     public function update($id)
     {
-        $x = new XS('/www/wwwroot/yadmin/admin/Modules/Site/Config/xunsearch/product.ini');
-        $index = $x->index;
+        $index = $this->xs->index;
         $ini = $this->GetProductData($id);
         $doc = new XSDocument();
         $doc->setFields($ini);
@@ -54,8 +57,7 @@ class XunSearch {
      */
     public function clean()
     {
-        $xs = new XS('/www/wwwroot/yadmin/admin/Modules/Site/Config/xunsearch/product.ini');
-        $index = $xs->index;
+        $index = $this->xs->index;
         $index->clean();
     }
 
@@ -64,8 +66,7 @@ class XunSearch {
      */
     public function search($keyword)
     {
-        $xs = new XS('/www/wwwroot/yadmin/admin/Modules/Site/Config/xunsearch/product.ini');
-        $index = $xs->index;
+        $index = $this->xs->index;
         return $index->search($keyword);
     }
 
