@@ -5,6 +5,10 @@
 
 namespace App\Http\Helper;
 
+use App\Models\Products;
+use XS;
+use XSDocument;
+
 class XunSearch {
     /**
      * 新增文档
