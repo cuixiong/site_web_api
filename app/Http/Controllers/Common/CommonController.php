@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Common;
 use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
+use App\Models\City;
 use App\Models\Link;
 use App\Models\Menu;
 use App\Models\PlateValue;
@@ -192,4 +193,22 @@ class CommonController extends Controller
             ReturnJson(false,'查询失败');
         }
     }
+
+    /** 
+     * 中国省份、城市数据
+     */
+    public function ChinaRegions()
+    {
+        $provinces = City::select(['id','name'])->where(['type'=>1])->get()->toArray();
+        foreach($provinces as $province){
+            $data[] = [
+                "id" => $province["id"],
+                "name" => $province["name"],
+                'sons' => City::select(['id','name'])->where(['type'=>2,'pid'=>$province['id']])->get()->toArray(),
+            ];
+        }
+        ReturnJson(true,'',$data);
+    }
+
+
 }

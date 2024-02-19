@@ -27,6 +27,7 @@ Route::middleware('api')->group(function () {
         Route::get('purchase-process', [\App\Http\Controllers\Common\CommonController::class, 'PurchaseProcess'])->name('购买流程');
         Route::get('product-tag', [\App\Http\Controllers\Common\CommonController::class, 'ProductTag'])->name('产品标签');
         Route::get('test-xunsearc', [\App\Http\Controllers\Common\CommonController::class, 'TestXunSearch'])->name('讯搜测速接口');
+        Route::get('china-regions', [\App\Http\Controllers\Common\CommonController::class, 'ChinaRegions'])->name('中国地区');
     });
 
     // index控制器(首页)
