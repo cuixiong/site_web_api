@@ -68,10 +68,20 @@ class XunSearch {
     {
         $search = $this->xs->search;
         $docs = $search->search($keyword);
+        $products = [];
+        if(!empty($docs)){
+            foreach ($docs as $key => $doc) {
+                $product = [];
+                foreach ($doc as $key2 => $value2) {
+                    $product[$key2] = $value2;
+                }
+                $products[] = $product;
+            }
+        }
         $count = $search->count($keyword);
         $all_cunt = $search->count();
         $data = [
-            'docs' => $docs,
+            'docs' => $products,
             'count' => $count,
             'keyword' => $keyword,
             'all_cunt' => $all_cunt,
