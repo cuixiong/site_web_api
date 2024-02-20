@@ -84,7 +84,7 @@ class ProductController extends Controller
     {
         try {
             // xunsearch 搜索
-            $res = (new XunSearch())->GetList($page,$pageSize,$keyword = '',$category_id = 0);
+            $res = (new XunSearch())->GetList($page,$pageSize,$keyword,$category_id);
             return $res;
         } catch (\Exception $e) {
             // mysql 搜索
