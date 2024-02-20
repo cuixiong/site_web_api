@@ -48,6 +48,7 @@ class XunSearch {
         $ini = $this->GetProductData($id);
         $doc = new XSDocument();
         $doc->setFields($ini);
+        $index->del($id);
         $index->update($doc); 
         return true;
     }
