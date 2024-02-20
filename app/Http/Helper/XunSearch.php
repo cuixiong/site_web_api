@@ -92,17 +92,10 @@ class XunSearch {
     /**
      * 搜索列表数据
      */
-    public function GetList($page,$pageSize,$where = []){
+    public function GetList($page,$pageSize,$keyword = '',$category_id = 0){
         $search = $this->xs->search;
-        // foreach ($where as $key => $value) {
-        //     if($key != 'keyword'){
-        //         $search->setQuery($key.':'.$value);
-        //     } else {
-        //         $search->setQuery($value);
-        //     }
-        // }
-        if(!empty($where['keyword'])){
-            $search->setQuery($where['keyword']);
+        if($keyword){
+            $search->setQuery($keyword);
         }
         // 表示先以 published_date 反序、再以 sort 正序
         $sorts = array('published_date' => false, 'sort' => true);

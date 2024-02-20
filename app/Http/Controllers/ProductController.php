@@ -84,14 +84,7 @@ class ProductController extends Controller
     {
         try {
             // xunsearch 搜索
-            $where = [];
-            if ($keyword) {
-                $where['keyword'] = $keyword;
-            }
-            if ($category_id) {
-                $where['category_id'] = $category_id;
-            }
-            $res = (new XunSearch())->GetList($page,$pageSize,$where);
+            $res = (new XunSearch())->GetList($page,$pageSize,$keyword = '',$category_id = 0);
             return $res;
         } catch (\Exception $e) {
             // mysql 搜索
