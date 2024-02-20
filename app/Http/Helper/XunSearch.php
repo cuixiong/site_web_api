@@ -98,6 +98,9 @@ class XunSearch {
         if($keyword){
             $search->setQuery($keyword);
         }
+        if($category_id){
+            $search->addRange('category_id',$category_id,$category_id);
+        }
         // 表示先以 published_date 反序、再以 sort 正序
         $sorts = array('published_date' => false, 'sort' => true);
         // 设置搜索排序
