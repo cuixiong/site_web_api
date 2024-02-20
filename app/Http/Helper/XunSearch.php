@@ -35,7 +35,7 @@ class XunSearch {
     public function delete($id)
     {
         $index = $this->xs->index;
-        $index->delete($id);
+        $index->del($id);
         return true;
     }
 
