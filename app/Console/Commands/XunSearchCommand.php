@@ -123,7 +123,6 @@ class XunSearchCommand extends Command
         return function (AMQPMessage $message) use ($channel) {
             $data = json_decode($message->body, true);
             $data = $data['data'];
-            file_put_contents('./log.txt', $data['id'] . ' ' . $data['action'] . "\n", FILE_APPEND);
             if($data['action'] == 'update'){
                 $res = (new XunSearch())->update($data['id']);
             } else if($data['action'] == 'add') {
