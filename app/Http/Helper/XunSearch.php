@@ -49,7 +49,7 @@ class XunSearch {
         $doc = new XSDocument();
         $doc->setFields($ini);
         $index->del($id);
-        $index->update($doc); 
+        $index->add($doc); 
         return true;
     }
 
