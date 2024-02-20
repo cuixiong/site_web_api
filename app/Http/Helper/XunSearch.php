@@ -101,7 +101,7 @@ class XunSearch {
         //         $search->setQuery($value);
         //     }
         // }
-        if(empty($where['keyword'])){
+        if(!empty($where['keyword'])){
             $search->setQuery($where['keyword']);
         }
         // 表示先以 published_date 反序、再以 sort 正序
