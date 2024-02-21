@@ -23,10 +23,14 @@ class XunSearch {
         
         $index = $this->xs->index;
         $ini = $this->GetProductData($id);
-        $doc = new XSDocument();
-        $doc->setFields($ini);
-        $index->add($doc); 
-        return true;
+        if($ini){
+            $doc = new XSDocument();
+            $doc->setFields($ini);
+            $index->add($doc); 
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -131,40 +135,46 @@ class XunSearch {
      */
     private function GetProductData($id)
     {
-        $data = Products::where('id',$id)->first()->toArray();
-        $ini = [
-            "id" => $data['id'],
-            "name" => $data['name'],
-            "english_name" => $data['english_name'],
-            "thumb" => $data['thumb'],
-            "publisher_id" => $data['publisher_id'],
-            "category_id" => $data['category_id'],
-            "country_id" => $data['country_id'],
-            "price" => $data['price'],
-            "keywords" => $data['keywords'],
-            "url" => $data['url'],
-            "published_date" => is_int($data['published_date']) ? $data['published_date'] : strtotime($data['published_date']),
-            "status" => $data['status'],
-            "author" => $data['author'],
-            "show_home" => $data['show_home'],
-            "have_sample" => $data['have_sample'],
-            "discount" => $data['discount'],
-            "discount_amount" => $data['discount_amount'],
-            "discount_type" => $data['discount_type'],
-            "discount_time_begin" => $data['discount_time_begin'],
-            "discount_time_end" => $data['discount_time_end'],
-            "pages" => $data['pages'],
-            "tables" => $data['tables'],
-            "hits" => $data['hits'],
-            "show_hot" => $data['show_hot'],
-            "show_recommend" => $data['show_recommend'],
-            "sort" => $data['sort'],
-            "updated_at" => $data['updated_at'],
-            "created_at" => $data['created_at'],
-            "updated_by" => $data['updated_by'],
-            "created_by" => $data['created_by'],
-            "downloads" => $data['downloads'],
-        ];
+        $data = Products::where('id',$id)->first();
+        if($data){
+            $data = $data->toArray();
+            $ini = [
+                "id" => $data['id'],
+                "name" => $data['name'],
+                "english_name" => $data['english_name'],
+                "thumb" => $data['thumb'],
+                "publisher_id" => $data['publisher_id'],
+                "category_id" => $data['category_id'],
+                "country_id" => $data['country_id'],
+                "price" => $data['price'],
+                "keywords" => $data['keywords'],
+                "url" => $data['url'],
+                "published_date" => is_int($data['published_date']) ? $data['published_date'] : strtotime($data['published_date']),
+                "status" => $data['status'],
+                "author" => $data['author'],
+                "show_home" => $data['show_home'],
+                "have_sample" => $data['have_sample'],
+                "discount" => $data['discount'],
+                "discount_amount" => $data['discount_amount'],
+                "discount_type" => $data['discount_type'],
+                "discount_time_begin" => $data['discount_time_begin'],
+                "discount_time_end" => $data['discount_time_end'],
+                "pages" => $data['pages'],
+                "tables" => $data['tables'],
+                "hits" => $data['hits'],
+                "show_hot" => $data['show_hot'],
+                "show_recommend" => $data['show_recommend'],
+                "sort" => $data['sort'],
+                "updated_at" => $data['updated_at'],
+                "created_at" => $data['created_at'],
+                "updated_by" => $data['updated_by'],
+                "created_by" => $data['created_by'],
+                "downloads" => $data['downloads'],
+            ];
+        } else {
+            $int = [];
+        }
+        
         return $ini;
     }
 }
