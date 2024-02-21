@@ -143,7 +143,7 @@ class XunSearch {
             "price" => $data['price'],
             "keywords" => $data['keywords'],
             "url" => $data['url'],
-            "published_date" => $data['published_date'],
+            "published_date" => is_int($data['published_date']) ? $data['published_date'] : strtotime($data['published_date']),
             "status" => $data['status'],
             "author" => $data['author'],
             "show_home" => $data['show_home'],
