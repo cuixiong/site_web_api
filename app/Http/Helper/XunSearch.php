@@ -13,7 +13,7 @@ class XunSearch {
     public $xs;
     public function __construct()
     {
-        $this->xs = new XS('/www/wwwroot/yapi.qyrdata.com/wwwroot/config/xunsearch/product.ini');
+        $this->xs = new XS('/www/wwwroot/yapi.qyrdata.com/wwwroot/config/xunsearch/MMG_CN.ini');
     }
     /**
      * 新增文档
