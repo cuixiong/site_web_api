@@ -6,6 +6,7 @@
 namespace App\Http\Helper;
 
 use App\Models\Products;
+use Predis\Command\Redis\APPEND;
 use XS;
 use XSDocument;
 
@@ -22,8 +23,10 @@ class XunSearch {
     {
         
         $index = $this->xs->index;
+        file_put_contents('a.txt','\n'.$id,FILE_APPEND);
         $ini = $this->GetProductData($id);
         if($ini){
+            file_put_contents('b.txt','\n'.$ini['id'],FILE_APPEND);
             $doc = new XSDocument();
             $doc->setFields($ini);
             $index->add($doc); 
