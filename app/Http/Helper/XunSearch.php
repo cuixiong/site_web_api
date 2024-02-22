@@ -23,14 +23,18 @@ class XunSearch {
     {
         
         $index = $this->xs->index;
-        file_put_contents('a.txt','\n'.$id,FILE_APPEND);
+        file_put_contents('a.txt','\r'.$id,FILE_APPEND);
         $ini = $this->GetProductData($id);
         if($ini){
-            file_put_contents('b.txt','\n'.$ini['id'],FILE_APPEND);
-            $doc = new XSDocument();
-            $doc->setFields($ini);
-            $index->add($doc); 
-            return true;
+            file_put_contents('b.txt','\r'.$ini['id'],FILE_APPEND);
+            try {
+                $doc = new XSDocument();
+                $doc->setFields($ini);
+                $index->add($doc); 
+                return true;
+            } catch (\Exception $e) {
+                file_put_contents('b.txt','\r'.$e->getMessage(),FILE_APPEND);
+            }
         } else {
             return false;
         }
