@@ -147,7 +147,7 @@ class XunSearchCommand extends Command
     {
         $this->connect(); // Establishing a connection
         $this->initChannel();// initialization channel
-        $this->channel->basic_qos(null, 1, null); // Receive only one unconfirmed message at a time
+        $this->channel->basic_qos(1, 1, 0); // Receive only one unconfirmed message at a time
         $callback = $this->CallFuncBack();
         $this->channel->basic_consume($this->QueueName.env('SITE_NAME',''), '', false, false, false, false, $callback);
         while (true) {
