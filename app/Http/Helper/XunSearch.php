@@ -19,12 +19,10 @@ class XunSearch {
     /**
      * 新增文档
      */
-    public function add($id)
+    public function add($ini)
     {
         
         $index = $this->xs->index;
-        file_put_contents('a.txt',"\r".$id,FILE_APPEND);
-        $ini = $this->GetProductData($id);
         if($ini){
             file_put_contents('b.txt',"\r".$ini['id'],FILE_APPEND);
             try {
@@ -43,20 +41,19 @@ class XunSearch {
     /**
      * 删除文档
      */
-    public function delete($id)
+    public function delete($ini)
     {
         $index = $this->xs->index;
-        $index->del($id);
+        $index->del($ini['id']);
         return true;
     }
 
     /**
      * 更新文档
      */
-    public function update($id)
+    public function update($ini)
     {
         $index = $this->xs->index;
-        $ini = $this->GetProductData($id);
         $doc = new XSDocument();
         $doc->setFields($ini);
         $index->update($doc); 

@@ -124,11 +124,11 @@ class XunSearchCommand extends Command
             $data = json_decode($message->body, true);
             $data = $data['data'];
             if($data['action'] == 'update'){
-                $res = (new XunSearch())->update($data['id']);
+                $res = (new XunSearch())->update($data['data']);
             } else if($data['action'] == 'add') {
-                $res = (new XunSearch())->add($data['id']);
+                $res = (new XunSearch())->add($data['data']);
             } else if($data['action'] == 'delete') {
-                $res = (new XunSearch())->delete($data['id']);
+                $res = (new XunSearch())->delete($data['data']);
             } else {
                 $res = false;
             }
