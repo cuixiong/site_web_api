@@ -24,7 +24,7 @@ class XunSearch {
         
         $index = $this->xs->index;
         if($ini){
-            file_put_contents('b.txt',"\r".$ini['id'],FILE_APPEND);
+            file_put_contents('a.txt',"\n add : ".json_encode($ini),FILE_APPEND);
             try {
                 $doc = new XSDocument();
                 $doc->setFields($ini);
@@ -43,6 +43,7 @@ class XunSearch {
      */
     public function delete($ini)
     {
+        file_put_contents('a.txt',"\n del : ".json_encode($ini),FILE_APPEND);
         $index = $this->xs->index;
         $index->del($ini['id']);
         return true;
@@ -53,6 +54,7 @@ class XunSearch {
      */
     public function update($ini)
     {
+        file_put_contents('a.txt',"\n update : ".json_encode($ini),FILE_APPEND);
         $index = $this->xs->index;
         $doc = new XSDocument();
         $doc->setFields($ini);
