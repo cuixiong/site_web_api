@@ -23,17 +23,17 @@ class XunSearch {
     {
         
         $index = $this->xs->index;
-        file_put_contents('a.txt','\r'.$id,FILE_APPEND);
+        file_put_contents('a.txt',"\r".$id,FILE_APPEND);
         $ini = $this->GetProductData($id);
         if($ini){
-            file_put_contents('b.txt','\r'.$ini['id'],FILE_APPEND);
+            file_put_contents('b.txt',"\r".$ini['id'],FILE_APPEND);
             try {
                 $doc = new XSDocument();
                 $doc->setFields($ini);
                 $index->add($doc); 
                 return true;
             } catch (\Exception $e) {
-                file_put_contents('b.txt','\r'.$e->getMessage(),FILE_APPEND);
+                file_put_contents('b.txt',"\r".$e->getMessage(),FILE_APPEND);
             }
         } else {
             return false;
@@ -142,9 +142,14 @@ class XunSearch {
      */
     private function GetProductData($id)
     {
+        try {
+            //code...
+
         $data = Products::where('id',$id)->first();
+        $data = $data->toArray();
+
         if($data){
-            $data = $data->toArray();
+            file_put_contents('b.txt',"\r".json_encode($data),FILE_APPEND);
             $ini = [
                 "pid" => $data['id'],
                 "id" => $data['id'],
@@ -184,5 +189,8 @@ class XunSearch {
         }
         
         return $ini;
+        } catch (\Exception $e) {
+            file_put_contents('b.txt',"\r".$e->getMessage(),FILE_APPEND);
+        }
     }
 }
