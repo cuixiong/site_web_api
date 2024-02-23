@@ -16,7 +16,7 @@ class XunSearch {
     {
         $RootPath = base_path();
         $name = env('SITE_NAME', '');
-        $IniFile = $RootPath.'/config/'.$name.'.ini';
+        $IniFile = $RootPath.'/config/xunsearch/'.$name.'.ini';
         $this->xs = new XS($IniFile);
     }
     /**
@@ -27,14 +27,12 @@ class XunSearch {
         
         $index = $this->xs->index;
         if($ini){
-            file_put_contents('a.txt',"\n add : ".json_encode($ini),FILE_APPEND);
             try {
                 $doc = new XSDocument();
                 $doc->setFields($ini);
                 $index->add($doc); 
                 return true;
             } catch (\Exception $e) {
-                file_put_contents('b.txt',"\r".$e->getMessage(),FILE_APPEND);
             }
         } else {
             return false;
@@ -46,7 +44,6 @@ class XunSearch {
      */
     public function delete($ini)
     {
-        file_put_contents('a.txt',"\n del : ".json_encode($ini),FILE_APPEND);
         $index = $this->xs->index;
         $index->del($ini['id']);
         return true;
@@ -57,7 +54,6 @@ class XunSearch {
      */
     public function update($ini)
     {
-        file_put_contents('a.txt',"\n update : ".json_encode($ini),FILE_APPEND);
         $index = $this->xs->index;
         $doc = new XSDocument();
         $doc->setFields($ini);
@@ -150,7 +146,6 @@ class XunSearch {
         $data = $data->toArray();
 
         if($data){
-            file_put_contents('b.txt',"\r".json_encode($data),FILE_APPEND);
             $ini = [
                 "pid" => $data['id'],
                 "id" => $data['id'],
@@ -191,7 +186,6 @@ class XunSearch {
         
         return $ini;
         } catch (\Exception $e) {
-            file_put_contents('b.txt',"\r".$e->getMessage(),FILE_APPEND);
         }
     }
 }
