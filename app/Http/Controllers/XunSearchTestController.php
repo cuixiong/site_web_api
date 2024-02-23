@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\SystemValue;
 use Illuminate\Http\Request;
+use XS;
 
 class XunSearchTestController extends Controller
 {
