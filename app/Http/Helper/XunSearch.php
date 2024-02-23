@@ -14,7 +14,10 @@ class XunSearch {
     public $xs;
     public function __construct()
     {
-        $this->xs = new XS('/www/wwwroot/yapi.qyrdata.com/wwwroot/config/xunsearch/MMG_CN.ini');
+        $RootPath = base_path();
+        $name = env('SITE_NAME', '');
+        $IniFile = $RootPath.'/config/'.$name.'.ini';
+        $this->xs = new XS($IniFile);
     }
     /**
      * 新增文档
