@@ -31,7 +31,7 @@ class XunSearch {
                 $doc = new XSDocument();
                 $doc->setFields($ini);
                 $index->add($doc); 
-                file_put_contents('xunsearch.txt',"\r".date('Y-m-d H:i:s')." add :".json_encode($ini).FILE_APPEND);
+                file_put_contents('xunsearch.txt',"\r".date('Y-m-d H:i:s')." add :".json_encode($ini),FILE_APPEND);
                 return true;
             } catch (\Exception $e) {
             }
@@ -47,7 +47,7 @@ class XunSearch {
     {
         $index = $this->xs->index;
         $index->del($ini['id']);
-        file_put_contents('xunsearch.txt',"\r".date('Y-m-d H:i:s')." delete :".json_encode($ini).FILE_APPEND);
+        file_put_contents('xunsearch.txt',"\r".date('Y-m-d H:i:s')." delete :".json_encode($ini),FILE_APPEND);
         return true;
     }
 
@@ -60,7 +60,7 @@ class XunSearch {
         $doc = new XSDocument();
         $doc->setFields($ini);
         $index->update($doc); 
-        file_put_contents('xunsearch.txt',"\r".date('Y-m-d H:i:s')." update :".json_encode($ini).FILE_APPEND);
+        file_put_contents('xunsearch.txt',"\r".date('Y-m-d H:i:s')." update :".json_encode($ini),FILE_APPEND);
         return true;
     }
 
