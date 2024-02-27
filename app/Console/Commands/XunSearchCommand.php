@@ -132,11 +132,7 @@ class XunSearchCommand extends Command
             } else {
                 $res = false;
             }
-            if($res === true){
-                $channel->basic_ack($message->delivery_info['delivery_tag']);
-            } else {
-                $channel->basic_nack($message->delivery_info['delivery_tag']);
-            }
+            return $res ? $message->delivery_info['delivery_tag'] : 0;
         };
     }
 
@@ -149,10 +145,12 @@ class XunSearchCommand extends Command
         $this->initChannel();// initialization channel
         $this->channel->basic_qos(null, 1, null); // Receive only one unconfirmed message at a time
         $callback = $this->CallFuncBack();
-        $this->channel->basic_consume($this->QueueName.env('SITE_NAME',''), '', false, false, false, false, $callback);
+        $delivery_tag = $this->channel->basic_consume($this->QueueName.env('SITE_NAME',''), '', false, false, false, false, $callback);
+        if($delivery_tag != 0){
+            $this->channel->basic_ack($delivery_tag);
+        }
         while (true) {
             $this->channel->wait();
         }
-        $this->close();
     }
 }
