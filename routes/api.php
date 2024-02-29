@@ -77,6 +77,13 @@ Route::middleware('api')->group(function () {
     Route::post('do-reset-register', [\App\Http\Controllers\UserController::class, 'DoResetPassword'])->name('忘记密码:修改密码');
     Route::post('check-email', [\App\Http\Controllers\UserController::class, 'CheckEmail'])->name('验证邮箱');
 
-
+    // Cart控制器(购物车模块)
+    Route::prefix('cart')->group(function () {
+        Route::post('add', [\App\Http\Controllers\CartController::class, 'Add'])->name('购物车添加');
+        Route::post('list', [\App\Http\Controllers\CartController::class, 'List'])->name('购物车列表');
+        Route::post('delete', [\App\Http\Controllers\CartController::class, 'Delete'])->name('购物车删除');
+        Route::post('updata-goods-number', [\App\Http\Controllers\CartController::class, 'UpdataGoodsNumber'])->name('购物车添加或减少商品数量');
+        Route::post('change-edition', [\App\Http\Controllers\CartController::class, 'ChangeEdition'])->name('购物车修改版本');
+    });
     Route::get('xunsearch/clean', [\App\Http\Controllers\XunSearchTestController::class, 'clean'])->name('讯搜清空数据');
 });

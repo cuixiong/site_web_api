@@ -1,0 +1,357 @@
+<?php
+
+namespace App\Http\Controllers;
+use App\Http\Controllers\Controller;
+use App\Models\Products;
+use App\Models\ProductsCategory;
+use App\Models\ShopCart;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class CartController extends Controller
+{
+    /**
+     * 购物车列表
+     */
+    public function List(Request $request)
+    {
+        $shopCart = ShopCart::from('shop_carts as cart')
+                    ->select([
+                        'cart.id', 
+                        'cart.goods_id', 
+                        'cart.number', 
+                        'cart.price_edition',
+                        'edition.name as price_name',
+                        // 'language.language',
+                        'products.url',
+                        'products.name',
+                        'products.price',
+                        'products.discount_type', 
+                        'products.discount_amount', 
+                        'products.discount_time_begin', 
+                        'products.discount_time_end',
+                        'products.published_date',
+                        'edition.rules',
+                        'products.category_id',
+                    ])
+                    ->leftJoin('product_routine as products','products.id','=', 'cart.goods_id')
+                    ->leftJoin('product_category as category', 'category.id','=','products.category_id')
+                    ->leftJoin('price_edition_values as edition', 'cart.price_edition','=','edition.id')
+                    // ->leftJoin('languages as language', 'edition.language_id','=','language.id')
+                    
+                    ->where([
+                        // 'cart.user_id' => $request->user->id, 
+                        'products.status' => 1 // product的status值如果是0，相当于删除这份报告
+                    ])->get()->toArray();
+
+        if (count($shopCart) < 1) { // 这个用户的购物车为空
+            $data = [
+                'result' => [],
+                'goodsCount' => 0,
+                'totalPrice' => 0,
+            ];
+            return ['code' => 0,'message' => '购物车为空', 'data' => $data];
+        }
+        $goodsCount = 0;
+        $totalPrice = 0;
+        $shopCartData = [];
+        foreach($shopCart as $key=>$value){
+            $shopCartData[$key]['thumb'] = ProductsCategory::where('id',$value['category_id'])->value('thumb');
+            $shopCartData[$key]['name'] = $value['name'];
+            $shopCartData[$key]['goods_id'] = $value['goods_id'];
+            $shopCartData[$key]['url'] = $value['url'];
+            $shopCartData[$key]['published_date'] = $value['published_date'] ? $value['published_date'] : '';
+            // $shopCartData[$key]['languageId'] = $value['language']; // 原本是language，改为迁就前端的languageId
+            // $shopCartData[$key]['price_edition_cent'] = $value['price_name']; // 原本是edition，改为迁就前端的price_edition_cent
+            $shopCartData[$key]['price_edition'] = $value['price_edition'];
+            $shopCartData[$key]['price'] = eval("return " . sprintf($value['rules'], $value['price']) . ";");
+            $shopCartData[$key]['number'] = intval($value['number']); // 把返回的number值由原来的字符类型变成整数类型
+            
+            $shopCartData[$key]['id'] = $value['id'];
+            $shopCartData[$key]['discount_type'] = $value['discount_type'];
+            $shopCartData[$key]['discount_amount'] = $value['discount_amount'];
+            $shopCartData[$key]['discount_time_begin'] = $value['discount_time_begin'] ? date('Y-m-d', $value['discount_time_begin']) : '';
+            $shopCartData[$key]['discount_time_end'] = $value['discount_time_end'] ? date('Y-m-d', $value['discount_time_end']) : '';
+            
+            // 这里的代码可以复用 开始
+            // $languages = PriceLanguage::find()->select(['id', 'language'])->asArray()->all();
+            // if(!empty($languages) && is_array($languages)){
+            //     foreach($languages as $indexLanguage=>$language){
+            //         $priceEditions = PriceEdition::find()->select(['id', 'edition', 'rule', 'notice'])->where(['language_id'=>$language['id']])->asArray()->all();
+            //         $prices[$indexLanguage]['language'] = $language['language'];
+            //         if(!empty($priceEditions) && is_array($priceEditions)){
+            //             foreach($priceEditions as $keyPriceEdition=>$priceEdition){
+            //                 $prices[$indexLanguage]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
+            //                 $prices[$indexLanguage]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+            //                 $prices[$indexLanguage]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
+            //                 $prices[$indexLanguage]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $value['price']) . ";");
+            //             }
+            //         }
+            //     }
+            // }
+            // $shopCartData[$key]['prices'] = $prices;
+            $shopCartData[$key]['prices'] = [];
+            // 这里的代码可以复用 结束
+            
+            $goodsCount += $value['number'];
+            $totalPrice += bcmul(eval("return " . sprintf($value['rules'], $value['price']) . ";"), $value['number']);
+        }
+        // var_dump(1);die;
+
+        $data = [
+            'result' => $shopCartData,
+            'goodsCount' => $goodsCount,
+            'totalPrice' => $totalPrice,
+        ];
+        ReturnJson(true,'',$data);
+    }
+    /**
+     * 购物车添加
+     */
+    public function Add(Request $request)
+    {
+        $goods_id = $request->goods_id; // id 改为 
+        $number = $request->number ?? 0; // num 改为 
+        $price_edition = $request->price_edition;
+
+        $data = ShopCart::where([
+            // 'user_id' => $request->user->id, 
+            'user_id' => 0, 
+            'goods_id' => $goods_id, 
+            'price_edition' => $price_edition
+        ])->first();
+        if (!empty($data)) {
+            $data->number += $number; // 添加数量
+            if (!$data->save()) {
+                ReturnJson(false,'',$data->getModelError());
+            }
+        } else { // 新增
+            $model = new ShopCart();
+            // $model->user_id = $request->user->id;
+            $model->user_id = 0;
+            $model->goods_id = $goods_id;
+            $model->number = $number;
+            $model->price_edition = $price_edition;
+            if (!$model->save()) {
+                ReturnJson(false,'',$model->getModelError());
+            }
+        }
+        ReturnJson(false,'success');
+    }
+
+    /**
+     * 购物车删除
+     */
+    public function Delete(Request $request)
+    {
+        $CartIds = $request->ids;
+        if (!is_array($CartIds) && empty($CartIds)) {
+            ReturnJson(false,'请选择需要删除的商品ID');
+        }
+        DB::beginTransaction();
+        try {
+            ShopCart::whereIn('id', $CartIds)->delete();
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            ReturnJson(false);
+        }
+        ReturnJson(true);
+    }
+
+    /**
+     * 购物车添加或减少商品数量
+     */
+    public function UpdataGoodsNumber(Request $request)
+    {
+        $id = $request->id;
+        $number = $request->number;
+
+        if (!is_numeric($id) || $id < 1 || !is_numeric($number) || $number < 1) {
+            ReturnJson(false, '参数错误');
+        }
+        $res = ShopCart::where('id', $id)->where([
+            // 'user_id' => $request->user->id,
+            'status' => 1])->update(['number' => $number]);
+        if(!$res){
+            ReturnJson(false, '修改失败');
+        }
+        ReturnJson(true);
+    }
+
+    /**
+     * 改变购物车里的某个产品的价格版本
+     * @param interger cart_id  购物车编号
+     * @param interger price_edition 价格版本号
+     */
+    public function ChangeEdition(Request $request)
+    {
+        
+        $id = $request->id;
+        $price_edition = $request->price_edition;
+        if(empty($id)){
+            ReturnJson(false,'购物车编号不能为空');
+        }
+        $data = ShopCart::find($id);
+        if(empty($data)){
+            ReturnJson(false,'购物车编号有误');
+        }
+        if(empty($price_edition)){
+            ReturnJson(false,'价格版本号不能为空');
+        }
+        $data = ShopCart::where('id',$id)->first();
+        if(!empty($data)){
+            $data->price_edition = $price_edition;
+            $data->save();
+            ReturnJson(true);
+        }
+    }
+
+    /**
+     * 购物车同步接口
+     * @param goods_id      商品编号 int
+     * @param number        购买数量 int
+     * @param price_edition 价格版本 int
+     */
+    public function Sync()
+    {
+        $user = User::verificationToken(Yii::$app->request->getHeaders()->get('token'));
+        if (is_null($user)) {
+            return $this->echoMsg(ApiCode::TOKEN_FAIL);
+        }
+        $frontData = Yii::$app->request->post();
+        if (!is_array($frontData)) {
+            return $this->echoMsg(ApiCode::INVALID_PARAM);
+        }
+        $frontlen = count($frontData);
+        if ($frontlen < 1) {
+            return $this->echoMsg(ApiCode::INVALID_PARAM);
+        }
+        $goodsArr = [];
+        for ($i = 0, $len = count($frontData); $i < $len; $i++) {
+            if (
+                !is_numeric($frontData[$i]['goods_id']) || $frontData[$i]['goods_id'] < 1 ||
+                !is_numeric($frontData[$i]['number']) || $frontData[$i]['number'] < 1
+            ) {
+                continue;
+            }
+            $goodsArr[] = $frontData[$i];
+        }
+
+        if (count($goodsArr) < 1) {
+            return $this->echoMsg(ApiCode::INVALID_PARAM);
+        }
+
+        $goodsIdArr = array_column($goodsArr, 'goods_id', null);
+        $goodsIdArr = Product::find()->select('id')
+            ->where(['id' => $goodsIdArr, 'status' => 1])->asArray()->column();
+
+        // 会把无效的 good_id 过滤
+        if (count($goodsIdArr) < 1) {
+            return $this->echoMsg(ApiCode::INVALID_PARAM);
+        }
+        $len = count($goodsArr);
+        for ($i = 0; $i < $len; $i++) {
+            if (!in_array($goodsArr[$i]['goods_id'], $goodsIdArr)) {
+                unset($goodsArr[$i]);
+            }
+        }
+        if ($len < 1) {
+            return $this->echoMsg(ApiCode::INVALID_PARAM);
+        }
+        //开始数据库操作
+        $transaction = Yii::$app->db->beginTransaction();
+        $query = ShopCart::find()->where(['user_id' => $user->id, 'status' => 1]);
+        $backData = $query->select(['id', 'goods_id', 'number', 'price_edition',])
+            ->indexBy('id')
+            ->asArray()->all();
+        $dbKey = [
+            'user_id',
+            'goods_id',
+            'number',
+            'price_edition',
+            'created_at',
+            'updated_at'
+        ];
+        $timestamp = time();
+        $backlen = count($backData);
+        if ($backlen < 1) { // 数据库里原本就没有数据
+            $row = [];
+            for ($i = 0; $i < $len; $i++) {
+                $row[] = [
+                    $user->id,
+                    $goodsArr[$i]['goods_id'],
+                    $goodsArr[$i]['number'],
+                    $goodsArr[$i]['price_edition'],
+                    $timestamp,
+                    $timestamp,
+                ];
+            }
+            $batchInsert = Yii::$app->db->createCommand()->batchInsert(ShopCart::tableName(), $dbKey, $row)->execute();
+            if ($batchInsert != $len) {
+                $transaction->rollBack();
+                return $this->echoMsg(ApiCode::DELETE_FAIL);
+            }
+            $transaction->commit();
+            return $this->echoMsg(ApiCode::SUCCESS);
+        }
+        // 筛选出 id和版本 不存在的记录，这是需要新增的记录
+        $oldData = [];
+        foreach ($backData as $key => $backItem) {
+            $tempKey = $backItem['goods_id'] . ',' . $backItem['price_edition'];
+            $oldData[$tempKey] = $backItem['id'];
+        }
+        $needInsert = [];
+        $needUpdate = [];
+        for ($i = 0; $i < $len; $i++) {
+            $tempKey = $goodsArr[$i]['goods_id'] . ',' . $goodsArr[$i]['price_edition'];
+            if (!key_exists($tempKey, $oldData)) {
+                $needInsert[] = $goodsArr[$i];
+            } else {
+                $backData[$oldData[$tempKey]]['number'] = $backData[$oldData[$tempKey]]['number'] > $goodsArr[$i]['number']?$backData[$oldData[$tempKey]]['number']:$goodsArr[$i]['number'];
+                // $backData[$oldData[$tempKey]]['number'] = $goodsArr[$i]['number'];
+                $needUpdate[] = $backData[$oldData[$tempKey]];
+            }
+        }
+        $insertlen = count($needInsert);
+        if ($insertlen > 0) {
+            $row = [];
+            foreach ($needInsert as $k => $item) {
+                $row[] = [
+                    $user->id,
+                    $item['goods_id'],
+                    $item['number'],
+                    $item['price_edition'],
+                    $timestamp,
+                    $timestamp,
+                ];
+                array_splice($goodsArr, $k, 1);
+            }
+            $batchInsert = Yii::$app->db->createCommand()->batchInsert(ShopCart::tableName(), $dbKey, $row)->execute();
+            if ($batchInsert != $insertlen) {
+                $transaction->rollBack();
+                return $this->echoMsg(ApiCode::DELETE_FAIL);
+            }
+        }
+        // 对比 id和版本 存在的记录，主要是对比数量，数量大的覆盖数量少的，数量相等的不用理，这是需要更新的记录
+        $updatelen = count($needUpdate);
+        if ($updatelen > 0) {
+            for ($i = 0; $i < $updatelen; $i++) {
+                if (!ShopCart::updateAll(
+                    [
+                        'number' => $needUpdate[$i]['number'],
+                        'updated_at' => $timestamp
+                    ],
+                    [
+                        'id' => $needUpdate[$i]['id']
+                    ]
+                )) {
+                    $transaction->rollBack();
+                    return $this->echoMsg(ApiCode::UPDATE_FAIL);
+                }
+            }
+        }
+        $transaction->commit();
+        return $this->echoMsg(ApiCode::SUCCESS);
+    }
+}
