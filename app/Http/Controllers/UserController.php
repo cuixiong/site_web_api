@@ -176,4 +176,17 @@ class UserController extends Controller
             ReturnJson(FALSE,$e->getMessage());
         }
     }
+
+    /**
+     * 验证邮箱是否存在
+     */
+    public function ExistsEmail(Request $request){
+        $email = $request->email;// 邮箱
+        $res = User::where('email',$email)->count();
+        if($res > 0) {
+            ReturnJson(true);
+        } else {
+            ReturnJson(false);
+        }
+    }
 }

@@ -76,6 +76,7 @@ Route::middleware('api')->group(function () {
     Route::post('reset-register-email', [\App\Http\Controllers\UserController::class, 'ResetPasswordEmail'])->name('忘记密码:发送邮箱');
     Route::post('do-reset-register', [\App\Http\Controllers\UserController::class, 'DoResetPassword'])->name('忘记密码:修改密码');
     Route::post('check-email', [\App\Http\Controllers\UserController::class, 'CheckEmail'])->name('验证邮箱');
+    Route::post('exists-email', [\App\Http\Controllers\UserController::class, 'ExistsEmail'])->name('邮箱是否存在');
 
     // Cart控制器(购物车模块)
     Route::prefix('cart')->group(function () {
