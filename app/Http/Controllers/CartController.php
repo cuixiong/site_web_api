@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
+use App\Models\Languages;
+use App\Models\PriceEditions;
 use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\ShopCart;
@@ -353,5 +355,78 @@ class CartController extends Controller
         }
         $transaction->commit();
         return $this->echoMsg(ApiCode::SUCCESS);
+    }
+
+    /**
+     * 分享购物车数据
+     * @param string cart 
+     * 参数值是类似于[{"goods_id":3,"price_edition":1,"number":1},{"goods_id":6,"price_edition":2,"number":3}]具有数组结构的字符串。
+     * 注意一定要用双引号，不能用单引号。
+     * cart 里面包含以下3个属性及值
+     * goods_id       产品id
+     * price_edition  价格版本id
+     * number            数量
+     */
+    public function Share(Request $request)
+    {
+        $cart = $request->cart;
+        $cart_array = json_decode($cart,true);   // 把接收到的参数通过英文分号分割成一个或多个数组
+        $results = [];
+        if(!empty($cart_array)){
+            $Nonexistent = 0; // 设置“购物车对应的商品列表数据里不存在的商品的数量”为0
+            $goods = [];
+            foreach($cart_array as $key=>$value){
+                $product = Products::from('product_routine product')
+                ->leftJoin('category category','product.category_id','=','category.id')
+                ->select([
+                    'category.thumb',
+                    'product.name',
+                    'product.id goods_id',
+                    'product.published_date',
+                    'product.discount_type',
+                    'product.discount_value',
+                    'product.discount_begin',
+                    'product.discount_end',
+                    'product.price',
+                    'product.url'
+                ])
+                ->where([
+                    'product.id' => $value['goods_id'],
+                    'product.status' => 1
+                ])
+                ->asArray()
+                ->one();
+                
+                if(!empty($product)){
+                    $results[] = $product;
+                }else{
+                    $Nonexistent++;
+                    $goods[] = [
+                        'goods_id' => $value['goods_id'],
+                        'price_edition' => $value['price_edition'],
+                    ];
+                } 
+
+                $results[$key]['published_date'] = $product['published_date'] ? date('Y-m-d', $product['published_date']) : '';
+                $results[$key]['discount_begin'] = $product['discount_begin'] ? date('Y-m-d', $product['discount_begin']) : '';
+                $results[$key]['discount_end'] = $product['discount_end'] ? date('Y-m-d', $product['discount_end']) : '';
+                $results[$key]['number'] = $value['number'];
+                $results[$key]['price_edition'] = $value['price_edition'];
+                $priceRule = PriceEditions::select('language_id,edition,rule')->where('id',$value['price_edition'])->first();
+                if(!empty($priceRule)){
+                    $results[$key]['languageId'] = Languages::where('id',$priceRule['language_id'])->value('language');
+                    $results[$key]['price_edition_cent'] = $priceRule['edition'];
+                    $price = Products::where('id',$value['goods_id'])->value('price');
+                    if(!empty($price)){
+                        $results[$key]['price'] = eval("return ".sprintf($priceRule['rule'], $price).";");
+                    }
+                }
+            }
+        }
+        if($Nonexistent>0){
+            ReturnJson(false, $goods); // 产品不存在
+        }else{
+            ReturnJson(true, $results);
+        }
     }
 }

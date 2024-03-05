@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Common\SendEmailController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\CouponUser;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -188,5 +189,133 @@ class UserController extends Controller
         } else {
             ReturnJson(false,'该邮箱可以注册');
         }
+    }
+
+    /**
+     * 会员个人中心里的优惠券列表
+     * @param int $status 优惠券状态值：0全部，1未使用，2已使用，3已过期
+     * @param int $scene  场景：1代表用户进入自己的个人中心，2代表用户下单。
+     * @param int $price  前端传过来的订单总价（原价）
+     */
+    public function Coupons(Request $request)
+    {
+        
+        $status = $request->status;
+        $scene = $request->scene;
+        $price = $request->price;
+        
+        if(!isset($status)){ // 由于允许参数status的值为0，所以这里要用【!isset】
+            ReturnJson(false,'status');
+        }
+        if(!isset($scene)){
+            ReturnJson(false,'scene');
+
+        }
+        if(!isset($price)){
+            ReturnJson(false,'price');
+        }
+
+        switch ($status) {
+            case 0: // 全部优惠券
+                $whereStatus = 1;
+                break;
+
+            case 1: // 未使用的优惠券
+                $whereStatus = ['user.is_used'=>1];
+                break;
+
+            case 2: // 已使用的优惠券
+                $whereStatus = ['user.is_used'=>2];
+                break;
+                
+            case 3: // 已过期的优惠券
+                $whereStatus = ['<', 'coupon.time_end', time()];
+                break;
+
+            default:// 全部优惠券
+                $whereStatus = 1;
+                break;
+        }
+
+        if($scene==1){
+            $wherePrice = [
+                'or',
+                [
+                    'and',
+                    ['coupon.type'=>1],
+                    ['<','coupon.value',100]
+                ],
+                [
+                    'and',
+                    ['coupon.type'=>2],
+                    ['>','coupon.value',0]
+                ],
+            ];
+        }
+        if($scene==2){
+            $wherePrice = [
+                'or',
+                [
+                    'and',
+                    ['coupon.type'=>1],
+                    ['<','coupon.value',100],
+                    ['>=', 'coupon.time_end', time()]
+                ],
+                [
+                    'and',
+                    ['coupon.type'=>2],
+                    ['>','coupon.value',0],
+                    ['<','coupon.value',$price],
+                    ['>=', 'coupon.time_end', time()]
+                ],
+
+            ];
+        }
+
+        $result = CouponUser::from('coupon_user as user')
+        ->select([
+            'coupon.type',
+            'value',
+            'coupon.time_end',
+            'coupon.code',
+            'coupon.id',
+            'user.is_used'
+        ])
+        ->leftJoin('coupons as coupon','user.coupon_id','=','coupon.id')
+        ->where([
+            // 'user.user_id' => $user->id, 
+            'coupon.status' => 1,
+        ])
+        ->where($whereStatus)
+        ->where($wherePrice)
+        ->get()
+        ->toArray();
+        $data = [];
+        if(!empty($result) && is_array($result)){
+            foreach($result as $key=>$value){
+                if($value['is_used']==1){ // 该券未使用
+                    $couponStatus = 1;
+                }
+                if($value['is_used']==2){ // 该券已使用
+                    $couponStatus = 2;
+                }
+                if($value['time_end']<time()){ // 该券已过期
+                    $couponStatus = 3;
+                }
+                if($value['is_used']==1 && $value['time_end']<time()){ // 如果该券未使用但已过期，
+                    $couponStatus = 3; // 就按照已过期处理
+                }
+                if($value['is_used']==2 && $value['time_end']<time()){ // 如果该券已使用并已过期，
+                    $couponStatus = 2; // 就按照已使用处理
+                }
+                $data[$key]['type'] = $value['type'];
+                $data[$key]['value'] = $value['type']==1 ? round($value['value'], 0) : (float)$value['value'];
+                $data[$key]['day_end'] = $value['time_end'] ? date('Y.m.d', $value['time_end']) : '';
+                $data[$key]['code'] = $value['code'];
+                $data[$key]['id'] = $value['id'];
+                $data[$key]['status'] = $couponStatus;
+            }
+        }
+        ReturnJson(true,'',$data);
     }
 }
