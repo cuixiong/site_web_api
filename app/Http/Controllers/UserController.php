@@ -184,9 +184,9 @@ class UserController extends Controller
         $email = $request->email;// 邮箱
         $res = User::where('email',$email)->count();
         if($res > 0) {
-            ReturnJson(true);
+            ReturnJson(true,'该邮箱已注册过，可直接登录');
         } else {
-            ReturnJson(false);
+            ReturnJson(false,'该邮箱可以注册');
         }
     }
 }
