@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
+use App\Models\Languages;
 use App\Models\News;
+use App\Models\PriceEditions;
+use App\Models\PriceEditionValues;
 use App\Models\ProductDescription;
 use App\Models\Products;
 use App\Models\ProductsCategory;
@@ -27,21 +30,21 @@ class ProductController extends Controller
             foreach ($result as $key => $value) {
                 $prices = [];
                 // 计算报告价格
-                // $languages = PriceLanguage::select(['id', 'language'])->get()->toArray();
-                // if ($languages) {
-                //     foreach ($languages as $index => $language) {
-                //         $priceEditions = PriceEdition::select(['id', 'edition', 'rule', 'notice'])->where(['language_id' => $language['id']])->asArray()->all();
-                //         $prices[$index]['language'] = $language['language'];
-                //         if ($priceEditions) {
-                //             foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
-                //                 $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
-                //                 $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
-                //                 $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
-                //                 $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $value['price']) . ";");
-                //             }
-                //         }
-                //     }
-                // }
+                $languages = Languages::select(['id', 'name'])->get()->toArray();
+                if ($languages) {
+                    foreach ($languages as $index => $language) {
+                        $priceEditions = PriceEditionValues::select(['id', 'name as edition', 'rules as rule', 'notice'])->where(['language_id' => $language['id']])->get()->toArray();
+                        $prices[$index]['language'] = $language['name'];
+                        if ($priceEditions) {
+                            foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
+                                $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
+                                $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+                                $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
+                                $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $value['price']) . ";");
+                            }
+                        }
+                    }
+                }
 
                 $category = ProductsCategory::select([
                     'id',
@@ -323,21 +326,21 @@ class ProductController extends Controller
             $data[$index]['published_date'] = $product['published_date'] ? date('Y-m-d', strtotime($product['published_date'])) : '';
             // 这里的代码可以复用 开始
             $prices = [];
-            // $languages = PriceLanguage::find()->select(['id', 'language'])->asArray()->all();
-            // if (!empty($languages) && is_array($languages)) {
-            //     foreach ($languages as $languageIndex => $language) {
-            //         $priceEditions = PriceEdition::find()->select(['id', 'edition', 'rule', 'notice'])->where(['language_id' => $language['id']])->asArray()->all();
-            //         $prices[$languageIndex]['language'] = $language['language'];
-            //         if (!empty($priceEditions) && is_array($priceEditions)) {
-            //             foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
-            //                 $prices[$languageIndex]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
-            //                 $prices[$languageIndex]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
-            //                 $prices[$languageIndex]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
-            //                 $prices[$languageIndex]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $product['price']) . ";");
-            //             }
-            //         }
-            //     }
-            // }
+            $languages = Languages::select(['id', 'language'])->get()->toArray();
+            if (!empty($languages) && is_array($languages)) {
+                foreach ($languages as $languageIndex => $language) {
+                    $priceEditions = PriceEditions::select(['id', 'edition', 'rule', 'notice'])->where(['language_id' => $language['id']])->get()->toArray();
+                    $prices[$languageIndex]['language'] = $language['language'];
+                    if (!empty($priceEditions) && is_array($priceEditions)) {
+                        foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
+                            $prices[$languageIndex]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
+                            $prices[$languageIndex]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+                            $prices[$languageIndex]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
+                            $prices[$languageIndex]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $product['price']) . ";");
+                        }
+                    }
+                }
+            }
             // 这里的代码可以复用 结束
             $data[$index]['prices'] = $prices;
         }

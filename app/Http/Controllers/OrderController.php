@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Coupon;
 use App\Models\CouponUser;
+use App\Models\Order;
+use App\Models\OrderTrans;
 use App\Models\Page;
 use App\Models\PriceEditions;
 use App\Models\User;
@@ -139,8 +141,6 @@ class OrderController extends Controller
      */
     public function CreateAndPay(Request $request)
     {
-        // $user = User::verificationToken(Yii::$app->request->post('token'));
-
         $goodsId = $request->goods_id;
         $shopIdArr = $request->shop_id;
         $shopcarJson = $request->shopcar_json;
@@ -183,9 +183,7 @@ class OrderController extends Controller
             $user->city_id = $city_id;
             $user->address = $address;
 
-            $user->password_hash = Yii::$app->security->generatePasswordHash('123456'); // 帮用户自动生成一个初始密码123456
-            $user->auth_key = Yii::$app->security->generateRandomString();
-            $user->verification_token = Yii::$app->security->generateRandomString() . '_' . time();
+            $user->password_hash = md5('123456'); // 帮用户自动生成一个初始密码123456
             $user->created_at = time();
             $user->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
             $user->save();
@@ -207,7 +205,7 @@ class OrderController extends Controller
             $priceEdition = $request->price_edition;
 
             if (!array_key_exists($payType, Order::payType())) {
-                return $this->echoMsg(ApiCode::INVALID_PARAM);
+                ReturnJson(false, '支付方式错误');
             }
             if (!in_array($priceEdition, PriceEditions::pluck('id'))) {
                 ReturnJson(false, '价格版本错误');
@@ -219,15 +217,15 @@ class OrderController extends Controller
             $shopIdArr = explode(',', $shopIdArr);
             // echo '<pre>';print_r($shopIdArr);exit;
             if (!array_key_exists($payType, Order::payType())) {
-                return $this->echoMsg(ApiCode::INVALID_PARAM, ApiCode::$message[ApiCode::INVALID_PARAM] . ' ' . __LINE__);
+                ReturnJson(false, '支付方式错误');
             }
             if (!is_array($shopIdArr) || count($shopIdArr) < 1) {
-                return $this->echoMsg(ApiCode::INVALID_PARAM, ApiCode::$message[ApiCode::INVALID_PARAM] . ' ' . __LINE__);
+                ReturnJson(false, '参数错误');
             }
 
             foreach ($shopIdArr as $item) {
                 if (!preg_match("/^[1-9][0-9]*$/", $item)) {
-                    return $this->echoMsg(ApiCode::INVALID_PARAM, ApiCode::$message[ApiCode::INVALID_PARAM] . ' ' . __LINE__);
+                    ReturnJson(false, '参数错误');
                 }
             }
 
@@ -238,7 +236,7 @@ class OrderController extends Controller
             $orderTrans = new OrderTrans();
             $order = $orderTrans->setUser($user)->createByCartWithoutLogin($shopcarArr, $payType, $coupon_id, $address, $remarks);
         } else {
-            return $this->echoMsg(ApiCode::INVALID_PARAM, ApiCode::$message[ApiCode::INVALID_PARAM] . ' ' . __LINE__);
+            ReturnJson(false, '参数错误');
         }
 
         if ($order === null) {
