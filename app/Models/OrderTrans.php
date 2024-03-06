@@ -37,7 +37,7 @@ class OrderTrans extends Base
     public function couponPrice($price,$coupon_id)
     {
         if(!empty($coupon_id)){
-            $coupon = Coupon::select('type,value')->where('id',$coupon_id)->first();
+            $coupon = Coupon::select(['type','value'])->where('id',$coupon_id)->first();
             if($coupon['type']==1){ // 如果优惠类型是打折
                 $price = $price * $coupon['value'] / 100;
             }else if($coupon['type']==2){ // 如果优惠类型是直减（type==2）
@@ -58,9 +58,9 @@ class OrderTrans extends Base
             'id', 
             'price',
             'discount_type', 
-            'discount_value',
-            'discount_begin',
-            'discount_end',
+            'discount_amount',
+            'discount_time_begin',
+            'discount_time_end',
             'published_date',
         ])
         ->where(['id' => $goodsId, 'status' => 1])->first();
@@ -100,9 +100,10 @@ class OrderTrans extends Base
         $order->address = $address;
         $order->coupon_id = $coupon_id;
         // $order->position = !empty($user->position)?$user->position:(new Ip2Location())->getLocation(Yii::$app->request->userIP)->area;
-        $order->position = !empty($user->position)?$user->position : 0;
+        // $order->position = !empty($user->position)?$user->position : 0;
         $order->is_mobile_pay = $this->isMobileClient()==true ? 1 : 0; // 是否为移动端支付：0代表否，1代表是。
         $order->remarks = $remarks;
+        $order->created_by = $userId;
         if (!$order->save()) {
             DB::rollBack();
             // $this->errno = ApiCode::INSERT_FAIL;
@@ -122,14 +123,14 @@ class OrderTrans extends Base
         $orderGoods->created_at = $timestamp;
         $orderGoods->updated_at = $timestamp;
 
-        if (!$orderGoods->save(false)) {
+        if (!$orderGoods->save()) {
             DB::rollBack();
             // $this->errno = ApiCode::INSERT_FAIL;
             $this->errno = '';
             return null;
         }
 
-        OrderModel::sendOrderEmail($order, $user);
+        // OrderModel::sendOrderEmail($order, $user);
         // OrderModel::sendPaymentEmail($order); // 发送已付款的邮件 // 记得把这行代码删掉
         DB::commit();
 
@@ -151,9 +152,9 @@ class OrderTrans extends Base
                         'shop_cart.price_edition',
                         'product.price',
                         'product.discount_type',
-                        'product.discount_value',
-                        'product.discount_begin',
-                        'product.discount_end',
+                        'product.discount_amount',
+                        'product.discount_time_begin',
+                        'product.discount_time_end',
                     ])->leftJoin(['product' => Products::tableName()],
                         'shop_cart.goods_id = product.id')
                     ->where([
@@ -282,10 +283,10 @@ class OrderTrans extends Base
         $goods = Products::find()->select([
             'id AS goods_id',
             'price',
-            'discount_begin',
-            'discount_end',
+            'discount_time_begin',
+            'discount_time_end',
             'discount_type',
-            'discount_value',
+            'discount_amount',
             ])->where(['id' => $goodsIdArr])->asArray()->all();
         if (count($goods) < 1) {
             $this->errno = ApiCode::INVALID_PARAM;

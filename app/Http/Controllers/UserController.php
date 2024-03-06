@@ -215,64 +215,7 @@ class UserController extends Controller
             ReturnJson(false,'price');
         }
 
-        switch ($status) {
-            case 0: // 全部优惠券
-                $whereStatus = 1;
-                break;
-
-            case 1: // 未使用的优惠券
-                $whereStatus = ['user.is_used'=>1];
-                break;
-
-            case 2: // 已使用的优惠券
-                $whereStatus = ['user.is_used'=>2];
-                break;
-                
-            case 3: // 已过期的优惠券
-                $whereStatus = ['<', 'coupon.time_end', time()];
-                break;
-
-            default:// 全部优惠券
-                $whereStatus = 1;
-                break;
-        }
-
-        if($scene==1){
-            $wherePrice = [
-                'or',
-                [
-                    'and',
-                    ['coupon.type'=>1],
-                    ['<','coupon.value',100]
-                ],
-                [
-                    'and',
-                    ['coupon.type'=>2],
-                    ['>','coupon.value',0]
-                ],
-            ];
-        }
-        if($scene==2){
-            $wherePrice = [
-                'or',
-                [
-                    'and',
-                    ['coupon.type'=>1],
-                    ['<','coupon.value',100],
-                    ['>=', 'coupon.time_end', time()]
-                ],
-                [
-                    'and',
-                    ['coupon.type'=>2],
-                    ['>','coupon.value',0],
-                    ['<','coupon.value',$price],
-                    ['>=', 'coupon.time_end', time()]
-                ],
-
-            ];
-        }
-
-        $result = CouponUser::from('coupon_user as user')
+        $result = CouponUser::from('coupon_users as user')
         ->select([
             'coupon.type',
             'value',
@@ -284,23 +227,49 @@ class UserController extends Controller
         ->leftJoin('coupons as coupon','user.coupon_id','=','coupon.id')
         ->where([
             // 'user.user_id' => $user->id, 
-            'coupon.status' => 1,
-        ])
-        ->where($whereStatus)
-        ->where($wherePrice)
-        ->get()
-        ->toArray();
+            // 'user.user_id' => 1, 
+            // 'coupon.status' => 1,
+        ]);
+        switch ($status) {
+            case 1: // 未使用的优惠券
+                $result = $result->where('user.is_used',1);
+            break;
+
+            case 2: // 已使用的优惠券
+                $result = $result->where('user.is_used',2);
+            break;
+                
+            case 3: // 已过期的优惠券
+                $result = $result->where('coupon.time_end','<',time());
+            break;
+            default:// 全部优惠券
+            break;
+        }
+
+        if($scene==1){
+            $result = $result->where(function($query){
+                $query->where(['coupon.type' => 1,'coupon.value' => ['>',100]])
+                    ->orWhere(['coupon.type'=>2,'coupon.value' => ['>',0]]);
+            });
+        }
+        if($scene==2){
+            $result = $result->where(function($query,$price){
+                $query->where(['coupon.type' => 1,'coupon.value' => ['<',100],'coupon.time_end' => ['>=',time()]])
+                    ->orWhere(['coupon.type'=>2,'coupon.value' => ['between',0,$price],'coupon.time_end' => ['>=', time()]]);
+            });
+        }
+        $result = $result->get()->toArray();
         $data = [];
         if(!empty($result) && is_array($result)){
             foreach($result as $key=>$value){
-                if($value['is_used']==1){ // 该券未使用
+                if($value['is_used']==0){ // 该券未使用
+                    $couponStatus = 0;
+                }
+                if($value['is_used']==1){ // 该券已使用
                     $couponStatus = 1;
                 }
-                if($value['is_used']==2){ // 该券已使用
-                    $couponStatus = 2;
-                }
                 if($value['time_end']<time()){ // 该券已过期
-                    $couponStatus = 3;
+                    $couponStatus = 2;
                 }
                 if($value['is_used']==1 && $value['time_end']<time()){ // 如果该券未使用但已过期，
                     $couponStatus = 3; // 就按照已过期处理

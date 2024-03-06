@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Pay\PayFactory;
 use App\Models\Coupon;
 use App\Models\CouponUser;
 use App\Models\Order;
 use App\Models\OrderTrans;
-use App\Models\Page;
+use App\Models\Payment;
 use App\Models\PriceEditions;
+use App\Models\PriceEditionValues;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class OrderController extends Controller
 {
@@ -21,21 +24,22 @@ class OrderController extends Controller
     {
         $username = $request->username;
         $province_id = $request->province_id ?? '';
-        $city_id = $request->city_id ?? '';
+        $area_id = $request->area_id ?? '';
         $phone = $request->phone;
         $email = $request->email;
         $company = $request->company;
 
-        $code = trim($request->coupon_code);
+        $code = trim($request->code);
         if (empty($code)) {
             ReturnJson(false, '优惠券码不能为空');
         }
 
         $now = time();
-        $coupon = Coupon::where(['code' => $code, 'status' => 1])
+        $coupon = Coupon::where('code',$code)
+            ->where('status',1)
             ->where('time_begin','<=',$now)
-            ->where('time_begin','>=',$now)
-            ->fisrt();
+            ->where('time_end','>=',$now)
+            ->first();
 
         if (empty($coupon)) {                                              // 如果查询不到该优惠券或券码错误或已过期,
             ReturnJson(false, '券码错误或已过期');        // 就提示 券码错误或已过期.
@@ -61,13 +65,14 @@ class OrderController extends Controller
 
             $model = new User();
             $modelCouponUser = new CouponUser();
-            $user = User::verificationToken($request->header('token'));
+            // $user = User::verificationToken($request->header('token'));
+            $user = null;
             if ($user == null) { // 如果获取不到头部token，说明此时用户没有登录，并不能说明用户有没有注册账户
                 // 根据用户提交的邮箱地址到user表查询是否存在一条数据
                 $user = User::where('email',$email)->first();
                 if ($user) { // 如果user表存在这个用户的数据，说明用户有注册账户
                     $user->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
-                    $user->password_hash = md5('123456'); // 帮用户把他的密码改为初始密码123456，我不知道这样合不合理，但是生涛要求这样
+                    $user->password = md5('123456'); // 帮用户把他的密码改为初始密码123456，我不知道这样合不合理，但是生涛要求这样
                     $user->save();
 
                     $user_ids = explode(',', $coupon->user_ids); // 把用户输入券码的这张优惠券的user_ids值转为数组
@@ -96,14 +101,13 @@ class OrderController extends Controller
                     }
                     $model->username = $username;
                     $model->province_id = $province_id;
-                    $model->city_id = $city_id;
+                    $model->area_id = $area_id;
                     $model->phone = $phone;
                     $model->email = $email;
                     $model->company = $company;
-                    $model->password_hash = md5('123456'); // 帮用户自动生成一个初始密码123456
-                    $model->auth_key = Yii::$app->security->generateRandomString();
-                    $model->verification_token = Yii::$app->security->generateRandomString() . '_' . time();
+                    $model->password = md5('123456'); // 帮用户自动生成一个初始密码123456
                     $model->created_at = time();
+                    $model->created_by = 0;
                     $model->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
                     if ($model->save()) {
                         $user_ids = explode(',', $coupon->user_ids); // 把用户输入券码的这张优惠券的user_ids值转为数组
@@ -172,7 +176,7 @@ class OrderController extends Controller
         }
         // 新需求：下单付款成功后自动给用户注册一个账户（实际情况是：还没付款） 开始
         $user = new User();
-        $exist = User::find()->where(['email' => $email])->one();
+        $exist = User::where('email',$email)->first();
         if (!$exist) {
             // $user->id = 0;
             $user->username = $username;
@@ -180,11 +184,12 @@ class OrderController extends Controller
             $user->phone = $phone;
             $user->company = $company;
             $user->province_id = $province_id;
-            $user->city_id = $city_id;
+            $user->area_id = $city_id;
             $user->address = $address;
 
-            $user->password_hash = md5('123456'); // 帮用户自动生成一个初始密码123456
+            $user->password = md5('123456'); // 帮用户自动生成一个初始密码123456
             $user->created_at = time();
+            $user->created_by = 0;
             $user->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
             $user->save();
         } else {
@@ -203,11 +208,10 @@ class OrderController extends Controller
         $tempOrderId = $request->temp_order_id; // 临时订单号
         if (!empty($goodsId)) { // 直接下单
             $priceEdition = $request->price_edition;
-
             if (!array_key_exists($payType, Order::payType())) {
                 ReturnJson(false, '支付方式错误');
             }
-            if (!in_array($priceEdition, PriceEditions::pluck('id'))) {
+            if (!in_array($priceEdition, PriceEditionValues::pluck('id')->toArray())) {
                 ReturnJson(false, '价格版本错误');
             }
 
@@ -215,17 +219,16 @@ class OrderController extends Controller
             $order = $orderTrans->setUser($user)->createBySingle($goodsId, $priceEdition, $payType, $coupon_id, $address, $remarks);
         } elseif (!empty($shopIdArr)) { // 已登录，通过购物车下单
             $shopIdArr = explode(',', $shopIdArr);
-            // echo '<pre>';print_r($shopIdArr);exit;
             if (!array_key_exists($payType, Order::payType())) {
                 ReturnJson(false, '支付方式错误');
             }
             if (!is_array($shopIdArr) || count($shopIdArr) < 1) {
-                ReturnJson(false, '参数错误');
+                ReturnJson(false, '参数错误1');
             }
 
             foreach ($shopIdArr as $item) {
                 if (!preg_match("/^[1-9][0-9]*$/", $item)) {
-                    ReturnJson(false, '参数错误');
+                    ReturnJson(false, '参数错误2');
                 }
             }
 
@@ -236,7 +239,7 @@ class OrderController extends Controller
             $orderTrans = new OrderTrans();
             $order = $orderTrans->setUser($user)->createByCartWithoutLogin($shopcarArr, $payType, $coupon_id, $address, $remarks);
         } else {
-            ReturnJson(false, '参数错误');
+            ReturnJson(false, '参数错误3');
         }
 
         if ($order === null) {
@@ -244,15 +247,31 @@ class OrderController extends Controller
         }
 
         // 把临时订单号加入缓存
-        $cache = Yii::$app->cache;
-        $cache->set($tempOrderId, [$order->id, $order->order_number], 600); // 十分钟过期
+        Cache::store('file')->put('$tempOrderId',[$order->id, $order->order_number], 600); // 十分钟过期
         $pay = PayFactory::create($order->pay_type);
-        Yii::$app->response->format = \yii\web\Response::FORMAT_HTML;
-        $isMobile = $isMobile == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
-        $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
-        $isWechat = $isWechat == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
-        $pay->setOption(Pay::KEY_IS_WECHAT, $isWechat);
+        $isMobile = $isMobile == 1 ? 1 : 2;
+        $pay->setOption('is_mobile', $isMobile);
+        $isWechat = $isWechat == 1 ? 1 : 2;
+        $pay->setOption('is_wechat', $isWechat);
 
         return $pay->do($order);
+    }
+
+    /**
+     * 支付方式
+     */
+    public function Payment()
+    {
+        $data = Payment::select([
+            'id',
+            'name',
+            'img',
+            'notice'
+        ])
+        ->where('status',1)
+        ->orderBy('order','asc')
+        ->get()
+        ->toArray();
+        ReturnJson(true, 'success', $data);
     }
 }

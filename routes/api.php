@@ -86,5 +86,17 @@ Route::middleware('api')->group(function () {
         Route::post('updata-goods-number', [\App\Http\Controllers\CartController::class, 'UpdataGoodsNumber'])->name('购物车添加或减少商品数量');
         Route::post('change-edition', [\App\Http\Controllers\CartController::class, 'ChangeEdition'])->name('购物车修改版本');
     });
+
+    // Order控制器
+    Route::prefix('order')->group(function () {
+        Route::post('coupon', [\App\Http\Controllers\OrderController::class, 'Coupon'])->name('查询优惠卷');
+        Route::post('create-and-pay', [\App\Http\Controllers\OrderController::class, 'CreateAndPay'])->name('购物车结算产品列表');
+        Route::get('payment', [\App\Http\Controllers\OrderController::class, 'Payment'])->name('支付方式');
+    });
+
+    // User控制器
+    Route::prefix('user')->group(function () {
+        Route::post('coupons', [\App\Http\Controllers\UserController::class, 'Coupons'])->name('查询用户优惠卷');
+    });
     Route::get('xunsearch/clean', [\App\Http\Controllers\XunSearchTestController::class, 'clean'])->name('讯搜清空数据');
 });
