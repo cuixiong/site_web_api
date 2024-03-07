@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3e16a2ecf6ec6813dbe9fc5823dd899e",
+    "content-hash": "28ce0e5be1911771e538fbbfecc52e11",
     "packages": [
         {
             "name": "adbario/php-dot-notation",
@@ -6654,6 +6654,61 @@
                 "source": "https://github.com/wechatpay-apiv3/wechatpay-php/tree/v1.4.9"
             },
             "time": "2023-11-22T11:30:25+00:00"
+        },
+        {
+            "name": "wechatpay/wechatpay-guzzle-middleware",
+            "version": "0.2.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/wechatpay-apiv3/wechatpay-guzzle-middleware.git",
+                "reference": "6782ac33ed8cf97628609a71cdc5e84a6a40677a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/wechatpay-apiv3/wechatpay-guzzle-middleware/zipball/6782ac33ed8cf97628609a71cdc5e84a6a40677a",
+                "reference": "6782ac33ed8cf97628609a71cdc5e84a6a40677a",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "ext-openssl": "*",
+                "php": ">=5.5"
+            },
+            "require-dev": {
+                "guzzlehttp/guzzle": "^6.3"
+            },
+            "suggest": {
+                "ext-bcmath": "Require bcmath in php 5.* version.",
+                "guzzlehttp/guzzle": "For using wechatpay guzzle middleware."
+            },
+            "bin": [
+                "tool/CertificateDownloader.php"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "WechatPay\\GuzzleMiddleware\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "WechatPay API V3 Guzzle Middleware",
+            "homepage": "https://wechatpay-api.gitbook.io/wechatpay-api-v3/",
+            "keywords": [
+                "wechatpay"
+            ],
+            "support": {
+                "issues": "https://github.com/wechatpay-apiv3/wechatpay-guzzle-middleware/issues",
+                "source": "https://github.com/wechatpay-apiv3/wechatpay-guzzle-middleware/tree/v0.2.2"
+            },
+            "time": "2021-03-05T03:09:29+00:00"
         }
     ],
     "packages-dev": [

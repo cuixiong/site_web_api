@@ -14,7 +14,8 @@
         "laravel/tinker": "^2.7",
         "php-amqplib/php-amqplib": "2.6.*",
         "predis/predis": "^2.2",
-        "wechatpay/wechatpay": "^1.4"
+        "wechatpay/wechatpay": "^1.4",
+        "wechatpay/wechatpay-guzzle-middleware": "^0.2.2"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

@@ -30,9 +30,9 @@ class WechatTool extends Base
         self::$APPID = env('WECHATPAY_APPID');
         self::$SECRET = env('WECHATPAY_SECRET');
         self::$MERCHANT_SERIAL_NUMBER = env('WECHATPAY_MERCHANT_SERIAL_NUMBER');
-        self::$MERCHANT_PRIVATE_KEY = env('WECHATPAY_MERCHANT_PRIVATE_KEY');
+        self::$MERCHANT_PRIVATE_KEY = base_path().env('WECHATPAY_MERCHANT_PRIVATE_KEY');
         self::$APIV3_SECRET_KEY = env('WECHATPAY_APIV3_SECRET_KEY');
-        self::$CERTIFICATE_FOLDER = env('WECHATPAY_CERTIFICATE_FOLDER');
+        self::$CERTIFICATE_FOLDER = base_path().env('WECHATPAY_CERTIFICATE_FOLDER');
     }
 
     public function getOAuthUrl($redirectUri, $state, $scope = 'snsapi_base')

@@ -396,13 +396,14 @@ class Wechatpay extends Pay
     {
         if ($this->wechatpayMiddleware === null) {
             // 商户相关配置
-            $merchantId = Yii::$app->params['wechatpay_merchant_id']; // 商户号
-            $merchantSerialNumber = Yii::$app->params['wechatpay_merchant_serial_number']; // 商户API证书序列号
-            $merchantPrivateKey = PemUtil::loadPrivateKey(Yii::$app->params['wechatpay_merchant_private_key']); // 商户私钥
+            $merchantId = env('WECHATPAY_MERCHANT_ID',''); // 商户号
+            $merchantSerialNumber = env('WECHATPAY_MERCHANT_SERIAL_NUMBER',''); // 商户API证书序列号
+            $merchantPrivateKey = PemUtil::loadPrivateKey(base_path().env('WECHATPAY_MERCHANT_PRIVATE_KEY','')); // 商户私钥
             // 微信支付平台配置
             $wechatpayCertificate = $this->getWechatpayCertificate();
 
             // 构造一个WechatPayMiddleware
+            // $wechatpayMiddleware = WechatPayMiddleware::builder()
             $wechatpayMiddleware = WechatPayMiddleware::builder()
                 ->withMerchant($merchantId, $merchantSerialNumber, $merchantPrivateKey) // 传入商户相关配置
                 ->withWechatPay($wechatpayCertificate); // 可传入多个微信支付平台证书，参数类型为array
@@ -456,7 +457,7 @@ class Wechatpay extends Pay
      */
     public function getWechatpayCertificate()
     {
-        $folder = Yii::$app->params['wechatpay_certificate_folder'];
+        $folder = env('WECHATPAY_CERTIFICATE_FOLDER','');
         $certArr = [];
         foreach (glob($folder.'/*.pem') as $item) {
             if (is_file($item)) {
@@ -492,7 +493,7 @@ class Wechatpay extends Pay
             'mchid' => $this->wechatTool::$MERCHANT_ID, // 商户号
             'description' => $this->wechatTool::$DESCRIPTION,
             'out_trade_no' => $order->order_number,
-            'notify_url' => Yii::$app->params['frontend_domain'].'/notify/wechatpay',
+            'notify_url' => env('APP_URL').'/notify/wechatpay',
             'amount' => [
                 'total' => $order->actually_paid * 100, // 单位为分
                 'currency' => 'CNY',
@@ -503,6 +504,7 @@ class Wechatpay extends Pay
             'json' => $json, // JSON请求体
             'headers' => ['Accept' => 'application/json']
         ]);
+        var_dump($json);die;
 
         $body = $resp->getBody();
         $body = json_decode($body, true);
