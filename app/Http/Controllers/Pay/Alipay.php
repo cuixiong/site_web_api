@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Pay;
 
 use backend\models\Order;
-use backend\models\Payment;
 use backend\models\CouponUser;
 use Alipay\EasySDK\Kernel\Factory;
 use Alipay\EasySDK\Kernel\Util\ResponseChecker;
 use Alipay\EasySDK\Kernel\Config;
+use App\Models\Payment;
 use Exception;
+use App\Http\Controllers\Pay\Pay;
 
 class Alipay extends Pay
 {
@@ -18,30 +19,24 @@ class Alipay extends Pay
     public function __construct()
     {
         parent::__construct();
-        $payment = Payment::findOne(1);
+        $payment = Payment::find(1);// 查了个寂寞
 
         $options = new Config();
         $options->protocol = 'https';
-        $options->gatewayHost = Yii::$app->params['alipay_getway_host'];
+        $options->gatewayHost = env('ALIPAY_GETWAY_HOST','https://openapi.alipaydev.com/gateway.do');
         $options->signType = 'RSA2';
 
-        $options->appId = Yii::$app->params['alipay_appid'];
+        $options->appId = env('ALIPAY_APPID','');
         // 为避免私钥随源码泄露，推荐从文件中读取私钥字符串而不是写入源码中
-        $options->merchantPrivateKey = file_get_contents(Yii::$app->params['alipay_privatekey']);
+        $options->merchantPrivateKey = file_get_contents(env('ALIPAY_PRIVATEKEY',''));
         // 支付宝公钥证书文件路径
-        $options->alipayCertPath = Yii::$app->params['alipay_cert'];
+        $options->alipayCertPath = env('ALIPAY_CERT','');
         // 支付宝根证书文件路径
-        $options->alipayRootCertPath = Yii::$app->params['alipay_root_cert'];
+        $options->alipayRootCertPath = env('ALIPAY_ROOT_CERT','');
         // 应用公钥证书文件路径
-        $options->merchantCertPath = Yii::$app->params['alipay_merchant_cert'];
+        $options->merchantCertPath = env('ALIPAY_MERCHANT_CERT','');
         // 异步通知接收服务地址
-        $options->notifyUrl = Yii::$app->params['frontend_domain'] . '/notify/alipay';
-        // var_dump($options->toMap());
-        // var_dump(is_file($options->merchantPrivateKey));
-        // var_dump(is_file($options->alipayCertPath));
-        // var_dump(is_file($options->alipayRootCertPath));
-        // var_dump(is_file($options->merchantCertPath));
-
+        $options->notifyUrl = env('APP_URL','') . '/notify/alipay';
         // exit;
         Factory::setOptions($options);
     }
@@ -52,34 +47,12 @@ class Alipay extends Pay
     public function do($order, $options = [])
     {
         try {
-            // 发起API调用（以支付能力下的统一收单交易创建接口为例）
-            // $result = Factory::payment()->Wap()->pay("iPhone6 16G", "20200326235526001", "88.88", "http://www.baidu.com", "http://www.baidu.com");
-            // $result = Factory::payment()->page()->pay("iPhone6 16G", "20200326235526001", "88.88", "http://www.baidu.com");
-
-            // $products = OrderGoods::find()->alias('order_goods')
-            //     ->leftJoin([Products::tableName() => 'products'], 'products.id = order_goods.goods_id')
-            //     ->select('products.name')
-            //     ->where(['order_goods.order_id' => $order->id])
-            //     ->column();
-            // if (count($products) > 0) {
-            //     $products = $products;
-            //     $products = implode(', ', $products);
-            // } else {
-            //     $products = $products[0];
-            // }
-            // if (empty($products)) {
-            //     $products = 'Global Info Research';
-            // }
-            // if (mb_strlen($products, 'UTF-8') > 20) {
-
-            // }
-
-            $subject = Yii::$app->params['alipay_subject']; // 商品名称
+            $subject = env('ALIPAY_SUBJECT', '商品名称'); // 商品名称
             $outTradeNo = $order->order_number; // 外部订单号
             $totalAmount = $order->actually_paid; // 交易金额
-            $returnUrl = Yii::$app->params['frontend_domain'] . '/paymentcomplete/' . $order->id; // 同步回调地址
+            $returnUrl = env('APP_URL','') . '/paymentcomplete/' . $order->id; // 同步回调地址
             if ($this->getOption(self::KEY_IS_MOBILE) == self::OPTION_ENABLE) {
-                $quitUrl = Yii::$app->params['frontend_domain'];
+                $quitUrl = env('APP_URL','');
                 $result = Factory::payment()->Wap()->pay($subject, $outTradeNo, $totalAmount, $quitUrl, $returnUrl);
             } else {
                 $result = Factory::payment()->page()->pay($subject, $outTradeNo, $totalAmount, $returnUrl);

@@ -1,13 +1,13 @@
 <?php
 namespace App\Http\Controllers\Pay;
-use backend\models\Order;
-use backend\models\WechatTool;
-use backend\models\CouponUser;
+
+use App\Models\WechatTool;
 use GuzzleHttp\Exception\RequestException;
 use WechatPay\GuzzleMiddleware\WechatPayMiddleware;
 use WechatPay\GuzzleMiddleware\Util\PemUtil;
 use WechatPay\GuzzleMiddleware\WechatPayMiddlewareBuilder;
 use CodeItNow\BarcodeBundle\Utils\QrCode;
+use Exception;
 
 class Wechatpay extends Pay
 {
@@ -26,7 +26,7 @@ class Wechatpay extends Pay
      */
     public function do($order, $options = [])
     {
-        $returnUrl = Yii::$app->params['frontend_domain'].'/paymentcomplete/'.$order->id;
+        $returnUrl = env('APP_URL','').'/paymentcomplete/'.$order->id;
 
         if ($this->getOption(self::KEY_IS_WECHAT) == self::OPTION_ENABLE) {
 
@@ -34,20 +34,20 @@ class Wechatpay extends Pay
             if (empty($order->wechat_type)) {
                 //假设进来没有记录终端方式
                 $order->wechat_type = $wechat_type;
-                if (!$order->save(false)) {
-                    throw new \yii\web\BadRequestHttpException('change wechatType error');
+                if (!$order->save()) {
+                    throw new Exception('change wechatType error');
                 }
             } elseif ($order->wechat_type != $wechat_type) {
                 //终端方式改变
                 $order->wechat_type = $wechat_type;
                 $order->order_number = date('YmdHis', time()) . mt_rand(10, 99);
-                if (!$order->save(false)) {
-                    throw new \yii\web\BadRequestHttpException('change wechatType error');
+                if (!$order->save()) {
+                    throw new Exception('change wechatType error');
                 }
             }
 
             $referer = $_SERVER['HTTP_REFERER'] ?? '';
-            $redirecturi = Yii::$app->params['frontend_domain'].'/api/order/wechat-order?referer='.urlencode($referer);
+            $redirecturi = env('APP_URL','').'/api/order/wechat-order?referer='.urlencode($referer);
             $url = $this->wechatTool->getOAuthUrl($redirecturi, $order->id);
 
             $html = $this->getJump($url);
@@ -62,15 +62,15 @@ class Wechatpay extends Pay
                 if (empty($order->wechat_type)) {
                     //假设进来没有记录终端方式
                     $order->wechat_type = $wechat_type;
-                    if (!$order->save(false)) {
-                        throw new \yii\web\BadRequestHttpException('change wechatType error');
+                    if (!$order->save()) {
+                        throw new Exception('change wechatType error');
                     }
                 } elseif ($order->wechat_type != $wechat_type) {
                     //终端方式改变
                     $order->wechat_type = $wechat_type;
                     $order->order_number = date('YmdHis', time()) . mt_rand(10, 99);
-                    if (!$order->save(false)) {
-                        throw new \yii\web\BadRequestHttpException('change wechatType error');
+                    if (!$order->save()) {
+                        throw new Exception('change wechatType error');
                     }
                 }
                 $h5Url = $this->getH5Url($order);
@@ -84,15 +84,15 @@ class Wechatpay extends Pay
                 if (empty($order->wechat_type)) {
                     //假设进来没有记录终端方式
                     $order->wechat_type = $wechat_type;
-                    if (!$order->save(false)) {
-                        throw new \yii\web\BadRequestHttpException('change wechatType error');
+                    if (!$order->save()) {
+                        throw new Exception('change wechatType error');
                     }
                 } elseif ($order->wechat_type != $wechat_type) {
                     //终端方式改变
                     $order->wechat_type = $wechat_type;
                     $order->order_number = date('YmdHis', time()) . mt_rand(10, 99);
-                    if (!$order->save(false)) {
-                        throw new \yii\web\BadRequestHttpException('change wechatType error');
+                    if (!$order->save()) {
+                        throw new Exception('change wechatType error');
                     }
                 }
 
@@ -277,7 +277,7 @@ class Wechatpay extends Pay
         $input = json_decode($input, true);
         if (!is_array($input)) {
             // 抛异常
-            throw new \yii\web\BadRequestHttpException('JSON interpretation error');
+            throw new Exception('JSON interpretation error');
         }
         $timestamp = time();
         $dir = $this->logdir.'/wechatpay/'.date('Y_m/', $timestamp);
@@ -297,14 +297,14 @@ class Wechatpay extends Pay
 
         if (!isset($input['resource'])) {
             // 抛异常
-            throw new \yii\web\BadRequestHttpException('resource not found');
+            throw new Exception('resource not found');
         }
         $resourceJson = $input['resource'];
         if (!isset($resourceJson['associated_data']) ||
             !isset($resourceJson['nonce']) ||
             !isset($resourceJson['ciphertext'])) {
             // 抛异常
-            throw new \yii\web\BadRequestHttpException('resource Key value not found');
+            throw new Exception('resource Key value not found');
         }
 
         $associatedData = $resourceJson['associated_data'];
@@ -317,7 +317,7 @@ class Wechatpay extends Pay
             // 抛异常
             $msg = 'Decryption failed';
             file_put_contents($logName, $msg.PHP_EOL, FILE_APPEND);
-            throw new \yii\web\BadRequestHttpException($msg);
+            throw new Exception($msg);
         }
         $resource = json_decode($resource, true);
         if (!is_array($resource)) {
@@ -329,13 +329,13 @@ class Wechatpay extends Pay
                     'json_error_msg' => json_last_error_msg(),
                     'json_error' => json_last_error(),
                 ], true).PHP_EOL, FILE_APPEND);
-            throw new \yii\web\BadRequestHttpException($msg);
+            throw new Exception($msg);
         }
         if (!isset($resource['transaction_id']) ||
             !isset($resource['out_trade_no']) ||
             !isset($resource['trade_state'])) {
             // 抛异常
-            throw new \yii\web\BadRequestHttpException('resource Key value not found');
+            throw new Exception('resource Key value not found');
         }
         file_put_contents($logName, var_export($resource, true).PHP_EOL, FILE_APPEND);
         $transaction_id = $resource['transaction_id'];
@@ -367,7 +367,7 @@ class Wechatpay extends Pay
             // 记下日志，提前返回
             $msg = 'order number not found';
             file_put_contents($logName, $msg.PHP_EOL, FILE_APPEND);
-            throw new \yii\web\ServerErrorHttpException($msg);
+            throw new Exception($msg);
         }
 
         // 改变订单状态
@@ -380,13 +380,13 @@ class Wechatpay extends Pay
                 $CouponUser = CouponUser::find()->where(['user_id'=>$order->user_id,'coupon_id'=>$order->coupon_id])->one();
                 $CouponUser->is_used = 2;  // 改变该优惠券的使用状态为“已使用”
                 $CouponUser->usage_time = time();
-                $CouponUser->save(false);
+                $CouponUser->save();
             }
             Order::sendPaymentEmail($order); // 发送已付款的邮件
         } else { // 订单状态更新失败
             $msg = 'order status update failed '.$order->getModelError();
             file_put_contents($logName, $msg.PHP_EOL, FILE_APPEND);
-            throw new \yii\web\ServerErrorHttpException($msg);
+            throw new Exception($msg);
         }
         file_put_contents($logName, 'success'.PHP_EOL, FILE_APPEND);
 
