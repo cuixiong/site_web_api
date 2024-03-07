@@ -92,6 +92,7 @@ Route::middleware('api')->group(function () {
         Route::post('coupon', [\App\Http\Controllers\OrderController::class, 'Coupon'])->name('查询优惠卷');
         Route::post('create-and-pay', [\App\Http\Controllers\OrderController::class, 'CreateAndPay'])->name('购物车结算产品列表');
         Route::get('payment', [\App\Http\Controllers\OrderController::class, 'Payment'])->name('支付方式');
+        Route::get('wechat-order', [\App\Http\Controllers\OrderController::class, 'WechatOrder'])->name('获取CODE信息');
     });
 
     // User控制器

@@ -27,7 +27,6 @@ class Wechatpay extends Pay
     public function do($order, $options = [])
     {
         $returnUrl = env('APP_URL','').'/paymentcomplete/'.$order->id;
-
         if ($this->getOption(self::KEY_IS_WECHAT) == self::OPTION_ENABLE) {
 
             $wechat_type = 'native';
@@ -51,7 +50,7 @@ class Wechatpay extends Pay
             $url = $this->wechatTool->getOAuthUrl($redirecturi, $order->id);
 
             $html = $this->getJump($url);
-
+            
             return $html;
         }
 
