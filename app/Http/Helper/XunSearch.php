@@ -108,6 +108,8 @@ class XunSearch {
         $search = $this->xs->search;
         if($keyword){
             $search->setQuery($keyword);
+        } else {
+            $search->setQuery('');
         }
         if($category_id){
             $search->addRange('category_id',$category_id,$category_id);
