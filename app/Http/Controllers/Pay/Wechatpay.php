@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Pay;
 
+use App\Models\Order;
 use App\Models\WechatTool;
 use GuzzleHttp\Exception\RequestException;
 use WechatPay\GuzzleMiddleware\WechatPayMiddleware;
@@ -106,11 +107,11 @@ class Wechatpay extends Pay
 
                 $orderNumber = $order->order_number;
                 $orderAmount = $order->actually_paid;
-                $orderCreateAt = date('Y-m-d H:i:s', $order->created_at);
-                $merchantName = Yii::$app->params['wechatpay_merchant_name'];
+                $orderCreateAt = date('Y-m-d H:i:s', $order->created_at->timestamp);
+                $merchantName = env('WECHATPAY_MERCHANT_NAME','');
                 $qrcodeUrl = $qrCode->getDataUri();
                 $orderPaySuccess = Order::PAY_SUCCESS;
-                $actionUrl = Yii::$app->params['frontend_domain'].'/api/order/details';
+                $actionUrl = env('APP_URL').'/api/order/details';
                 $html = <<<EOF
                 <!DOCTYPE html>
                 <html>
@@ -459,7 +460,6 @@ class Wechatpay extends Pay
     {
         $folder = base_path().env('WECHATPAY_CERTIFICATE_FOLDER','');
         $certArr = [];
-        var_dump($folder.'/*.pem');die;
         foreach (glob($folder.'/*.pem') as $item) {
             if (is_file($item)) {
                 $certArr[] = PemUtil::loadCertificate($item); // 微信支付平台证书

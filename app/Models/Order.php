@@ -4,6 +4,8 @@ namespace App\Models;
 use App\Models\Base;
 class Order extends Base
 {
+    const PAY_UNPAID = 1;
+    const PAY_SUCCESS = 2;
     public static function payType(): array
     {
         static $payType = null;
