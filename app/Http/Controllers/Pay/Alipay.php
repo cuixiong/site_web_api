@@ -28,13 +28,13 @@ class Alipay extends Pay
 
         $options->appId = env('ALIPAY_APPID','');
         // 为避免私钥随源码泄露，推荐从文件中读取私钥字符串而不是写入源码中
-        $options->merchantPrivateKey = file_get_contents(env('ALIPAY_PRIVATEKEY',''));
+        $options->merchantPrivateKey = file_get_contents(base_path().env('ALIPAY_PRIVATEKEY',''));
         // 支付宝公钥证书文件路径
-        $options->alipayCertPath = env('ALIPAY_CERT','');
+        $options->alipayCertPath = base_path().env('ALIPAY_CERT','');
         // 支付宝根证书文件路径
-        $options->alipayRootCertPath = env('ALIPAY_ROOT_CERT','');
+        $options->alipayRootCertPath = base_path().env('ALIPAY_ROOT_CERT','');
         // 应用公钥证书文件路径
-        $options->merchantCertPath = env('ALIPAY_MERCHANT_CERT','');
+        $options->merchantCertPath = base_path().env('ALIPAY_MERCHANT_CERT','');
         // 异步通知接收服务地址
         $options->notifyUrl = env('APP_URL','') . '/notify/alipay';
         // exit;
