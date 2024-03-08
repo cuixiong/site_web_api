@@ -357,7 +357,6 @@ class OrderController extends Controller
                 $msg .= $e->getResponse()->getStatusCode() . ' ' . $e->getResponse()->getReasonPhrase() . "\n";
                 $msg .= $e->getResponse()->getBody();
             }
-            // Yii::$app->response->statusCode = 500;
             return $msg;
         }
     }
