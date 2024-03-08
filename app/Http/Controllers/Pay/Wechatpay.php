@@ -459,6 +459,7 @@ class Wechatpay extends Pay
     {
         $folder = base_path().env('WECHATPAY_CERTIFICATE_FOLDER','');
         $certArr = [];
+        var_dump($folder.'/*.pem');die;
         foreach (glob($folder.'/*.pem') as $item) {
             if (is_file($item)) {
                 $certArr[] = PemUtil::loadCertificate($item); // 微信支付平台证书
@@ -504,7 +505,6 @@ class Wechatpay extends Pay
             'json' => $json, // JSON请求体
             'headers' => ['Accept' => 'application/json']
         ]);
-        var_dump($json);die;
 
         $body = $resp->getBody();
         $body = json_decode($body, true);
