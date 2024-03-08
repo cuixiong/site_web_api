@@ -524,13 +524,13 @@ class Wechatpay extends Pay
             'mchid' => $this->wechatTool::$MERCHANT_ID, // 商户号
             'description' => $this->wechatTool::$DESCRIPTION,
             'out_trade_no' => $order->order_number,
-            'notify_url' => Yii::$app->params['frontend_domain'].'/notify/wechatpay',
+            'notify_url' => env('APP_URL').'/notify/wechatpay',
             'amount' => [
                 'total' => $order->actually_paid * 100, // 单位为分
                 'currency' => 'CNY',
             ],
             'scene_info' => [
-                'payer_client_ip' => Yii::$app->request->userIP,
+                'payer_client_ip' => request()->ip(),
                 'h5_info' => [
                     'type' => 'Wap',
                 ]
