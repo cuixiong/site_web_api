@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Pay;
 
+use App\Models\CouponUser;
 use App\Models\Order;
 use App\Models\WechatTool;
 use GuzzleHttp\Exception\RequestException;
@@ -280,7 +281,7 @@ class Wechatpay extends Pay
             throw new Exception('JSON interpretation error');
         }
         $timestamp = time();
-        $dir = $this->logdir.'/wechatpay/'.date('Y_m/', $timestamp);
+        $dir = storage_path('log').'/wechatpay/'.date('Y_m/', $timestamp);
         if (!is_dir($dir)) {
             mkdir($dir, 0777, true); // true参数是指是否创建多级目录，默认为false
         }
@@ -289,7 +290,7 @@ class Wechatpay extends Pay
         $_DATA = count($_POST) == 0 ? file_get_contents("php://input") : $_POST;
         $log = sprintf("%s", var_export([
                         '_TIME' => date('Y-m-d H:i:s', $timestamp),
-                        '_IP' => Yii::$app->request->userIP,
+                        '_IP' => request()->ip(),
                         '_DATA' => $_DATA,
                         '_GET' => $_GET,
                     ], true)).PHP_EOL;
@@ -310,7 +311,7 @@ class Wechatpay extends Pay
         $associatedData = $resourceJson['associated_data'];
         $nonceStr = $resourceJson['nonce'];
         $ciphertext = $resourceJson['ciphertext'];
-        $aesKey = Yii::$app->params['wechatpay_apiv3_secret_key'];
+        $aesKey = env('WECHATPAY_APIV3_SECRET_KEY');
         $aesUtil = new \WechatPay\GuzzleMiddleware\Util\AesUtil($aesKey);
         $resource = $aesUtil->decryptToString($associatedData, $nonceStr, $ciphertext);
         if ($resource === false) {
@@ -362,7 +363,7 @@ class Wechatpay extends Pay
             }
         }
 
-        $order = Order::findOne(['order_number' => $out_trade_no]);
+        $order = Order::where(['order_number' => $out_trade_no])->first();
         if (!$order) { // 订单号不存在
             // 记下日志，提前返回
             $msg = 'order number not found';
@@ -377,7 +378,7 @@ class Wechatpay extends Pay
         $order->updated_at = time();
         if ($order->save()) {
             if (!empty($order->coupon_id)) { // 如果这个订单有使用优惠券
-                $CouponUser = CouponUser::find()->where(['user_id'=>$order->user_id,'coupon_id'=>$order->coupon_id])->one();
+                $CouponUser = CouponUser::where(['user_id'=>$order->user_id,'coupon_id'=>$order->coupon_id])->first();
                 $CouponUser->is_used = 2;  // 改变该优惠券的使用状态为“已使用”
                 $CouponUser->usage_time = time();
                 $CouponUser->save();

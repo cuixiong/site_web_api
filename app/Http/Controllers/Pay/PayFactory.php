@@ -19,9 +19,6 @@ class PayFactory extends Controller
             case Payment::where('code','WECHATPAY')->value('id');
                 $pay = new Wechatpay();
                 break;
-            case Payment::where('code','CREDITCARD')->value('id');
-                $pay = new Unionpay();
-                break;
         }
 
         return $pay;

@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Pay;
 
-use backend\models\Order;
-use backend\models\CouponUser;
+use App\Models\Order;
 use Alipay\EasySDK\Kernel\Factory;
 use Alipay\EasySDK\Kernel\Util\ResponseChecker;
 use Alipay\EasySDK\Kernel\Config;
 use App\Models\Payment;
 use Exception;
 use App\Http\Controllers\Pay\Pay;
+use App\Models\CouponUser;
 
 class Alipay extends Pay
 {
@@ -191,7 +191,7 @@ class Alipay extends Pay
         }
         $paymentMsg = '';
         $trade_no = trim($trade_no);
-        $dir = $this->logdir . '/alipay/' . date('Y_m/', time());
+        $dir = storage_path('log') . '/alipay/' . date('Y_m/', time());
         if (!is_dir($dir)) {
             mkdir($dir, 0777, true); // true参数是指是否创建多级目录，默认为false
         }
@@ -200,13 +200,13 @@ class Alipay extends Pay
         $_DATA = count($_POST) == 0 ? file_get_contents("php://input") : $_POST;
         $log = sprintf("%s", var_export([
             '_TIME' => date('Y-m-d H:i:s', $timestamp),
-            '_IP' => Yii::$app->request->userIP,
+            '_IP' => request()->ip(),
             '_DATA' => $_DATA,
             '_GET' => $_GET,
         ], true)) . PHP_EOL;
         file_put_contents($logName, $log, FILE_APPEND);
 
-        $order = Order::findOne(['order_number' => $out_trade_no]);
+        $order = Order::where('order_number',$out_trade_no)->first();
         if (!$order) {
             $paymentMsg .= 'order_number is invalid' . PHP_EOL;
             file_put_contents($logName, $paymentMsg, FILE_APPEND);
@@ -237,7 +237,7 @@ class Alipay extends Pay
             $order->updated_at = time();
             if ($order->save()) {
                 if (!empty($order->coupon_id)) { // 如果这个订单有使用优惠券
-                    $CouponUser = CouponUser::find()->where(['user_id' => $order->user_id, 'coupon_id' => $order->coupon_id])->one();
+                    $CouponUser = CouponUser::where('user_id',$order->user_id)->where('coupon_id',$order->coupon_id)->first();
                     $CouponUser->is_used = 2;  // 改变该优惠券的使用状态为“已使用”
                     $CouponUser->usage_time = time();
                     $CouponUser->save(false);

@@ -99,5 +99,9 @@ Route::middleware('api')->group(function () {
     Route::prefix('user')->group(function () {
         Route::post('coupons', [\App\Http\Controllers\UserController::class, 'Coupons'])->name('查询用户优惠卷');
     });
+
+    Route::get('/notify/alipay', [App\Http\Controllers\Pay\Notify::class, 'Alipay'])->name('支付宝支付回调');
+    Route::get('/notify/wechatpay', [App\Http\Controllers\Pay\Notify::class, 'Wechatpay'])->name('微信支付回调');
+
     Route::get('xunsearch/clean', [\App\Http\Controllers\XunSearchTestController::class, 'clean'])->name('讯搜清空数据');
 });
