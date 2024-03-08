@@ -457,7 +457,7 @@ class Wechatpay extends Pay
      */
     public function getWechatpayCertificate()
     {
-        $folder = env('WECHATPAY_CERTIFICATE_FOLDER','');
+        $folder = base_path().env('WECHATPAY_CERTIFICATE_FOLDER','');
         $certArr = [];
         foreach (glob($folder.'/*.pem') as $item) {
             if (is_file($item)) {
