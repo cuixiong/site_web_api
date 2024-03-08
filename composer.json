@@ -12,6 +12,7 @@
         "laravel/framework": "^9.19",
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
+        "lessclick-system/barcode": "^3.0",
         "php-amqplib/php-amqplib": "2.6.*",
         "predis/predis": "^2.2",
         "wechatpay/wechatpay": "^1.4",
