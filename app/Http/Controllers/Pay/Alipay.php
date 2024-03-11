@@ -36,7 +36,7 @@ class Alipay extends Pay
         // 应用公钥证书文件路径
         $options->merchantCertPath = base_path().env('ALIPAY_MERCHANT_CERT','');
         // 异步通知接收服务地址
-        $options->notifyUrl = env('APP_URL','') . '/notify/alipay';
+        $options->notifyUrl = env('APP_URL','') . '/api/notify/alipay';
         // exit;
         Factory::setOptions($options);
     }
