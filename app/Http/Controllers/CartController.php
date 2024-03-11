@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Languages;
 use App\Models\PriceEditions;
+use App\Models\PriceEditionValues;
 use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\ShopCart;
@@ -64,7 +65,7 @@ class CartController extends Controller
             $shopCartData[$key]['url'] = $value['url'];
             $shopCartData[$key]['published_date'] = $value['published_date'] ? $value['published_date'] : '';
             // $shopCartData[$key]['languageId'] = $value['language']; // 原本是language，改为迁就前端的languageId
-            // $shopCartData[$key]['price_edition_cent'] = $value['price_name']; // 原本是edition，改为迁就前端的price_edition_cent
+            $shopCartData[$key]['price_edition_cent'] = $value['price_name']; // 原本是edition，改为迁就前端的price_edition_cent
             $shopCartData[$key]['price_edition'] = $value['price_edition'];
             $shopCartData[$key]['price'] = eval("return " . sprintf($value['rules'], $value['price']) . ";");
             $shopCartData[$key]['number'] = intval($value['number']); // 把返回的number值由原来的字符类型变成整数类型
@@ -76,23 +77,24 @@ class CartController extends Controller
             $shopCartData[$key]['discount_time_end'] = $value['discount_time_end'] ? date('Y-m-d', $value['discount_time_end']) : '';
             
             // 这里的代码可以复用 开始
-            // $languages = PriceLanguage::find()->select(['id', 'language'])->asArray()->all();
-            // if(!empty($languages) && is_array($languages)){
-            //     foreach($languages as $indexLanguage=>$language){
-            //         $priceEditions = PriceEdition::find()->select(['id', 'edition', 'rule', 'notice'])->where(['language_id'=>$language['id']])->asArray()->all();
-            //         $prices[$indexLanguage]['language'] = $language['language'];
-            //         if(!empty($priceEditions) && is_array($priceEditions)){
-            //             foreach($priceEditions as $keyPriceEdition=>$priceEdition){
-            //                 $prices[$indexLanguage]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
-            //                 $prices[$indexLanguage]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
-            //                 $prices[$indexLanguage]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
-            //                 $prices[$indexLanguage]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $value['price']) . ";");
-            //             }
-            //         }
-            //     }
-            // }
-            // $shopCartData[$key]['prices'] = $prices;
-            $shopCartData[$key]['prices'] = [];
+            $prices = [];
+                // 计算报告价格
+                $languages = Languages::select(['id', 'name'])->get()->toArray();
+                if ($languages) {
+                    foreach ($languages as $index => $language) {
+                        $priceEditions = PriceEditionValues::select(['id', 'name as edition', 'rules as rule', 'notice'])->where(['language_id' => $language['id']])->get()->toArray();
+                        $prices[$index]['language'] = $language['name'];
+                        if ($priceEditions) {
+                            foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
+                                $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
+                                $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+                                $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
+                                $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $value['price']) . ";");
+                            }
+                        }
+                    }
+                }
+                $shopCartData[$key]['prices'] = $prices ?? [];
             // 这里的代码可以复用 结束
             
             $goodsCount += $value['number'];
