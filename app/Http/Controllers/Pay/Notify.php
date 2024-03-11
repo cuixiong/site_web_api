@@ -1,15 +1,15 @@
 <?php
 namespace App\Http\Controllers\Pay;
 
-use AlibabaCloud\Tea\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 
 /**
  * 处理各种回调请求
  */
 class Notify extends Controller
 {
-    public function __construct($action)
+    public function __construct()
     {
         $dir = storage_path('log').'/_notify_log_/'.date('Y_m/', time());
         $timestamp = time();
@@ -24,13 +24,12 @@ class Notify extends Controller
                     ], true));
         $logName = $dir.$timestamp.'.log';
         file_put_contents($logName, $log, FILE_APPEND);
-
-        return parent::beforeAction($action);
     }
 
     public function Alipay(Request $request)
     {
         try {
+
             $pay = new Alipay();
             return $pay->notify();
         } catch (\Throwable $e) {

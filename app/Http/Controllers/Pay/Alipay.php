@@ -167,12 +167,12 @@ class Alipay extends Pay
         // trade_status	交易状态	String(32)	否	交易目前所处的状态，见下文 交易状态说明	TRADE_CLOSED
         // total_amount	订单金额    本次交易支付的订单金额，单位为人民币（元），精确到小数点后2位	20.00
         // gmt_payment	交易付款时间 该笔交易的买家付款时间。格式为yyyy-MM-dd HH:mm:ss	2015-04-27 15:45:57
-
-        $trade_no = $_POST['trade_no'];
-        $out_trade_no = $_POST['out_trade_no'];
-        $trade_status = $_POST['trade_status'];
-        $total_amount = $_POST['total_amount'];
-        $gmt_payment = $_POST['gmt_payment'];
+        $request = request();
+        $trade_no = $request->trade_no;
+        $out_trade_no = $request->out_trade_no;
+        $trade_status = $request->trade_status;
+        $total_amount = $request->total_amount;
+        $gmt_payment = $request->gmt_payment;
         if (
             empty($trade_no) ||
             empty($out_trade_no) ||
