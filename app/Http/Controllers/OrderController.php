@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Pay\PayFactory;
 use App\Http\Controllers\Pay\Wechatpay;
+use App\Models\City;
 use App\Models\Coupon;
 use App\Models\CouponUser;
 use App\Models\Order;
+use App\Models\OrderGoods;
+use App\Models\OrderStatus;
 use App\Models\OrderTrans;
 use App\Models\Payment;
 use App\Models\PriceEditions;
@@ -141,7 +144,6 @@ class OrderController extends Controller
             ReturnJson(true,'',$data);
         }
     }
-
 
     /**
      * 下单付款
@@ -359,5 +361,89 @@ class OrderController extends Controller
             }
             return $msg;
         }
+    }
+
+    /**
+     * 订单明细
+     */
+    public function Details(Request $request)
+    {
+        $orderId = $request->order_id;
+        $order = Order::select([
+            'order_amount', 
+            'actually_paid',
+            'is_pay', 
+            'pay_type', 
+            'order_number', 
+            // 'FROM_UNIXTIME(pay_time,"%Y-%m-%d %H:%i:%s") as pay_time',
+            'user_id',
+            'province_id',
+            'city_id',
+            'address',
+            'remarks',
+        ])
+        ->where(['id' => $orderId])
+        ->first()->toArray();
+        if (!is_array($order)) {
+            ReturnJson(false,'订单不存在');
+        }
+        $orderStatus = $order['is_pay'] ?? '';
+        $orderNumber =  $order['order_number'] ?? 0;
+        $payTime =  $order['pay_time'] ?? 0;
+
+        if ($orderStatus == Order::PAY_UNPAID) {
+            // 主动查询订单状态
+            // 未付款
+            ReturnJson(true,'',['is_pay' => $orderStatus, 'order_number' => $orderNumber]);
+        }
+
+        $orderGoods = OrderGoods::from('order_goods')->select([
+            'product.name',
+            'language.name as language',
+            'edition.name as edition',
+            'order_goods.goods_number',
+            'order_goods.goods_original_price',
+            'order_goods.goods_present_price',
+            'order_goods.goods_id as product_id',
+            'product.url',
+            // 'order_goods.price_edition',
+        ])
+            ->leftJoin('product_routine as product', 'product.id','order_goods.goods_id')
+            ->leftJoin('price_edition_values as edition', 'edition.id','order_goods.price_edition')
+            ->leftJoin('languages as language', 'language.id','edition.language_id')
+            ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
+            ->get()->toArray();
+
+        if(!empty($order['user_id'])){
+            $user = User::select(['username', 'email', 'phone', 'company', 'province_id', 'area_id', 'address'])->where('id',$order['user_id'])->first();
+            $province = City::where('id',$order['province_id'])->value('name');
+            $city = City::where('id',$order['city_id'])->value('name');
+            $address = $province . $city . $order['address'];
+            $_user = [
+                'name' => $user['username'],
+                'email' => $user['email'],
+                'phone' => $user['phone'],
+                'company' => $user['company'],
+                'address' => $address,
+            ];
+        }
+        $discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);
+
+        $data = [
+            'order' => [
+                'order_amount' => $order['order_amount'], // 订单总额
+                'discount_value' => $discount_value, // 优惠金额
+                'actually_paid' => $order['actually_paid'], // 实付金额
+                'order_status' => OrderStatus::where('id',$order['is_pay'])->value('name'),
+                'pay_type' => Payment::where('id',$order['pay_type'])->value('name'),
+                'order_number' => $orderNumber,
+                'pay_time' => $payTime,
+                'remarks' => $order['remarks'] ? $order['remarks'] : '',
+            ],
+            'goods' => $orderGoods,
+            'user' => $_user,           // 用户的初始账户信息
+            'is_pay' => $orderStatus,
+        ];
+        ReturnJson(true,'',$data);
     }
 }
