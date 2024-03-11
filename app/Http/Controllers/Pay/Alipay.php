@@ -240,7 +240,7 @@ class Alipay extends Pay
                     $CouponUser = CouponUser::where('user_id',$order->user_id)->where('coupon_id',$order->coupon_id)->first();
                     $CouponUser->is_used = 2;  // 改变该优惠券的使用状态为“已使用”
                     $CouponUser->usage_time = time();
-                    $CouponUser->save(false);
+                    $CouponUser->save();
                 }
                 // Order::sendPaymentEmail($order); // 发送已付款的邮件
                 $paymentMsg .= 'success to update status' . PHP_EOL;
