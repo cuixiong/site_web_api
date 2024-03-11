@@ -383,7 +383,7 @@ class Wechatpay extends Pay
                 $CouponUser->usage_time = time();
                 $CouponUser->save();
             }
-            Order::sendPaymentEmail($order); // 发送已付款的邮件
+            // Order::sendPaymentEmail($order); // 发送已付款的邮件
         } else { // 订单状态更新失败
             $msg = 'order status update failed '.$order->getModelError();
             file_put_contents($logName, $msg.PHP_EOL, FILE_APPEND);

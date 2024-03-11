@@ -242,7 +242,7 @@ class Alipay extends Pay
                     $CouponUser->usage_time = time();
                     $CouponUser->save(false);
                 }
-                Order::sendPaymentEmail($order); // 发送已付款的邮件
+                // Order::sendPaymentEmail($order); // 发送已付款的邮件
                 $paymentMsg .= 'success to update status' . PHP_EOL;
             } else {
                 $paymentMsg .= 'fail to update status' . PHP_EOL;

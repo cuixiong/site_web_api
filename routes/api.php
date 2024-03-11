@@ -95,6 +95,11 @@ Route::middleware('api')->group(function () {
         Route::get('wechat-order', [\App\Http\Controllers\OrderController::class, 'WechatOrder'])->name('获取CODE信息');
     });
 
+    // 支付宝回调
+    Route::post('alipay', [\App\Http\Controllers\Pay\Notify::class, 'Alipay'])->name('支付宝回调');
+    // 微信支付回调
+    Route::post('wechatpay', [\App\Http\Controllers\Pay\Notify::class, 'Wechatpay'])->name('微信支付回调');
+
     // User控制器
     Route::prefix('user')->group(function () {
         Route::post('coupons', [\App\Http\Controllers\UserController::class, 'Coupons'])->name('查询用户优惠卷');
