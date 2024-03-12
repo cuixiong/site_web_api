@@ -106,5 +106,13 @@ Route::middleware('api')->group(function () {
         Route::post('coupons', [\App\Http\Controllers\UserController::class, 'Coupons'])->name('查询用户优惠卷');
     });
 
+    // News控制器
+    Route::prefix('news')->group(function () {
+        Route::post('index', [\App\Http\Controllers\NewsController::class, 'Index'])->name('新闻列表');
+        Route::get('view', [\App\Http\Controllers\NewsController::class, 'View'])->name('新闻详情');
+        Route::get('relevant', [\App\Http\Controllers\NewsController::class, 'Relevant'])->name('相关新闻');
+        Route::get('relevant-products', [\App\Http\Controllers\NewsController::class, 'RelevantProducts'])->name('相关报告列表');
+    });
+
     Route::get('xunsearch/clean', [\App\Http\Controllers\XunSearchTestController::class, 'clean'])->name('讯搜清空数据');
 });

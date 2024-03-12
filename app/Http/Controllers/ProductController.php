@@ -205,6 +205,23 @@ class ProductController extends Controller
             }
             // 这里的代码可以复用 开始
             $prices = [];
+            // 计算报告价格
+            $languages = Languages::select(['id', 'name'])->get()->toArray();
+            if ($languages) {
+                foreach ($languages as $index => $language) {
+                    $priceEditions = PriceEditionValues::select(['id', 'name as edition', 'rules as rule', 'notice'])->where(['language_id' => $language['id']])->get()->toArray();
+                    $prices[$index]['language'] = $language['name'];
+                    if ($priceEditions) {
+                        foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
+                            $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
+                            $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+                            $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
+                            $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $product_desc['price']) . ";");
+                        }
+                    }
+                }
+            }
+            // 这里的代码可以复用 结束
             $product_desc['prices'] = $prices;
             $product_desc['description'] = $product_desc['description'];
             $product_desc['url'] = $product_desc['url'];
