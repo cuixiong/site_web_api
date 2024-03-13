@@ -28,6 +28,7 @@ Route::middleware('api')->group(function () {
         Route::get('product-tag', [\App\Http\Controllers\Common\CommonController::class, 'ProductTag'])->name('产品标签');
         Route::get('test-xunsearc', [\App\Http\Controllers\Common\CommonController::class, 'TestXunSearch'])->name('讯搜测速接口');
         Route::get('china-regions', [\App\Http\Controllers\Common\CommonController::class, 'ChinaRegions'])->name('中国地区');
+        Route::get('set', [\App\Http\Controllers\Common\CommonController::class, 'Set'])->name('站点设置');
     });
 
     // index控制器(首页)
@@ -58,11 +59,6 @@ Route::middleware('api')->group(function () {
     Route::prefix('contact-us')->group(function () {
         Route::post('add', [\App\Http\Controllers\ContactUsController::class, 'Add'])->name('新增数据');
         Route::get('dictionary', [\App\Http\Controllers\ContactUsController::class, 'Dictionary'])->name('字典数据');
-    });
-
-    // System控制器(网站设置)
-    Route::prefix('system')->group(function () {
-        Route::get('get-children', [\App\Http\Controllers\SystemController::class, 'GetChildren'])->name('通过父级ID获取子级数据列表');
     });
 
     // System控制器(网站设置)

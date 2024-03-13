@@ -211,4 +211,29 @@ class CommonController extends Controller
     }
 
 
+    /**
+     * 网站设置（包括了seo三要素）
+     * 因为由于API端可能会接入多个个站点，所以当前需要前端当前站点的“站点设置”的ID来获取信息
+     */
+    public function Set(Request $request)
+    {
+        $id = $request->id;
+        if(empty($id)){
+            ReturnJson(false,'id is empty');
+        }
+        $data = SystemValue::where('parent_id',$id)
+                ->where('status',1)
+                ->select(['name','key','value'])
+                ->get()
+                ->toArray();
+        $result = [];
+        foreach ($data as $key => $value) {
+            $result[$value['key']] = [
+                'name' => $value['name'],
+                'value' => $value['value']
+            ];
+        }
+        ReturnJson(true,'',$result);
+    }
+
 }
