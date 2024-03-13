@@ -46,7 +46,6 @@ class OrderController extends Controller
             ->where('time_begin','<=',$now)
             ->where('time_end','>=',$now)
             ->first();
-
         if (empty($coupon)) {                                              // 如果查询不到该优惠券或券码错误或已过期,
             ReturnJson(false, '券码错误或已过期');        // 就提示 券码错误或已过期.
         } else {
@@ -71,8 +70,7 @@ class OrderController extends Controller
 
             $model = new User();
             $modelCouponUser = new CouponUser();
-            // $user = User::verificationToken($request->header('token'));
-            $user = null;
+            $user = User::IsLogin();
             if ($user == null) { // 如果获取不到头部token，说明此时用户没有登录，并不能说明用户有没有注册账户
                 // 根据用户提交的邮箱地址到user表查询是否存在一条数据
                 $user = User::where('email',$email)->first();
@@ -134,9 +132,10 @@ class OrderController extends Controller
                 if (in_array($user->id, $user_ids) != true) {
                     array_push($user_ids, $user->id);
                     $coupon->user_ids = implode(',', $user_ids);
-                    if ($coupon->save(false)) {            // 修改coupon表对应的数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会修改数据。
+                    if ($coupon->save()) {            // 修改coupon表对应的数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会修改数据。
                         $modelCouponUser->user_id = $user->id;
                         $modelCouponUser->coupon_id = $coupon->id;
+                        $modelCouponUser->created_by = $user->id;
                         $modelCouponUser->save();  // 给coupon_user表新增一条数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会新增一条数据。
                     }
                 }
