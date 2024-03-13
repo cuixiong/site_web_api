@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Menu;
 use App\Models\Page;
+use App\Models\Partner;
 use Illuminate\Http\Request;
 
 class PageController extends Controller
@@ -37,5 +38,24 @@ class PageController extends Controller
             $content = $special;
         }
         ReturnJson(true,'',$content);
+    }
+
+    /**
+     * 权威引用列表
+     */
+    public function Quotes(Request $request)
+    {
+        $page = $request->page ?? 1;
+        $pageSize = $request->pageSize ?? 16;
+        $result = Partner::select(['id', 'name as title', 'logo as img'])->orderBy('order','asc')->offset(($page-1)*$pageSize)->limit($pageSize)->get()->toArray();
+        $count = Partner::select(['id', 'name as title', 'logo as img'])->count();
+        $data = [
+            'result' => $result,
+            'page' => $page,
+            'pageSize' => $pageSize,
+            'pageCount' => ceil($count/$pageSize),
+            'count' => intval($count),
+        ];
+        ReturnJson(true,'',$data);
     }
 }

@@ -46,7 +46,7 @@ class CommonController extends Controller
     public function info(Request $request)
     {
         $link = $request->link ?? 'index';
-        if(empty($request->link)){
+        if(empty($link)){
             ReturnJson(false,'参数错误');
         }
         $result = Menu::select(['name','banner_pc','banner_mobile','banner_title','banner_short_title','seo_title','seo_keyword','seo_description'])->where(['link' => $link])->orderBy('sort','ASC')->first();
