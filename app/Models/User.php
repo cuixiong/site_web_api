@@ -1,7 +1,19 @@
 <?php
 
 namespace App\Models;
-use App\Models\Base;
-class User extends Base
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Tymon\JWTAuth\Contracts\JWTSubject;
+class User extends Authenticatable implements JWTSubject
 {
+    // 时间戳
+    protected $dateFormat = 'U';
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
 }
