@@ -24,14 +24,6 @@ class JwtMiddleware
                     'message' => '账号不存在'
                 ], 404);
             }
-            $token = $request->header('Authorization');
-            $token = trim($token);
-            if($user->token != $token){
-                return response()->json([
-                    'code' => -200,
-                    'message' => 'token is error'
-                ], 404);
-            }
             // 将用户信息存储在请求中，以便后续使用
             $request->user = $user;
             return $next($request);

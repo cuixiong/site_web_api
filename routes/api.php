@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Middleware\JwtMiddleware;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -77,6 +77,11 @@ Route::middleware('api')->group(function () {
     Route::post('do-reset-register', [\App\Http\Controllers\UserController::class, 'DoResetPassword'])->name('忘记密码:修改密码');
     Route::get('check-email', [\App\Http\Controllers\UserController::class, 'CheckEmail'])->name('验证邮箱');
     Route::post('exists-email', [\App\Http\Controllers\UserController::class, 'ExistsEmail'])->name('邮箱是否存在');
+    Route::prefix('user')->group(function () {
+        Route::middleware(JwtMiddleware::class)->get('info', [\App\Http\Controllers\UserController::class, 'Info'])->name('Info接口');
+        Route::post('coupons', [\App\Http\Controllers\UserController::class, 'Coupons'])->name('查询用户优惠卷');
+
+    });
 
     // Cart控制器(购物车模块)
     Route::prefix('cart')->group(function () {
@@ -101,10 +106,6 @@ Route::middleware('api')->group(function () {
     // 微信支付回调
     Route::post('notify/wechatpay', [\App\Http\Controllers\Pay\Notify::class, 'Wechatpay'])->name('微信支付回调');
 
-    // User控制器
-    Route::prefix('user')->group(function () {
-        Route::post('coupons', [\App\Http\Controllers\UserController::class, 'Coupons'])->name('查询用户优惠卷');
-    });
 
     // News控制器
     Route::prefix('news')->group(function () {

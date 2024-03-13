@@ -290,4 +290,26 @@ class UserController extends Controller
         }
         ReturnJson(true,'',$data);
     }
+
+    /**
+     * 用户信息
+     * @return array
+     */
+    public function Info(Request $request)
+    {
+        $user = $request->user;
+        $data = [];
+        $data['userid'] = $user['id'];
+        $data['username'] = $user['username'];
+        $data['email'] = $user['email'];
+        $data['phone'] = $user['phone'];
+        $data['company'] = $user['company'];
+        $data['address'] = $user['address'];
+        $data['area'] = [
+            (string)$user['province_id'], 
+            (string)$user['area_id']
+        ];
+
+        ReturnJson(true,'',$data);die;
+    }
 }
