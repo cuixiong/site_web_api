@@ -9,6 +9,7 @@ use App\Models\CouponUser;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
@@ -96,6 +97,7 @@ class UserController extends Controller
         if($user->status == 0){
             ReturnJson(false,'账号处于封禁状态，禁止登陆');
         }
+        $token = JWTAuth::fromUser($user);//生成token
         // 最后一次登录时间
         $user->login_time = time();
         $user->update();
@@ -105,9 +107,10 @@ class UserController extends Controller
             'username' => $user->username,// 用户名
             'email' => $user->email,// 邮箱
             'phone' => $user->phone,// 手机号
-            'area_id' => $user->country_id,// 地区ID
+            'area_id' => $user->country_id ? [$user->country_id] : [],// 地区ID
             'company' => $user->company,// 公司
             'login_time' => $user->login_time,// 最近登陆的时间
+            'token' => $token,// token
         ];
         ReturnJson(true,'',$data);
     }
