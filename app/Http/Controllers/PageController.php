@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
+use App\Models\Comment;
 use App\Models\ContactUs;
 use App\Models\Menu;
 use App\Models\Page;
@@ -169,23 +170,23 @@ class PageController extends Controller
     /**
      * 客户评价-列表
      */
-    public function CustomerEvaluations()
+    public function CustomerEvaluations(Request $request)
     {
-        $params = Yii::$app->request->get();
+        $params = $request->all();
         $page = $params['page'] ?? 1;
         $pageSize = $params['pageSize'] ?? 16;
 
-        $query = CustomerEvaluation::find()->select([
+        $query = Comment::select([
             'id',
             'title',
-            'thumb',
+            'image as thumb',
         ])
-        ->orderBy(['order'=>SORT_ASC])
-        ->where(['status'=>1]);
+        ->orderBy('sort','asc')
+        ->where('status',1);
         
-        $count = count($query->asArray()->all());
+        $count = $query->count();
 
-        $result = $query->offset(($page-1)*$pageSize)->limit($pageSize)->asArray()->all();
+        $result = $query->offset(($page-1)*$pageSize)->limit($pageSize)->get()->toArray();
 
         $data = [
             'result' => $result,
@@ -194,7 +195,26 @@ class PageController extends Controller
             'pageCount' => ceil($count/$pageSize),
             "count" => intval($count),
         ];
+        ReturnJson(true,'',$data);
+    }
 
-        return $this->echoData(ApiCode::SUCCESS, $data);
+    /**
+     * 客户评价-详情
+     */
+    public function CustomerEvaluation(Request $request)
+    {
+        $id = $request->id;
+        if(!isset($id)){
+            ReturnJson(false, 'id is empty');
+        }
+        $data = Comment::select([
+            'title',
+            'created_at',
+            'image as img',
+        ])
+        ->where('status',1)
+        ->where('id',$id)
+        ->first();
+        ReturnJson(true,'',$data);
     }
 }

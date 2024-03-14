@@ -69,6 +69,8 @@ Route::middleware('api')->group(function () {
         Route::get('team-member', [\App\Http\Controllers\PageController::class, 'TeamMember'])->name('团队成员');
         Route::get('qualification', [\App\Http\Controllers\PageController::class, 'Qualification'])->name('资质认证');
         Route::get('faqs', [\App\Http\Controllers\PageController::class, 'Faqs'])->name('常见问题');
+        Route::get('customer-evaluations', [\App\Http\Controllers\PageController::class, 'CustomerEvaluations'])->name('客户评价-列表');
+        Route::get('customer-evaluation', [\App\Http\Controllers\PageController::class, 'CustomerEvaluation'])->name('客户评价-详情');
     });
 
     // User控制器(用户模块)
