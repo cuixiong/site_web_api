@@ -64,6 +64,7 @@ Route::middleware('api')->group(function () {
     // System控制器(网站设置)
     Route::prefix('page')->group(function () {
         Route::get('get', [\App\Http\Controllers\PageController::class, 'Get'])->name('单页面内容');
+        Route::get('quote', [\App\Http\Controllers\PageController::class, 'Quote'])->name('权威引用');
     });
 
     // User控制器(用户模块)

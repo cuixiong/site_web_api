@@ -43,11 +43,11 @@ class PageController extends Controller
     /**
      * 权威引用列表
      */
-    public function Quotes(Request $request)
+    public function Quote(Request $request)
     {
         $page = $request->page ?? 1;
         $pageSize = $request->pageSize ?? 16;
-        $result = Partner::select(['id', 'name as title', 'logo as img'])->orderBy('order','asc')->offset(($page-1)*$pageSize)->limit($pageSize)->get()->toArray();
+        $result = Partner::select(['id', 'name as title', 'logo as img'])->orderBy('sort','asc')->offset(($page-1)*$pageSize)->limit($pageSize)->get()->toArray();
         $count = Partner::select(['id', 'name as title', 'logo as img'])->count();
         $data = [
             'result' => $result,
