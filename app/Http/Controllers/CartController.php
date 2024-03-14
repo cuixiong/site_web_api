@@ -217,20 +217,21 @@ class CartController extends Controller
      * @param number        购买数量 int
      * @param price_edition 价格版本 int
      */
-    public function Sync()
+    public function Sync(Request $request)
     {
-        $user = User::verificationToken(Yii::$app->request->getHeaders()->get('token'));
+        $user = $request->user;
         if (is_null($user)) {
-            return $this->echoMsg(ApiCode::TOKEN_FAIL);
+            ReturnJson(false, '用户未登录');
         }
-        $frontData = Yii::$app->request->post();
+        $frontData = $request->all();
         if (!is_array($frontData)) {
-            return $this->echoMsg(ApiCode::INVALID_PARAM);
+            ReturnJson(false, '参数错误');
         }
         $frontlen = count($frontData);
         if ($frontlen < 1) {
-            return $this->echoMsg(ApiCode::INVALID_PARAM);
+            ReturnJson(false, '参数错误');
         }
+        var_dump($frontData);die;
         $goodsArr = [];
         for ($i = 0, $len = count($frontData); $i < $len; $i++) {
             if (
@@ -243,16 +244,15 @@ class CartController extends Controller
         }
 
         if (count($goodsArr) < 1) {
-            return $this->echoMsg(ApiCode::INVALID_PARAM);
+            ReturnJson(false, '参数错误');
         }
 
         $goodsIdArr = array_column($goodsArr, 'goods_id', null);
-        $goodsIdArr = Product::find()->select('id')
-            ->where(['id' => $goodsIdArr, 'status' => 1])->asArray()->column();
+        $goodsIdArr = Products::where('status',1)->whereIn('id',$goodsIdArr)->pluck('id');
 
         // 会把无效的 good_id 过滤
         if (count($goodsIdArr) < 1) {
-            return $this->echoMsg(ApiCode::INVALID_PARAM);
+            ReturnJson(false, '参数错误');
         }
         $len = count($goodsArr);
         for ($i = 0; $i < $len; $i++) {
@@ -261,14 +261,14 @@ class CartController extends Controller
             }
         }
         if ($len < 1) {
-            return $this->echoMsg(ApiCode::INVALID_PARAM);
+            ReturnJson(false, '参数错误');
         }
         //开始数据库操作
-        $transaction = Yii::$app->db->beginTransaction();
-        $query = ShopCart::find()->where(['user_id' => $user->id, 'status' => 1]);
+        DB::beginTransaction();
+        $query = ShopCart::where(['user_id' => $user->id, 'status' => 1]);
         $backData = $query->select(['id', 'goods_id', 'number', 'price_edition',])
-            ->indexBy('id')
-            ->asArray()->all();
+            ->keyBy('id')
+            ->get()->toArray();
         $dbKey = [
             'user_id',
             'goods_id',
@@ -291,13 +291,14 @@ class CartController extends Controller
                     $timestamp,
                 ];
             }
-            $batchInsert = Yii::$app->db->createCommand()->batchInsert(ShopCart::tableName(), $dbKey, $row)->execute();
+            $createShopCart = ShopCart::createMany($row);
+            $batchInsert = $createShopCart->count();
             if ($batchInsert != $len) {
-                $transaction->rollBack();
-                return $this->echoMsg(ApiCode::DELETE_FAIL);
+                DB::rollback();
+                ReturnJson(false,'删除失败');
             }
-            $transaction->commit();
-            return $this->echoMsg(ApiCode::SUCCESS);
+            DB::commit();
+            ReturnJson(true);
         }
         // 筛选出 id和版本 不存在的记录，这是需要新增的记录
         $oldData = [];
@@ -313,7 +314,6 @@ class CartController extends Controller
                 $needInsert[] = $goodsArr[$i];
             } else {
                 $backData[$oldData[$tempKey]]['number'] = $backData[$oldData[$tempKey]]['number'] > $goodsArr[$i]['number']?$backData[$oldData[$tempKey]]['number']:$goodsArr[$i]['number'];
-                // $backData[$oldData[$tempKey]]['number'] = $goodsArr[$i]['number'];
                 $needUpdate[] = $backData[$oldData[$tempKey]];
             }
         }
@@ -331,10 +331,11 @@ class CartController extends Controller
                 ];
                 array_splice($goodsArr, $k, 1);
             }
-            $batchInsert = Yii::$app->db->createCommand()->batchInsert(ShopCart::tableName(), $dbKey, $row)->execute();
+            $createShopCart = ShopCart::createMany($row);
+            $batchInsert = $createShopCart->count();
             if ($batchInsert != $insertlen) {
-                $transaction->rollBack();
-                return $this->echoMsg(ApiCode::DELETE_FAIL);
+                DB::rollback();
+                ReturnJson(false,'删除失败');
             }
         }
         // 对比 id和版本 存在的记录，主要是对比数量，数量大的覆盖数量少的，数量相等的不用理，这是需要更新的记录
@@ -350,13 +351,13 @@ class CartController extends Controller
                         'id' => $needUpdate[$i]['id']
                     ]
                 )) {
-                    $transaction->rollBack();
-                    return $this->echoMsg(ApiCode::UPDATE_FAIL);
+                    DB::rollback();
+                    ReturnJson(false,'删除失败');
                 }
             }
         }
-        $transaction->commit();
-        return $this->echoMsg(ApiCode::SUCCESS);
+        DB::commit();
+        ReturnJson(true);
     }
 
     /**
