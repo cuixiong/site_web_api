@@ -13,7 +13,7 @@ class PageController extends Controller
      * 获取单页面内容
      */
     public function Get(Request $request){
-        $link = $request->link;
+        $link = $request->link ?? 'index';
         if(empty($link)){
             ReturnJson(false,'link is empty');
         }
