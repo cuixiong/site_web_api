@@ -231,7 +231,6 @@ class CartController extends Controller
         if ($frontlen < 1) {
             ReturnJson(false, '参数错误');
         }
-        var_dump($frontData);die;
         $goodsArr = [];
         for ($i = 0, $len = count($frontData); $i < $len; $i++) {
             if (

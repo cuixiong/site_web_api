@@ -65,6 +65,7 @@ class ProductController extends Controller
                 $products[$key]['keywords'] = $value['keywords'];
                 $products[$key]['discount_type'] = $value['discount_type'];
                 $products[$key]['discount_amount'] = $value['discount_amount'];
+                $products[$key]['discount'] = $value['discount'];
                 $products[$key]['prices'] = $prices ?? [];
                 $products[$key]['id'] = $value['id'];
                 $products[$key]['url'] = $value['url'];
@@ -101,6 +102,7 @@ class ProductController extends Controller
                 'url',
                 'price',
                 'discount_type',
+                'discount',
                 'discount_amount',
                 'category_id',
             ]);
@@ -157,6 +159,7 @@ class ProductController extends Controller
                 'p.keywords',
                 'p.price',
                 'p.discount_type',
+                'p.discount',
                 'p.discount_amount',
                 'p.discount_time_end',
             ])->leftJoin('product_category as cate','cate.id','=', 'p.category_id')
