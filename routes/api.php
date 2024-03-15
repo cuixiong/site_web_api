@@ -119,5 +119,10 @@ Route::middleware('api')->group(function () {
         Route::get('relevant-products', [\App\Http\Controllers\NewsController::class, 'RelevantProducts'])->name('相关报告列表');
     });
 
+    // Sitemap(网站地图)控制器
+    Route::prefix('sitemap')->group(function () {
+        Route::get('make-site-map', [\App\Http\Controllers\SitemapController::class, 'MakeSiteMap'])->name('更新地图');
+    });
+
     Route::get('xunsearch/clean', [\App\Http\Controllers\XunSearchTestController::class, 'clean'])->name('讯搜清空数据');
 });
