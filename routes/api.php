@@ -65,12 +65,14 @@ Route::middleware('api')->group(function () {
     Route::prefix('page')->group(function () {
         Route::get('get', [\App\Http\Controllers\PageController::class, 'Get'])->name('单页面内容');
         Route::get('quote', [\App\Http\Controllers\PageController::class, 'Quote'])->name('权威引用');
-        Route::post('contact-us', [\App\Http\Controllers\PageController::class, 'ContactUs'])->name('定制报告');
+        Route::post('custom-reports', [\App\Http\Controllers\PageController::class, 'CustomReports'])->name('定制报告');
         Route::get('team-member', [\App\Http\Controllers\PageController::class, 'TeamMember'])->name('团队成员');
         Route::get('qualification', [\App\Http\Controllers\PageController::class, 'Qualification'])->name('资质认证');
         Route::get('faqs', [\App\Http\Controllers\PageController::class, 'Faqs'])->name('常见问题');
         Route::get('customer-evaluations', [\App\Http\Controllers\PageController::class, 'CustomerEvaluations'])->name('客户评价-列表');
         Route::get('customer-evaluation', [\App\Http\Controllers\PageController::class, 'CustomerEvaluation'])->name('客户评价-详情');
+        Route::post('contact-us', [\App\Http\Controllers\PageController::class, 'ContactUs'])->name('联系我们');
+
     });
 
     // User控制器(用户模块)

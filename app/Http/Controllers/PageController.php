@@ -106,6 +106,48 @@ class PageController extends Controller
         }
     }
 
+    /**
+     * 定制报告（表单）
+     * @param string $username 姓名
+     * @param string $email 邮箱地址
+     * @param integer $province_id 省份编号
+     * @param integer $city_id 城市编号
+     * @param string $phone 电话号码
+     * @param string $company 公司名称
+     * @param integer $plan_buy_time 计划购买时间
+     * @param string $content 留言反馈
+     */
+    public function CustomReports(Request $request)
+    {
+        $params = $request->all();
+        $name = $params['name'];
+        $email = $params['email'];
+        $province_id = $params['province_id'];
+        $city_id = $params['city_id'];
+        $phone = $params['phone'];
+        $company = $params['company'];
+        $plan_buy_time = $params['plan_buy_time'];
+        $content = $params['content'];
+
+        $model = new ContactUs();
+        $model->name = $name;
+        $model->email = $email;
+        $model->area_id = $province_id;
+        $model->city_id = $city_id;
+        $model->phone = $phone;
+        $model->company = $company;
+        $model->buy_time = $plan_buy_time;
+        $model->remarks = $content;
+        $model->status = 0;
+        if($model->save()){
+            // $user = new User();
+            // Contact::sendContactEmail($params, $user);// 发送邮件
+            ReturnJson(true,'',$model);
+        } else {
+            ReturnJson(false,$model->getModelError());
+        }
+    }
+
 
     /**
      * 团队成员
