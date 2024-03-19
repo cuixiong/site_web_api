@@ -28,24 +28,6 @@ class ProductController extends Controller
         if ($result) {
             $products = [];
             foreach ($result as $key => $value) {
-                $prices = [];
-                // 计算报告价格
-                $languages = Languages::select(['id', 'name'])->get()->toArray();
-                if ($languages) {
-                    foreach ($languages as $index => $language) {
-                        $priceEditions = PriceEditionValues::select(['id', 'name as edition', 'rules as rule', 'notice'])->where(['language_id' => $language['id']])->get()->toArray();
-                        $prices[$index]['language'] = $language['name'];
-                        if ($priceEditions) {
-                            foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
-                                $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
-                                $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
-                                $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
-                                $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $value['price']) . ";");
-                            }
-                        }
-                    }
-                }
-
                 $category = ProductsCategory::select([
                     'id',
                     'name',
@@ -66,7 +48,7 @@ class ProductController extends Controller
                 $products[$key]['discount_type'] = $value['discount_type'];
                 $products[$key]['discount_amount'] = $value['discount_amount'];
                 $products[$key]['discount'] = $value['discount'];
-                $products[$key]['prices'] = $prices ?? [];
+                $products[$key]['prices'] = Products::CountPrice($value['price']) ?? [];
                 $products[$key]['id'] = $value['id'];
                 $products[$key]['url'] = $value['url'];
             }
@@ -206,26 +188,7 @@ class ProductController extends Controller
                 $serviceMethod = SystemValue::select(['name as key', 'value'])->where(['key' => 'Service', 'status' => 1])->first();
                 $product_desc['serviceMethod'] = $serviceMethod ?? '';
             }
-            // 这里的代码可以复用 开始
-            $prices = [];
-            // 计算报告价格
-            $languages = Languages::select(['id', 'name'])->get()->toArray();
-            if ($languages) {
-                foreach ($languages as $index => $language) {
-                    $priceEditions = PriceEditionValues::select(['id', 'name as edition', 'rules as rule', 'notice'])->where(['language_id' => $language['id']])->get()->toArray();
-                    $prices[$index]['language'] = $language['name'];
-                    if ($priceEditions) {
-                        foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
-                            $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
-                            $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
-                            $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
-                            $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $product_desc['price']) . ";");
-                        }
-                    }
-                }
-            }
-            // 这里的代码可以复用 结束
-            $product_desc['prices'] = $prices;
+            $product_desc['prices'] = Products::CountPrice($product_desc['price']);
             $product_desc['description'] = $product_desc['description'];
             $product_desc['url'] = $product_desc['url'];
             $product_desc['thumb'] = $product_desc['thumb'] ? $request->thumbUrl . $product_desc['thumb'] : '';
@@ -344,25 +307,7 @@ class ProductController extends Controller
             $data[$index]['url'] = $product['url'];
             $data[$index]['category_name'] = $product['category_name'];
             $data[$index]['published_date'] = $product['published_date'] ? date('Y-m-d', strtotime($product['published_date'])) : '';
-            // 这里的代码可以复用 开始
-            $prices = [];
-            $languages = Languages::select(['id', 'language'])->get()->toArray();
-            if (!empty($languages) && is_array($languages)) {
-                foreach ($languages as $languageIndex => $language) {
-                    $priceEditions = PriceEditions::select(['id', 'edition', 'rule', 'notice'])->where(['language_id' => $language['id']])->get()->toArray();
-                    $prices[$languageIndex]['language'] = $language['language'];
-                    if (!empty($priceEditions) && is_array($priceEditions)) {
-                        foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
-                            $prices[$languageIndex]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
-                            $prices[$languageIndex]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
-                            $prices[$languageIndex]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
-                            $prices[$languageIndex]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $product['price']) . ";");
-                        }
-                    }
-                }
-            }
-            // 这里的代码可以复用 结束
-            $data[$index]['prices'] = $prices;
+            $data[$index]['prices'] = Products::CountPrice($product['price']);
         }
         ReturnJson(true,'获取成功',$data);
     }

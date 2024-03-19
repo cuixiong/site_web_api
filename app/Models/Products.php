@@ -41,4 +41,30 @@ class Products extends Base
         }
         return $actuallyPaid;
     }
+
+    /**
+     * 通过价格和价格版本进行计算价格
+     */
+    public static function CountPrice($price)
+    {
+        // 这里的代码可以复用 开始
+        $prices = [];
+        // 计算报告价格（当前语言是放在站点端的，但是后台的语言是放在总控端的，接手的小伙伴自己改）
+        $languages = Languages::select(['id', 'name'])->get()->toArray();
+        if ($languages) {
+            foreach ($languages as $index => $language) {
+                $priceEditions = PriceEditionValues::GetList($language['id']);
+                $prices[$index]['language'] = $language['name'];
+                if ($priceEditions) {
+                    foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
+                        $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
+                        $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+                        $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
+                        $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rule'], $price) . ";");
+                    }
+                }
+            }
+        }
+        // 这里的代码可以复用 结束
+    }
 }
