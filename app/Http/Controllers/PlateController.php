@@ -30,7 +30,7 @@ class PlateController extends Controller
         ReturnJson(true,'请求成功',$data);
     }
 
-    public function form(Request $request)
+    public function Form(Request $request)
     {
         $id = $request->id;
         if(empty($id)){

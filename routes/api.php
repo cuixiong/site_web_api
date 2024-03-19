@@ -43,7 +43,7 @@ Route::middleware('api')->group(function () {
     // Plate控制器(页面板块)
     Route::prefix('plate')->group(function () {
         Route::get('plate-value', [\App\Http\Controllers\PlateController::class, 'PlateValue'])->name('页面板块子级的值');
-        Route::get('form', [\App\Http\Controllers\PlateController::class, 'form'])->name('页面板块（包含父级和子级）');
+        Route::get('form', [\App\Http\Controllers\PlateController::class, 'Form'])->name('页面板块（包含父级和子级）');
     });
 
     // Product控制器(报告)
