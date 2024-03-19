@@ -65,6 +65,7 @@ class Products extends Base
                 }
             }
         }
+        return $prices;
         // 这里的代码可以复用 结束
     }
 }
