@@ -98,7 +98,7 @@ class OrderTrans extends Base
         $order->city_id = $user->city_id;
         $order->status = 0;
         $order->address = $address;
-        $order->coupon_id = $coupon_id;
+        $order->coupon_id = $coupon_id ? intval($coupon_id) : 0;
         // $order->position = !empty($user->position)?$user->position:(new Ip2Location())->getLocation(Yii::$app->request->userIP)->area;
         // $order->position = !empty($user->position)?$user->position : 0;
         $order->is_mobile_pay = $this->isMobileClient()==true ? 1 : 0; // 是否为移动端支付：0代表否，1代表是。
@@ -210,7 +210,7 @@ class OrderTrans extends Base
         $order->province_id = $user->province_id;
         $order->city_id = $user->city_id;
         $order->address = $address;
-        $order->coupon_id = $coupon_id;
+        $order->coupon_id = $coupon_id ? intval($coupon_id) : 0;
 
         $order->position = !empty($user->position)?$user->position:$position = (new Ip2Location())->getLocation(Yii::$app->request->userIP)->area;
         $order->is_mobile_pay = $this->isMobileClient()==true ? 1 : 0; // 是否为移动端支付：0代表否，1代表是。
@@ -338,7 +338,7 @@ class OrderTrans extends Base
         $order->province_id = $user->province_id;
         $order->city_id = $user->city_id;
         $order->address = $address;
-        $order->coupon_id = $coupon_id;
+        $order->coupon_id = $coupon_id ? intval($coupon_id) : 0;
 
         $order->position = !empty($user->position)?$user->position:$position = (new Ip2Location())->getLocation(Yii::$app->request->userIP)->area;
         $order->is_mobile_pay = $this->isMobileClient()==true ? 1 : 0; // 是否为移动端支付：0代表否，1代表是。
