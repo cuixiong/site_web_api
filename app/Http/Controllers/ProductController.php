@@ -48,7 +48,7 @@ class ProductController extends Controller
                 $products[$key]['discount_type'] = $value['discount_type'];
                 $products[$key]['discount_amount'] = $value['discount_amount'];
                 $products[$key]['discount'] = $value['discount'];
-                $products[$key]['prices'] = Products::CountPrice($value['price']) ?? [];
+                $products[$key]['prices'] = Products::CountPrice($value['publisher_id'],$value['publisher_id']) ?? [];
                 $products[$key]['id'] = $value['id'];
                 $products[$key]['url'] = $value['url'];
             }
@@ -87,6 +87,7 @@ class ProductController extends Controller
                 'discount',
                 'discount_amount',
                 'category_id',
+                'publisher_id',
             ]);
             // 分类ID
             if($category_id){
@@ -144,6 +145,7 @@ class ProductController extends Controller
                 'p.discount',
                 'p.discount_amount',
                 'p.discount_time_end',
+                'p.publisher_id',
             ])->leftJoin('product_category as cate','cate.id','=', 'p.category_id')
                 ->where(['p.id' => $product_id])
                 ->where('p.status',1)
@@ -188,7 +190,7 @@ class ProductController extends Controller
                 $serviceMethod = SystemValue::select(['name as key', 'value'])->where(['key' => 'Service', 'status' => 1])->first();
                 $product_desc['serviceMethod'] = $serviceMethod ?? '';
             }
-            $product_desc['prices'] = Products::CountPrice($product_desc['price']);
+            $product_desc['prices'] = Products::CountPrice($product_desc['price'],$product_desc['publisher_id']);
             $product_desc['description'] = $product_desc['description'];
             $product_desc['url'] = $product_desc['url'];
             $product_desc['thumb'] = $product_desc['thumb'] ? $request->thumbUrl . $product_desc['thumb'] : '';
@@ -283,6 +285,7 @@ class ProductController extends Controller
                 'product.id',
                 'product.url',
                 'product.price',
+                'product.publisher_id',
                 'product.published_date',
                 'category.thumb',
                 'category.name as category_name',
@@ -307,7 +310,7 @@ class ProductController extends Controller
             $data[$index]['url'] = $product['url'];
             $data[$index]['category_name'] = $product['category_name'];
             $data[$index]['published_date'] = $product['published_date'] ? date('Y-m-d', strtotime($product['published_date'])) : '';
-            $data[$index]['prices'] = Products::CountPrice($product['price']);
+            $data[$index]['prices'] = Products::CountPrice($product['price'],$product['publisher_id']);
         }
         ReturnJson(true,'获取成功',$data);
     }
