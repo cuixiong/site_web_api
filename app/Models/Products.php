@@ -60,6 +60,7 @@ class Products extends Base
                         $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
                         $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['name'];
                         $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
+                        $prices[$index]['data'][$keyPriceEdition]['sort'] = $priceEdition['sort'];
                         $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf($priceEdition['rules'], $price) . ";");
                     }
                 }
