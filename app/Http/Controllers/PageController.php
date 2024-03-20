@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
+use App\Models\Authority;
 use App\Models\Comment;
 use App\Models\ContactUs;
 use App\Models\Menu;
@@ -48,12 +49,17 @@ class PageController extends Controller
     /**
      * 权威引用列表
      */
-    public function Quote(Request $request)
+    public function Quotes(Request $request)
     {
         $page = $request->page ?? 1;
         $pageSize = $request->pageSize ?? 16;
-        $result = Partner::select(['id', 'name as title', 'logo as img'])->orderBy('sort','asc')->offset(($page-1)*$pageSize)->limit($pageSize)->get()->toArray();
-        $count = Partner::select(['id', 'name as title', 'logo as img'])->count();
+        $category_id = $request->category_id ?? 0;
+        $model = Authority::select(['id', 'name as title', 'thumbnail as img'])->orderBy('sort','asc');
+        if($category_id){
+            $model = $model->where('class_id',$category_id);
+        }
+        $count = $model->count();
+        $result = $model->offset(($page-1)*$pageSize)->limit($pageSize)->get()->toArray();
         $data = [
             'result' => $result,
             'page' => $page,
@@ -61,6 +67,19 @@ class PageController extends Controller
             'pageCount' => ceil($count/$pageSize),
             'count' => intval($count),
         ];
+        ReturnJson(true,'',$data);
+    }
+
+    /**
+     * 权威引用单个查询
+     */
+    public function Quote(Request $request)
+    {
+        $id = $request->id;
+        if(empty($id)){
+            ReturnJson(false,'id is empty');
+        }
+        $data = Authority::select(['name as title', 'description as content'])->where('id',$id)->first();
         ReturnJson(true,'',$data);
     }
 

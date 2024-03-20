@@ -64,6 +64,7 @@ Route::middleware('api')->group(function () {
     // System控制器(网站设置)
     Route::prefix('page')->group(function () {
         Route::get('get', [\App\Http\Controllers\PageController::class, 'Get'])->name('单页面内容');
+        Route::get('quotes', [\App\Http\Controllers\PageController::class, 'Quotes'])->name('权威引用列表');
         Route::get('quote', [\App\Http\Controllers\PageController::class, 'Quote'])->name('权威引用');
         Route::post('custom-reports', [\App\Http\Controllers\PageController::class, 'CustomReports'])->name('定制报告');
         Route::get('team-member', [\App\Http\Controllers\PageController::class, 'TeamMember'])->name('团队成员');
