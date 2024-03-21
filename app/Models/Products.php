@@ -34,9 +34,9 @@ class Products extends Base
         $actuallyPaid = $price;
         if ($timestamp >= $goods['discount_begin'] && $timestamp <= $goods['discount_end']) { // 如果队列不能把discount_begin和discount_end的值恢复成null，就不能要这句代码了
             if ($goods['discount_type'] == 1) {
-                $actuallyPaid = $price * $goods['discount_value'] / 100;
+                $actuallyPaid = $price * $goods['discount'] / 100;
             } else if ($goods['discount_type'] == 2) {
-                $actuallyPaid = bcsub($price, $goods['discount_value'], 2);
+                $actuallyPaid = bcsub($price, $goods['discount_amount'], 2);
             }
         }
         return $actuallyPaid;
