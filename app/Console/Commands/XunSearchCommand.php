@@ -63,8 +63,8 @@ class XunSearchCommand extends Command
             'AMQPLAIN',
             null,
             'en_US',
-            3.0,
-            3.0,
+            30.0,
+            30.0,
             null,
             false,
             15
