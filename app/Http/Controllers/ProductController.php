@@ -37,8 +37,10 @@ class ProductController extends Controller
                 $products[$key]['thumb'] = $category ? $category['thumb'] : '';
                 $products[$key]['name'] = $value['name'];
                 $products[$key]['english_name'] = $value['english_name'];
-                // $products[$key]['description_seo'] = $value['description_seo'];
-                $products[$key]['published_date'] = $value['published_date'] ? $value['published_date'] : '';
+                $suffix = date('Y', strtotime($value['published_date']));
+                $description = (new ProductDescription($suffix))->where('product_id',$value['id'])->value('description');
+                $products[$key]['description'] = $description;
+                $products[$key]['published_date'] = $value['published_date'] ? date('Y-m-d',$value['published_date']) : '';
                 $products[$key]['category'] = $category ? [
                     'id' => $category['id'],
                     'name' => $category['name'],
@@ -214,41 +216,12 @@ class ProductController extends Controller
             //产品关键词 结束
 
             //产品标签 开始
-            try {
-                // $isSphinx = true; //sphinx是否可用
-                // $port = $request->sphinxPort;
-                // $conn = mysqli_connect("127.0.0.1:" . $port, "", "", "");
-                // if (mysqli_connect_errno()) {
-                //     $isSphinx = false;
-                // }
-                $isSphinx = false;
-
-            } catch (\Throwable $th) {
-                $isSphinx = false;
-            }
-            // header('Content-Type:text/html;charset=utf-8');
-            $tagList = [];
-            if ($isSphinx) {
-                $sql = "SELECT `keyword` FROM `products_rt` WHERE (`status` = 1) ";
-                $sql .= " AND match('@keyword \"" . addslashes($product_desc['keyword']) . "\"') group by keyword";
-
-                $tag_res = mysqli_query($conn, $sql);
-                if (empty($tag_res)) {
-                    $tagList = [];
-                } else {
-                    while ($row = mysqli_fetch_assoc($tag_res)) {
-                        $tagList[] = $row['keyword'];
-                    }
-                }
-                $product_desc['tag'] = $tagList;
-            } else {
-                $product_desc['tag'] = [$product_desc['keyword']];
-            }
+            $product_desc['tag'] = explode(',',$product_desc['keyword']);
             if ((!$product_desc['tag'] || count($product_desc['tag']) <= 1) && $product_desc['product_tag']) {
                 $product_desc['tag'] = array_merge($product_desc['tag'], explode(',', $product_desc['product_tag']));
             }
             unset($product_desc['product_tag']);
-            $product_desc['isSphinx'] = $isSphinx;
+            $product_desc['isSphinx'] = false;
             //产品标签 结束
 
             ReturnJson(true,'',$product_desc);

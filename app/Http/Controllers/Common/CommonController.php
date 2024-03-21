@@ -8,6 +8,7 @@ use App\Models\Link;
 use App\Models\Menu;
 use App\Models\PlateValue;
 use App\Models\ProductsCategory;
+use App\Models\SearchRank;
 use App\Models\SystemValue;
 use Illuminate\Http\Request;
 class CommonController extends Controller
@@ -239,4 +240,12 @@ class CommonController extends Controller
         ReturnJson(true,'',$result);
     }
 
+    /**
+     * 热搜关键词
+     */
+    public function ProductKeyword()
+    {
+        $data = SearchRank::where('status',1)->orderBy('hits','desc')->pluck('name');
+        ReturnJson(true,'',$data);
+    }
 }

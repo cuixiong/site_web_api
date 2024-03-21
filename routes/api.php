@@ -29,6 +29,7 @@ Route::middleware('api')->group(function () {
         Route::get('test-xunsearc', [\App\Http\Controllers\Common\CommonController::class, 'TestXunSearch'])->name('讯搜测速接口');
         Route::get('china-regions', [\App\Http\Controllers\Common\CommonController::class, 'ChinaRegions'])->name('中国地区');
         Route::get('set', [\App\Http\Controllers\Common\CommonController::class, 'Set'])->name('站点设置');
+        Route::get('product-keyword', [\App\Http\Controllers\Common\CommonController::class, 'ProductKeyword'])->name('热搜关键词');
     });
 
     // index控制器(首页)

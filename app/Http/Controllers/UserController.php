@@ -16,10 +16,10 @@ class UserController extends Controller
     // 账号注册
     public function Register(Request $request)
     {
-        $username = $request->username;
+        $username = $request->name;
         $email = $request->email;
-        $province_id = $request->province_id;
-        $area_id = $request->area_id;
+        $province_id = $request->city_id;
+        $area_id = $request->province_id;
         $phone = $request->phone;
         $company = $request->company;
         $password = $request->password;
@@ -39,7 +39,7 @@ class UserController extends Controller
         $model = new User;
         $model->username = $username;
         $model->email = $email;
-        // $model->province_id = $province_id;// MMG中的未知参数
+        $model->province_id = $province_id;// MMG中的未知参数
         $model->area_id = $area_id;
         $model->phone = $phone;
         $model->company = $company;

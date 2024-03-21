@@ -31,6 +31,8 @@ class IndexController extends Controller
         foreach ($list as $key => &$value) {
             $description = (new ProductDescription(date('Y',strtotime($value['published_date']))))->where('product_id',$value->id)->value('description');
             $value['description'] = substr($description,0,255);
+            $value['published_date'] = strtotime($value['published_date']);
+            $value['published_date'] = date('Y-m-d',$value['published_date']);
         }
         ReturnJson(true,'',$list);
     }
