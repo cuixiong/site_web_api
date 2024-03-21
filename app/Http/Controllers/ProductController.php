@@ -37,9 +37,8 @@ class ProductController extends Controller
                 $products[$key]['thumb'] = $category ? $category['thumb'] : '';
                 $products[$key]['name'] = $value['name'];
                 $products[$key]['english_name'] = $value['english_name'];
-
+                $value['published_date'] = ctype_digit($value['published_date']) ? date('Y-m-d H:i:s', (int)$value['published_date']) : $value['published_date'];
                 $suffix = date('Y', strtotime($value['published_date']));
-
                 $description = (new ProductDescription($suffix))->where('product_id',$value['id'])->value('description');
                 $products[$key]['description'] = $description;
                 $products[$key]['published_date'] = $value['published_date'] ? date('Y-m-d', strtotime($value['published_date'])) : '';
