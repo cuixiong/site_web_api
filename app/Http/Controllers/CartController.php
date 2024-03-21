@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Languages;
 use App\Models\PriceEditions;
 use App\Models\PriceEditionValues;
+use App\Models\ProductDescription;
 use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\ShopCart;
@@ -430,5 +431,49 @@ class CartController extends Controller
         }else{
             ReturnJson(true, $results);
         }
+    }
+
+    /**
+     * 相关报告
+     * 根据报告的goods_ids值，获取相同的keyword值的报告
+     * @param array goods_ids
+     */
+    public function Relevant(Request $request)
+    {
+        $goods_ids = $request->goods_ids;
+        $data = [];
+        if(!empty($goods_ids) && is_array($goods_ids)){
+            $keywords = Products::whereIn('id', $goods_ids)->pluck('keywords')->toArray();
+            if(!empty($keywords) && is_array($keywords)){
+                $products = Products::select([
+                    'name',
+                    'id', 
+                    'category_id',
+                    'url',
+                    'published_date',
+                    'price',
+                ])
+                ->whereIn('keywords', $keywords)
+                ->whereNotIn('id',$goods_ids)
+                ->limit(5)
+                ->get()
+                ->toArray();
+                if(!empty($products) && is_array($products)){
+                    $data = [];
+                    foreach($products as $index=>$product){
+                        $data[$index]['thumb'] = ProductsCategory::where('id',$product['category_id'])->value('thumb');
+                        $data[$index]['name'] = $product['name'];
+                        $suffix = date('Y', strtotime($product['published_date']));
+                        $description = (new ProductDescription($suffix))->where('product_id',$product['id'])->value('description');
+                        $data[$index]['description_seo'] = $description;
+                        $data[$index]['published_date'] = $product['published_date'] ? date('Y-m-d', strtotime($product['published_date'])) : '';
+                        $data[$index]['price'] = $product['price'];
+                        $data[$index]['id'] = $product['id'];
+                        $data[$index]['url'] = $product['url'];
+                    }
+                }
+            }            
+        }
+        ReturnJson(true,'',$data);
     }
 }

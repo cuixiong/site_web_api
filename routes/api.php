@@ -98,6 +98,7 @@ Route::middleware('api')->group(function () {
         Route::post('updata-goods-number', [\App\Http\Controllers\CartController::class, 'UpdataGoodsNumber'])->name('购物车添加或减少商品数量');
         Route::post('change-edition', [\App\Http\Controllers\CartController::class, 'ChangeEdition'])->name('购物车修改版本');
         Route::middleware(JwtMiddleware::class)->post('sync', [\App\Http\Controllers\CartController::class, 'Sync'])->name('购物车分享');
+        Route::get('relevant', [\App\Http\Controllers\CartController::class, 'Relevant'])->name('相关报告');
     });
 
     // Order控制器

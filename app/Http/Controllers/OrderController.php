@@ -29,10 +29,11 @@ class OrderController extends Controller
     public function Coupon(Request $request)
     {
         $username = $request->username;
-        $province_id = $request->province_id ?? '';
-        $area_id = $request->area_id ?? '';
+        $province_id = $request->province_id ?? 0;
+        $area_id = $request->city_id ?? 0;
         $phone = $request->phone;
         $email = $request->email;
+        $email = $request->city_id;
         $company = $request->company;
 
         $code = trim($request->code);
@@ -122,6 +123,7 @@ class OrderController extends Controller
                                 $modelCouponUser = new CouponUser();
                                 $modelCouponUser->user_id = $model->id;
                                 $modelCouponUser->coupon_id = $coupon->id;
+                                $modelCouponUser->created_by = 0;
                                 $modelCouponUser->save();  // 给coupon_user表新增一条数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会新增一条数据。
                             }
                         }
@@ -136,6 +138,7 @@ class OrderController extends Controller
                         $modelCouponUser->user_id = $user->id;
                         $modelCouponUser->coupon_id = $coupon->id;
                         $modelCouponUser->created_by = $user->id;
+                        $modelCouponUser->created_by = 0;
                         $modelCouponUser->save();  // 给coupon_user表新增一条数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会新增一条数据。
                     }
                 }
