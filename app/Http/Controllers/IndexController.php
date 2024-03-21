@@ -27,13 +27,13 @@ class IndexController extends Controller
                 ->orderBy('sort', 'desc') // 排序权重：sort > 发布时间 > id
                 ->orderBy('published_date', 'desc')
                 ->orderBy('id', 'desc')
-                ->limit(6)->get();
+                ->limit(6)->get()->toArray();
         foreach ($list as $key => &$value) {
-            $description = (new ProductDescription(date('Y',strtotime($value['published_date']))))->where('product_id',$value->id)->value('description');
-            $value['description'] = substr($description,0,255);
-            $value['published_date'] = strtotime($value['published_date']);
-            $value['published_date'] = date('Y-m-d',$value['published_date']);
+            $description = (new ProductDescription(date('Y',strtotime($value['published_date']))))->where('product_id',$value['id'])->value('description');
+            $value['description'] = mb_substr ($description,0,100, 'UTF-8');
+            $value['published_date'] = date('Y-m-d',strtotime($value['published_date']));
         }
+        $list = $list ? $list : [];
         ReturnJson(true,'',$list);
     }
     // 推荐报告
