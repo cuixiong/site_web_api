@@ -375,18 +375,6 @@ class CartController extends Controller
     {
         $cart = $request->cart;
         $cart_array = json_decode($cart,true);   // 把接收到的参数通过英文分号分割成一个或多个数组
-        $cart_array = [
-            [
-                'goods_id' => '502',
-                'price_edition' => 118,
-                'number' => 1,
-            ],
-            [
-                'goods_id' => '333',
-                'price_edition' => 118,
-                'number' => 1,
-            ],
-        ];
         $results = [];
         if(!empty($cart_array)){
             $Nonexistent = 0; // 设置“购物车对应的商品列表数据里不存在的商品的数量”为0
