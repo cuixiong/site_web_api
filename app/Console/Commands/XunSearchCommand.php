@@ -59,15 +59,6 @@ class XunSearchCommand extends Command
             $this->user,
             $this->pass,
             $this->vhost,
-            false,
-            'AMQPLAIN',
-            null,
-            'en_US',
-            30.0,
-            30.0,
-            null,
-            false,
-            15
         );
         return $this->connection;
     }
