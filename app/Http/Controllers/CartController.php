@@ -441,7 +441,7 @@ class CartController extends Controller
         if($Nonexistent > 0 ){
             ReturnJson(false, $goods); // 产品不存在
         }else{
-            ReturnJson(true, $results);
+            ReturnJson(true,'', $results);
         }
     }
 
