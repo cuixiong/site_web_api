@@ -162,7 +162,7 @@ class ProductController extends Controller
             ])->leftJoin('product_category as cate','cate.id','=', 'p.category_id')
                 ->where(['p.id' => $product_id])
                 ->where('p.status',1)
-                ->first();
+                ->first()->toArray();
 
             $suffix = date('Y', strtotime($product_desc['published_date']));
             $description = (new ProductDescription($suffix))->select([
