@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Common\SendEmailController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\DictionaryValue;
@@ -28,6 +29,8 @@ class ContactUsController extends Controller
             $model->buy_time = $buy_time;
             $model->area_id = $area_id;
             $model->save();
+            // 发送验证邮件
+            (new SendEmailController)->productSample($model->id);
             ReturnJson(true);
         } catch (\Exception $e) {
             ReturnJson(false,$e->getMessage());

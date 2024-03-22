@@ -4,6 +4,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TrendsEmail;
+use App\Models\City;
+use App\Models\ContactUs;
 use App\Models\Email;
 use App\Models\EmailScene;
 use App\Models\SystemValue;
@@ -147,6 +149,66 @@ class SendEmailController extends Controller
                 }
             }
             ReturnJson(true,trans()->get('lang.eamail_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
+
+    // 申请样本
+    public function productSample($id)
+    {
+        try {
+            $ContactUs = ContactUs::find($id);
+            $data = $ContactUs ? $ContactUs->toArray() : [];
+            $data['area_id'] = City::where('id',$data['area_id'])->value('name');
+            $token = $data['email'].'&'.$data['id'];
+            $data['token'] = base64_encode($token);
+            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
+            if($siteInfo){
+                foreach ($siteInfo as $key => $value) {
+                    $data[$key] = $value;
+                }
+            }
+            $scene = EmailScene::where('action','productSample')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            if(empty($scene)){
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            }
+
+            if($scene->status == 0)
+            {
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            }
+            $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
+            // 邮箱账号配置信息
+            $config = [
+                'host' =>  $senderEmail->host,
+                'port' =>  $senderEmail->port,
+                'encryption' =>  $senderEmail->encryption,
+                'username' =>  $senderEmail->email,
+                'password' =>  $senderEmail->password
+            ];
+            $this->SetConfig($config);
+            if($scene->alternate_email_id){
+                // 备用邮箱配置信息
+                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
+                $BackupConfig = [
+                    'host' =>  $BackupSenderEmail->host,
+                    'port' =>  $BackupSenderEmail->port,
+                    'encryption' =>  $BackupSenderEmail->encryption,
+                    'username' =>  $BackupSenderEmail->email,
+                    'password' =>  $BackupSenderEmail->password
+                ];
+                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+            }
+            try {
+                $this->SendEmail($data['email'],$scene->body,$data,$scene->title,$senderEmail->email);
+            } catch (\Exception $e) {
+                if($scene->alternate_email_id){
+                    $this->SendEmail($data['email'],$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
+                }
+            }
+            return true;
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
