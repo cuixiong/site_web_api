@@ -11,6 +11,7 @@ use App\Models\ProductsCategory;
 use App\Models\ShopCart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 
 class CartController extends Controller
 {
@@ -374,22 +375,34 @@ class CartController extends Controller
     {
         $cart = $request->cart;
         $cart_array = json_decode($cart,true);   // 把接收到的参数通过英文分号分割成一个或多个数组
+        $cart_array = [
+            [
+                'goods_id' => '502',
+                'price_edition' => 118,
+                'number' => 1,
+            ],
+            [
+                'goods_id' => '333',
+                'price_edition' => 118,
+                'number' => 1,
+            ],
+        ];
         $results = [];
         if(!empty($cart_array)){
             $Nonexistent = 0; // 设置“购物车对应的商品列表数据里不存在的商品的数量”为0
             $goods = [];
             foreach($cart_array as $key=>$value){
-                $product = Products::from('product_routine product')
-                ->leftJoin('category category','product.category_id','=','category.id')
+                $product = Products::from('product_routine as product')
+                ->leftJoin('product_category as category','product.category_id','=','category.id')
                 ->select([
                     'category.thumb',
                     'product.name',
-                    'product.id goods_id',
+                    'product.id as goods_id',
                     'product.published_date',
                     'product.discount_type',
-                    'product.discount_value',
-                    'product.discount_begin',
-                    'product.discount_end',
+                    'product.discount_amount as discount_value',
+                    'product.discount_time_begin as discount_begin',
+                    'product.discount_time_end as discount_end',
                     'product.price',
                     'product.url'
                 ])
@@ -397,9 +410,7 @@ class CartController extends Controller
                     'product.id' => $value['goods_id'],
                     'product.status' => 1
                 ])
-                ->asArray()
-                ->one();
-                
+                ->first()->toArray();
                 if(!empty($product)){
                     $results[] = $product;
                 }else{
@@ -409,15 +420,28 @@ class CartController extends Controller
                         'price_edition' => $value['price_edition'],
                     ];
                 } 
-
-                $results[$key]['published_date'] = $product['published_date'] ? date('Y-m-d', $product['published_date']) : '';
+                $results[$key]['published_date'] = $product['published_date'] ? date('Y-m-d', strtotime($product['published_date'])) : '';
                 $results[$key]['discount_begin'] = $product['discount_begin'] ? date('Y-m-d', $product['discount_begin']) : '';
                 $results[$key]['discount_end'] = $product['discount_end'] ? date('Y-m-d', $product['discount_end']) : '';
                 $results[$key]['number'] = $value['number'];
                 $results[$key]['price_edition'] = $value['price_edition'];
-                $priceRule = PriceEditions::select('language_id,edition,rule')->where('id',$value['price_edition'])->first();
+                $priceEdition = Redis::hget(PriceEditionValues::RedisKey,$value['price_edition']);
+                if($priceEdition){
+                    $priceEdition = json_decode($priceEdition,true);
+                    $priceRule = $priceEdition ? ['language_id' => $priceEdition['language_id'],'edition' => $priceEdition['name'],'rule' => $priceEdition['rules']] : [];
+                } else {
+                    $priceRule = [];
+                }                
                 if(!empty($priceRule)){
-                    $results[$key]['languageId'] = Languages::where('id',$priceRule['language_id'])->value('language');
+                    $language = Redis::hget(Languages::RedisKey,$priceRule['language_id']);
+                    if($language)
+                    {
+                        $language = json_decode($language,true);
+                        $language = $language['name'];
+                    } else {
+                        $language = '';
+                    }
+                    $results[$key]['languageId'] = $language;
                     $results[$key]['price_edition_cent'] = $priceRule['edition'];
                     $price = Products::where('id',$value['goods_id'])->value('price');
                     if(!empty($price)){
@@ -426,7 +450,7 @@ class CartController extends Controller
                 }
             }
         }
-        if($Nonexistent>0){
+        if($Nonexistent > 0 ){
             ReturnJson(false, $goods); // 产品不存在
         }else{
             ReturnJson(true, $results);

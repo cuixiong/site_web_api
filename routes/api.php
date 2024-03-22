@@ -100,6 +100,7 @@ Route::middleware('api')->group(function () {
         Route::post('change-edition', [\App\Http\Controllers\CartController::class, 'ChangeEdition'])->name('购物车修改版本');
         Route::middleware(JwtMiddleware::class)->post('sync', [\App\Http\Controllers\CartController::class, 'Sync'])->name('购物车分享');
         Route::get('relevant', [\App\Http\Controllers\CartController::class, 'Relevant'])->name('相关报告');
+        Route::post('share', [\App\Http\Controllers\CartController::class, 'Share'])->name('分享购物车数据');
     });
 
     // Order控制器

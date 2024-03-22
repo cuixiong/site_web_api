@@ -452,7 +452,7 @@ class ProductController extends Controller
         $productsPdf = new ProductPdf();
         $productsPdf->setProductId($productId);
         $model = Products::find($productId);
-        $model->downloads += 1;
+        $model->downloads = $model->downloads ? $model->downloads + 1 : 1;
         $model->save();
         return $productsPdf->frontBuild();
     }
