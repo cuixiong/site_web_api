@@ -207,6 +207,7 @@ class ProductController extends Controller
             $product_desc['description'] = $product_desc['description'];
             $product_desc['url'] = $product_desc['url'];
             $product_desc['thumb'] = $product_desc['thumb'] ? $request->thumbUrl . $product_desc['thumb'] : '';
+            $product_desc['published_date'] = $product_desc['published_date'] ? date('Y-m-d',strtotime($product_desc['published_date'])) : '';
 
             //产品关键词 开始
             if (!empty($product_desc['keyword_suffix'])) {
