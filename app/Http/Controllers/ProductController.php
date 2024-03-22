@@ -217,18 +217,18 @@ class ProductController extends Controller
                     $separator = ''; // 分隔符
                     // echo '<pre>';print_r($keyword_suffixs);exit;
                     foreach ($keyword_suffixs as $keyword_suffix) {
-                        $seo_keyword .= $separator . $product_desc['keyword'] . $keyword_suffix;
+                        $seo_keyword .= $separator . $product_desc['keywords'] . $keyword_suffix;
                         $separator = '，';
                     }
                 }
             } else {
-                $seo_keyword = $product_desc['keyword'];
+                $seo_keyword = $product_desc['keywords'];
             }
             $product_desc['seo_keyword'] = $seo_keyword;
             //产品关键词 结束
 
             //产品标签 开始
-            $product_desc['tag'] = explode(',',$product_desc['keyword']);
+            $product_desc['tag'] = explode(',',$product_desc['keywords']);
             if ((!$product_desc['tag'] || count($product_desc['tag']) <= 1) && $product_desc['product_tag']) {
                 $product_desc['tag'] = array_merge($product_desc['tag'], explode(',', $product_desc['product_tag']));
             }
