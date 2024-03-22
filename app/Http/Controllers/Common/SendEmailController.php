@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\TrendsEmail;
 use App\Models\Email;
 use App\Models\EmailScene;
+use App\Models\SystemValue;
 use App\Models\User;
 
 class SendEmailController extends Controller
@@ -47,6 +48,12 @@ class SendEmailController extends Controller
             $token = $user['email'].'&'.$user['id'];
             $user['token'] = base64_encode($token);
             $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone'])->pluck('value','key')->toArray();
+            if($siteInfo){
+                foreach ($siteInfo as $key => $value) {
+                    $user[$key] = $value;
+                }
+            }
             $scene = EmailScene::where('action','register')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
