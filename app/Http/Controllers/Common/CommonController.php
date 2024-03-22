@@ -20,7 +20,7 @@ class CommonController extends Controller
     {
         $menus = Menu::where('status',1)
                     ->whereIn('type',[1,3])
-                    ->select(['id','link','name','banner_title','banner_short_title','parent_id'])
+                    ->select(['id','link','name','banner_title','banner_short_title','parent_id','seo_title','seo_keyword','seo_description'])
                     ->get();
         $menus = $this->MenusTree($menus->toArray());
         ReturnJson(TRUE,'', $menus);
@@ -87,6 +87,9 @@ class CommonController extends Controller
                     'id',
                     'name',
                     'link',
+                    'seo_title',
+                    'seo_keyword',
+                    'seo_description'
                 ])
                 ->where('parent_id',$frontMenu['id'])
                 ->whereIn('type',[2,3])
