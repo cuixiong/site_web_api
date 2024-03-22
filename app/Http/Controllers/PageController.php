@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Http\Controllers\Common\SendEmailController;
 use App\Http\Controllers\Controller;
 use App\Models\Authority;
 use App\Models\Comment;
@@ -117,8 +119,7 @@ class PageController extends Controller
         $model->remarks = $content;
         $model->status = 0;
         if($model->save()){
-            // $user = new User();
-            // Contact::sendContactEmail($params, $user);// 发送邮件
+            (new SendEmailController)->contactUs($model->id);// 发送邮件
             ReturnJson(true,'',$model);
         } else {
             ReturnJson(false,$model->getModelError());
