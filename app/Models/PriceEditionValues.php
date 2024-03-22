@@ -7,11 +7,11 @@ use Illuminate\Support\Facades\Redis;
 class PriceEditionValues extends Base
 {
     const RedisKey = 'PriceEditionValue';// 要与后台程序的KEY一致
-    public static function GetList($languageId,$publisherId)
+    public static function GetList($languageId,$publisherId,$priceEditionsValue = null,$priceEditionsPid = null)
     {
         try {
-            $priceEditionIds = PriceEditions::GetList($publisherId);
-            $priceEditions = Redis::hgetall(self::RedisKey);
+            $priceEditionIds = PriceEditions::GetList($publisherId,$priceEditionsPid);
+            $priceEditions = $priceEditionsValue ? $priceEditionsValue : Redis::hgetall(self::RedisKey);
             if(empty($priceEditions)){
                 return [];
             } else {

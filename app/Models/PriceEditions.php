@@ -10,9 +10,9 @@ class PriceEditions extends Base
      * 从redis中获取数据
      * 自己加风险意识代码，不想给那个SB领导写
      */
-    public static function GetList($id){
+    public static function GetList($id,$priceEditionsPid = null){
         $res = [];
-        $lists = Redis::hgetall(self::RedisKey);
+        $lists = $priceEditionsPid ? $priceEditionsPid : Redis::hgetall(self::RedisKey);
         if(!empty($lists)){
            foreach ($lists as $key => $value) {
                 $value = json_decode($value,true);

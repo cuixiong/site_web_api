@@ -13,6 +13,7 @@ use App\Models\ProductDescription;
 use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\SystemValue;
+use Illuminate\Support\Facades\Redis;
 
 class ProductController extends Controller
 {
@@ -27,6 +28,13 @@ class ProductController extends Controller
         $count = $res['count'];
         if ($result) {
             $products = [];
+            // 从redis中获取语言
+            $languages = Languages::GetList();
+            // redis中获取价格版本子项
+            $priceEditionsValue = Redis::hgetall(PriceEditionValues::RedisKey);
+            // 从redis中获取价格版本父项
+            $priceEditions = Redis::hgetall(PriceEditions::RedisKey);
+
             foreach ($result as $key => $value) {
                 $category = ProductsCategory::select([
                     'id',
@@ -51,7 +59,7 @@ class ProductController extends Controller
                 $products[$key]['discount_type'] = $value['discount_type'];
                 $products[$key]['discount_amount'] = $value['discount_amount'];
                 $products[$key]['discount'] = $value['discount'];
-                $products[$key]['prices'] = Products::CountPrice($value['publisher_id'],$value['publisher_id']) ?? [];
+                $products[$key]['prices'] = Products::CountPrice($value['publisher_id'],$value['publisher_id'],$languages,$priceEditionsValue,$priceEditions) ?? [];
                 $products[$key]['id'] = $value['id'];
                 $products[$key]['url'] = $value['url'];
             }

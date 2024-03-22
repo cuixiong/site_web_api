@@ -45,15 +45,15 @@ class Products extends Base
     /**
      * 通过价格和价格版本进行计算价格
      */
-    public static function CountPrice($price,$publisherId)
+    public static function CountPrice($price,$publisherId,$languages = null ,$priceEditionsValue = null, $priceEditionsPid = null)
     {
         // 这里的代码可以复用 开始
         $prices = [];
         // 计算报告价格（当前语言是放在站点端的，但是后台的语言是放在总控端的，接手的小伙伴自己改）
-        $languages = Languages::GetList();
+        $languages = $languages ? $languages : Languages::GetList();
         if ($languages) {
             foreach ($languages as $index => $language) {
-                $priceEditions = PriceEditionValues::GetList($language['id'],$publisherId);
+                $priceEditions = PriceEditionValues::GetList($language['id'],$publisherId,$priceEditionsValue,$priceEditionsPid);
                 if ($priceEditions) {
                     $prices[$index]['language'] = $language['name'];
                     foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
