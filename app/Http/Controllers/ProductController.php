@@ -10,6 +10,7 @@ use App\Models\News;
 use App\Models\PriceEditions;
 use App\Models\PriceEditionValues;
 use App\Models\ProductDescription;
+use App\Models\ProductPdf;
 use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\SystemValue;
@@ -436,5 +437,22 @@ class ProductController extends Controller
             'link' => '',
         ]);
         ReturnJson(true, '', $data);
+    }
+
+    /**
+     * 下载PDF
+     */
+    public function OutputPdf(Request $request)
+    {
+        $productId = $request->product_id;
+        if (empty($productId)) {
+            ReturnJson(false,'product_id is empty');
+        }
+        $productsPdf = new ProductPdf();
+        $productsPdf->setProductId($productId);
+        $model = Products::find($productId);
+        $model->downloads += 1;
+        $model->save();
+        return $productsPdf->frontBuild();
     }
 }

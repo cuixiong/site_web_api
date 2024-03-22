@@ -54,6 +54,7 @@ Route::middleware('api')->group(function () {
         Route::get('relevant', [\App\Http\Controllers\ProductController::class, 'Relevant'])->name('相关报告');
         Route::get('news', [\App\Http\Controllers\ProductController::class, 'News'])->name('更多资讯');
         Route::get('filters', [\App\Http\Controllers\ProductController::class, 'Filters'])->name('筛选条件');
+        Route::get('output-pdf', [\App\Http\Controllers\ProductController::class, 'OutputPdf'])->name('下载PDF');
     });
 
     // ContactUs控制器(联系我们)
