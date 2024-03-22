@@ -49,6 +49,7 @@ class ProductController extends Controller
                 $value['published_date'] = ctype_digit($value['published_date']) ? date('Y-m-d H:i:s', (int)$value['published_date']) : $value['published_date'];
                 $suffix = date('Y', strtotime($value['published_date']));
                 $description = (new ProductDescription($suffix))->where('product_id',$value['id'])->value('description');
+                $description = mb_substr($description,0,120,'UTF-8');
                 $products[$key]['description'] = $description;
                 $products[$key]['published_date'] = $value['published_date'] ? date('Y-m-d', strtotime($value['published_date'])) : '';
                 $products[$key]['category'] = $category ? [
