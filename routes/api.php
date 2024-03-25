@@ -109,7 +109,7 @@ Route::middleware('api')->group(function () {
         Route::get('create-and-pay', [\App\Http\Controllers\OrderController::class, 'CreateAndPay'])->name('购物车结算产品列表');
         Route::get('payment', [\App\Http\Controllers\OrderController::class, 'Payment'])->name('支付方式');
         Route::get('wechat-order', [\App\Http\Controllers\OrderController::class, 'WechatOrder'])->name('获取CODE信息');
-        Route::get('details', [\App\Http\Controllers\OrderController::class, 'Details'])->name('检测已支付订单');
+        Route::post('details', [\App\Http\Controllers\OrderController::class, 'Details'])->name('检测已支付订单');
     });
 
     // 支付宝回调
