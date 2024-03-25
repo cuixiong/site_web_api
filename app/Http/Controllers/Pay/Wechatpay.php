@@ -112,7 +112,7 @@ class Wechatpay extends Pay
                 $merchantName = env('WECHATPAY_MERCHANT_NAME','');
                 $qrcodeUrl = $qrCode->getDataUri();
                 $orderPaySuccess = Order::PAY_SUCCESS;
-                $actionUrl = env('APP_URL').'/api/order/details';
+                $actionUrl = rtrim(env('APP_URL'),'/').'/api/order/details';
                 $html = <<<EOF
                 <!DOCTYPE html>
                 <html>
