@@ -42,26 +42,25 @@ class NewsController extends Controller
             ->where('upload_at','<=',  time());
 
         $count = News::where($where);
-
         if (!empty($keyword)) {
             $keyword = explode(" ", $keyword);
             for ($i = 0; $i <= count($keyword); $i++) {
                 if (!empty($keyword[$i])) {
-                    $query->where('title','like','%'.$keyword[$i].'%');
-                    $count->where('title','like','%'.$keyword[$i].'%');
+                    $query = $query->where('title','LIKE','%'.$keyword[$i].'%');
+                    $count = $count->where('title','LIKE','%'.$keyword[$i].'%');
                 }
             }
         }
 
         if (!empty($industry_id)) {
             $industryIdWhere = ['type' => $industry_id];
-            $query->where($industryIdWhere);
-            $count->where($industryIdWhere);
+            $query = $query->where($industryIdWhere);
+            $count = $count->where($industryIdWhere);
         }
 
         if (!empty($tag)) {
-            $query->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
-            $count->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
+            $query = $query->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
+            $count = $count->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
         }
         $result = $query->orderBy('sort','asc')->orderBy('upload_at','desc')
             ->offset(($page - 1) * $pageSize)
