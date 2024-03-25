@@ -222,7 +222,7 @@ class SitemapController extends Controller
         foreach ($map as $loc) {
             $str .= '<url>';
             //            $str .= '<loc><![CDATA[' . $this->domain . $loc . ']]></loc>'; // 网页地址
-            $str .= '<loc>' . $this->domain .'/sitemap/'. $loc . '</loc>'; // 网页地址
+            $str .= '<loc>' . $this->domain .'/sitemap'. $loc . '</loc>'; // 网页地址
             $str .= '<lastmod>' . $this->date . '</lastmod>'; // 最后修改时间
             $str .= '<changefreq>daily</changefreq>'; // 更新频率，这里是每天更新
             $str .= '<priority>' . $priority . '</priority>'; // 权重
