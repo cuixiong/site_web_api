@@ -28,9 +28,8 @@ class PageController extends Controller
         $domian = env('APP_URL','');
         $front_menu_id = Menu::where('link',$link)->value('id');
         $content = Page::where('page_id',$front_menu_id)->value('content');
-        $content = str_replace('src="', 'src="'.$domian, $content);
+        // $content = str_replace('src="', 'src="'.$domian, $content);
         $content = str_replace('srcset="', 'srcset="'.$domian, $content);
-        $content = str_replace('url("', 'url("'.$domian, $content);
         $content = str_replace('url("', 'url("'.$domian, $content);
         if(strpos($content,'%s')!==false){
             $year = bcsub(date('Y'), 2022); // 两个任意精度数字的减法
