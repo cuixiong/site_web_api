@@ -8,6 +8,9 @@ use App\Models\City;
 use App\Models\ContactUs;
 use App\Models\Email;
 use App\Models\EmailScene;
+use App\Models\Order;
+use App\Models\OrderGoods;
+use App\Models\Products;
 use App\Models\SystemValue;
 use App\Models\User;
 
@@ -231,6 +234,80 @@ class SendEmailController extends Controller
                 }
             }
             $scene = EmailScene::where('action','contactUs')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            if(empty($scene)){
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            }
+
+            if($scene->status == 0)
+            {
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            }
+            $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
+            // 邮箱账号配置信息
+            $config = [
+                'host' =>  $senderEmail->host,
+                'port' =>  $senderEmail->port,
+                'encryption' =>  $senderEmail->encryption,
+                'username' =>  $senderEmail->email,
+                'password' =>  $senderEmail->password
+            ];
+            $this->SetConfig($config);
+            if($scene->alternate_email_id){
+                // 备用邮箱配置信息
+                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
+                $BackupConfig = [
+                    'host' =>  $BackupSenderEmail->host,
+                    'port' =>  $BackupSenderEmail->port,
+                    'encryption' =>  $BackupSenderEmail->encryption,
+                    'username' =>  $BackupSenderEmail->email,
+                    'password' =>  $BackupSenderEmail->password
+                ];
+                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+            }
+            try {
+                $this->SendEmail($data['email'],$scene->body,$data,$scene->title,$senderEmail->email);
+            } catch (\Exception $e) {
+                if($scene->alternate_email_id){
+                    $this->SendEmail($data['email'],$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
+                }
+            }
+            return true;
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
+
+    // 下单后未付款
+    public function placeOrder($id)
+    {
+        try {
+            $OrderGoods = OrderGoods::find($id);
+            $order = Order::find($OrderGoods->order_id);
+            $user = User::find($order->user_id);
+            $data = $order->toArray();
+            $user = $user->toArray();
+            $products = Products::whereIn('id',$OrderGoods->goods_id)->select(['link','name','id as product_id','published_date','language','price_edition','goods_number','goods_present_price'])->get()->toArray();
+            $data = [
+                'userName' => $user['username'],
+                'userEmail' => $user['email'],
+                'userCompany' => $user['company'],
+                'userAddress' => City::where('id',$user['area_id'])->value('name'),
+                'userPhone' => $user['phone'],
+                'orderStatus' => $order['status'],
+                'paymentMethod' => $order['pay_type'],
+                'orderAmount' => $order['order_amount'],
+                'preferentialAmount' => $order['order_amount'] - $order['actually_paid'],
+                'orderActuallyPaid' => $order['actually_paid'],
+                'goods' => $products,
+            ];
+            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
+            if($siteInfo){
+                foreach ($siteInfo as $key => $value) {
+                    $data[$key] = $value;
+                }
+            }
+            $scene = EmailScene::where('action','placeOrder')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }

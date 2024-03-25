@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+use App\Http\Controllers\Common\SendEmailController;
 use App\Models\Base;
 use Illuminate\Support\Facades\DB;
 
@@ -129,7 +130,7 @@ class OrderTrans extends Base
             $this->errno = '';
             return null;
         }
-
+        (new SendEmailController)->placeOrder($orderGoods->id);
         // OrderModel::sendOrderEmail($order, $user);
         // OrderModel::sendPaymentEmail($order); // 发送已付款的邮件 // 记得把这行代码删掉
         DB::commit();

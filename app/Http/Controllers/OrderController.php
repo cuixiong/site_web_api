@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Pay\Pay;
 use App\Http\Controllers\Pay\PayFactory;
 use App\Http\Controllers\Pay\Wechatpay;
 use App\Models\City;
@@ -256,10 +257,10 @@ class OrderController extends Controller
         // 把临时订单号加入缓存
         Cache::store('file')->put('$tempOrderId',[$order->id, $order->order_number], 600); // 十分钟过期
         $pay = PayFactory::create($order->pay_type);
-        $isMobile = $isMobile == 1 ? 1 : 2;
-        $pay->setOption('is_mobile', $isMobile);
-        $isWechat = $isWechat == 1 ? 1 : 2;
-        $pay->setOption('is_wechat', $isWechat);
+        $isMobile = $isMobile == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
+        $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
+        $isWechat = $isWechat == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
+        $pay->setOption(Pay::KEY_IS_WECHAT, $isWechat);
 
         return $pay->do($order);
     }
