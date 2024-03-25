@@ -157,7 +157,7 @@ class OrderController extends Controller
         $shopIdArr = $request->shop_id;
         $shopcarJson = $request->shopcar_json;
         $isMobile = $request->is_mobile;
-        $isWechat = $request->isWechat;
+        $isWechat = $request->is_wechat;
         $coupon_id = $request->coupon_id ?? ''; // 优惠券id：无论是用户输入优惠券码，还是用户选择某一种优惠券，都接收coupon_id
         $username = $request->username;
         $email = $request->email;
