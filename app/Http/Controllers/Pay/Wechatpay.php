@@ -49,7 +49,7 @@ class Wechatpay extends Pay
 
             $referer = $_SERVER['HTTP_REFERER'] ?? '';
             // $redirecturi = env('APP_URL','').'/api/order/wechat-order?referer='.urlencode($referer);
-            $redirecturi = 'https://www.marketmonitorglobal.com.cn/api/wx-empower/index1?business_url='.env('APP_URL','').'/api/order/wechat-order%3F&referer='.urlencode($referer);
+            $redirecturi = 'https://www.marketmonitorglobal.com.cn/api/wx-empower/index1?business_url='.rtrim(env('APP_URL',''),'/').'/api/order/wechat-order%3F&referer='.urlencode($referer);
             $url = $this->wechatTool->getOAuthUrl($redirecturi, $order->id);
 
             $html = $this->getJump($url);
