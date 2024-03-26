@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Pay;
 use App\Http\Controllers\Controller;
+use App\Models\Pay;
 use App\Models\Payment;
 
 class PayFactory extends Controller
@@ -13,10 +14,10 @@ class PayFactory extends Controller
     {
         $pay = null;
         switch ($type) {
-            case Payment::where('code','ALIPAL')->value('id');
+            case Pay::where('code','ALIPAL')->value('id');
                 $pay = new Alipay();
                 break;
-            case Payment::where('code','WECHATPAY')->value('id');
+            case Pay::where('code','WECHATPAY')->value('id');
                 $pay = new Wechatpay();
                 break;
         }
