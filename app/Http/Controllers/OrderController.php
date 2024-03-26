@@ -12,8 +12,7 @@ use App\Models\Order;
 use App\Models\OrderGoods;
 use App\Models\OrderStatus;
 use App\Models\OrderTrans;
-use App\Models\Payment;
-use App\Models\PriceEditions;
+use App\Models\Pay as ModelsPay;
 use App\Models\PriceEditionValues;
 use App\Models\User;
 use App\Models\WechatTool;
@@ -270,14 +269,14 @@ class OrderController extends Controller
      */
     public function Payment()
     {
-        $data = Payment::select([
+        $data = ModelsPay::select([
             'id',
             'name',
-            'img',
-            'notice'
+            'image as img',
+            'content as notice'
         ])
         ->where('status',1)
-        ->orderBy('order','asc')
+        ->orderBy('sort','asc')
         ->get()
         ->toArray();
         ReturnJson(true, 'success', $data);
@@ -438,7 +437,7 @@ class OrderController extends Controller
                 'discount_value' => $discount_value, // 优惠金额
                 'actually_paid' => $order['actually_paid'], // 实付金额
                 'order_status' => OrderStatus::where('id',$order['is_pay'])->value('name'),
-                'pay_type' => Payment::where('id',$order['pay_type'])->value('name'),
+                'pay_type' => ModelsPay::where('id',$order['pay_type'])->value('name'),
                 'order_number' => $orderNumber,
                 'pay_time' => $payTime,
                 'remarks' => $order['remarks'] ? $order['remarks'] : '',
