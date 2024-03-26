@@ -55,7 +55,7 @@ class PageController extends Controller
         $page = $request->page ?? 1;
         $pageSize = $request->pageSize ?? 16;
         $category_id = $request->category_id ?? 0;
-        $model = Authority::select(['id', 'name as title', 'thumbnail as img'])->orderBy('sort','asc');
+        $model = Authority::select(['id', 'name as title', 'thumbnail as img','category_id'])->orderBy('sort','asc');
         if($category_id){
             $model = $model->where('class_id',$category_id);
         }
