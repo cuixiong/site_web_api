@@ -167,12 +167,28 @@ class SendEmailController extends Controller
             $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $data2 = [
+                'homePage' => $data['domain'],
+                'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
+                'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
+                'homeUrl' => $data['domain'],
+                'userName' => $data['name'] ? $data['name'] : '',
+                'email' => $data['email'],
+                'company' => $data['company'],
+                'area' => City::where('id',$data['area_id'])->value('name'),
+                'phone' => $data['phone'] ? $data['phone'] : '',
+                'plantTimeBuy' => $data['buy_time'],
+                'content' => $data['remarks'],
+                'backendUrl' => env('IMAGE_URL'),
+                'plantTimeBuy' => $data['buy_time'],
+            ];
             $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
             if($siteInfo){
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
                 }
             }
+            $data = array_merge($data2,$data);
             $scene = EmailScene::where('action','productSample')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
