@@ -6,6 +6,7 @@ use App\Models\Order;
 use Alipay\EasySDK\Kernel\Factory;
 use Alipay\EasySDK\Kernel\Util\ResponseChecker;
 use Alipay\EasySDK\Kernel\Config;
+use App\Http\Controllers\Common\SendEmailController;
 use App\Models\Payment;
 use Exception;
 use App\Http\Controllers\Pay\Pay;
@@ -242,6 +243,7 @@ class Alipay extends Pay
                     $CouponUser->usage_time = time();
                     $CouponUser->save();
                 }
+                (new SendEmailController())->payment($order->id);
                 // Order::sendPaymentEmail($order); // 发送已付款的邮件
                 $paymentMsg .= 'success to update status' . PHP_EOL;
             } else {

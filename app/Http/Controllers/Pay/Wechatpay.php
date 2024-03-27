@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Pay;
 
+use App\Http\Controllers\Common\SendEmailController;
 use App\Models\CouponUser;
 use App\Models\Order;
 use App\Models\WechatTool;
@@ -383,6 +384,7 @@ class Wechatpay extends Pay
                 $CouponUser->usage_time = time();
                 $CouponUser->save();
             }
+            (new SendEmailController())->payment($order->id);
             // Order::sendPaymentEmail($order); // 发送已付款的邮件
         } else { // 订单状态更新失败
             $msg = 'order status update failed '.$order->getModelError();
