@@ -130,7 +130,7 @@ class OrderTrans extends Base
             $this->errno = '';
             return null;
         }
-        // (new SendEmailController)->placeOrder($orderGoods->id);//暂时注释
+        (new SendEmailController)->placeOrder($orderGoods->id);//暂时注释
         // OrderModel::sendOrderEmail($order, $user);
         // OrderModel::sendPaymentEmail($order); // 发送已付款的邮件 // 记得把这行代码删掉
         DB::commit();
