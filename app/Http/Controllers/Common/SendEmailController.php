@@ -393,7 +393,8 @@ class SendEmailController extends Controller
     public function placeOrder($id)
     {
         try {
-            $Order = Order::where('id',$id)->first();
+            $OrderGoods = OrderGoods::where('id',$id)->first();
+            $Order = Order::where('id',$OrderGoods['order_id'])->first();
             $data = $Order ? $Order->toArray() : [];
             if(!$data){
                 ReturnJson(false, '未找到订单数据');
@@ -402,7 +403,7 @@ class SendEmailController extends Controller
             $user = $user ? $user->toArray() : [];
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $PayName = Pay::where('id',$data['pay_type'])->value('name');
-            $OrderGoods = OrderGoods::where('order_id',$data['id'])->first();
+            
             $priceEdition = Redis::hget(PriceEditionValues::RedisKey,$OrderGoods['price_edition']);
             $priceEdition = json_decode($priceEdition,true);
             if(!isset($priceEdition['price'])){
