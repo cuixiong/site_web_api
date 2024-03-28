@@ -282,6 +282,8 @@ class SendEmailController extends Controller
             }
             $data = array_merge($data2,$data);
             $scene = EmailScene::where('action','productSample')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            // 收件人的数组
+            $emails = explode(',',$scene->email_recipient);
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
@@ -317,6 +319,15 @@ class SendEmailController extends Controller
             } catch (\Exception $e) {
                 if($scene->alternate_email_id){
                     $this->SendEmail($data['email'],$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
+                }
+            }
+            foreach ($emails as $email) {
+                try {
+                    $this->SendEmail($email,$scene->body,$data,$scene->title,$senderEmail->email);
+                } catch (\Exception $e) {
+                    if($scene->alternate_email_id){
+                        $this->SendEmail($email,$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
+                    }
                 }
             }
             return true;
@@ -357,6 +368,8 @@ class SendEmailController extends Controller
             }
             $data = array_merge($data2,$data);
             $scene = EmailScene::where('action','contactUs')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            // 收件人的数组
+            $emails = explode(',',$scene->email_recipient);
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
@@ -392,6 +405,15 @@ class SendEmailController extends Controller
             } catch (\Exception $e) {
                 if($scene->alternate_email_id){
                     $this->SendEmail($data['email'],$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
+                }
+            }
+            foreach ($emails as $email) {
+                try {
+                    $this->SendEmail($email,$scene->body,$data,$scene->title,$senderEmail->email);
+                } catch (\Exception $e) {
+                    if($scene->alternate_email_id){
+                        $this->SendEmail($email,$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
+                    }
                 }
             }
             return true;
@@ -432,6 +454,8 @@ class SendEmailController extends Controller
             }
             $data = array_merge($data2,$data);
             $scene = EmailScene::where('action','customized')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            // 收件人的数组
+            $emails = explode(',',$scene->email_recipient);
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
@@ -467,6 +491,15 @@ class SendEmailController extends Controller
             } catch (\Exception $e) {
                 if($scene->alternate_email_id){
                     $this->SendEmail($data['email'],$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
+                }
+            }
+            foreach ($emails as $email) {
+                try {
+                    $this->SendEmail($email,$scene->body,$data,$scene->title,$senderEmail->email);
+                } catch (\Exception $e) {
+                    if($scene->alternate_email_id){
+                        $this->SendEmail($email,$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
+                    }
                 }
             }
             return true;
@@ -537,6 +570,8 @@ class SendEmailController extends Controller
             }
             $data = array_merge($data2,$data);
             $scene = EmailScene::where('action','placeOrder')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            // 收件人的数组
+            $emails = explode(',',$scene->email_recipient);
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
@@ -572,6 +607,15 @@ class SendEmailController extends Controller
             } catch (\Exception $e) {
                 if($scene->alternate_email_id){
                     $this->SendEmail($data['email'],$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
+                }
+            }
+            foreach ($emails as $email) {
+                try {
+                    $this->SendEmail($email,$scene->body,$data,$scene->title,$senderEmail->email);
+                } catch (\Exception $e) {
+                    if($scene->alternate_email_id){
+                        $this->SendEmail($email,$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
+                    }
                 }
             }
             return true;
@@ -642,6 +686,8 @@ class SendEmailController extends Controller
             }
             $data = array_merge($data2,$data);
             $scene = EmailScene::where('action','payment')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            // 收件人的数组
+            $emails = explode(',',$scene->email_recipient);
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
@@ -677,6 +723,15 @@ class SendEmailController extends Controller
             } catch (\Exception $e) {
                 if($scene->alternate_email_id){
                     $this->SendEmail($data['email'],$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
+                }
+            }
+            foreach ($emails as $email) {
+                try {
+                    $this->SendEmail($email,$scene->body,$data,$scene->title,$senderEmail->email);
+                } catch (\Exception $e) {
+                    if($scene->alternate_email_id){
+                        $this->SendEmail($email,$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
+                    }
                 }
             }
             return true;
