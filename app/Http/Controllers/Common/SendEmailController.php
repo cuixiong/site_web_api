@@ -48,22 +48,110 @@ class SendEmailController extends Controller
         return $res;
     }
 
-    // 注册账号发送邮箱
+    // 注册账号发送邮箱(验证用户邮箱是否正确)
     public function Register($id)
     {
         try {
             $user = User::find($id);
-            $user = $user ? $user->toArray() : [];
-            $token = $user['email'].'&'.$user['id'];
-            $user['token'] = base64_encode($token);
-            $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-            $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone'])->pluck('value','key')->toArray();
+            $data = $user ? $user->toArray() : [];
+            $data['domain'] = 'https://'.$_SERVER['SERVER_NAME'];
+            $token = $data['email'].'&'.$data['id'];
+            $data['token'] = base64_encode($token);
+            $emailCode = 'signupToBeMember';
+            $dataQuery = [
+                'timestamp' => time(),
+                'randomstr' => '123',
+                'authkey' => '123',
+                'sign' => $data['token'],
+            ];
+            $verifyUrl = $data['domain'].'/?verifyemail='.$emailCode.'&'.http_build_query($dataQuery);
+            $data2 = [
+                'homePage' => $data['domain'],
+                'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
+                'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
+                'homeUrl' => $data['domain'],
+                'backendUrl' => env('IMAGE_URL'),
+                'verifyUrl' => $verifyUrl,
+                'userName' => $data['name'],
+                'area' => City::where('id',$data['area_id'])->value('name'),
+            ];
+            $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
             if($siteInfo){
                 foreach ($siteInfo as $key => $value) {
-                    $user[$key] = $value;
+                    $data[$key] = $value;
                 }
             }
+            $data = array_merge($data2,$data);
             $scene = EmailScene::where('action','register')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            if(empty($scene)){
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            }
+
+            if($scene->status == 0)
+            {
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            }
+            $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
+            // 邮箱账号配置信息
+            $config = [
+                'host' =>  $senderEmail->host,
+                'port' =>  $senderEmail->port,
+                'encryption' =>  $senderEmail->encryption,
+                'username' =>  $senderEmail->email,
+                'password' =>  $senderEmail->password
+            ];
+            $this->SetConfig($config);
+            if($scene->alternate_email_id){
+                // 备用邮箱配置信息
+                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
+                $BackupConfig = [
+                    'host' =>  $BackupSenderEmail->host,
+                    'port' =>  $BackupSenderEmail->port,
+                    'encryption' =>  $BackupSenderEmail->encryption,
+                    'username' =>  $BackupSenderEmail->email,
+                    'password' =>  $BackupSenderEmail->password
+                ];
+                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+            }
+            try {
+                $this->SendEmail($user['email'],$scene->body,$user,$scene->title,$senderEmail->email);
+            } catch (\Exception $e) {
+                if($scene->alternate_email_id){
+                    $this->SendEmail($user['email'],$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
+                }
+            }
+            return true;
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
+
+    // 注册账号发送邮箱(验证用户邮箱是否正确)
+    public function RegisterSuccess($id)
+    {
+        try {
+            $user = User::find($id);
+            $data = $user ? $user->toArray() : [];
+            $data['domain'] = 'https://'.$_SERVER['SERVER_NAME'];
+            $token = $data['email'].'&'.$data['id'];
+            $data['token'] = base64_encode($token);
+            $data2 = [
+                'homePage' => $data['domain'],
+                'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
+                'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
+                'homeUrl' => $data['domain'],
+                'backendUrl' => env('IMAGE_URL'),
+                'userName' => $data['name'],
+                'area' => City::where('id',$data['area_id'])->value('name'),
+            ];
+            $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
+            if($siteInfo){
+                foreach ($siteInfo as $key => $value) {
+                    $data[$key] = $value;
+                }
+            }
+            $data = array_merge($data2,$data);
+            $scene = EmailScene::where('action','registerSuccess')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
