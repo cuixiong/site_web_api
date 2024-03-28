@@ -433,7 +433,7 @@ class SendEmailController extends Controller
                 }
             }
             $data = array_merge($data2,$data);
-            $scene = EmailScene::where('action','contactUs')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            $scene = EmailScene::where('action','customized')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
