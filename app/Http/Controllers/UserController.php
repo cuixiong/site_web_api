@@ -312,4 +312,22 @@ class UserController extends Controller
 
         ReturnJson(true,'',$data);die;
     }
+
+    /**
+     * 注册验证邮箱
+     */
+    public function VerifyEmail(Request $request)
+    {
+        $data = $request->all();
+        if (!isset($data['timestamp']) || !isset($data['randomstr']) || !isset($data['authkey']) || !isset($data['sign'])) {
+            ReturnJson(false,'参数错误');
+        }
+        $userToken = base64_decode($data['sign']);
+        $id = $userToken['id'];
+        $user = User::find($id);
+        $token = JWTAuth::fromUser($user);//生成tokenJWTAuth::
+        $user->check_email = 1;
+        $user->save();
+        ReturnJson(true,'',['token' => $token]);
+    }
 }
