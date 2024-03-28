@@ -331,7 +331,6 @@ class SendEmailController extends Controller
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
-            $data['area_id'] = City::where('id',$data['area_id'])->value('name');
             $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
@@ -407,7 +406,6 @@ class SendEmailController extends Controller
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
-            $data['area_id'] = City::where('id',$data['area_id'])->value('name');
             $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];

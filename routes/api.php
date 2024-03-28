@@ -75,6 +75,7 @@ Route::middleware('api')->group(function () {
         Route::get('customer-evaluations', [\App\Http\Controllers\PageController::class, 'CustomerEvaluations'])->name('客户评价-列表');
         Route::get('customer-evaluation', [\App\Http\Controllers\PageController::class, 'CustomerEvaluation'])->name('客户评价-详情');
         Route::post('contact-us', [\App\Http\Controllers\PageController::class, 'ContactUs'])->name('联系我们');
+        Route::post('application-sample', [\App\Http\Controllers\PageController::class, 'ApplicationSample'])->name('申请样本');
 
     });
 
