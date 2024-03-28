@@ -325,9 +325,15 @@ class UserController extends Controller
         $userToken = base64_decode($data['sign']);
         $id = $userToken['id'];
         $user = User::find($id);
-        $token = JWTAuth::fromUser($user);//生成tokenJWTAuth::
-        $user->check_email = 1;
-        $user->save();
-        ReturnJson(true,'',['token' => $token]);
+        if($user->check_email == 0){
+            $token = JWTAuth::fromUser($user);//生成tokenJWTAuth::
+            $user->check_email = 1;
+            $user->save();
+            (new SendEmailController)->RegisterSuccess($user->id);// 注册成功
+            ReturnJson(true,'',['token' => $token]);
+        } else {
+            ReturnJson(false);
+        }
+
     }
 }
