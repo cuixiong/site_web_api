@@ -11,12 +11,23 @@ class PlateController extends Controller
 {
     // 获取页面板块信息
     public function PlateValue(Request $request){
-        $id = $request->id;
-        if(empty($id)){
-            ReturnJson(false,'ID不允许为空');
+        $name = $request->name;
+        if(empty($name)){
+            ReturnJson(false,'名称不允许空');
         }
+        $ParentData = Plate::select([
+            'id',
+            'pc_image as img',
+            'mb_image as img_mobile',
+            'name as title',
+            'content as description'
+        ])->where('alias',$name)->first();
+        if(empty($ParentData)){
+            ReturnJson(false,'data is empty');
+        }
+
         $data = PlateValue::where('status',1)
-                ->where('parent_id',$id)
+                ->where('parent_id',$ParentData->id)
                 ->select([
                     'title',
                     'short_title',
@@ -27,7 +38,11 @@ class PlateController extends Controller
                     'content',
                 ])->get();
         $data = $data ? $data : [];
-        ReturnJson(true,'请求成功',$data);
+        $res = [
+            'category' => $ParentData,
+            'items' => $data
+        ];
+        ReturnJson(true,'请求成功',$res);
     }
 
     public function Form(Request $request)
