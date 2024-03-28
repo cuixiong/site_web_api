@@ -32,4 +32,10 @@ class PriceEditionValues extends Base
             file_put_contents(storage_path('log').'/prices_editon/'.date('Y_m_d',time()).'.log',FILE_APPEND);
         }
     }
+
+    public static function GetPriceEditonsIds(){
+        $data  = Redis::hgetall(self::RedisKey);
+        $ids = array_keys($data);
+        return $ids;
+    }
 }

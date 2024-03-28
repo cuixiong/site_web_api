@@ -218,7 +218,7 @@ class OrderController extends Controller
             if (!array_key_exists($payType, Order::payType())) {
                 ReturnJson(false, '支付方式错误');
             }
-            if (!in_array($priceEdition, PriceEditionValues::pluck('id')->toArray())) {
+            if (!in_array($priceEdition, PriceEditionValues::GetPriceEditonsIds())) {
                 ReturnJson(false, '价格版本错误');
             }
 
