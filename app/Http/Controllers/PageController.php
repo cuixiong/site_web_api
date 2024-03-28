@@ -161,6 +161,7 @@ class PageController extends Controller
         if($model->save()){
             // $user = new User();
             // Contact::sendContactEmail($params, $user);// 发送邮件
+            (new SendEmailController)->customized($model->id);
             ReturnJson(true,'',$model);
         } else {
             ReturnJson(false,$model->getModelError());

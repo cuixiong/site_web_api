@@ -324,6 +324,9 @@ class UserController extends Controller
         }
         $userToken = base64_decode($data['sign']);
         $id = $userToken['id'];
+        if(empty($userToken)){
+            ReturnJson(false,'签名错误');
+        }
         $user = User::find($id);
         if($user->check_email == 0){
             $token = JWTAuth::fromUser($user);//生成tokenJWTAuth::
