@@ -114,10 +114,10 @@ class SendEmailController extends Controller
                 $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
             }
             try {
-                $this->SendEmail($user['email'],$scene->body,$user,$scene->title,$senderEmail->email);
+                $this->SendEmail($user['email'],$scene->body,$data,$scene->title,$senderEmail->email);
             } catch (\Exception $e) {
                 if($scene->alternate_email_id){
-                    $this->SendEmail($user['email'],$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
+                    $this->SendEmail($user['email'],$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
                 }
             }
             return true;
@@ -183,10 +183,10 @@ class SendEmailController extends Controller
                 $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
             }
             try {
-                $this->SendEmail($user['email'],$scene->body,$user,$scene->title,$senderEmail->email);
+                $this->SendEmail($user['email'],$scene->body,$data,$scene->title,$senderEmail->email);
             } catch (\Exception $e) {
                 if($scene->alternate_email_id){
-                    $this->SendEmail($user['email'],$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
+                    $this->SendEmail($user['email'],$scene->body,$data,$scene->title,$BackupSenderEmail->email,'backups');
                 }
             }
             return true;
