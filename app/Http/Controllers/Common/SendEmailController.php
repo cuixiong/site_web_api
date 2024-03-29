@@ -529,7 +529,7 @@ class SendEmailController extends Controller
             $language = Redis::hget(Languages::RedisKey,$priceEdition['language_id']);
             $language = json_decode($language,true);
             $language = isset($language['name']) ? $language['name'] : '';
-            $Products = Products::select(['url as link','thumb','name','id as product_id','published_date'])->whereIn('id',explode(',',$OrderGoods['goods_id']))->get()->toArray();
+            $Products = Products::select(['url as link','thumb','name','id as product_id','published_date','category_id'])->whereIn('id',explode(',',$OrderGoods['goods_id']))->get()->toArray();
             if($Products){
                 foreach ($Products as $key => $value) {
                     $Products[$key]['goods_number'] = $data['out_order_num'] ? intval($data['out_order_num']) : 0;
@@ -652,7 +652,7 @@ class SendEmailController extends Controller
             $language = Redis::hget(Languages::RedisKey,$priceEdition['language_id']);
             $language = json_decode($language,true);
             $language = isset($language['name']) ? $language['name'] : '';
-            $Products = Products::select(['url as link','thumb','name','id as product_id','published_date'])->whereIn('id',explode(',',$OrderGoods['goods_id']))->get()->toArray();
+            $Products = Products::select(['url as link','thumb','name','id as product_id','published_date','category_id'])->whereIn('id',explode(',',$OrderGoods['goods_id']))->get()->toArray();
             if($Products){
                 foreach ($Products as $key => $value) {
                     $Products[$key]['goods_number'] = $data['out_order_num'] ? intval($data['out_order_num']) : 0;
