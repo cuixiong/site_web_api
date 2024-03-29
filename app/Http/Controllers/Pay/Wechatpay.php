@@ -224,7 +224,7 @@ class Wechatpay extends Pay
                                                 console.log(xhr.responseText);
                                                 obj = JSON.parse(xhr.responseText);
                                                 console.log(obj);
-                                                if (!'code' in obj || obj.code != 0 || !'data' in obj) {
+                                                if (!'code' in obj || obj.code != 200 || !'data' in obj) {
                                                     return;
                                                 }
                                                 if (!'is_pay' in obj.data || obj.data.is_pay != $orderPaySuccess) {
