@@ -295,7 +295,7 @@ class OrderController extends Controller
         if (empty($order)) {
             throw new Exception('order_id not found');
         }
-        $returnUrl = env('APP_URL') . '/paymentComplete/' . $order->id;
+        $returnUrl = rtrim(env('APP_URL').'/') . '/paymentComplete/' . $order->id;
         try {
             $wechatTool = new WechatTool();
             $wechatpay = new Wechatpay();
