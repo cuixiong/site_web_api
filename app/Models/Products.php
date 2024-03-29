@@ -2,6 +2,8 @@
 
 namespace App\Models;
 use App\Models\Base;
+use Illuminate\Support\Facades\Redis;
+
 class Products extends Base
 {
     protected $table = 'product_routine';
@@ -18,7 +20,9 @@ class Products extends Base
      */
     public static function getPrice($priceEdition, $goods)
     {
-        $priceRule = PriceEditionValues::where('id',$priceEdition)->value('rules');
+        $priceRule = Redis::hget(PriceEditionValues::RedisKey,$priceEdition);
+        $priceRule = json_decode($priceRule,true);
+        $priceRule = $priceRule['rules'];
         $price = eval("return " . sprintf($priceRule, $goods['price']) . ";");
         return $price;
     }

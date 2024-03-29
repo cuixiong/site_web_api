@@ -66,8 +66,7 @@ class OrderTrans extends Base
         ])
         ->where(['id' => $goodsId, 'status' => 1])->first();
         if (!$goods) {
-            $this->errno = ApiCode::INVALID_PARAM;
-            return null;
+            ReturnJson(false,'商品不存在');
         }
         DB::beginTransaction();
         $timestamp = time();
@@ -86,8 +85,7 @@ class OrderTrans extends Base
         $order->updated_at = $timestamp;
         $order->order_number = date('YmdHis', $timestamp).mt_rand(10, 99);
         $order->user_id = $userId;
-        // $order->is_pay = OrderModel::PAY_UNPAID;
-        $order->is_pay = 0;
+        $order->is_pay = Order::PAY_UNPAID;
         $order->pay_type = $payType;
         $order->order_amount = $orderAmount;
         $order->actually_paid = round($actuallyPaid, 2);
@@ -100,14 +98,11 @@ class OrderTrans extends Base
         $order->status = 0;
         $order->address = $address;
         $order->coupon_id = $coupon_id ? intval($coupon_id) : 0;
-        // $order->position = !empty($user->position)?$user->position:(new Ip2Location())->getLocation(Yii::$app->request->userIP)->area;
-        // $order->position = !empty($user->position)?$user->position : 0;
         $order->is_mobile_pay = $this->isMobileClient()==true ? 1 : 0; // 是否为移动端支付：0代表否，1代表是。
         $order->remarks = $remarks;
         $order->created_by = $userId;
         if (!$order->save()) {
             DB::rollBack();
-            // $this->errno = ApiCode::INSERT_FAIL;
             $this->errno = '';
             return null;
         }
@@ -195,12 +190,12 @@ class OrderTrans extends Base
         }
 
         // 插入订单表 order
-        $order = new OrderModel();
+        $order = new Order();
         $order->created_at = $timestamp;
         $order->updated_at = $timestamp;
         $order->order_number = date('YmdHis', $timestamp).mt_rand(10, 99);
         $order->user_id = $userId;
-        $order->is_pay = OrderModel::PAY_UNPAID;
+        $order->is_pay = Order::PAY_UNPAID;
         $order->pay_type = $payType;
         $order->order_amount = $orderAmountAll;
         $order->actually_paid = round($actuallyPaidAll, 2);
@@ -323,12 +318,12 @@ class OrderTrans extends Base
         }
 
         // 插入订单表 order
-        $order = new OrderModel();
+        $order = new Order();
         $order->created_at = $timestamp;
         $order->updated_at = $timestamp;
         $order->order_number = date('YmdHis', $timestamp).mt_rand(10, 99);
         $order->user_id = $userId;
-        $order->is_pay = OrderModel::PAY_UNPAID;
+        $order->is_pay = Order::PAY_UNPAID;
         $order->pay_type = $payType;
         $order->order_amount = $orderAmountAll; // 原价
         $order->actually_paid = round($actuallyPaidAll ,2); // 折后
@@ -344,10 +339,9 @@ class OrderTrans extends Base
         $order->position = !empty($user->position)?$user->position:$position = (new Ip2Location())->getLocation(Yii::$app->request->userIP)->area;
         $order->is_mobile_pay = $this->isMobileClient()==true ? 1 : 0; // 是否为移动端支付：0代表否，1代表是。
         $order->remarks = $remarks;
-        if (!$order->save(false)) {
+        if (!$order->save()) {
             DB::rollBack();
-            $this->errno = ApiCode::INSERT_FAIL;
-            return null;
+            ReturnJson(false,'新增失败');
         }
 
         // 插入订单商品表 order_goods
