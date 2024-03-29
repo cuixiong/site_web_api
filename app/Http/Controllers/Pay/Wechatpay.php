@@ -29,7 +29,7 @@ class Wechatpay extends Pay
      */
     public function do($order, $options = [])
     {
-        $returnUrl = env('APP_URL','').'/paymentcomplete/'.$order->id;
+        $returnUrl = rtrim(env('APP_URL',''),'/').'/paymentcomplete/'.$order->id;
         if ($this->getOption(self::KEY_IS_WECHAT) == self::OPTION_ENABLE) {
 
             $wechat_type = 'native';
@@ -497,7 +497,7 @@ class Wechatpay extends Pay
             'mchid' => $this->wechatTool::$MERCHANT_ID, // 商户号
             'description' => $this->wechatTool::$DESCRIPTION,
             'out_trade_no' => $order->order_number,
-            'notify_url' => env('APP_URL').'/api/notify/wechatpay',
+            'notify_url' => rtrim(env('APP_URL',''),'/').'/api/notify/wechatpay',
             'amount' => [
                 'total' => $order->actually_paid * 100, // 单位为分
                 'currency' => 'CNY',
@@ -527,7 +527,7 @@ class Wechatpay extends Pay
             'mchid' => $this->wechatTool::$MERCHANT_ID, // 商户号
             'description' => $this->wechatTool::$DESCRIPTION,
             'out_trade_no' => $order->order_number,
-            'notify_url' => env('APP_URL').'/api/notify/wechatpay',
+            'notify_url' => rtrim(env('APP_URL',''),'/').'/api/notify/wechatpay',
             'amount' => [
                 'total' => $order->actually_paid * 100, // 单位为分
                 'currency' => 'CNY',
@@ -568,7 +568,7 @@ class Wechatpay extends Pay
             'mchid' => $this->wechatTool::$MERCHANT_ID, // 商户号
             'description' => $this->wechatTool::$DESCRIPTION,
             'out_trade_no' => $order->order_number,
-            'notify_url' => env('APP_URL','').'/api/notify/wechatpay',
+            'notify_url' => rtrim(env('APP_URL',''),'/').'/api/notify/wechatpay',
             'amount' => [
                 'total' => $order->actually_paid * 100, // 单位为分
                 'currency' => 'CNY',

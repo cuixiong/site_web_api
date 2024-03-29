@@ -37,7 +37,7 @@ class Alipay extends Pay
         // 应用公钥证书文件路径
         $options->merchantCertPath = base_path().env('ALIPAY_MERCHANT_CERT','');
         // 异步通知接收服务地址
-        $options->notifyUrl = env('APP_URL','') . '/api/notify/alipay';
+        $options->notifyUrl = rtrim(env('APP_URL',''), '/') . '/api/notify/alipay';
         // exit;
         Factory::setOptions($options);
     }
@@ -51,7 +51,7 @@ class Alipay extends Pay
             $subject = env('ALIPAY_SUBJECT', '商品名称'); // 商品名称
             $outTradeNo = $order->order_number; // 外部订单号
             $totalAmount = $order->actually_paid; // 交易金额
-            $returnUrl = env('APP_URL','') . '/paymentcomplete/' . $order->id; // 同步回调地址
+            $returnUrl = rtrim(env('APP_URL',''), '/') . '/paymentcomplete/' . $order->id; // 同步回调地址
             if ($this->getOption(self::KEY_IS_MOBILE) == self::OPTION_ENABLE) {
                 $quitUrl = env('APP_URL','');
                 $result = Factory::payment()->Wap()->pay($subject, $outTradeNo, $totalAmount, $quitUrl, $returnUrl);
