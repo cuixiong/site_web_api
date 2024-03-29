@@ -14,6 +14,7 @@ use App\Models\OrderGoods;
 use App\Models\Pay;
 use App\Models\PriceEditionValues;
 use App\Models\Products;
+use App\Models\ProductsCategory;
 use App\Models\SystemValue;
 use App\Models\User;
 use Illuminate\Support\Facades\Redis;
@@ -536,6 +537,12 @@ class SendEmailController extends Controller
                     $Products[$key]['price_edition'] = $priceEdition['name'];
                     $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
                     $Products[$key]['thumb'] = rtrim(env('IMAGE_URL',''),'/').$value['thumb'];
+                    if(empty($value['thumb'])){
+                        $categoryThumb = ProductsCategory::where('id',$value['category_id'])->value('thumb');
+                        $Products[$key]['thumb'] = rtrim(env('IMAGE_URL',''),'/').$categoryThumb;
+                    } else {
+                        $Products[$key]['thumb'] = rtrim(env('IMAGE_URL',''),'/').$value['thumb'];
+                    }
                 }
             }
             $cityName = City::where('id',$data['city_id'])->value('name');
@@ -652,7 +659,12 @@ class SendEmailController extends Controller
                     $Products[$key]['language'] = $language;
                     $Products[$key]['price_edition'] = $priceEdition['name'];
                     $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
-                    $Products[$key]['thumb'] = rtrim(env('IMAGE_URL',''),'/').$value['thumb'];
+                    if(empty($value['thumb'])){
+                        $categoryThumb = ProductsCategory::where('id',$value['category_id'])->value('thumb');
+                        $Products[$key]['thumb'] = rtrim(env('IMAGE_URL',''),'/').$categoryThumb;
+                    } else {
+                        $Products[$key]['thumb'] = rtrim(env('IMAGE_URL',''),'/').$value['thumb'];
+                    }
                 }
             }
             $cityName = City::where('id',$data['city_id'])->value('name');
