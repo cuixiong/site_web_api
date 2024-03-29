@@ -372,6 +372,10 @@ class Wechatpay extends Pay
             throw new Exception($msg);
         }
 
+        if($order->is_pay == Order::PAY_SUCCESS){
+            return ['code' => 'SUCCESS', 'message' => ''];
+        }
+
         // 改变订单状态
         $order->out_order_num = $transaction_id;
         $order->is_pay = Order::PAY_SUCCESS;
