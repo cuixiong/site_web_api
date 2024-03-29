@@ -385,8 +385,8 @@ class OrderController extends Controller
             'remarks',
         ])
         ->where(['id' => $orderId])
-        ->first()->toArray();
-        if (!is_array($order)) {
+        ->first();
+        if (!$order) {
             ReturnJson(false,'订单不存在');
         }
         $orderStatus = $order['is_pay'] ?? '';
