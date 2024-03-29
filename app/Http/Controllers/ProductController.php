@@ -61,7 +61,7 @@ class ProductController extends Controller
                 $products[$key]['discount_type'] = $value['discount_type'];
                 $products[$key]['discount_amount'] = $value['discount_amount'];
                 $products[$key]['discount'] = $value['discount'];
-                $products[$key]['prices'] = Products::CountPrice($value['publisher_id'],$value['publisher_id'],$languages,$priceEditionsValue,$priceEditions) ?? [];
+                $products[$key]['prices'] = Products::CountPrice($value['price'],$value['publisher_id'],$languages,$priceEditionsValue,$priceEditions) ?? [];
                 $products[$key]['id'] = $value['id'];
                 $products[$key]['url'] = $value['url'];
             }
