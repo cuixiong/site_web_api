@@ -532,7 +532,7 @@ class SendEmailController extends Controller
             $Products = Products::select(['url as link','thumb','name','id as product_id','published_date','category_id'])->whereIn('id',explode(',',$OrderGoods['goods_id']))->get()->toArray();
             if($Products){
                 foreach ($Products as $key => $value) {
-                    $Products[$key]['goods_number'] = $data['out_order_num'] ? intval($data['out_order_num']) : 0;
+                    $Products[$key]['goods_number'] = $OrderGoods['goods_number'] ? intval($OrderGoods['goods_number']) : 0;
                     $Products[$key]['language'] = $language;
                     $Products[$key]['price_edition'] = $priceEdition['name'];
                     $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
@@ -655,7 +655,7 @@ class SendEmailController extends Controller
             $Products = Products::select(['url as link','thumb','name','id as product_id','published_date','category_id'])->whereIn('id',explode(',',$OrderGoods['goods_id']))->get()->toArray();
             if($Products){
                 foreach ($Products as $key => $value) {
-                    $Products[$key]['goods_number'] = $data['out_order_num'] ? intval($data['out_order_num']) : 0;
+                    $Products[$key]['goods_number'] = $OrderGoods['goods_number'] ? intval($OrderGoods['goods_number']) : 0;
                     $Products[$key]['language'] = $language;
                     $Products[$key]['price_edition'] = $priceEdition['name'];
                     $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
