@@ -29,7 +29,7 @@ class SitemapController extends Controller
             chmod($dir, 0777);
         }
         $this->dir = $dir;
-        $this->domain = env('APP_URL','');
+        $this->domain = rtrim(env('APP_URL',''),'/');
     }
 
     /**
