@@ -24,3 +24,6 @@ Homestead.json
 .htaccess
 /resources/views/emails/
 storage/log/_notify_log/
+/public/nginx.htaccess
+/public/robots.txt
+/public/favicon.ico
