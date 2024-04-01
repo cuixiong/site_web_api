@@ -18,6 +18,8 @@ class ContactUsController extends Controller
             $company = $request->company;// 公司名称
             $channel = $request->channel;// 来源
             $buy_time = $request->buy_time;// 购买时间
+            $product_id = $request->product_id; // 报告id
+            $remarks = $request->remarks; // 备注/内容
             $category_id = $request->category_id ? $request->category_id : 0;// 留言分类ID
             $area_id = $request->area_id ? $request->area_id : 0;// 地区ID
             $model = new \App\Models\ContactUs();
@@ -28,6 +30,8 @@ class ContactUsController extends Controller
             $model->category_id = $category_id;
             $model->buy_time = $buy_time;
             $model->area_id = $area_id;
+            $model->product_id = $product_id;
+            $model->remarks = $remarks;
             $model->save();
             // 发送验证邮件
             (new SendEmailController)->productSample($model->id);
