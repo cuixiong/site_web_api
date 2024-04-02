@@ -10,7 +10,7 @@ class Products extends Base
 
     public function getPublishedDataAttributes($value)
     {
-        return date('Y-m-d H:i:s', $value);
+        return date('Y-m-d', $value);
     }
 
     /**

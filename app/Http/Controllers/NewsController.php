@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Http\Controllers\Controller;
 use App\Models\Languages;
 use App\Models\News;
@@ -29,25 +30,25 @@ class NewsController extends Controller
         ];
 
         $query = News::select([
-                'thumb',
-                'title',
-                'upload_at as release_at',
-                'tags',
-                'description',
-                'type as industry_id',
-                'id',
-                'url'
-            ])
+            'thumb',
+            'title',
+            'upload_at as release_at',
+            'tags',
+            'description',
+            'type as industry_id',
+            'id',
+            'url'
+        ])
             ->where($where)
-            ->where('upload_at','<=',  time());
+            ->where('upload_at', '<=',  time());
 
         $count = News::where($where);
         if (!empty($keyword)) {
             $keyword = explode(" ", $keyword);
             for ($i = 0; $i <= count($keyword); $i++) {
                 if (!empty($keyword[$i])) {
-                    $query = $query->where('title','LIKE','%'.$keyword[$i].'%');
-                    $count = $count->where('title','LIKE','%'.$keyword[$i].'%');
+                    $query = $query->where('title', 'LIKE', '%' . $keyword[$i] . '%');
+                    $count = $count->where('title', 'LIKE', '%' . $keyword[$i] . '%');
                 }
             }
         }
@@ -59,10 +60,10 @@ class NewsController extends Controller
         }
 
         if (!empty($tag)) {
-            $query = $query->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
-            $count = $count->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
+            $query = $query->whereRaw(DB::raw('FIND_IN_SET("' . $tag . '",tags)'));
+            $count = $count->whereRaw(DB::raw('FIND_IN_SET("' . $tag . '",tags)'));
         }
-        $result = $query->orderBy('sort','asc')->orderBy('upload_at','desc')
+        $result = $query->orderBy('sort', 'asc')->orderBy('upload_at', 'desc')
             ->offset(($page - 1) * $pageSize)
             ->limit($pageSize)
             ->get()
@@ -75,7 +76,7 @@ class NewsController extends Controller
                 $news[$key]['title'] = $value['title'];
                 $news[$key]['month_day'] = $value['release_at'] ? date('m-d', $value['release_at']) : '';
                 $news[$key]['year'] = $value['release_at'] ? date('Y', $value['release_at']) : '';
-                $news[$key]['category'] = ProductsCategory::select(['id','name','link'])->where('id',$value['industry_id'])->first();
+                $news[$key]['category'] = ProductsCategory::select(['id', 'name', 'link'])->where('id', $value['industry_id'])->first();
                 $news[$key]['tags'] = $value['tags'] ? explode(',', $value['tags']) : [];
                 $news[$key]['description'] = $value['description'];
                 $news[$key]['id'] = $value['id'];
@@ -90,7 +91,7 @@ class NewsController extends Controller
             'pageCount' => ceil($count / $pageSize),
             "count" => intval($count),
         ];
-        ReturnJson(true,'',$data);
+        ReturnJson(true, '', $data);
     }
 
     /**
@@ -100,18 +101,18 @@ class NewsController extends Controller
     {
         $id = $request->id;
         if (!isset($id)) {
-            ReturnJson(false,'id is empty');
+            ReturnJson(false, 'id is empty');
         }
 
         $data = News::select([
-                'title',
-                'upload_at',
-                'hits',
-                'tags',
-                'content',
-                'keywords',
-                'description'
-            ])
+            'title',
+            'upload_at',
+            'hits',
+            'tags',
+            'content',
+            'keywords',
+            'description'
+        ])
             ->where(['id' => $id, 'status' => 1])
             ->first();
         if ($data) {
@@ -123,16 +124,16 @@ class NewsController extends Controller
 
         //查询上一篇
         $prev = News::select(['id', 'title', 'url', 'category_id'])
-            ->where('id','<',  $id)
+            ->where('id', '<',  $id)
             ->where(['status' => 1])
-            ->orderBy('id','desc')
+            ->orderBy('id', 'desc')
             ->first();
 
         //查询下一篇
         $next = News::select(['id', 'title', 'url', 'category_id'])
-            ->where('id','>',  $id)
+            ->where('id', '>',  $id)
             ->where(['status' => 1])
-            ->orderBy('id','asc')
+            ->orderBy('id', 'asc')
             ->first();
 
         $prev_next = [];
@@ -152,7 +153,7 @@ class NewsController extends Controller
 
         $data['prev_next'] = $prev_next;
 
-        ReturnJson(true,'success',$data);
+        ReturnJson(true, 'success', $data);
     }
 
     /**
@@ -160,9 +161,9 @@ class NewsController extends Controller
      */
     public function Relevant(Request $request)
     {
-        $id =$request->id; // 从详情页获取id，根据该id获取相关数据
+        $id = $request->id; // 从详情页获取id，根据该id获取相关数据
         if (empty($id)) {
-            ReturnJson(false,'id is empty');
+            ReturnJson(false, 'id is empty');
         }
         // $category_id = 1;
 
@@ -172,15 +173,15 @@ class NewsController extends Controller
             'id',
             'url',
         ])
-        ->where('status',1)
-        ->where( 'id','<>',$id)
-        // ->where($category_id)
-        ->orderBy('sort','asc')
-        ->orderBy('created_at','desc')
-        ->limit(5)
-        ->get()
-        ->toArray();
-        ReturnJson(true,'success',$data);
+            ->where('status', 1)
+            ->where('id', '<>', $id)
+            // ->where($category_id)
+            ->orderBy('sort', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->toArray();
+        ReturnJson(true, 'success', $data);
     }
 
     /**
@@ -191,13 +192,13 @@ class NewsController extends Controller
     public function RelevantProducts(Request $request)
     {
         $id = $request->id ? $request->id : null;
-        $keyword = News::where('id',$id)->value('tags');
+        $keyword = News::where('id', $id)->value('tags');
         if (!empty($keyword)) {
             $keyword = explode(',', $keyword);
         }
         $data = [];
         if ($keyword) {
-            $begin = strtotime("-2 year", strtotime(date('Y-01-01',time()))); // 前两年
+            $begin = strtotime("-2 year", strtotime(date('Y-01-01', time()))); // 前两年
             $result = Products::select([
                 'id',
                 'name',
@@ -211,21 +212,22 @@ class NewsController extends Controller
                 'discount_amount as discount_value',
                 // 'description_seo'
             ])
-            ->whereIn('keywords', $keyword)
-            ->where('published_date','>',$begin)
-            ->orderBy('published_date','desc')
-            ->get()
-            ->toArray();
+                ->whereIn('keywords', $keyword)
+                ->where('published_date', '>', $begin)
+                ->orderBy('published_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->get()
+                ->toArray();
 
             if ($result) {
                 foreach ($result as $key => $value) {
-                    $data[$key]['thumb'] = ProductsCategory::where('id',$value['category_id'])->value('thumb');
+                    $data[$key]['thumb'] = ProductsCategory::where('id', $value['category_id'])->value('thumb');
                     $data[$key]['name'] = $value['name'];
                     $data[$key]['keyword'] = $value['keywords'];
                     $data[$key]['english_name'] = $value['english_name'];
                     // $data[$key]['description'] = $value['description_seo'];
                     $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
-                    $data[$key]['categoryName'] = ProductsCategory::where('id',$value['category_id'])->value('name');
+                    $data[$key]['categoryName'] = ProductsCategory::where('id', $value['category_id'])->value('name');
                     $data[$key]['discount_type'] = $value['discount_type'];
                     $data[$key]['discount_value'] = $value['discount_value'];
 
@@ -254,6 +256,6 @@ class NewsController extends Controller
                 }
             }
         }
-        ReturnJson(true,'success',$data);
+        ReturnJson(true, 'success', $data);
     }
 }
