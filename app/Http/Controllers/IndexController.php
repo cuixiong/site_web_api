@@ -134,10 +134,10 @@ class IndexController extends Controller
             ->orderBy('sort', 'desc')
             ->orderBy('upload_at', 'desc')
             ->orderBy('id', 'desc')
-            ->limit(6)->get();
+            ->limit(6)->get()->toArray();
         if ($list) {
             $list = array_map(function ($item) {
-                $item['upload_at'] = date('Y-m-d H:i:s', $item['upload_at']);
+                $item['upload_at_format'] = date('Y-m-d H:i:s', $item['upload_at']);
                 return $item;
             }, $list);
         }
