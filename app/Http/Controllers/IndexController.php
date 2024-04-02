@@ -137,7 +137,7 @@ class IndexController extends Controller
             ->limit(6)->get();
         if ($list) {
             $list = array_map(function ($item) {
-                $item['upload_at_format'] = date('Y-m-d H:i:s', $item['upload_at']);
+                $item['upload_at'] = date('Y-m-d H:i:s', $item['upload_at']);
                 return $item;
             }, $list);
         }
