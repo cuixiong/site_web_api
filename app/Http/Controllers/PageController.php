@@ -12,6 +12,7 @@ use App\Models\Page;
 use App\Models\Partner;
 use App\Models\Problem;
 use App\Models\Qualification;
+use App\Models\QuoteCategory;
 use App\Models\TeamMember;
 use Illuminate\Http\Request;
 
@@ -20,31 +21,32 @@ class PageController extends Controller
     /**
      * 获取单页面内容
      */
-    public function Get(Request $request){
+    public function Get(Request $request)
+    {
         $link = $request->link ?? 'index';
-        if(empty($link)){
-            ReturnJson(false,'link is empty');
+        if (empty($link)) {
+            ReturnJson(false, 'link is empty');
         }
-        $domian = env('APP_URL','');
-        $front_menu_id = Menu::where('link',$link)->value('id');
-        $content = Page::where('page_id',$front_menu_id)->value('content');
+        $domian = env('APP_URL', '');
+        $front_menu_id = Menu::where('link', $link)->value('id');
+        $content = Page::where('page_id', $front_menu_id)->value('content');
         // $content = str_replace('src="', 'src="'.$domian, $content);
-        $content = str_replace('srcset="', 'srcset="'.$domian, $content);
-        $content = str_replace('url("', 'url("'.$domian, $content);
-        if(strpos($content,'%s')!==false){
+        $content = str_replace('srcset="', 'srcset="' . $domian, $content);
+        $content = str_replace('url("', 'url("' . $domian, $content);
+        if (strpos($content, '%s') !== false) {
             $year = bcsub(date('Y'), 2022); // 两个任意精度数字的减法
             $content = str_replace('%s', bcadd(15, $year), $content);
         }
 
-        if($link=='about'){ // 其中的单页【公司简介】（link值是about）比较特殊：后台此单页富文本编辑器的内容要返回a和b两部分给前端，a和b中间嵌入其它内容。
-            $divisionArray = explode('<div id="division"></div>',$content);
+        if ($link == 'about') { // 其中的单页【公司简介】（link值是about）比较特殊：后台此单页富文本编辑器的内容要返回a和b两部分给前端，a和b中间嵌入其它内容。
+            $divisionArray = explode('<div id="division"></div>', $content);
             $special = [
                 'a' => $divisionArray[0],
                 'b' => isset($divisionArray[1]) ? $divisionArray[1] : '',
             ];
             $content = $special;
         }
-        ReturnJson(true,'',$content);
+        ReturnJson(true, '', $content);
     }
 
     /**
@@ -52,23 +54,30 @@ class PageController extends Controller
      */
     public function Quotes(Request $request)
     {
-        $page = $request->page ?? 1;
-        $pageSize = $request->pageSize ?? 16;
-        $category_id = $request->category_id ?? 0;
-        $model = Authority::select(['id', 'name as title', 'thumbnail as img','category_id'])->orderBy('sort','asc');
-        if($category_id){
-            $model = $model->where('class_id',$category_id);
+        $page = !empty($request->page) ? $request->page : 1;
+        $pageSize = !empty($request->pageSize) ? $request->pageSize : 16;
+        $category_id = !empty($request->category_id) ? $request->category_id : 0;
+
+        //权威引用分类
+        $category = QuoteCategory::select(['id', 'name'])->orderBy('sort', 'asc')->get()->toArray() ?? [];
+        array_unshift($category, ['id' => '0', 'name' => '全部']);
+
+        // 数据
+        $model = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id'])->orderBy('sort', 'asc');
+        if ($category_id) {
+            $model = $model->where('category_id', $category_id);
         }
         $count = $model->count();
-        $result = $model->offset(($page-1)*$pageSize)->limit($pageSize)->get()->toArray();
+        $result = $model->offset(($page - 1) * $pageSize)->limit($pageSize)->get()->toArray();
         $data = [
             'result' => $result,
+            'category' => $category,
             'page' => $page,
             'pageSize' => $pageSize,
-            'pageCount' => ceil($count/$pageSize),
+            'pageCount' => ceil($count / $pageSize),
             'count' => intval($count),
         ];
-        ReturnJson(true,'',$data);
+        ReturnJson(true, '', $data);
     }
 
     /**
@@ -77,11 +86,11 @@ class PageController extends Controller
     public function Quote(Request $request)
     {
         $id = $request->id;
-        if(empty($id)){
-            ReturnJson(false,'id is empty');
+        if (empty($id)) {
+            ReturnJson(false, 'id is empty');
         }
-        $data = Authority::select(['name as title', 'description as content'])->where('id',$id)->first();
-        ReturnJson(true,'',$data);
+        $data = Authority::select(['name as title', 'description as content'])->where('id', $id)->first();
+        ReturnJson(true, '', $data);
     }
 
     /**
@@ -117,11 +126,11 @@ class PageController extends Controller
         $model->buy_time = $plan_buy_time;
         $model->remarks = $content;
         $model->status = 0;
-        if($model->save()){
-            (new SendEmailController)->contactUs($model->id);// 发送邮件
-            ReturnJson(true,'',$model);
+        if ($model->save()) {
+            (new SendEmailController)->contactUs($model->id); // 发送邮件
+            ReturnJson(true, '', $model);
         } else {
-            ReturnJson(false,$model->getModelError());
+            ReturnJson(false, $model->getModelError());
         }
     }
 
@@ -158,13 +167,13 @@ class PageController extends Controller
         $model->buy_time = $plan_buy_time;
         $model->remarks = $content;
         $model->status = 0;
-        if($model->save()){
+        if ($model->save()) {
             // $user = new User();
             // Contact::sendContactEmail($params, $user);// 发送邮件
             (new SendEmailController)->customized($model->id);
-            ReturnJson(true,'',$model);
+            ReturnJson(true, '', $model);
         } else {
-            ReturnJson(false,$model->getModelError());
+            ReturnJson(false, $model->getModelError());
         }
     }
 
@@ -201,11 +210,11 @@ class PageController extends Controller
         $model->buy_time = $plan_buy_time;
         $model->remarks = $content;
         $model->status = 0;
-        if($model->save()){
-            (new SendEmailController)->productSample($model->id);// 发送邮件
-            ReturnJson(true,'',$model);
+        if ($model->save()) {
+            (new SendEmailController)->productSample($model->id); // 发送邮件
+            ReturnJson(true, '', $model);
         } else {
-            ReturnJson(false,$model->getModelError());
+            ReturnJson(false, $model->getModelError());
         }
     }
 
@@ -221,13 +230,13 @@ class PageController extends Controller
             'image as img',
             'custom as sketch'
         ])
-        ->where('status',1)
-        ->orderBy('sort','asc')
-        ->get()
-        ->toArray();
-        ReturnJson(true,'',$data);
+            ->where('status', 1)
+            ->orderBy('sort', 'asc')
+            ->get()
+            ->toArray();
+        ReturnJson(true, '', $data);
     }
-    
+
     /**
      * 资质认证
      */
@@ -238,27 +247,27 @@ class PageController extends Controller
         $pageSize = $params['pageSize'] ?? 12;
 
         $result = Qualification::select([
-            'id', 
-            'name as title', 
-            'thumbnail as thumb', 
+            'id',
+            'name as title',
+            'thumbnail as thumb',
             'image as img'
         ])
-        ->orderBy('sort','asc')
-        ->where('status',1)
-        ->offset(($page-1)*$pageSize)
-        ->limit($pageSize)
-        ->get()
-        ->toArray();
-        $count = Qualification::where('status',1)->count();
+            ->orderBy('sort', 'asc')
+            ->where('status', 1)
+            ->offset(($page - 1) * $pageSize)
+            ->limit($pageSize)
+            ->get()
+            ->toArray();
+        $count = Qualification::where('status', 1)->count();
 
         $data = [
             'result' => $result,
             'page' => $page,
             'pageSize' => $pageSize,
-            'pageCount' => ceil($count/$pageSize),
+            'pageCount' => ceil($count / $pageSize),
             'count' => intval($count),
         ];
-        ReturnJson(true,'',$data);
+        ReturnJson(true, '', $data);
     }
 
     /**
@@ -266,8 +275,8 @@ class PageController extends Controller
      */
     public function Faqs()
     {
-        $data = Problem::select(['problem as question', 'reply as answer'])->where('status',1)->orderBy('sort','asc')->get()->toArray();
-        ReturnJson(true,'',$data);
+        $data = Problem::select(['problem as question', 'reply as answer'])->where('status', 1)->orderBy('sort', 'asc')->get()->toArray();
+        ReturnJson(true, '', $data);
     }
 
     /**
@@ -284,21 +293,21 @@ class PageController extends Controller
             'title',
             'image as thumb',
         ])
-        ->orderBy('sort','asc')
-        ->where('status',1);
-        
+            ->orderBy('sort', 'asc')
+            ->where('status', 1);
+
         $count = $query->count();
 
-        $result = $query->offset(($page-1)*$pageSize)->limit($pageSize)->get()->toArray();
+        $result = $query->offset(($page - 1) * $pageSize)->limit($pageSize)->get()->toArray();
 
         $data = [
             'result' => $result,
             "page" => $page,
             "pageSize" => $pageSize,
-            'pageCount' => ceil($count/$pageSize),
+            'pageCount' => ceil($count / $pageSize),
             "count" => intval($count),
         ];
-        ReturnJson(true,'',$data);
+        ReturnJson(true, '', $data);
     }
 
     /**
@@ -307,7 +316,7 @@ class PageController extends Controller
     public function CustomerEvaluation(Request $request)
     {
         $id = $request->id;
-        if(!isset($id)){
+        if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }
         $data = Comment::select([
@@ -315,9 +324,9 @@ class PageController extends Controller
             'created_at',
             'image as img',
         ])
-        ->where('status',1)
-        ->where('id',$id)
-        ->first();
-        ReturnJson(true,'',$data);
+            ->where('status', 1)
+            ->where('id', $id)
+            ->first();
+        ReturnJson(true, '', $data);
     }
 }

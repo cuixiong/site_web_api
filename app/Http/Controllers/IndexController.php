@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\News;
 use App\Models\Office;
 use App\Models\Partner;
@@ -16,37 +17,38 @@ class IndexController extends Controller
     public function NewsProduct(Request $request)
     {
         $list = Products::where('status', 1)
-                ->select([
-                    'id',
-                    'thumb',
-                    'name',
-                    'published_date',
-                    'price',
-                    'url'
-                ])
-                ->orderBy('sort', 'desc') // 排序权重：sort > 发布时间 > id
-                ->orderBy('published_date', 'desc')
-                ->orderBy('id', 'desc')
-                ->limit(6)->get()->toArray();
+            ->select([
+                'id',
+                'thumb',
+                'name',
+                'published_date',
+                'price',
+                'url'
+            ])
+            ->orderBy('sort', 'desc') // 排序权重：sort > 发布时间 > id
+            ->orderBy('published_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit(6)->get()->toArray();
         foreach ($list as $key => &$value) {
-            $description = (new ProductDescription(date('Y',strtotime($value['published_date']))))->where('product_id',$value['id'])->value('description');
-            $value['description'] = mb_substr ($description,0,100, 'UTF-8');
-            $value['published_date'] = date('Y-m-d',strtotime($value['published_date']));
+            $description = (new ProductDescription(date('Y', strtotime($value['published_date']))))->where('product_id', $value['id'])->value('description');
+            $value['description'] = mb_substr($description, 0, 100, 'UTF-8');
+            $value['published_date'] = date('Y-m-d', strtotime($value['published_date']));
         }
         $list = $list ? $list : [];
-        ReturnJson(true,'',$list);
+        ReturnJson(true, '', $list);
     }
+
     // 推荐报告
     public function RecommendProduct(Request $request)
     {
         $categories = ProductsCategory::select([
-                'id',
-                'name',
-                'link',
-            ])
-            ->orderBy('sort','asc')
-            ->where('show_home',1)
-            ->where('pid',0)
+            'id',
+            'name',
+            'link',
+        ])
+            ->orderBy('sort', 'asc')
+            ->where('show_home', 1)
+            ->where('pid', 0)
             ->limit(4)
             ->get()
             ->toArray();
@@ -60,7 +62,7 @@ class IndexController extends Controller
                     'url' => $category['link'],
                 ];
 
-                $keywords = Products::where('category_id',$category['id'])->limit(5)->pluck('keywords');
+                $keywords = Products::where('category_id', $category['id'])->limit(5)->pluck('keywords');
                 if (!empty($keywords)) {
                     $data[$index]['keywords'] = $keywords;
                 } else {
@@ -68,25 +70,25 @@ class IndexController extends Controller
                 }
 
                 $firstProduct = Products::select([
-                        'name',
-                        'keywords',
-                        'price',
-                        'id',
-                        'url',
-                        'category_id',
-                        'published_date',
-                    ])
-                    ->where('category_id',$category['id'])
-                    ->where('show_recommend',1)
-                    ->orderBy('sort','asc')
+                    'name',
+                    'keywords',
+                    'price',
+                    'id',
+                    'url',
+                    'category_id',
+                    'published_date',
+                ])
+                    ->where('category_id', $category['id'])
+                    ->where('show_recommend', 1)
+                    ->orderBy('sort', 'asc')
                     ->first();
 
                 if (!empty($firstProduct)) {
-                    $thumb = ProductsCategory::where('id',$firstProduct['category_id'])->value('thumb');
+                    $thumb = ProductsCategory::where('id', $firstProduct['category_id'])->value('thumb');
                     $firstProduct['thumb'] = $thumb;
-                    $firstProduct['description'] = (new ProductDescription(date('Y',strtotime($firstProduct['published_date']))))
-                                                    ->where('product_id',$firstProduct['id'])
-                                                    ->value('description');
+                    $firstProduct['description'] = (new ProductDescription(date('Y', strtotime($firstProduct['published_date']))))
+                        ->where('product_id', $firstProduct['id'])
+                        ->value('description');
                 }
                 if (!empty($firstProduct)) {
                     $data[$index]['firstProduct'] = $firstProduct;
@@ -96,13 +98,13 @@ class IndexController extends Controller
                         'id',
                         'url'
                     ])
-                    ->where('category_id',$category['id'])
-                    ->where('show_recommend',1)
-                    ->where('id','<>',$firstProduct['id'])
-                    ->orderBy('sort','asc')
-                    ->limit(4)
-                    ->get()
-                    ->toArray();
+                        ->where('category_id', $category['id'])
+                        ->where('show_recommend', 1)
+                        ->where('id', '<>', $firstProduct['id'])
+                        ->orderBy('sort', 'asc')
+                        ->limit(4)
+                        ->get()
+                        ->toArray();
                 } else {
                     $data[$index]['firstProduct'] = [];
                 }
@@ -113,65 +115,71 @@ class IndexController extends Controller
                 }
             }
         }
-        ReturnJson(true,'success',$data);
+        ReturnJson(true, 'success', $data);
     }
 
     // 行业新闻
     public function RecommendNews(Request $request)
     {
         $list = News::where('status', 1)
-                ->select([
-                    'id',
-                    'thumb',
-                    'title',
-                    'description',
-                    'upload_at',
-                    'url'
-                ])
-                ->where('show_home',1) // 是否在首页显示
-                ->orderBy('sort', 'desc')
-                ->orderBy('upload_at', 'desc')
-                ->orderBy('id', 'desc')
-                ->limit(6)->get();
-        ReturnJson(true,'',$list);
+            ->select([
+                'id',
+                'thumb',
+                'title',
+                'description',
+                'upload_at',
+                'url'
+            ])
+            ->where('show_home', 1) // 是否在首页显示
+            ->orderBy('sort', 'desc')
+            ->orderBy('upload_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit(6)->get();
+        if ($list) {
+            $list = array_map(function ($item) {
+                $item['upload_at_format'] = date('Y-m-d H:i:s', $item['upload_at']);
+                return $item;
+            }, $list);
+        }
+        ReturnJson(true, '', $list);
     }
     // 合作伙伴
     public function partners(Request $request)
     {
         $list = Partner::where('status', 1)
-                ->select([
-                    'id',
-                    'name',
-                    'logo',
-                ])
-                ->orderBy('sort', 'desc')
-                ->orderBy('id', 'desc')
-                ->get();
-        ReturnJson(true,'',$list);
+            ->select([
+                'id',
+                'name',
+                'logo',
+            ])
+            ->orderBy('sort', 'desc')
+            ->orderBy('id', 'desc')
+            ->get();
+        ReturnJson(true, '', $list);
     }
     // 办公室
     public function office(Request $request)
     {
         $list = Office::where('status', 1)
-        ->select([
-            'id',
-            'city',
-            'name',
-            'language_alias',
-            'region',
-            'area',
-            'image',
-            'national_flag',
-            'phone',
-            'address',
-            'working_language',
-            'working_time',
-            'time_zone',
-        ])
-        ->orderBy('sort', 'desc')
-        ->orderBy('id', 'desc')
-        ->get();
-        ReturnJson(true,'',$list);
+            ->select([
+                'id',
+                'city',
+                'name',
+                'language_alias',
+                'region',
+                'area',
+                'image',
+                'national_flag',
+                'phone',
+                'address',
+                'working_language',
+                'working_time',
+                'time_zone',
+            ])
+            ->orderBy('sort', 'desc')
+            ->orderBy('id', 'desc')
+            ->get();
+        ReturnJson(true, '', $list);
     }
 
     /**
@@ -180,8 +188,8 @@ class IndexController extends Controller
     public function WebpageOrientation(Request $request)
     {
         $id = $request->id;
-        if(empty($id)){
-            ReturnJson(false,'ID不能为空！');
+        if (empty($id)) {
+            ReturnJson(false, 'ID不能为空！');
         }
     }
 }
