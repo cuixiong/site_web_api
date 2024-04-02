@@ -216,6 +216,7 @@ class NewsController extends Controller
                 ->where('published_date', '>', $begin)
                 ->orderBy('published_date', 'desc')
                 ->orderBy('id', 'desc')
+                ->limit(2)
                 ->get()
                 ->toArray();
 
