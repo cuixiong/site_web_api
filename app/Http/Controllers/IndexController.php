@@ -137,12 +137,13 @@ class IndexController extends Controller
             ->limit(6)->get()->toArray();
         if ($list) {
             $list = array_map(function ($item) {
-                $item['upload_at_format'] = date('Y-m-d H:i:s', $item['upload_at']);
+                $item['upload_at_format'] = date('Y-m-d', $item['upload_at']);
                 return $item;
             }, $list);
         }
         ReturnJson(true, '', $list);
     }
+
     // 合作伙伴
     public function partners(Request $request)
     {
@@ -157,6 +158,7 @@ class IndexController extends Controller
             ->get();
         ReturnJson(true, '', $list);
     }
+
     // 办公室
     public function office(Request $request)
     {
