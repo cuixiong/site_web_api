@@ -49,9 +49,12 @@ class UserController extends Controller
         $model->password = Hash::make($password);// 密码使用hash值
         $model->created_at = time();
         $model->status = 1;
-        $model->token = JWTAuth::fromUser($model);//生成token
         $model->save();
         DB::commit();
+        
+        $user = User::where(['email'=>$email])->first();
+        $user->token = JWTAuth::fromUser($user);//生成token
+        $user->save();
         // 发送验证邮件
         (new SendEmailController)->Register($model->id);
         ReturnJson(true);
