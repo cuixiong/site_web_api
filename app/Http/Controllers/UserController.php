@@ -180,9 +180,12 @@ class UserController extends Controller
             if(!isset($token) || empty($token)){
                 ReturnJson(FALSE,trans('lang.token_empty'));
             }
-            $token = base64_decode($request->token);
-            list($email,$id) = explode('&',$token);
-            $res = User::where('email',$email)->where('id',$id)->update(['check_email' => 1]);
+            // $token = base64_decode($request->token);
+            // list($email,$id) = explode('&',$token);
+            $token = $request->token;
+            $res = User::where('token',$token)->update(['check_email' => 1]);
+            // $res = User::where('email',$email)->where('id',$id)->update(['check_email' => 1]);
+
             $res ? ReturnJson(TRUE,trans('lang.request_success')) : ReturnJson(FALSE,trans('lang.request_error'));
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
