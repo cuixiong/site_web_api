@@ -30,6 +30,7 @@ Route::middleware('api')->group(function () {
         Route::get('china-regions', [\App\Http\Controllers\Common\CommonController::class, 'ChinaRegions'])->name('中国地区');
         Route::get('set', [\App\Http\Controllers\Common\CommonController::class, 'Set'])->name('站点设置');
         Route::get('product-keyword', [\App\Http\Controllers\Common\CommonController::class, 'ProductKeyword'])->name('热搜关键词');
+        Route::get('other-website', [\App\Http\Controllers\Common\CommonController::class, 'OtherWebsite'])->name('其它语言网站');
     });
 
     // index控制器(首页)
@@ -68,14 +69,15 @@ Route::middleware('api')->group(function () {
         Route::get('get', [\App\Http\Controllers\PageController::class, 'Get'])->name('单页面内容');
         Route::get('quotes', [\App\Http\Controllers\PageController::class, 'Quotes'])->name('权威引用列表');
         Route::get('quote', [\App\Http\Controllers\PageController::class, 'Quote'])->name('权威引用');
-        Route::post('custom-reports', [\App\Http\Controllers\PageController::class, 'CustomReports'])->name('定制报告');
         Route::get('team-member', [\App\Http\Controllers\PageController::class, 'TeamMember'])->name('团队成员');
         Route::get('qualification', [\App\Http\Controllers\PageController::class, 'Qualification'])->name('资质认证');
         Route::get('faqs', [\App\Http\Controllers\PageController::class, 'Faqs'])->name('常见问题');
         Route::get('customer-evaluations', [\App\Http\Controllers\PageController::class, 'CustomerEvaluations'])->name('客户评价-列表');
         Route::get('customer-evaluation', [\App\Http\Controllers\PageController::class, 'CustomerEvaluation'])->name('客户评价-详情');
-        Route::post('contact-us', [\App\Http\Controllers\PageController::class, 'ContactUs'])->name('联系我们');
+        
         Route::post('application-sample', [\App\Http\Controllers\PageController::class, 'ApplicationSample'])->name('申请样本');
+        Route::post('custom-reports', [\App\Http\Controllers\PageController::class, 'CustomReports'])->name('定制报告');
+        Route::post('contact-us', [\App\Http\Controllers\PageController::class, 'ContactUs'])->name('联系我们');
 
     });
 

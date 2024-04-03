@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Http\Controllers\Common;
+
 use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
 use App\Models\City;
+use App\Models\LanguageWebsite;
 use App\Models\Link;
 use App\Models\Menu;
 use App\Models\PlateValue;
@@ -11,6 +13,7 @@ use App\Models\ProductsCategory;
 use App\Models\SearchRank;
 use App\Models\SystemValue;
 use Illuminate\Http\Request;
+
 class CommonController extends Controller
 {
     /**
@@ -18,23 +21,23 @@ class CommonController extends Controller
      */
     public function TopMenus(Request $request)
     {
-        $menus = Menu::where('status',1)
-                    ->whereIn('type',[1,3])
-                    ->select(['id','link','name','banner_title','banner_short_title','parent_id','seo_title','seo_keyword','seo_description'])
-                    ->get();
+        $menus = Menu::where('status', 1)
+            ->whereIn('type', [1, 3])
+            ->select(['id', 'link', 'name', 'banner_title', 'banner_short_title', 'parent_id', 'seo_title', 'seo_keyword', 'seo_description'])
+            ->get();
         $menus = $this->MenusTree($menus->toArray());
-        ReturnJson(TRUE,'', $menus);
+        ReturnJson(TRUE, '', $menus);
     }
 
     /**
      * 顶部导航栏递归方法
      */
-    private function MenusTree($list,$parent = 0)
+    private function MenusTree($list, $parent = 0)
     {
         $result = [];
         foreach ($list as $key => $value) {
-            if($value['id'] == $parent){
-                $value['children'] = $this->MenusTree($list,$value['parent_id']);
+            if ($value['id'] == $parent) {
+                $value['children'] = $this->MenusTree($list, $value['parent_id']);
             }
             $result[] = $value;
         }
@@ -47,12 +50,12 @@ class CommonController extends Controller
     public function info(Request $request)
     {
         $link = $request->link ?? 'index';
-        if(empty($link)){
-            ReturnJson(false,'参数错误');
+        if (empty($link)) {
+            ReturnJson(false, '参数错误');
         }
-        $result = Menu::select(['name','banner_pc','banner_mobile','banner_title','banner_short_title','seo_title','seo_keyword','seo_description'])->where(['link' => $link])->orderBy('sort','ASC')->first();
+        $result = Menu::select(['name', 'banner_pc', 'banner_mobile', 'banner_title', 'banner_short_title', 'seo_title', 'seo_keyword', 'seo_description'])->where(['link' => $link])->orderBy('sort', 'ASC')->first();
         // 若有栏目ID则优先使用栏目的TKD
-        if(!empty($params['category_id'])){
+        if (!empty($params['category_id'])) {
             $category = ProductsCategory::where(['id' => $params['category_id']])->select('seo_title,seo_keyword,seo_description')->first();
             $result['seo_title'] = $category['seo_title'] ? $category['seo_title'] : $result['seo_title'];
             $result['seo_keyword'] = $category['seo_keyword'] ? $category['seo_keyword'] : $result['seo_keyword'];
@@ -75,31 +78,31 @@ class CommonController extends Controller
             'id',
             'name'
         ])
-        ->where('parent_id',0)
-        ->whereIn('type',[2,3])
-        ->where('status',1)
-        ->orderBy('type','DESC')
-        ->orderBy('sort','ASC')
-        ->get()
-        ->toArray();
+            ->where('parent_id', 0)
+            ->whereIn('type', [2, 3])
+            ->where('status', 1)
+            ->orderBy('type', 'DESC')
+            ->orderBy('sort', 'ASC')
+            ->get()
+            ->toArray();
         foreach ($frontMenus as $key => $frontMenu) {
             $sonMenus = Menu::select([
-                    'id',
-                    'name',
-                    'link',
-                    'seo_title',
-                    'seo_keyword',
-                    'seo_description'
-                ])
-                ->where('parent_id',$frontMenu['id'])
-                ->whereIn('type',[2,3])
-                ->where('status',1)
-                ->orderBy('sort','ASC')
+                'id',
+                'name',
+                'link',
+                'seo_title',
+                'seo_keyword',
+                'seo_description'
+            ])
+                ->where('parent_id', $frontMenu['id'])
+                ->whereIn('type', [2, 3])
+                ->where('status', 1)
+                ->orderBy('sort', 'ASC')
                 ->get()
                 ->toArray();
             $frontMenus[$key]['menus'] = $sonMenus;
         }
-        ReturnJson(TRUE,'', $frontMenus);
+        ReturnJson(TRUE, '', $frontMenus);
     }
 
     /**
@@ -109,46 +112,47 @@ class CommonController extends Controller
     public function ControlPage(Request $request)
     {
         $id = $request->id;
-        if(empty($id)){
-            ReturnJson(false,'ID不允许为空');
+        if (empty($id)) {
+            ReturnJson(false, 'ID不允许为空');
         }
-        $data = SystemValue::where('parent_id',$id)
-                ->where('status',1)
-                ->select(['key','value'])
-                ->get()
-                ->toArray();
+        $data = SystemValue::where('parent_id', $id)
+            ->where('status', 1)
+            ->select(['key', 'value'])
+            ->get()
+            ->toArray();
         $result = [];
         foreach ($data as $key => &$value) {
             $result[$value['key']] = intval($value['value']);
         }
-        ReturnJson(true,'',$result);
+        ReturnJson(true, '', $result);
     }
 
     /**
      * 友情链接
      */
-    public function Link(Request $request){
-        $link = Link::where('status',1)
-                ->select(['name','link'])
-                ->orderBy('sort','ASC')
-                ->get()
-                ->toArray();
-        ReturnJson(true,'',$link);
+    public function Link(Request $request)
+    {
+        $link = Link::where('status', 1)
+            ->select(['name', 'link'])
+            ->orderBy('sort', 'ASC')
+            ->get()
+            ->toArray();
+        ReturnJson(true, '', $link);
     }
 
     // 购买流程
     public function PurchaseProcess(Request $request)
     {
         $id = $request->parentId;
-        if(empty($id)){
-            ReturnJson(false,'ID不允许为空');
+        if (empty($id)) {
+            ReturnJson(false, 'ID不允许为空');
         }
-        $res = PlateValue::where('parent_id',$id)->where('status',1)->select(['id','title','image as link'])->get()->toArray();
+        $res = PlateValue::where('parent_id', $id)->where('status', 1)->select(['id', 'title', 'image as link'])->get()->toArray();
         foreach ($res as $key => $value) {
             # code...
         }
         $res = $res ? $res : [];
-        ReturnJson(true,'',$res);
+        ReturnJson(true, '', $res);
     }
 
     /**
@@ -157,29 +161,29 @@ class CommonController extends Controller
     public function ProductTag(Request $request)
     {
         $category_id = $request->category_id;
-        if(!empty($category_id)){ // 某个行业分类的全部标签
-            $tags = ProductsCategory::select('product_tag')->where(['id'=>$category_id])->value('product_tag');
-            if(!empty($tags)){
+        if (!empty($category_id)) { // 某个行业分类的全部标签
+            $tags = ProductsCategory::select('product_tag')->where(['id' => $category_id])->value('product_tag');
+            if (!empty($tags)) {
                 $data = explode(',', $tags);
-            }else{
+            } else {
                 $data = [];
             }
-        }else{ // 全部行业分类的全部标签
-            $tags = ProductsCategory::where('status',1)->pluck('product_tag')->toArray();
+        } else { // 全部行业分类的全部标签
+            $tags = ProductsCategory::where('status', 1)->pluck('product_tag')->toArray();
             $result = '';
             $separator = ''; // 分隔符
             $tags = Array_filter($tags);
-            if(!empty($tags) && is_array($tags)){
-                foreach($tags as $tag){
+            if (!empty($tags) && is_array($tags)) {
+                foreach ($tags as $tag) {
                     $result .= $separator . $tag;
                     $separator = ',';
                 }
                 $data = explode(',', $result);
-            }else{
+            } else {
                 $data = [];
             }
         }
-        ReturnJson(true,'',$data);
+        ReturnJson(true, '', $data);
     }
 
     /**
@@ -189,15 +193,15 @@ class CommonController extends Controller
     public function TestXunSearch(Request $request)
     {
         $keyword = $request->keyword;
-        if(empty($keyword)){
-            ReturnJson(false,'关键字不允许为空');
+        if (empty($keyword)) {
+            ReturnJson(false, '关键字不允许为空');
         }
         $xunsearch = new XunSearch();
         $res = $xunsearch->search($keyword);
-        if($res){
-            ReturnJson(true,'',$res);
-        }else{
-            ReturnJson(false,'查询失败');
+        if ($res) {
+            ReturnJson(true, '', $res);
+        } else {
+            ReturnJson(false, '查询失败');
         }
     }
 
@@ -206,15 +210,15 @@ class CommonController extends Controller
      */
     public function ChinaRegions()
     {
-        $provinces = City::select(['id','name'])->where(['type'=>1])->get()->toArray();
-        foreach($provinces as $province){
+        $provinces = City::select(['id', 'name'])->where(['type' => 1])->get()->toArray();
+        foreach ($provinces as $province) {
             $data[] = [
                 "id" => $province["id"],
                 "name" => $province["name"],
-                'sons' => City::select(['id','name'])->where(['type'=>2,'pid'=>$province['id']])->get()->toArray(),
+                'sons' => City::select(['id', 'name'])->where(['type' => 2, 'pid' => $province['id']])->get()->toArray(),
             ];
         }
-        ReturnJson(true,'',$data);
+        ReturnJson(true, '', $data);
     }
 
 
@@ -225,14 +229,14 @@ class CommonController extends Controller
     public function Set(Request $request)
     {
         $id = $request->id;
-        if(empty($id)){
-            ReturnJson(false,'id is empty');
+        if (empty($id)) {
+            ReturnJson(false, 'id is empty');
         }
-        $data = SystemValue::where('parent_id',$id)
-                ->where('status',1)
-                ->select(['name','key','value'])
-                ->get()
-                ->toArray();
+        $data = SystemValue::where('parent_id', $id)
+            ->where('status', 1)
+            ->select(['name', 'key', 'value'])
+            ->get()
+            ->toArray();
         $result = [];
         foreach ($data as $key => $value) {
             $result[$value['key']] = [
@@ -240,7 +244,7 @@ class CommonController extends Controller
                 'value' => $value['value']
             ];
         }
-        ReturnJson(true,'',$result);
+        ReturnJson(true, '', $result);
     }
 
     /**
@@ -248,7 +252,20 @@ class CommonController extends Controller
      */
     public function ProductKeyword()
     {
-        $data = SearchRank::where('status',1)->orderBy('hits','desc')->pluck('name');
-        ReturnJson(true,'',$data);
+        $data = SearchRank::where('status', 1)->orderBy('hits', 'desc')->pluck('name');
+        ReturnJson(true, '', $data);
+    }
+
+    /**
+     * 其他语言网站
+     */
+    public function OtherWebsite()
+    {
+        $data = LanguageWebsite::where('status', 1)
+            ->select(['name', 'url'])
+            ->orderBy('sort', 'ASC')
+            ->get()
+            ->toArray();
+        ReturnJson(true, '', $data ?? []);
     }
 }
