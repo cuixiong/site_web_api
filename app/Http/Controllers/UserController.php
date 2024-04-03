@@ -52,7 +52,7 @@ class UserController extends Controller
         $model->save();
         DB::commit();
         
-        $user = User::where(['email'=>$email])->first();
+        $user = User::where(['id'=>$model->id])->first();
         $user->token = JWTAuth::fromUser($user);//生成token
         $user->save();
         // 发送验证邮件
