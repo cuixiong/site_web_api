@@ -19,6 +19,7 @@ use App\Models\WechatTool;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 
 class OrderController extends Controller
 {
@@ -77,7 +78,7 @@ class OrderController extends Controller
                 $user = User::where('email',$email)->first();
                 if ($user) { // 如果user表存在这个用户的数据，说明用户有注册账户
                     $user->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
-                    $user->password = md5('123456'); // 帮用户把他的密码改为初始密码123456，我不知道这样合不合理，但是生涛要求这样
+                    $user->password = Hash::make('123456'); // 帮用户把他的密码改为初始密码123456，我不知道这样合不合理，但是生涛要求这样
                     $user->save();
 
                     $user_ids = explode(',', $coupon->user_ids); // 把用户输入券码的这张优惠券的user_ids值转为数组
@@ -110,7 +111,7 @@ class OrderController extends Controller
                     $model->phone = $phone;
                     $model->email = $email;
                     $model->company = $company;
-                    $model->password = md5('123456'); // 帮用户自动生成一个初始密码123456
+                    $model->password = Hash::make('123456'); // 帮用户自动生成一个初始密码123456
                     $model->created_at = time();
                     $model->created_by = 0;
                     $model->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
@@ -194,7 +195,7 @@ class OrderController extends Controller
             $user->area_id = $city_id;
             $user->address = $address;
 
-            $user->password = md5('123456'); // 帮用户自动生成一个初始密码123456
+            $user->password = Hash::make('123456'); // 帮用户自动生成一个初始密码123456
             $user->created_at = time();
             $user->created_by = 0;
             $user->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全

@@ -27,6 +27,7 @@ class ContactUsController extends Controller
             $country_id = $request->country_id ? $request->country_id : 0; // 国家ID
             $province_id = $request->province_id ? $request->province_id : 0; // 省份ID
             $city_id = $request->city_id ? $request->city_id : 0; // 城市ID
+            $phone = $request->phone; // 联系电话
             $model = new \App\Models\ContactUs();
             $model->category_id = $category_id;
             $model->product_id = $product_id;
@@ -39,6 +40,7 @@ class ContactUsController extends Controller
             $model->country_id = $country_id;
             $model->province_id = $province_id;
             $model->city_id = $city_id;
+            $model->phone = $phone;
             $model->save();
             // 发送验证邮件
             (new SendEmailController)->productSample($model->id);

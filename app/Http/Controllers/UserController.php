@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Common\SendEmailController;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\CouponUser;
@@ -18,8 +19,9 @@ class UserController extends Controller
     {
         $username = $request->name;
         $email = $request->email;
-        $province_id = $request->city_id;
-        $area_id = $request->province_id;
+        $country_id = $request->country_id;
+        $province_id = $request->province_id;
+        $city_id = $request->city_id;
         $phone = $request->phone;
         $company = $request->company;
         $password = $request->password;
@@ -39,13 +41,15 @@ class UserController extends Controller
         $model = new User;
         $model->username = $username;
         $model->email = $email;
-        $model->province_id = $province_id;// MMG中的未知参数
-        $model->area_id = $area_id;
+        $model->country_id = $country_id;
+        $model->province_id = $province_id;
+        $model->city_id = $city_id;
         $model->phone = $phone;
         $model->company = $company;
-        $model->password = md5($password);
+        $model->password = Hash::make($password);// 密码使用hash值
         $model->created_at = time();
         $model->status = 1;
+        $model->token = JWTAuth::fromUser($user);//生成token
         $model->save();
         DB::commit();
         // 发送验证邮件
@@ -91,7 +95,7 @@ class UserController extends Controller
             (new SendEmailController)->Register($user->id);//只要是用户以前已经注册但没有验证邮箱，无论以前的邮件里的链接有没有过期，都重新发送验证邮件
             ReturnJson(false,'账号的邮箱未验证，请先验证！');
         }
-        if($user->password != md5($password)){
+        if($user->password != Hash::make($password)){
             ReturnJson(false,'密码不正确');
         }
         if($user->status == 0){
@@ -100,6 +104,7 @@ class UserController extends Controller
         $token = JWTAuth::fromUser($user);//生成token
         // 最后一次登录时间
         $user->login_time = time();
+        $user->token = $token;
         $user->update();
         $data = [
             'id' => $user->id,// ID
@@ -153,7 +158,7 @@ class UserController extends Controller
             if (!$model) {
                 ReturnJson(false,trans('lang.eamail_undefined'));
             }
-            $model->password = MD5($request->get('password'));
+            $model->password = Hash::make($request->get('password'));
             $model->save();
             ReturnJson(true,trans('lang.request_success'));
         } catch (\Exception $e) {

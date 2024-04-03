@@ -60,15 +60,19 @@ class SendEmailController extends Controller
             $data = $user ? $user->toArray() : [];
             $data['domain'] = 'https://' . $_SERVER['SERVER_NAME'];
             $token = $data['email'] . '&' . $data['id'];
-            $data['token'] = base64_encode($token);
+            $token = $user['token'];
+            // $data['token'] = base64_encode($token);
             $emailCode = 'signupToBeMember';
-            $dataQuery = [
-                'timestamp' => time(),
-                'randomstr' => '123',
-                'authkey' => '123',
-                'sign' => $data['token'],
-            ];
-            $verifyUrl = $data['domain'] . '/?verifyemail=' . $emailCode . '&' . http_build_query($dataQuery);
+            // $dataQuery = [
+            //     'timestamp' => time(),
+            //     'randomstr' => '123',
+            //     'authkey' => '123',
+            //     'sign' => $data['token'],
+            // ];
+            // $verifyUrl = $data['domain'] . '/?verifyemail=' . $emailCode . '&' . http_build_query($dataQuery);
+
+            $verifyUrl = $data['domain'] . '/?verifyemail=' . $emailCode . '&token=' . $token;
+
             $data2 = [
                 'homePage' => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/') . '/account/account-infor',
@@ -77,7 +81,7 @@ class SendEmailController extends Controller
                 'backendUrl' => env('IMAGE_URL'),
                 'verifyUrl' => $verifyUrl,
                 'userName' => $data['name'],
-                'area' => City::where('id', $data['area_id'])->value('name'),
+                'area' => City::where('id', $data['city_id'])->value('name'),
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')->toArray();
             if ($siteInfo) {
