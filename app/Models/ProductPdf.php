@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Models;
+
 use App\Models\Base;
 use Exception;
 
@@ -13,7 +15,7 @@ class ProductPdf extends Base
 
     public function __construct()
     {
-        $this->defaultTemplatePath = resource_path('views').'/pdfTempale.php';
+        $this->defaultTemplatePath = resource_path('views') . '/pdfTempale.php';
     }
 
     public function setProductId($id)
@@ -86,13 +88,13 @@ class ProductPdf extends Base
                 'category.name as category_name',
                 'category.thumb',
             ])
-            ->leftJoin('product_category as category','product.category_id','=','category.id');
+            ->leftJoin('product_category as category', 'product.category_id', '=', 'category.id');
         if ($productId !== null) {
-            $query->where('product.id',$productId);
+            $query->where('product.id', $productId);
         }
         $product = $query->first()->toArray();
 
-        
+
         //目录
         $year = date('Y', strtotime($product['published_date']));
         $description = (new ProductDescription($year))->select([
@@ -100,21 +102,22 @@ class ProductPdf extends Base
             'table_of_content',
             'tables_and_figures',
             'companies_mentioned',
-        ])->where('product_id',$productId)->first()->toArray();
+        ])->where('product_id', $productId)->first()->toArray();
         $product = array_merge($product, $description ?? []);
         // return $product;
 
-        $adminEmail = SystemValue::where('key','siteEmail')->value('value');
-        $adminPhone = SystemValue::where('key','sitePhone')->value('value');
-
+        $adminEmail = SystemValue::where('key', 'siteEmail')->value('value');
+        $adminPhone = SystemValue::where('key', 'sitePhone')->value('value');
+        $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+        
         $product_id = $product['id'] ?? '';
         $product_url = $product['url'] ?? '';
         header('Content-type:text/html;charset = utf-8');
         // echo '<pre>';print_r($prices);exit;
-        
+
         return [
             'title' => 'MMG-CN',
-            'url' => env('APP_URL').'/reports/'.$product_id.'/'.$product_url,
+            'url' => env('APP_URL') . '/reports/' . $product_id . '/' . $product_url,
             'product_id' => $product_id,
             'product_name' => $product['name'] ?? '',
             'product_english_name' => $product['english_name'] ?? '',
@@ -127,16 +130,16 @@ class ProductPdf extends Base
             'discount' => $product['discount'] ?? '',
             'discount_type' => $product['discount_type'] ?? '',
             'discount_amount' => $product['discount_amount'] ?? '',
-            'prices' => Products::CountPrice($product['price'],$product['publisher_id']),
+            'prices' => Products::CountPrice($product['price'], $product['publisher_id']),
             'description' => isset($product['description']) ? trim($product['description']) : '',
             'table_of_content' => isset($product['table_of_content']) ? trim($product['table_of_content']) : '',
             'tables_and_figures' => isset($product['tables_and_figures']) ? trim($product['tables_and_figures']) : '',
-            'companies_mentioned' => isset($product['companies_mentioned']) ?trim($product['companies_mentioned']) : '',
+            'companies_mentioned' => isset($product['companies_mentioned']) ? trim($product['companies_mentioned']) : '',
             'category_name' => $product['category_name'] ?? '',
-            'thumb' => env('IMAGE_URL').$product['thumb'] ?? '',
+            'thumb' => !empty($product['thumb']) ? env('IMAGE_URL') . $product['thumb'] : $defaultImg,
             'email' => $adminEmail ?? '',
             'phone' => $adminPhone ?? '',
-            
+
 
             'homeUrl' => env('APP_URL'),
             // 'homepage' => parse_url(Yii::$app->params['frontend_domain'])['host'],
@@ -158,7 +161,7 @@ class ProductPdf extends Base
             })();
 
             $output = ob_get_clean();
-        } catch(\Throwable $e) {
+        } catch (\Throwable $e) {
             ob_end_clean();
             throw $e;
         }
