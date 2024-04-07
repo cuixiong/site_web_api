@@ -418,7 +418,7 @@ class OrderController extends Controller
             ->get()->toArray();
 
         if(!empty($order['user_id'])){
-            $user = User::select(['username', 'email', 'phone', 'company', 'province_id', 'area_id', 'address'])->where('id',$order['user_id'])->first();
+            $user = User::select(['username', 'email', 'phone', 'company', 'province_id', 'city_id', 'address'])->where('id',$order['user_id'])->first();
             $province = City::where('id',$order['province_id'])->value('name');
             $city = City::where('id',$order['city_id'])->value('name');
             $address = $province . $city . $order['address'];
