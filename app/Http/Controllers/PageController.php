@@ -60,7 +60,7 @@ class PageController extends Controller
         $category_id = !empty($request->category_id) ? $request->category_id : 0;
 
         //权威引用分类
-        $$category = DictionaryValue::GetDicOptions('quote_cage');
+        $category = DictionaryValue::GetDicOptions('quote_cage');
         // $category = QuoteCategory::select(['id', 'name'])->orderBy('sort', 'asc')->get()->toArray() ?? [];
         array_unshift($category, ['id' => '0', 'name' => '全部']);
 
