@@ -136,7 +136,7 @@ class ProductPdf extends Base
             'tables_and_figures' => isset($product['tables_and_figures']) ? trim($product['tables_and_figures']) : '',
             'companies_mentioned' => isset($product['companies_mentioned']) ? trim($product['companies_mentioned']) : '',
             'category_name' => $product['category_name'] ?? '',
-            'thumb' => !empty($product['thumb']) ? env('IMAGE_URL') . $product['thumb'] : $defaultImg,
+            'thumb' => !empty($product['thumb']) ? env('IMAGE_URL') . $product['thumb'] : env('IMAGE_URL') .$defaultImg,
             'email' => $adminEmail ?? '',
             'phone' => $adminPhone ?? '',
 
