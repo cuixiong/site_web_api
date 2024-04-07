@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Authority;
 use App\Models\Comment;
 use App\Models\ContactUs;
+use App\Models\DictionaryValue;
 use App\Models\Menu;
 use App\Models\Page;
 use App\Models\Partner;
@@ -59,7 +60,8 @@ class PageController extends Controller
         $category_id = !empty($request->category_id) ? $request->category_id : 0;
 
         //权威引用分类
-        $category = QuoteCategory::select(['id', 'name'])->orderBy('sort', 'asc')->get()->toArray() ?? [];
+        $$category = DictionaryValue::GetDicOptions('quote_cage');
+        // $category = QuoteCategory::select(['id', 'name'])->orderBy('sort', 'asc')->get()->toArray() ?? [];
         array_unshift($category, ['id' => '0', 'name' => '全部']);
 
         // 数据
