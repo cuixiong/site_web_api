@@ -98,7 +98,7 @@ class UserController extends Controller
             (new SendEmailController)->Register($user->id);//只要是用户以前已经注册但没有验证邮箱，无论以前的邮件里的链接有没有过期，都重新发送验证邮件
             ReturnJson(false,'账号的邮箱未验证，请先验证！');
         }
-        if(Hash::check($password, $user->password)){
+        if(!Hash::check($password, $user->password)){
             ReturnJson(false,'密码不正确');
         }
         if($user->status == 0){
