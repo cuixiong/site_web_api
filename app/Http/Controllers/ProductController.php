@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
+use App\Models\Common;
 use App\Models\Languages;
 use App\Models\News;
 use App\Models\PriceEditions;
@@ -63,6 +64,7 @@ class ProductController extends Controller
                     'thumb'
                 ])->find($value['category_id']);
                 $products[$key]['thumb'] = $category ? $category['thumb'] : '';
+                $products[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($products[$key]['thumb']);
                 $products[$key]['name'] = $value['name'];
                 $products[$key]['english_name'] = $value['english_name'];
                 $value['published_date'] = ctype_digit($value['published_date']) ? date('Y-m-d H:i:s', (int)$value['published_date']) : $value['published_date'];
@@ -247,6 +249,7 @@ class ProductController extends Controller
             $product_desc['prices'] = Products::CountPrice($product_desc['price'],$product_desc['publisher_id']);
             $product_desc['description'] = $product_desc['description'];
             $product_desc['url'] = $product_desc['url'];
+            $product_desc['thumb'] = Common::cutoffSiteUploadPathPrefix($product_desc['thumb']);
             $product_desc['thumb'] = $product_desc['thumb'] ? $request->thumbUrl . $product_desc['thumb'] : '';
             $product_desc['published_date'] = $product_desc['published_date'] ? date('Y-m-d',strtotime($product_desc['published_date'])) : '';
 
@@ -326,6 +329,7 @@ class ProductController extends Controller
         $data = [];
         foreach ($products as $index => $product) {
             $data[$index]['thumb'] = $product['thumb'];
+            $data[$index]['thumb'] = Common::cutoffSiteUploadPathPrefix($data[$index]['thumb']);
             $data[$index]['name'] = $product['name'];
             $data[$index]['keywords'] = $product['keywords'];
             $data[$index]['english_name'] = $product['english_name'];
