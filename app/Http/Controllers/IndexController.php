@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Common;
 use App\Models\News;
 use App\Models\Office;
 use App\Models\Partner;
@@ -25,7 +26,7 @@ class IndexController extends Controller
                 'price',
                 'url'
             ])
-            ->orderBy('sort', 'desc') // 排序权重：sort > 发布时间 > id
+            ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
             ->orderBy('published_date', 'desc')
             ->orderBy('id', 'desc')
             ->limit(6)->get()->toArray();
@@ -33,6 +34,7 @@ class IndexController extends Controller
             $description = (new ProductDescription(date('Y', strtotime($value['published_date']))))->where('product_id', $value['id'])->value('description');
             $value['description'] = mb_substr($description, 0, 100, 'UTF-8');
             $value['published_date'] = date('Y-m-d', strtotime($value['published_date']));
+            $value['thumb'] = Common::cutoffSiteUploadPathPrefix($value['thumb']);
         }
         $list = $list ? $list : [];
         ReturnJson(true, '', $list);
@@ -85,6 +87,8 @@ class IndexController extends Controller
 
                 if (!empty($firstProduct)) {
                     $thumb = ProductsCategory::where('id', $firstProduct['category_id'])->value('thumb');
+                    $thumb = Common::cutoffSiteUploadPathPrefix($thumb);
+
                     $firstProduct['thumb'] = $thumb;
                     $firstProduct['description'] = (new ProductDescription(date('Y', strtotime($firstProduct['published_date']))))
                         ->where('product_id', $firstProduct['id'])
@@ -138,6 +142,7 @@ class IndexController extends Controller
         if ($list) {
             $list = array_map(function ($item) {
                 $item['upload_at_format'] = date('Y-m-d', $item['upload_at']);
+                $item['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
                 return $item;
             }, $list);
         }

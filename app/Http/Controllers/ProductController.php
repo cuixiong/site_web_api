@@ -47,8 +47,8 @@ class ProductController extends Controller
                 if ((empty($value['discount_time_end']) || $time > $value['discount_time_end']) || ($value['discount'] == 100 && $value['discount_amount'] == 0)) {
                     // $productList[$key]['discount_time_end'] = '';
 
-                    // unset($value['discount_time_begin']);
-                    // unset($value['discount_time_end']);
+                    unset($value['discount_time_begin']);
+                    unset($value['discount_time_end']);
                     $value['discount'] = 100;
                     $value['discount_amount'] = 0;
                 } else {

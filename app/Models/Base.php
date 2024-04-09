@@ -1,7 +1,10 @@
 <?php
 
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
+use Predis\Command\Redis\LTRIM;
+
 class Base extends Model
 {
     // 时间戳
