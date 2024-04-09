@@ -37,6 +37,25 @@ class ProductController extends Controller
             $priceEditions = Redis::hgetall(PriceEditions::RedisKey);
 
             foreach ($result as $key => $value) {
+                
+                //返回打折信息
+                $time = time();
+                if (empty($value['discount_time_end']) || time() > $value['discount_time_end']) {
+                    unset($value['discount_time_end']);
+                }
+
+                if ((empty($value['discount_time_end']) || $time > $value['discount_time_end']) || ($value['discount'] == 100 && $value['discount_amount'] == 0)) {
+                    // $productList[$key]['discount_time_end'] = '';
+
+                    // unset($value['discount_time_begin']);
+                    // unset($value['discount_time_end']);
+                    $value['discount'] = 100;
+                    $value['discount_amount'] = 0;
+                } else {
+                    // $value['discount_time_start_date'] = date('m.d', $value['discount_time_begin']);
+                    // $value['discount_time_end_date'] = date('m.d', $value['discount_time_end']);
+                }
+
                 $category = ProductsCategory::select([
                     'id',
                     'name',
@@ -97,6 +116,8 @@ class ProductController extends Controller
                 'url',
                 'price',
                 'discount_type',
+                'discount_time_begin',
+                'discount_time_end',
                 'discount',
                 'discount_amount',
                 'category_id',
@@ -157,12 +178,32 @@ class ProductController extends Controller
                 'p.discount_type',
                 'p.discount',
                 'p.discount_amount',
+                'p.discount_time_begin',
                 'p.discount_time_end',
                 'p.publisher_id',
             ])->leftJoin('product_category as cate','cate.id','=', 'p.category_id')
                 ->where(['p.id' => $product_id])
                 ->where('p.status',1)
                 ->first()->toArray();
+
+            
+            //返回打折信息
+            $time = time();
+            if (empty($product_desc['discount_time_end']) || time() > $product_desc['discount_time_end']) {
+                unset($product_desc['discount_time_end']);
+            }
+
+            if ((empty($product_desc['discount_time_end']) || $time > $product_desc['discount_time_end']) || ($product_desc['discount'] == 100 && $product_desc['discount_amount'] == 0)) {
+                // $productList[$key]['discount_time_end'] = '';
+
+                unset($product_desc['discount_time_begin']);
+                unset($product_desc['discount_time_end']);
+                $product_desc['discount'] = 100;
+                $product_desc['discount_amount'] = 0;
+            } else {
+                // $product_desc['discount_time_start_date'] = date('m.d', $product_desc['discount_time_begin']);
+                // $product_desc['discount_time_end_date'] = date('m.d', $product_desc['discount_time_end']);
+            }
 
             $suffix = date('Y', strtotime($product_desc['published_date']));
             $description = (new ProductDescription($suffix))->select([
