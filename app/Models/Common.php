@@ -15,6 +15,6 @@ class Common extends Base
 
     public static function cutoffSiteUploadPathPrefix($path = '')
     {
-        return LTRIM($path, self::$siteUploadPathPrefix);
+        return str_replace(self::$siteUploadPathPrefix, '', $path);
     }
 }
