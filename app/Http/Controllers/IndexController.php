@@ -140,11 +140,10 @@ class IndexController extends Controller
             ->orderBy('id', 'desc')
             ->limit(6)->get()->toArray();
         if ($list) {
-            $list = array_map(function ($item) {
-                $item['upload_at_format'] = date('Y-m-d', $item['upload_at']);
-                $item['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
-                return $item;
-            }, $list);
+            foreach ($list as $key => $item) {
+                $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
+                $list[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
+            }
         }
         ReturnJson(true, '', $list);
     }
