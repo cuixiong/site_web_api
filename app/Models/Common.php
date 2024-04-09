@@ -10,14 +10,8 @@ class Common extends Base
     // 例如：数据库保存的值为 [/site/MMG_CN/products/1.jpg]
     // 后台正常引用 为 [域名 + /site/MMG_CN/products/1.jpg]
     // 前台正常引用 为 [oss域名 + /products/1.jpg]
+    // 默认值我写在 App\Providers\AppServiceProvider boot()方法初始化
     public static $siteUploadPathPrefix;
-
-    public static function boot()
-    {
-        parent::boot();
-
-        self::$siteUploadPathPrefix = '/site/' . env('APP_NAME');
-    }
 
     public static function cutoffSiteUploadPathPrefix($path = '')
     {
