@@ -12,8 +12,10 @@ class Common extends Base
     // 前台正常引用 为 [oss域名 + /products/1.jpg]
     public static $siteUploadPathPrefix;
 
-    public static function initialize()
+    public static function boot()
     {
+        parent::boot();
+
         self::$siteUploadPathPrefix = '/site/' . env('APP_NAME');
     }
 
