@@ -481,8 +481,8 @@ color: #333333;
     <body>
     <div class="PDF">
         <div class="Top">
-            <img src="<?=env('IMAGE_URL');?>/images/pdf/yeMei.webp" alt="<?=env('IMAGE_URL');?>/images/pdf/yeMei.webp" class="img_2">
-            <img src="<?=env('IMAGE_URL');?>/images/pdf/logo.webp" alt="qyrLogo" class="img_1">
+            <img src="<?=env('IMAGE_URL');?>/pdf/yeMei.webp" alt="<?=env('IMAGE_URL');?>/pdf/yeMei.webp" class="img_2">
+            <img src="<?=env('IMAGE_URL');?>/pdf/logo.webp" alt="qyrLogo" class="img_1">
             <p class="top_p">专注为企业提供资深报告，预测未来行业发展趋势</p>
         </div>
         <div class="content">
@@ -562,7 +562,7 @@ color: #333333;
             <div class="text_centen">
                 <div class="title">
                     <img
-                        src="<?=env('IMAGE_URL');?>/images/pdf/biaoTi.webp"
+                        src="<?=env('IMAGE_URL');?>/pdf/biaoTi.webp"
                         alt="biaoTi"
                         class="text_img"
                     />
@@ -572,7 +572,7 @@ color: #333333;
 
                 <div class="title">
                     <img
-                        src="<?=env('IMAGE_URL');?>/images/pdf/biaoTi.webp"
+                        src="<?=env('IMAGE_URL');?>/pdf/biaoTi.webp"
                         alt="biaoTi"
                         class="text_img"
                     />
@@ -582,7 +582,7 @@ color: #333333;
 
                 <div class="title">
                     <img
-                        src="<?=env('IMAGE_URL');?>/images/pdf/biaoTi.webp"
+                        src="<?=env('IMAGE_URL');?>/pdf/biaoTi.webp"
                         alt="biaoTi"
                         class="text_img"
                     />
