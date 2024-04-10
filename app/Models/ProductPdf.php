@@ -109,7 +109,9 @@ class ProductPdf extends Base
         $adminEmail = SystemValue::where('key', 'siteEmail')->value('value');
         $adminPhone = SystemValue::where('key', 'sitePhone')->value('value');
         $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
-        
+        $productThumb = !empty($product['thumb']) ?$product['thumb'] : $defaultImg;
+        $productThumb = env('IMAGE_URL') . Common::cutoffSiteUploadPathPrefix($productThumb);
+
         $product_id = $product['id'] ?? '';
         $product_url = $product['url'] ?? '';
         header('Content-type:text/html;charset = utf-8');
@@ -136,7 +138,7 @@ class ProductPdf extends Base
             'tables_and_figures' => isset($product['tables_and_figures']) ? trim($product['tables_and_figures']) : '',
             'companies_mentioned' => isset($product['companies_mentioned']) ? trim($product['companies_mentioned']) : '',
             'category_name' => $product['category_name'] ?? '',
-            'thumb' => !empty($product['thumb']) ? env('IMAGE_URL') . $product['thumb'] : env('IMAGE_URL') .$defaultImg,
+            'thumb' => $productThumb,
             'email' => $adminEmail ?? '',
             'phone' => $adminPhone ?? '',
 

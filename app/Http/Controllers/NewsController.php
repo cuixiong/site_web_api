@@ -8,6 +8,7 @@ use App\Models\News;
 use App\Models\PriceEditionValues;
 use App\Models\Products;
 use App\Models\ProductsCategory;
+use App\Models\Common;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -73,6 +74,7 @@ class NewsController extends Controller
         if (!empty($result) && is_array($result)) {
             foreach ($result as $key => $value) {
                 $news[$key]['thumb'] = $value['thumb'];
+                $news[$key]['thumb'] =  Common::cutoffSiteUploadPathPrefix($news[$key]['thumb']);
                 $news[$key]['title'] = $value['title'];
                 $news[$key]['month_day'] = $value['release_at'] ? date('m-d', $value['release_at']) : '';
                 $news[$key]['year'] = $value['release_at'] ? date('Y', $value['release_at']) : '';
@@ -223,6 +225,7 @@ class NewsController extends Controller
             if ($result) {
                 foreach ($result as $key => $value) {
                     $data[$key]['thumb'] = ProductsCategory::where('id', $value['category_id'])->value('thumb');
+                    $data[$key]['thumb'] =  Common::cutoffSiteUploadPathPrefix($data[$key]['thumb']);
                     $data[$key]['name'] = $value['name'];
                     $data[$key]['keyword'] = $value['keywords'];
                     $data[$key]['english_name'] = $value['english_name'];
