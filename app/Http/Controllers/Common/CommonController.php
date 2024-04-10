@@ -11,6 +11,7 @@ use App\Models\Menu;
 use App\Models\PlateValue;
 use App\Models\ProductsCategory;
 use App\Models\SearchRank;
+use App\Models\System;
 use App\Models\SystemValue;
 use Illuminate\Http\Request;
 
@@ -228,23 +229,58 @@ class CommonController extends Controller
      */
     public function Set(Request $request)
     {
-        $id = $request->id;
-        if (empty($id)) {
-            ReturnJson(false, 'id is empty');
+        $name = $request->name;
+        if (empty($name)) {
+            ReturnJson(false, 'name is empty');
         }
-        $data = SystemValue::where('parent_id', $id)
+
+        $setId = System::select(['id'])
+            ->where('status', 1)
+            ->where('alias', $name)
+            ->get()
+            ->value('id');
+
+        $result = [];
+        if ($setId) {
+
+            $data = SystemValue::where('parent_id', $setId)
+                ->where('status', 1)
+                ->select(['name', 'key', 'value'])
+                ->get()
+                ->toArray();
+            foreach ($data as $key => $value) {
+                $result[$value['key']] = [
+                    'name' => $value['name'],
+                    'value' => $value['value']
+                ];
+            }
+        }
+        ReturnJson(true, '', $result);
+    }
+
+    // 获取页面板块信息
+    public function SettingValue(Request $request)
+    {
+        $key = $request->key;
+        if (empty($key)) {
+            ReturnJson(false, 'key is empty');
+        }
+
+        $result = [];
+
+        $data = SystemValue::where('key', $key)
             ->where('status', 1)
             ->select(['name', 'key', 'value'])
             ->get()
             ->toArray();
-        $result = [];
         foreach ($data as $key => $value) {
-            $result[$value['key']] = [
+            $result[] = [
                 'name' => $value['name'],
                 'value' => $value['value']
             ];
         }
-        ReturnJson(true, '', $result);
+
+        ReturnJson(true, '请求成功', $result);
     }
 
     /**

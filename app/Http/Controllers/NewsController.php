@@ -9,6 +9,7 @@ use App\Models\PriceEditionValues;
 use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\Common;
+use App\Models\ProductDescription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -119,7 +120,7 @@ class NewsController extends Controller
             ->first();
         if ($data) {
             $data['tags'] = $data['tags'] ? explode(',', $data['tags']) : [];
-            $data['upload_at'] = $data['upload_at'] ? date('Y-m-d H:i:s', $data['upload_at']) : '';
+            $data['upload_at_format'] = $data['upload_at'] ? date('Y-m-d', $data['upload_at']) : '';
         } else {
             $data = [];
         }
@@ -234,6 +235,9 @@ class NewsController extends Controller
                     $data[$key]['categoryName'] = ProductsCategory::where('id', $value['category_id'])->value('name');
                     $data[$key]['discount_type'] = $value['discount_type'];
                     $data[$key]['discount_value'] = $value['discount_value'];
+
+                    $data[$key]['description'] = (new ProductDescription(date('Y', strtotime($value['published_date']))))->where('product_id', $value['id'])->value('description');
+                    $data[$key]['description'] = mb_substr($data[$key]['description'], 0, 100, 'UTF-8');
 
                     // 这里的代码可以复用 开始
                     $prices = [];

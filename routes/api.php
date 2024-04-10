@@ -28,7 +28,8 @@ Route::middleware('api')->group(function () {
         Route::get('product-tag', [\App\Http\Controllers\Common\CommonController::class, 'ProductTag'])->name('产品标签');
         Route::get('test-xunsearc', [\App\Http\Controllers\Common\CommonController::class, 'TestXunSearch'])->name('讯搜测速接口');
         Route::get('china-regions', [\App\Http\Controllers\Common\CommonController::class, 'ChinaRegions'])->name('中国地区');
-        Route::get('set', [\App\Http\Controllers\Common\CommonController::class, 'Set'])->name('站点设置');
+        Route::get('set', [\App\Http\Controllers\Common\CommonController::class, 'Set'])->name('站点设置(分类)');
+        Route::get('setting-value', [\App\Http\Controllers\Common\CommonController::class, 'settingValue'])->name('站点设置(单个)');
         Route::get('product-keyword', [\App\Http\Controllers\Common\CommonController::class, 'ProductKeyword'])->name('热搜关键词');
         Route::get('other-website', [\App\Http\Controllers\Common\CommonController::class, 'OtherWebsite'])->name('其它语言网站');
     });
