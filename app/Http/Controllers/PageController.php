@@ -6,6 +6,7 @@ use App\Http\Controllers\Common\SendEmailController;
 use App\Http\Controllers\Controller;
 use App\Models\Authority;
 use App\Models\Comment;
+use App\Models\Common;
 use App\Models\ContactUs;
 use App\Models\DictionaryValue;
 use App\Models\Menu;
@@ -71,6 +72,9 @@ class PageController extends Controller
         }
         $count = $model->count();
         $result = $model->offset(($page - 1) * $pageSize)->limit($pageSize)->get()->toArray();
+        foreach ($result as $key => $item) {
+            $result[$key]['img'] = Common::cutoffSiteUploadPathPrefix($result[$key]['img']);
+        }
         $data = [
             'result' => $result,
             'category' => $category,
@@ -262,6 +266,10 @@ class PageController extends Controller
             ->toArray();
         $count = Qualification::where('status', 1)->count();
 
+        foreach ($result as $key => $item) {
+            $result[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($result[$key]['thumb']);
+            $result[$key]['img'] = Common::cutoffSiteUploadPathPrefix($result[$key]['img']);
+        }
         $data = [
             'result' => $result,
             'page' => $page,

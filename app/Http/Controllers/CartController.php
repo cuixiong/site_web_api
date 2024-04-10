@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
+use App\Models\Common;
 use App\Models\Languages;
 use App\Models\PriceEditions;
 use App\Models\PriceEditionValues;
@@ -62,6 +63,7 @@ class CartController extends Controller
         $shopCartData = [];
         foreach($shopCart as $key=>$value){
             $shopCartData[$key]['thumb'] = ProductsCategory::where('id',$value['category_id'])->value('thumb');
+            $shopCartData[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($shopCartData[$key]['thumb']);
             $shopCartData[$key]['name'] = $value['name'];
             $shopCartData[$key]['goods_id'] = $value['goods_id'];
             $shopCartData[$key]['url'] = $value['url'];
@@ -408,6 +410,8 @@ class CartController extends Controller
                         'price_edition' => $value['price_edition'],
                     ];
                 } 
+                
+                $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($results[$key]['thumb']);
                 $results[$key]['published_date'] = $product['published_date'] ? date('Y-m-d', strtotime($product['published_date'])) : '';
                 $results[$key]['discount_begin'] = $product['discount_begin'] ? date('Y-m-d', $product['discount_begin']) : '';
                 $results[$key]['discount_end'] = $product['discount_end'] ? date('Y-m-d', $product['discount_end']) : '';
@@ -474,6 +478,7 @@ class CartController extends Controller
                     $data = [];
                     foreach($products as $index=>$product){
                         $data[$index]['thumb'] = ProductsCategory::where('id',$product['category_id'])->value('thumb');
+                        $data[$index]['thumb'] = Common::cutoffSiteUploadPathPrefix($data[$index]['thumb']);
                         $data[$index]['name'] = $product['name'];
                         $suffix = date('Y', strtotime($product['published_date']));
                         $description = (new ProductDescription($suffix))->where('product_id',$product['id'])->value('description');
