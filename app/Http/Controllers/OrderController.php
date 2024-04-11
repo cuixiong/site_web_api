@@ -392,8 +392,8 @@ class OrderController extends Controller
             ReturnJson(false, '订单不存在');
         }
         $orderStatus = $order['is_pay'] ?? '';
-        $orderNumber =  $order['order_number'] ?? 0;
-        $payTime =  !empty($order['pay_time']) ? date('Y-m-d', $order['pay_time']) : '';
+        $orderNumber =  $order['order_number'] ?? '';
+        $payTime =  !empty($order['pay_time']) ? date('Y-m-d H:i:s', $order['pay_time']) : '';
 
         if ($orderStatus == Order::PAY_UNPAID) {
             // 主动查询订单状态
