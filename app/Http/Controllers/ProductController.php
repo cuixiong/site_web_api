@@ -102,11 +102,11 @@ class ProductController extends Controller
      */
     private function GetProductResult($page,$pageSize,$keyword = '',$category_id = 0)
     {
-        try {
-            // xunsearch 搜索
-            $res = (new XunSearch())->GetList($page,$pageSize,$keyword,$category_id);
-            return $res;
-        } catch (\Exception $e) {
+        // try {
+        //     // xunsearch 搜索
+        //     $res = (new XunSearch())->GetList($page,$pageSize,$keyword,$category_id);
+        //     return $res;
+        // } catch (\Exception $e) {
             // mysql 搜索
             $query = Products::where(['status' => 1])
             ->select([
@@ -144,7 +144,7 @@ class ProductController extends Controller
             $offset = ($page -1) * $pageSize;
             $res = $query->offset($offset)->limit($pageSize)->get()->toArray();
             return ['list' => $res, 'count' => $count];
-        }
+        // }
     }
 
 

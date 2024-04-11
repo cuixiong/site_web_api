@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\TrendsEmail;
 use App\Models\City;
 use App\Models\ContactUs;
+use App\Models\DictionaryValue;
 use App\Models\Email;
 use App\Models\EmailScene;
 use App\Models\Languages;
@@ -251,6 +252,95 @@ class SendEmailController extends Controller
                 }
             }
             ReturnJson(true, trans()->get('lang.eamail_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
+    // 留言
+    public function Message($id)
+    {
+        try {
+            $ContactUs = ContactUs::find($id);
+            $data = $ContactUs ? $ContactUs->toArray() : [];
+            $result['country'] = DictionaryValue::GetDicOptions('Country');
+            $data['country'] = Country::where('id',$data['country_id'])->value('name');
+            $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
+            $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
+            $token = $data['email'] . '&' . $data['id'];
+            $data['token'] = base64_encode($token);
+            $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
+            $data2 = [
+                'homePage' => $data['domain'],
+                'myAccountUrl' => rtrim($data['domain'], '/') . '/account/account-infor',
+                'contactUsUrl' => rtrim($data['domain'], '/') . '/contact-us',
+                'homeUrl' => $data['domain'],
+                'userName' => $data['name'] ? $data['name'] : '',
+                'email' => $data['email'],
+                'company' => $data['company'],
+                'area' => $data['province'] . $data['city'],
+                'phone' => $data['phone'] ? $data['phone'] : '',
+                'plantTimeBuy' => $data['buy_time'],
+                'content' => $data['content'],
+                'backendUrl' => env('IMAGE_URL'),
+                'plantTimeBuy' => $data['buy_time'],
+            ];
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')->toArray();
+            if ($siteInfo) {
+                foreach ($siteInfo as $key => $value) {
+                    $data[$key] = $value;
+                }
+            }
+            $data = array_merge($data2, $data);
+            $scene = EmailScene::where('action', 'productSample')->select(['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id'])->first();
+            // 收件人的数组
+            $emails = explode(',', $scene->email_recipient);
+            if (empty($scene)) {
+                ReturnJson(FALSE, trans()->get('lang.eamail_error'));
+            }
+
+            if ($scene->status == 0) {
+                ReturnJson(FALSE, trans()->get('lang.eamail_error'));
+            }
+            $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find($scene->email_sender_id);
+            // 邮箱账号配置信息
+            $config = [
+                'host' =>  $senderEmail->host,
+                'port' =>  $senderEmail->port,
+                'encryption' =>  $senderEmail->encryption,
+                'username' =>  $senderEmail->email,
+                'password' =>  $senderEmail->password
+            ];
+            $this->SetConfig($config);
+            if ($scene->alternate_email_id) {
+                // 备用邮箱配置信息
+                $BackupSenderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find($scene->alternate_email_id);
+                $BackupConfig = [
+                    'host' =>  $BackupSenderEmail->host,
+                    'port' =>  $BackupSenderEmail->port,
+                    'encryption' =>  $BackupSenderEmail->encryption,
+                    'username' =>  $BackupSenderEmail->email,
+                    'password' =>  $BackupSenderEmail->password
+                ];
+                $this->SetConfig($BackupConfig, 'backups'); // 若发送失败，则使用备用邮箱发送
+            }
+            try {
+                $this->SendEmail($data['email'], $scene->body, $data, $scene->title, $senderEmail->email);
+            } catch (\Exception $e) {
+                if ($scene->alternate_email_id) {
+                    $this->SendEmail($data['email'], $scene->body, $data, $scene->title, $BackupSenderEmail->email, 'backups');
+                }
+            }
+            foreach ($emails as $email) {
+                try {
+                    $this->SendEmail($email, $scene->body, $data, $scene->title, $senderEmail->email);
+                } catch (\Exception $e) {
+                    if ($scene->alternate_email_id) {
+                        $this->SendEmail($email, $scene->body, $data, $scene->title, $BackupSenderEmail->email, 'backups');
+                    }
+                }
+            }
+            return true;
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
         }
