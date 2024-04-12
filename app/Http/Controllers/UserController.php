@@ -48,7 +48,7 @@ class UserController extends Controller
         $model->company = $company;
         $model->password = Hash::make($password);// 密码使用hash值
         $model->created_at = time();
-        $model->status = 1;
+        $model->status = 0;
         $model->save();
         DB::commit();
         
@@ -183,7 +183,8 @@ class UserController extends Controller
             // $token = base64_decode($request->token);
             // list($email,$id) = explode('&',$token);
             $token = $request->token;
-            $res = User::where('token',$token)->update(['check_email' => 1]);
+            // 可能有bug，比如邮件没限制时间或者封禁账号后通过邮件重新启用了。后面有空再改
+            $res = User::where('token',$token)->update(['check_email' => 1,'status' => 1]);
             // $res = User::where('email',$email)->where('id',$id)->update(['check_email' => 1]);
 
             $res ? ReturnJson(TRUE,trans('lang.request_success')) : ReturnJson(FALSE,trans('lang.request_error'));
