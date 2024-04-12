@@ -20,11 +20,12 @@ use Illuminate\Support\Facades\Redis;
 class ProductController extends Controller
 {
     // 获取报告列表信息
-    public function List(Request $request){
+    public function List(Request $request)
+    {
         $page = $request->page ? intval($request->page) : 1; // 页码
         $pageSize = $request->pageSize ? intval($request->pageSize) : 10; // 每页显示数量
         $category_id = $request->category_id ?? 0; // 分类ID
-        $keyword = trim($request->keyword) ?? null;// 搜索关键词
+        $keyword = trim($request->keyword) ?? null; // 搜索关键词
         $res = $this->GetProductResult($page, $pageSize, $keyword, $category_id);
         $result = $res['list'];
         $count = $res['count'];
@@ -38,7 +39,7 @@ class ProductController extends Controller
             $priceEditions = Redis::hgetall(PriceEditions::RedisKey);
 
             foreach ($result as $key => $value) {
-                
+
                 //返回打折信息
                 $time = time();
                 if (empty($value['discount_time_end']) || time() > $value['discount_time_end']) {
@@ -48,13 +49,15 @@ class ProductController extends Controller
                 if ((empty($value['discount_time_end']) || $time > $value['discount_time_end']) || ($value['discount'] == 100 && $value['discount_amount'] == 0)) {
                     // $productList[$key]['discount_time_end'] = '';
 
-                    unset($value['discount_time_begin']);
-                    unset($value['discount_time_end']);
+                    // unset($value['discount_time_begin']);
+                    // unset($value['discount_time_end']);
                     $value['discount'] = 100;
                     $value['discount_amount'] = 0;
                 } else {
-                    // $value['discount_time_start_date'] = date('m.d', $value['discount_time_begin']);
-                    // $value['discount_time_end_date'] = date('m.d', $value['discount_time_end']);
+                    $products[$key]['discount_time_begin'] = $value['discount_time_begin'];
+                    $products[$key]['discount_time_end'] = $value['discount_time_end'];
+                    $products[$key]['discount_time_start_date'] = date('m.d', $value['discount_time_begin']);
+                    $products[$key]['discount_time_end_date'] = date('m.d', $value['discount_time_end']);
                 }
 
                 $category = ProductsCategory::select([
@@ -69,8 +72,8 @@ class ProductController extends Controller
                 $products[$key]['english_name'] = $value['english_name'];
                 $value['published_date'] = ctype_digit($value['published_date']) ? date('Y-m-d H:i:s', (int)$value['published_date']) : $value['published_date'];
                 $suffix = date('Y', strtotime($value['published_date']));
-                $description = (new ProductDescription($suffix))->where('product_id',$value['id'])->value('description');
-                $description = mb_substr($description,0,120,'UTF-8');
+                $description = (new ProductDescription($suffix))->where('product_id', $value['id'])->value('description');
+                $description = mb_substr($description, 0, 120, 'UTF-8');
                 $products[$key]['description'] = $description;
                 $products[$key]['published_date'] = $value['published_date'] ? date('Y-m-d', strtotime($value['published_date'])) : '';
                 $products[$key]['category'] = $category ? [
@@ -82,7 +85,7 @@ class ProductController extends Controller
                 $products[$key]['discount_type'] = $value['discount_type'];
                 $products[$key]['discount_amount'] = $value['discount_amount'];
                 $products[$key]['discount'] = $value['discount'];
-                $products[$key]['prices'] = Products::CountPrice($value['price'],$value['publisher_id'],$languages,$priceEditionsValue,$priceEditions) ?? [];
+                $products[$key]['prices'] = Products::CountPrice($value['price'], $value['publisher_id'], $languages, $priceEditionsValue, $priceEditions) ?? [];
                 $products[$key]['id'] = $value['id'];
                 $products[$key]['url'] = $value['url'];
             }
@@ -94,21 +97,21 @@ class ProductController extends Controller
             "count" => intVal($count),
             'pageCount' => ceil($count / $pageSize),
         ];
-        ReturnJson(true,'请求成功',$data);
+        ReturnJson(true, '请求成功', $data);
     }
 
     /**
      * 搜索产品数据
      */
-    private function GetProductResult($page,$pageSize,$keyword = '',$category_id = 0)
+    private function GetProductResult($page, $pageSize, $keyword = '', $category_id = 0)
     {
         // try {
         //     // xunsearch 搜索
         //     $res = (new XunSearch())->GetList($page,$pageSize,$keyword,$category_id);
         //     return $res;
         // } catch (\Exception $e) {
-            // mysql 搜索
-            $query = Products::where(['status' => 1])
+        // mysql 搜索
+        $query = Products::where(['status' => 1])
             ->select([
                 'name',
                 'english_name',
@@ -125,25 +128,25 @@ class ProductController extends Controller
                 'category_id',
                 'publisher_id',
             ]);
-            // 分类ID
-            if($category_id){
-                $query = $query->where('category_id', $category_id);
-            }
-            // 关键词
-            if($keyword){
-                $query = $query->where(function($query) use ($keyword){
-                    $query->where('name', 'like', '%'.$keyword.'%');
-                });
-            }
-            // 获取当前复合条件的总数量
-            $count = $query->count();
+        // 分类ID
+        if ($category_id) {
+            $query = $query->where('category_id', $category_id);
+        }
+        // 关键词
+        if ($keyword) {
+            $query = $query->where(function ($query) use ($keyword) {
+                $query->where('name', 'like', '%' . $keyword . '%');
+            });
+        }
+        // 获取当前复合条件的总数量
+        $count = $query->count();
 
-            // 排序 显示发布时间 》 排序 》 id
-            $query = $query->orderBy('published_date','desc')->orderBy('sort','asc');
-            // 分页
-            $offset = ($page -1) * $pageSize;
-            $res = $query->offset($offset)->limit($pageSize)->get()->toArray();
-            return ['list' => $res, 'count' => $count];
+        // 排序 显示发布时间 》 排序 》 id
+        $query = $query->orderBy('published_date', 'desc')->orderBy('sort', 'asc');
+        // 分页
+        $offset = ($page - 1) * $pageSize;
+        $res = $query->offset($offset)->limit($pageSize)->get()->toArray();
+        return ['list' => $res, 'count' => $count];
         // }
     }
 
@@ -154,14 +157,14 @@ class ProductController extends Controller
         $product_id = $request->product_id;
         $url = $request->url;
         if (empty($product_id)) {
-            ReturnJson(false,'产品ID不允许为空！',[]);
+            ReturnJson(false, '产品ID不允许为空！', []);
         }
-        
+
         $product = Products::where(['id' => $product_id, 'status' => 1])->select('id')->first();
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
 
         if (!empty($product)) {
-                $product_desc = (new Products)->from('product_routine as p')->select([
+            $product_desc = (new Products)->from('product_routine as p')->select([
                 'p.name',
                 'p.english_name',
                 'cate.thumb',
@@ -183,12 +186,12 @@ class ProductController extends Controller
                 'p.discount_time_begin',
                 'p.discount_time_end',
                 'p.publisher_id',
-            ])->leftJoin('product_category as cate','cate.id','=', 'p.category_id')
+            ])->leftJoin('product_category as cate', 'cate.id', '=', 'p.category_id')
                 ->where(['p.id' => $product_id])
-                ->where('p.status',1)
+                ->where('p.status', 1)
                 ->first()->toArray();
 
-            
+
             //返回打折信息
             $time = time();
             if (empty($product_desc['discount_time_end']) || time() > $product_desc['discount_time_end']) {
@@ -203,8 +206,8 @@ class ProductController extends Controller
                 $product_desc['discount'] = 100;
                 $product_desc['discount_amount'] = 0;
             } else {
-                // $product_desc['discount_time_start_date'] = date('m.d', $product_desc['discount_time_begin']);
-                // $product_desc['discount_time_end_date'] = date('m.d', $product_desc['discount_time_end']);
+                $product_desc['discount_time_start_date'] = date('m.d', $product_desc['discount_time_begin']);
+                $product_desc['discount_time_end_date'] = date('m.d', $product_desc['discount_time_end']);
             }
 
             $suffix = date('Y', strtotime($product_desc['published_date']));
@@ -216,7 +219,7 @@ class ProductController extends Controller
                 'tables_and_figures',
                 'tables_and_figures_en',
                 'companies_mentioned',
-            ])->where('product_id',$product_id)->first();
+            ])->where('product_id', $product_id)->first();
 
             if ($description === null) {
                 $description = [];
@@ -246,12 +249,12 @@ class ProductController extends Controller
                 $serviceMethod = SystemValue::select(['name as key', 'value'])->where(['key' => 'Service', 'status' => 1])->first();
                 $product_desc['serviceMethod'] = $serviceMethod ?? '';
             }
-            $product_desc['prices'] = Products::CountPrice($product_desc['price'],$product_desc['publisher_id']);
+            $product_desc['prices'] = Products::CountPrice($product_desc['price'], $product_desc['publisher_id']);
             $product_desc['description'] = $product_desc['description'];
             $product_desc['url'] = $product_desc['url'];
             $product_desc['thumb'] = Common::cutoffSiteUploadPathPrefix($product_desc['thumb']);
             $product_desc['thumb'] = $product_desc['thumb'] ? $request->thumbUrl . $product_desc['thumb'] : '';
-            $product_desc['published_date'] = $product_desc['published_date'] ? date('Y-m-d',strtotime($product_desc['published_date'])) : '';
+            $product_desc['published_date'] = $product_desc['published_date'] ? date('Y-m-d', strtotime($product_desc['published_date'])) : '';
 
             //产品关键词 开始
             if (!empty($product_desc['keyword_suffix'])) {
@@ -272,7 +275,7 @@ class ProductController extends Controller
             //产品关键词 结束
 
             //产品标签 开始
-            $product_desc['tag'] = explode(',',$product_desc['keywords']);
+            $product_desc['tag'] = explode(',', $product_desc['keywords']);
             if ((!$product_desc['tag'] || count($product_desc['tag']) <= 1) && $product_desc['product_tag']) {
                 $product_desc['tag'] = array_merge($product_desc['tag'], explode(',', $product_desc['product_tag']));
             }
@@ -280,18 +283,18 @@ class ProductController extends Controller
             $product_desc['isSphinx'] = false;
             //产品标签 结束
 
-            ReturnJson(true,'',$product_desc);
+            ReturnJson(true, '', $product_desc);
         } else {
             $product_desc = Products::select(['id', 'url', 'published_date'])
-                ->where(['url' => $url,'status'=>1])
-                ->orderBy('published_date','desc')
-                ->orderBy('id','desc')
+                ->where(['url' => $url, 'status' => 1])
+                ->orderBy('published_date', 'desc')
+                ->orderBy('id', 'desc')
                 ->first();
             unset($product_desc->published_date);
             if (!empty($product_desc)) {
-                ReturnJson(true,'',$product_desc);
+                ReturnJson(true, '', $product_desc);
             } else {
-                ReturnJson(false,'请求失败');
+                ReturnJson(false, '请求失败');
             }
         }
     }
@@ -301,9 +304,9 @@ class ProductController extends Controller
     {
         $product_id = $request->product_id ?? '';
         if (empty($product_id)) {
-            ReturnJson(false,'产品ID不允许为空！',[]);
+            ReturnJson(false, '产品ID不允许为空！', []);
         }
-        $product = Products::select(['keywords','published_date'])->where('id',$product_id)->first()->toArray(); //根据详情页这份报告的关键词匹配到其它报告（同一个关键词的一些报告，除了自己，其它报告就是相关报告）
+        $product = Products::select(['keywords', 'published_date'])->where('id', $product_id)->first()->toArray(); //根据详情页这份报告的关键词匹配到其它报告（同一个关键词的一些报告，除了自己，其它报告就是相关报告）
         $start_time = date('Y-01-01 00:00:00', strtotime($product['published_date']));
         $end_time = date('Y-12-31 23:59:59', strtotime($product['published_date']));
         $products = Products::from('product_routine as product')
@@ -319,10 +322,10 @@ class ProductController extends Controller
                 'category.thumb',
                 'category.name as category_name',
             ])
-            ->leftJoin('product_category as category','category.id','=','product.category_id')
-            ->where('product.keywords',$product['keywords'])
-            ->where('product.id','<>',$product_id)
-            ->where('product.published_date','between',[strtotime($start_time), strtotime($end_time)]) // 只取与这份报告同年份的两份报告数据
+            ->leftJoin('product_category as category', 'category.id', '=', 'product.category_id')
+            ->where('product.keywords', $product['keywords'])
+            ->where('product.id', '<>', $product_id)
+            ->where('product.published_date', 'between', [strtotime($start_time), strtotime($end_time)]) // 只取与这份报告同年份的两份报告数据
             ->limit(2)
             ->get()->toArray();
 
@@ -334,15 +337,15 @@ class ProductController extends Controller
             $data[$index]['keywords'] = $product['keywords'];
             $data[$index]['english_name'] = $product['english_name'];
             $suffix = date('Y', strtotime($product['published_date']));
-            $data[$index]['description'] = (new ProductDescription($suffix))->where('product_id',$product['id'])->value('description');
+            $data[$index]['description'] = (new ProductDescription($suffix))->where('product_id', $product['id'])->value('description');
             $data[$index]['description'] = $data[$index]['description'] ? $data[$index]['description'] : '';
             $data[$index]['id'] = $product['id'];
             $data[$index]['url'] = $product['url'];
             $data[$index]['category_name'] = $product['category_name'];
             $data[$index]['published_date'] = $product['published_date'] ? date('Y-m-d', strtotime($product['published_date'])) : '';
-            $data[$index]['prices'] = Products::CountPrice($product['price'],$product['publisher_id']);
+            $data[$index]['prices'] = Products::CountPrice($product['price'], $product['publisher_id']);
         }
-        ReturnJson(true,'获取成功',$data);
+        ReturnJson(true, '获取成功', $data);
     }
 
     // 更多资讯
@@ -356,11 +359,11 @@ class ProductController extends Controller
             'category_id as type'
         ])
             ->where(['status' => 1])
-            ->orderBy('created_at','desc')
+            ->orderBy('created_at', 'desc')
             ->limit(8)
             ->get()
             ->toArray();
-        ReturnJson(true,'获取成功',$data);
+        ReturnJson(true, '获取成功', $data);
     }
 
     /**
@@ -379,14 +382,14 @@ class ProductController extends Controller
                 $row = trim($row, "\r");
                 $row = trim($row, "\r\n");
                 //判断是否换行
-                if(!empty($row) && strpos($row, ' ') === 0){
-                    $row = "&nbsp;&nbsp;&nbsp;&nbsp;".trim($row);
+                if (!empty($row) && strpos($row, ' ') === 0) {
+                    $row = "&nbsp;&nbsp;&nbsp;&nbsp;" . trim($row);
                 }
                 if (!empty($row) && strpos($row, ' ') === 0 && ($index + 1) != count($descriptionArray) && strpos($descriptionArray[$index + 1], ' ') !== 0) {
                     // $row = "&nbsp;&nbsp;".trim($row);
                     $result[] = $row;
                     $result[] = "<br />";
-                }elseif (!empty($row) && strrpos($row, '。') && strpos($row, '（')!==0) {
+                } elseif (!empty($row) && strrpos($row, '。') && strpos($row, '（') !== 0) {
                     $result[] = $row;
                     $result[] = "<br />";
                 } elseif ($row == "\n" || $row == "\r" || $row == "\r\n") {
@@ -468,14 +471,14 @@ class ProductController extends Controller
         $industry_id = $request->industry_id;
         $model = new ProductsCategory();
         if (!empty($industry_id)) {
-            $model = $model->where('industry_id',$industry_id);
+            $model = $model->where('industry_id', $industry_id);
         }
         $data = ProductsCategory::select([
-                'id',
-                'name',
-                'link',
-            ])
-            ->where('status',1)
+            'id',
+            'name',
+            'link',
+        ])
+            ->where('status', 1)
             ->get()
             ->toArray();
         array_unshift($data, [
@@ -493,7 +496,7 @@ class ProductController extends Controller
     {
         $productId = $request->product_id;
         if (empty($productId)) {
-            ReturnJson(false,'product_id is empty');
+            ReturnJson(false, 'product_id is empty');
         }
         $productsPdf = new ProductPdf();
         $productsPdf->setProductId($productId);
