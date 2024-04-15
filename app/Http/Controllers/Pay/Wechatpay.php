@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Pay;
 
 use App\Http\Controllers\Common\SendEmailController;
@@ -29,7 +30,7 @@ class Wechatpay extends Pay
      */
     public function do($order, $options = [])
     {
-        $returnUrl = rtrim(env('APP_URL',''),'/').'/paymentcomplete/'.$order->id;
+        $returnUrl = rtrim(env('APP_URL', ''), '/') . '/paymentcomplete/' . $order->id;
         if ($this->getOption(self::KEY_IS_WECHAT) == self::OPTION_ENABLE) {
 
             $wechat_type = 'native';
@@ -50,7 +51,7 @@ class Wechatpay extends Pay
 
             $referer = $_SERVER['HTTP_REFERER'] ?? '';
             // $redirecturi = env('APP_URL','').'/api/order/wechat-order?referer='.urlencode($referer);
-            $redirecturi = 'https://www.marketmonitorglobal.com.cn/api/wx-empower/index1?business_url='.rtrim(env('APP_URL',''),'/').'/api/order/wechat-order%3F&referer='.urlencode($referer);
+            $redirecturi = 'https://www.marketmonitorglobal.com.cn/api/wx-empower/index1?business_url=' . rtrim(env('APP_URL', ''), '/') . '/api/order/wechat-order%3F&referer=' . urlencode($referer);
             $url = $this->wechatTool->getOAuthUrl($redirecturi, $order->id);
 
             $html = $this->getJump($url);
@@ -59,7 +60,7 @@ class Wechatpay extends Pay
 
         try {
             if ($this->getOption(self::KEY_IS_MOBILE) == self::OPTION_ENABLE) { // h5 支付
-                
+
                 $wechat_type = 'h5';
                 if (empty($order->wechat_type)) {
                     //假设进来没有记录终端方式
@@ -76,7 +77,7 @@ class Wechatpay extends Pay
                     }
                 }
                 $h5Url = $this->getH5Url($order);
-                $h5Url = $h5Url.'&redirect_url='. urldecode($returnUrl);
+                $h5Url = $h5Url . '&redirect_url=' . urldecode($returnUrl);
                 $html = $this->getJump($h5Url);
 
                 return $html;
@@ -109,11 +110,15 @@ class Wechatpay extends Pay
 
                 $orderNumber = $order->order_number;
                 $orderAmount = $order->actually_paid;
-                $orderCreateAt = date('Y-m-d H:i:s', $order->created_at->timestamp);
-                $merchantName = env('WECHATPAY_MERCHANT_NAME','');
+                if (is_numeric($order->created_at)) {
+                    $orderCreateAt = date('Y-m-d H:i:s', $order->created_at);
+                } else {
+                    $orderCreateAt = date('Y-m-d H:i:s', $order->created_at->timestamp);
+                }
+                $merchantName = env('WECHATPAY_MERCHANT_NAME', '');
                 $qrcodeUrl = $qrCode->getDataUri();
                 $orderPaySuccess = Order::PAY_SUCCESS;
-                $actionUrl = rtrim(env('APP_URL'),'/').'/api/order/details';
+                $actionUrl = rtrim(env('APP_URL'), '/') . '/api/order/details';
                 $html = <<<EOF
                 <!DOCTYPE html>
                 <html>
@@ -249,9 +254,9 @@ class Wechatpay extends Pay
             }
         } catch (RequestException $e) {
             // 进行错误处理
-            $msg = $e->getMessage()."\n";
+            $msg = $e->getMessage() . "\n";
             if ($e->hasResponse()) {
-                $msg .= $e->getResponse()->getStatusCode().' '.$e->getResponse()->getReasonPhrase()."\n";
+                $msg .= $e->getResponse()->getStatusCode() . ' ' . $e->getResponse()->getReasonPhrase() . "\n";
                 $msg .= $e->getResponse()->getBody();
             }
             throw new \Exception($msg);
@@ -282,19 +287,19 @@ class Wechatpay extends Pay
             throw new Exception('JSON interpretation error');
         }
         $timestamp = time();
-        $dir = storage_path('log').'/wechatpay/'.date('Y_m/', $timestamp);
+        $dir = storage_path('log') . '/wechatpay/' . date('Y_m/', $timestamp);
         if (!is_dir($dir)) {
             mkdir($dir, 0777, true); // true参数是指是否创建多级目录，默认为false
         }
-        $logName = $input['id'] ?? 'create_time_'.$timestamp;
-        $logName = $dir.$logName.'.log';
+        $logName = $input['id'] ?? 'create_time_' . $timestamp;
+        $logName = $dir . $logName . '.log';
         $_DATA = count($_POST) == 0 ? file_get_contents("php://input") : $_POST;
         $log = sprintf("%s", var_export([
-                        '_TIME' => date('Y-m-d H:i:s', $timestamp),
-                        '_IP' => request()->ip(),
-                        '_DATA' => $_DATA,
-                        '_GET' => $_GET,
-                    ], true)).PHP_EOL;
+            '_TIME' => date('Y-m-d H:i:s', $timestamp),
+            '_IP' => request()->ip(),
+            '_DATA' => $_DATA,
+            '_GET' => $_GET,
+        ], true)) . PHP_EOL;
         file_put_contents($logName, $log, FILE_APPEND);
 
         if (!isset($input['resource'])) {
@@ -302,9 +307,11 @@ class Wechatpay extends Pay
             throw new Exception('resource not found');
         }
         $resourceJson = $input['resource'];
-        if (!isset($resourceJson['associated_data']) ||
+        if (
+            !isset($resourceJson['associated_data']) ||
             !isset($resourceJson['nonce']) ||
-            !isset($resourceJson['ciphertext'])) {
+            !isset($resourceJson['ciphertext'])
+        ) {
             // 抛异常
             throw new Exception('resource Key value not found');
         }
@@ -318,7 +325,7 @@ class Wechatpay extends Pay
         if ($resource === false) {
             // 抛异常
             $msg = 'Decryption failed';
-            file_put_contents($logName, $msg.PHP_EOL, FILE_APPEND);
+            file_put_contents($logName, $msg . PHP_EOL, FILE_APPEND);
             throw new Exception($msg);
         }
         $resource = json_decode($resource, true);
@@ -326,40 +333,42 @@ class Wechatpay extends Pay
             // 抛异常
             $msg = 'resource interpretation error';
             file_put_contents($logName, var_export([
-                    'msg' => $msg,
-                    'resource' => $resource,
-                    'json_error_msg' => json_last_error_msg(),
-                    'json_error' => json_last_error(),
-                ], true).PHP_EOL, FILE_APPEND);
+                'msg' => $msg,
+                'resource' => $resource,
+                'json_error_msg' => json_last_error_msg(),
+                'json_error' => json_last_error(),
+            ], true) . PHP_EOL, FILE_APPEND);
             throw new Exception($msg);
         }
-        if (!isset($resource['transaction_id']) ||
+        if (
+            !isset($resource['transaction_id']) ||
             !isset($resource['out_trade_no']) ||
-            !isset($resource['trade_state'])) {
+            !isset($resource['trade_state'])
+        ) {
             // 抛异常
             throw new Exception('resource Key value not found');
         }
-        file_put_contents($logName, var_export($resource, true).PHP_EOL, FILE_APPEND);
+        file_put_contents($logName, var_export($resource, true) . PHP_EOL, FILE_APPEND);
         $transaction_id = $resource['transaction_id'];
         $out_trade_no = $resource['out_trade_no'];
         $trade_state = $resource['trade_state'];
 
         if ($trade_state != 'SUCCESS') { // 支付不成功
             // 记下日志，提前返回
-            file_put_contents($logName, 'Payment failed'.PHP_EOL, FILE_APPEND);
+            file_put_contents($logName, 'Payment failed' . PHP_EOL, FILE_APPEND);
             return ['code' => 'SUCCESS', 'message' => ''];
         }
 
         if (!isset($resource['success_time'])) {
             // 记下错误，但不抛异常
-            file_put_contents($logName, 'success_time not found'.PHP_EOL, FILE_APPEND);
+            file_put_contents($logName, 'success_time not found' . PHP_EOL, FILE_APPEND);
             $success_time = time();
         } else {
             $success_time = $resource['success_time'];
             $success_time = strtotime($success_time);
             if ($success_time === false) {
                 // 记下错误，但不抛异常
-                file_put_contents($logName, 'success_time format error'.PHP_EOL, FILE_APPEND);
+                file_put_contents($logName, 'success_time format error' . PHP_EOL, FILE_APPEND);
                 $success_time = time();
             }
         }
@@ -368,11 +377,11 @@ class Wechatpay extends Pay
         if (!$order) { // 订单号不存在
             // 记下日志，提前返回
             $msg = 'order number not found';
-            file_put_contents($logName, $msg.PHP_EOL, FILE_APPEND);
+            file_put_contents($logName, $msg . PHP_EOL, FILE_APPEND);
             throw new Exception($msg);
         }
 
-        if($order->is_pay == Order::PAY_SUCCESS){
+        if ($order->is_pay == Order::PAY_SUCCESS) {
             return ['code' => 'SUCCESS', 'message' => ''];
         }
 
@@ -383,7 +392,7 @@ class Wechatpay extends Pay
         $order->updated_at = time();
         if ($order->save()) {
             if (!empty($order->coupon_id)) { // 如果这个订单有使用优惠券
-                $CouponUser = CouponUser::where(['user_id'=>$order->user_id,'coupon_id'=>$order->coupon_id])->first();
+                $CouponUser = CouponUser::where(['user_id' => $order->user_id, 'coupon_id' => $order->coupon_id])->first();
                 $CouponUser->is_used = 2;  // 改变该优惠券的使用状态为“已使用”
                 $CouponUser->usage_time = time();
                 $CouponUser->save();
@@ -391,11 +400,11 @@ class Wechatpay extends Pay
             (new SendEmailController())->payment($order->id);
             // Order::sendPaymentEmail($order); // 发送已付款的邮件
         } else { // 订单状态更新失败
-            $msg = 'order status update failed '.$order->getModelError();
-            file_put_contents($logName, $msg.PHP_EOL, FILE_APPEND);
+            $msg = 'order status update failed ' . $order->getModelError();
+            file_put_contents($logName, $msg . PHP_EOL, FILE_APPEND);
             throw new Exception($msg);
         }
-        file_put_contents($logName, 'success'.PHP_EOL, FILE_APPEND);
+        file_put_contents($logName, 'success' . PHP_EOL, FILE_APPEND);
 
         return ['code' => 'SUCCESS', 'message' => ''];
     }
@@ -404,9 +413,9 @@ class Wechatpay extends Pay
     {
         if ($this->wechatpayMiddleware === null) {
             // 商户相关配置
-            $merchantId = env('WECHATPAY_MERCHANT_ID',''); // 商户号
-            $merchantSerialNumber = env('WECHATPAY_MERCHANT_SERIAL_NUMBER',''); // 商户API证书序列号
-            $merchantPrivateKey = PemUtil::loadPrivateKey(base_path().env('WECHATPAY_MERCHANT_PRIVATE_KEY','')); // 商户私钥
+            $merchantId = env('WECHATPAY_MERCHANT_ID', ''); // 商户号
+            $merchantSerialNumber = env('WECHATPAY_MERCHANT_SERIAL_NUMBER', ''); // 商户API证书序列号
+            $merchantPrivateKey = PemUtil::loadPrivateKey(base_path() . env('WECHATPAY_MERCHANT_PRIVATE_KEY', '')); // 商户私钥
             // 微信支付平台配置
             $wechatpayCertificate = $this->getWechatpayCertificate();
 
@@ -465,9 +474,9 @@ class Wechatpay extends Pay
      */
     public function getWechatpayCertificate()
     {
-        $folder = base_path().env('WECHATPAY_CERTIFICATE_FOLDER','');
+        $folder = base_path() . env('WECHATPAY_CERTIFICATE_FOLDER', '');
         $certArr = [];
-        foreach (glob($folder.'/*.pem') as $item) {
+        foreach (glob($folder . '/*.pem') as $item) {
             if (is_file($item)) {
                 $certArr[] = PemUtil::loadCertificate($item); // 微信支付平台证书
             }
@@ -501,7 +510,7 @@ class Wechatpay extends Pay
             'mchid' => $this->wechatTool::$MERCHANT_ID, // 商户号
             'description' => $this->wechatTool::$DESCRIPTION,
             'out_trade_no' => $order->order_number,
-            'notify_url' => rtrim(env('APP_URL',''),'/').'/api/notify/wechatpay',
+            'notify_url' => rtrim(env('APP_URL', ''), '/') . '/api/notify/wechatpay',
             'amount' => [
                 'total' => $order->actually_paid * 100, // 单位为分
                 'currency' => 'CNY',
@@ -525,13 +534,13 @@ class Wechatpay extends Pay
     public function getH5Url($order)
     {
         $client = $this->getGuzzleHttpClient();
-    
+
         $json = [
             'appid' => $this->wechatTool::$APPID,
             'mchid' => $this->wechatTool::$MERCHANT_ID, // 商户号
             'description' => $this->wechatTool::$DESCRIPTION,
             'out_trade_no' => $order->order_number,
-            'notify_url' => rtrim(env('APP_URL',''),'/').'/api/notify/wechatpay',
+            'notify_url' => rtrim(env('APP_URL', ''), '/') . '/api/notify/wechatpay',
             'amount' => [
                 'total' => $order->actually_paid * 100, // 单位为分
                 'currency' => 'CNY',
@@ -572,7 +581,7 @@ class Wechatpay extends Pay
             'mchid' => $this->wechatTool::$MERCHANT_ID, // 商户号
             'description' => $this->wechatTool::$DESCRIPTION,
             'out_trade_no' => $order->order_number,
-            'notify_url' => rtrim(env('APP_URL',''),'/').'/api/notify/wechatpay',
+            'notify_url' => rtrim(env('APP_URL', ''), '/') . '/api/notify/wechatpay',
             'amount' => [
                 'total' => $order->actually_paid * 100, // 单位为分
                 'currency' => 'CNY',
@@ -606,8 +615,8 @@ class Wechatpay extends Pay
     {
         $appid = $this->wechatTool::$APPID;
 
-        $prepay_id = 'prepay_id='.$prepayid;
-        $data = $appid."\n".$timestamp."\n".$nonce."\n".$prepay_id."\n";
+        $prepay_id = 'prepay_id=' . $prepayid;
+        $data = $appid . "\n" . $timestamp . "\n" . $nonce . "\n" . $prepay_id . "\n";
         $binary_signature = "";
         $algo = "SHA256";
         $prikey = file_get_contents($this->wechatTool::$MERCHANT_PRIVATE_KEY);
@@ -616,7 +625,7 @@ class Wechatpay extends Pay
 
         return $base64_signature;
     }
-    
+
 
     /**
      * @param Order $order
@@ -628,7 +637,7 @@ class Wechatpay extends Pay
         $query = [
             'mchid' => $this->wechatTool::$MERCHANT_ID, // 商户号
         ];
-        $resp = $client->request('GET', 'https://api.mch.weixin.qq.com/v3/pay/transactions/out-trade-no/'.$order->order_number, [
+        $resp = $client->request('GET', 'https://api.mch.weixin.qq.com/v3/pay/transactions/out-trade-no/' . $order->order_number, [
             'query' => $query, // JSON请求体
             'headers' => ['Accept' => 'application/json']
         ]);
@@ -639,8 +648,8 @@ class Wechatpay extends Pay
     }
 
     /**
-    * 获取签名
-    */
+     * 获取签名
+     */
     public static function getSign($params, $key)
     {
         ksort($params, SORT_STRING);
