@@ -272,21 +272,7 @@ class OrderController extends Controller
     public function Pay(Request $request)
     {
         $orderId = $request->order_id;
-        $order = Order::select([
-            'order_amount',
-            'actually_paid',
-            'is_pay',
-            'pay_type',
-            'order_number',
-            'pay_time',
-            'user_id',
-            'province_id',
-            'city_id',
-            'address',
-            'remarks',
-        ])
-            ->where(['id' => $orderId])
-            ->first();
+        $order = Order::where(['id' => $orderId])->first();
         if (!$order) {
             ReturnJson(false, '订单不存在');
         }
