@@ -112,11 +112,12 @@ Route::middleware('api')->group(function () {
     Route::prefix('order')->group(function () {
         Route::post('coupon', [\App\Http\Controllers\OrderController::class, 'Coupon'])->name('查询优惠卷');
         Route::post('create-and-pay', [\App\Http\Controllers\OrderController::class, 'CreateAndPay'])->name('购物车结算产品列表');
+        Route::post('pay', [\App\Http\Controllers\OrderController::class, 'Pay'])->name('订单调用支付');
         Route::get('payment', [\App\Http\Controllers\OrderController::class, 'Payment'])->name('支付方式');
         Route::get('wechat-order', [\App\Http\Controllers\OrderController::class, 'WechatOrder'])->name('获取CODE信息');
         Route::post('details', [\App\Http\Controllers\OrderController::class, 'Details'])->name('检测已支付订单');
     });
-
+    
     // 支付宝回调
     Route::post('notify/alipay', [\App\Http\Controllers\Pay\Notify::class, 'Alipay'])->name('支付宝回调');
     // 微信支付回调

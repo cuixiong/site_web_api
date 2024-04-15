@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\DictionaryValue;
 use App\Models\MessageLanguageVersion;
+use App\Models\Country;
+use App\Models\City;
 
 class ContactUsController extends Controller
 {
@@ -59,6 +61,16 @@ class ContactUsController extends Controller
 
         // 获知渠道 
         $result['channel'] = DictionaryValue::GetDicOptions('Channel_Type');
+
+        // 国家 
+        $result['country'] = Country::where('status', 1)->select('id as value', 'data as label', 'code')->orderBy('sort', 'asc')->get()->toArray();;
+
+        $provinces = City::where(['status' => 1, 'type' => 1])->select('id as value', 'name as label')->orderBy('id', 'asc')->get()->toArray();
+        foreach ($provinces as $key => $province) {
+            $cities = City::where(['status' => 1, 'type' => 2, 'pid' => $province['value']])->select('id as value', 'name as label')->orderBy('id', 'asc')->get()->toArray();
+            $provinces[$key]['children'] = $cities;
+        }
+        $result['city'] = $provinces;
 
         // 语言版本
         $result['language_version'] = MessageLanguageVersion::where('status', 1)
