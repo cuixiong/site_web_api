@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Common\SendEmailController;
 use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
 use Illuminate\Http\Request;
@@ -13,4 +14,12 @@ class XunSearchTestController extends Controller
         $xs->clean();
         echo "完成".date('Y-m-d H:i:s',time());
     }
+
+    public function test() {
+        //测试 付款完成, 邮件
+//        $smController = new SendEmailController();
+//        $a = $smController->payment(1384);
+//        dd($a);
+    }
+
 }

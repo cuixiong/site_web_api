@@ -75,7 +75,7 @@ Route::middleware('api')->group(function () {
         Route::get('faqs', [\App\Http\Controllers\PageController::class, 'Faqs'])->name('常见问题');
         Route::get('customer-evaluations', [\App\Http\Controllers\PageController::class, 'CustomerEvaluations'])->name('客户评价-列表');
         Route::get('customer-evaluation', [\App\Http\Controllers\PageController::class, 'CustomerEvaluation'])->name('客户评价-详情');
-        
+
         Route::post('application-sample', [\App\Http\Controllers\PageController::class, 'ApplicationSample'])->name('申请样本');
         Route::post('custom-reports', [\App\Http\Controllers\PageController::class, 'CustomReports'])->name('定制报告');
         Route::post('contact-us', [\App\Http\Controllers\PageController::class, 'ContactUs'])->name('联系我们');
@@ -117,7 +117,7 @@ Route::middleware('api')->group(function () {
         Route::get('wechat-order', [\App\Http\Controllers\OrderController::class, 'WechatOrder'])->name('获取CODE信息');
         Route::post('details', [\App\Http\Controllers\OrderController::class, 'Details'])->name('检测已支付订单');
     });
-    
+
     // 支付宝回调
     Route::post('notify/alipay', [\App\Http\Controllers\Pay\Notify::class, 'Alipay'])->name('支付宝回调');
     // 微信支付回调
@@ -132,10 +132,20 @@ Route::middleware('api')->group(function () {
         Route::get('relevant-products', [\App\Http\Controllers\NewsController::class, 'RelevantProducts'])->name('相关报告列表');
     });
 
+    // Information控制器 (热门资讯)
+    Route::prefix('information')->group(function () {
+        Route::post('index', [\App\Http\Controllers\InformationController::class, 'Index'])->name('热门资讯列表');
+        Route::get('view', [\App\Http\Controllers\InformationController::class, 'View'])->name('热门资讯详情');
+        Route::get('relevant', [\App\Http\Controllers\InformationController::class, 'Relevant'])->name('相关热门资讯');
+        Route::get('relevant-products', [\App\Http\Controllers\InformationController::class, 'RelevantProducts'])->name('相关报告列表');
+    });
+
     // Sitemap(网站地图)控制器
     Route::prefix('sitemap')->group(function () {
         Route::get('make-site-map', [\App\Http\Controllers\SitemapController::class, 'MakeSiteMap'])->name('更新地图');
     });
 
     Route::get('xunsearch/clean', [\App\Http\Controllers\XunSearchTestController::class, 'clean'])->name('讯搜清空数据');
+
+    Route::get('xunsearch/test', [\App\Http\Controllers\XunSearchTestController::class, 'test'])->name('测试接口');
 });

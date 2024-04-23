@@ -451,10 +451,12 @@ class SendEmailController extends Controller
                 'userName' => $data['name'] ? $data['name'] : '',
                 'email' => $data['email'],
                 'company' => $data['company'],
-                'area' => City::where('id', $data['area_id'])->value('name'),
+                //'area' => City::where('id', $data['area_id'])->value('name'),
+                'area' => City::where('id', $data['city_id'])->value('name'),
                 'phone' => $data['phone'] ? $data['phone'] : '',
                 'plantTimeBuy' => $data['buy_time'],
-                'content' => $data['remarks'],
+                //'content' => $data['remarks'],
+                'content' => $data['content'],
                 'backendUrl' => env('IMAGE_URL'),
                 'plantTimeBuy' => $data['buy_time'],
             ];
@@ -743,15 +745,21 @@ class SendEmailController extends Controller
 
             $priceEdition = Redis::hget(PriceEditionValues::RedisKey, $OrderGoods['price_edition']);
             $priceEdition = json_decode($priceEdition, true);
-            $language = Redis::hget(Languages::RedisKey, $priceEdition['language_id']);
-            $language = json_decode($language, true);
+            if(!empty($priceEdition['language_id'] )) {
+                $language = Redis::hget(Languages::RedisKey, $priceEdition['language_id']);
+                $language = json_decode($language, true);
+            }
             $language = isset($language['name']) ? $language['name'] : '';
             $Products = Products::select(['url as link', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id'])->whereIn('id', explode(',', $OrderGoods['goods_id']))->get()->toArray();
             if ($Products) {
                 foreach ($Products as $key => $value) {
                     $Products[$key]['goods_number'] = $OrderGoods['goods_number'] ? intval($OrderGoods['goods_number']) : 0;
                     $Products[$key]['language'] = $language;
-                    $Products[$key]['price_edition'] = $priceEdition['name'];
+                    if(!empty($priceEdition )) {
+                        $Products[$key]['price_edition'] = $priceEdition['name'];
+                    }else{
+                        $Products[$key]['price_edition'] = '';
+                    }
                     $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
                     if (empty($value['thumb'])) {
                         $categoryThumb = ProductsCategory::where('id', $value['category_id'])->value('thumb');
@@ -784,7 +792,7 @@ class SendEmailController extends Controller
                 'paymentLink' => $data['domain'] . '/api/order/pay?order_id=' . $data['id'],
                 'orderDetails' => $data['domain'] . '/account?orderdetails=' . $data['id'],
                 'goods' => $Products,
-                'userId' => $user['id']
+                'userId' => $data['user_id']
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')->toArray();
             if ($siteInfo) {

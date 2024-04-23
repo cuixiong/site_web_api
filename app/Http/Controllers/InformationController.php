@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Information;
 use App\Models\Languages;
-use App\Models\News;
 use App\Models\PriceEditionValues;
 use App\Models\Products;
 use App\Models\ProductsCategory;
@@ -13,10 +13,10 @@ use App\Models\ProductDescription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class NewsController extends Controller
+class InformationController extends Controller
 {
     /**
-     * 行业新闻列表
+     * 热门资讯列表
      */
     public function Index(Request $request)
     {
@@ -31,7 +31,7 @@ class NewsController extends Controller
             // 'category_id' => 1
         ];
 
-        $query = News::select([
+        $query = Information::select([
             'thumb',
             'title',
             'upload_at as release_at',
@@ -44,7 +44,7 @@ class NewsController extends Controller
             ->where($where)
             ->where('upload_at', '<=',  time());
 
-        $count = News::where($where);
+        $count = Information::where($where);
         if (!empty($keyword)) {
             $keyword = explode(" ", $keyword);
             for ($i = 0; $i <= count($keyword); $i++) {
@@ -98,7 +98,7 @@ class NewsController extends Controller
     }
 
     /**
-     * 行业新闻详情
+     * 热门资讯详情
      */
     public function View(Request $request)
     {
@@ -107,7 +107,7 @@ class NewsController extends Controller
             ReturnJson(false, 'id is empty');
         }
 
-        $data = News::select([
+        $data = Information::select([
             'title',
             'upload_at',
             'hits',
@@ -120,7 +120,7 @@ class NewsController extends Controller
             ->first();
         if ($data) {
             // real_hits + 1
-            News::where(['id' => $id])->increment('real_hits');
+            Information::where(['id' => $id])->increment('real_hits');
 
             $data['tags'] = $data['tags'] ? explode(',', $data['tags']) : [];
             $data['upload_at_format'] = $data['upload_at'] ? date('Y-m-d', $data['upload_at']) : '';
@@ -129,7 +129,7 @@ class NewsController extends Controller
         }
 
         //查询上一篇
-        $prev = News::select(['id', 'title', 'url', 'category_id'])
+        $prev = Information::select(['id', 'title', 'url', 'category_id'])
             ->where('id', '<',  $id)
             ->where(['status' => 1])
             ->where('upload_at', '<=',  time())  //发布时间需要<=当前时间
@@ -138,7 +138,7 @@ class NewsController extends Controller
             ->first();
 
         //查询下一篇
-        $next = News::select(['id', 'title', 'url', 'category_id'])
+        $next = Information::select(['id', 'title', 'url', 'category_id'])
             ->where('id', '>',  $id)
             ->where(['status' => 1])
             ->where('upload_at', '<=',  time())  //发布时间需要<=当前时间
@@ -177,7 +177,7 @@ class NewsController extends Controller
         }
         // $category_id = 1;
 
-        $data = News::select([
+        $data = Information::select([
             'title',
             'keywords',
             'id',
@@ -202,7 +202,7 @@ class NewsController extends Controller
     public function RelevantProducts(Request $request)
     {
         $id = $request->id ? $request->id : null;
-        $keyword = News::where('id', $id)->value('tags');
+        $keyword = Information::where('id', $id)->value('tags');
         if (!empty($keyword)) {
             $keyword = explode(',', $keyword);
         }

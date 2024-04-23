@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Redis;
 
 class Languages extends Base
 {
-    // const RedisKey = 'Languages';
+     const RedisKey = 'Languages';
     /**
      * 从redis中获取数据
      * 自己加风险意识代码，不想给那个SB领导写

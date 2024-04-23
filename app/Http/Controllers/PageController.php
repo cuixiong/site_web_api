@@ -70,6 +70,8 @@ class PageController extends Controller
         if ($category_id) {
             $model = $model->where('category_id', $category_id);
         }
+        //过滤状态
+        $model->where("status" , 1);
         $count = $model->count();
         $result = $model->offset(($page - 1) * $pageSize)->limit($pageSize)->get()->toArray();
         foreach ($result as $key => $item) {
@@ -125,12 +127,14 @@ class PageController extends Controller
         $model = new ContactUs();
         $model->name = $name;
         $model->email = $email;
-        $model->area_id = $province_id;
+        //$model->area_id = $province_id;  数据库字段对应省份字段
+        $model->province_id = $province_id;
         $model->city_id = $city_id;
         $model->phone = $phone;
         $model->company = $company;
         $model->buy_time = $plan_buy_time;
-        $model->remarks = $content;
+        //$model->remarks = $content;
+        $model->content = $content;
         $model->status = 0;
         if ($model->save()) {
             (new SendEmailController)->contactUs($model->id); // 发送邮件
