@@ -121,6 +121,7 @@ class NewsController extends Controller
         if ($data) {
             // real_hits + 1
             News::where(['id' => $id])->increment('real_hits');
+            News::where(['id' => $id])->increment('hits');
 
             $data['tags'] = $data['tags'] ? explode(',', $data['tags']) : [];
             $data['upload_at_format'] = $data['upload_at'] ? date('Y-m-d', $data['upload_at']) : '';

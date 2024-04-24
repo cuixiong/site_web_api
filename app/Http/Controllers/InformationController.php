@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Information;
 use App\Models\Languages;
+use App\Models\News;
 use App\Models\PriceEditionValues;
 use App\Models\Products;
 use App\Models\ProductsCategory;
@@ -121,6 +122,7 @@ class InformationController extends Controller
         if ($data) {
             // real_hits + 1
             Information::where(['id' => $id])->increment('real_hits');
+            Information::where(['id' => $id])->increment('hits');
 
             $data['tags'] = $data['tags'] ? explode(',', $data['tags']) : [];
             $data['upload_at_format'] = $data['upload_at'] ? date('Y-m-d', $data['upload_at']) : '';
