@@ -125,6 +125,7 @@ class PageController extends Controller
         $content = $params['content'];
 
         $model = new ContactUs();
+        $model->category_id = $params['category_id'] ?? 0;
         $model->name = $name;
         $model->email = $email;
         //$model->area_id = $province_id;  数据库字段对应省份字段
