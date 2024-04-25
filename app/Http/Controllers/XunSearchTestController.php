@@ -5,6 +5,7 @@ use App\Http\Controllers\Common\SendEmailController;
 use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
 use Illuminate\Http\Request;
+use XS;
 
 class XunSearchTestController extends Controller
 {
