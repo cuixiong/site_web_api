@@ -15,7 +15,19 @@ class XunSearchTestController extends Controller
         echo "完成".date('Y-m-d H:i:s',time());
     }
 
-    public function test() {
+    public function test(Request $request) {
+        $input = $request->all();
+        $keyword = $input['keyword'];
+
+        $RootPath = base_path();
+        $xs = new XS($RootPath.'/config/xunsearch/MMG_CN.ini');
+        $search = $xs->search;
+        $queryWords = "name:{$keyword}";
+        $search->setQuery($queryWords);
+        $docs = $search->search();
+        $count = $search->count();
+        dd([$docs , $count]);
+
         //测试 付款完成, 邮件
 //        $smController = new SendEmailController();
 //        $a = $smController->payment(1384);
