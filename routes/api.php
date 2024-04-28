@@ -89,11 +89,22 @@ Route::middleware('api')->group(function () {
     Route::post('do-reset-register', [\App\Http\Controllers\UserController::class, 'DoResetPassword'])->name('忘记密码:修改密码');
     Route::get('check-email', [\App\Http\Controllers\UserController::class, 'CheckEmail'])->name('验证邮箱');
     Route::post('exists-email', [\App\Http\Controllers\UserController::class, 'ExistsEmail'])->name('邮箱是否存在');
+    //退出登陆
+    Route::middleware(JwtMiddleware::class)->get('loginout', [\App\Http\Controllers\UserController::class, 'loginout'])->name('退出登陆');
     Route::prefix('user')->group(function () {
         Route::middleware(JwtMiddleware::class)->get('info', [\App\Http\Controllers\UserController::class, 'Info'])->name('Info接口');
         Route::post('coupons', [\App\Http\Controllers\UserController::class, 'Coupons'])->name('查询用户优惠卷');
         Route::post('verify-email', [\App\Http\Controllers\UserController::class, 'VerifyEmail'])->name('注册验证邮箱');
+        Route::middleware(JwtMiddleware::class)->post('update', [\App\Http\Controllers\UserController::class, 'update'])->name('用户信息修改');
+    });
 
+    //user-address 用户收货地址
+    Route::prefix('user-address')->group(function () {
+        Route::middleware(JwtMiddleware::class)->get('list', [\App\Http\Controllers\UserAddressController::class, 'list'])->name('收货地址列表');
+        Route::middleware(JwtMiddleware::class)->post('add', [\App\Http\Controllers\UserAddressController::class, 'store'])->name('添加收货地址');
+        Route::middleware(JwtMiddleware::class)->get('form/{id}', [\App\Http\Controllers\UserAddressController::class, 'form'])->name('根据id查询');
+        Route::middleware(JwtMiddleware::class)->post('update', [\App\Http\Controllers\UserAddressController::class, 'update'])->name('修改收货地址');
+        Route::middleware(JwtMiddleware::class)->get('delete/{id}', [\App\Http\Controllers\UserAddressController::class, 'delete'])->name('收货地址删除');
     });
 
     // Cart控制器(购物车模块)

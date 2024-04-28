@@ -11,9 +11,12 @@ class XunSearchTestController extends Controller
 {
     public function clean(Request $request)
     {
-        $xs = new XunSearch();
-        $xs->clean();
-        echo "完成".date('Y-m-d H:i:s',time());
+        $a = date("Y-m-d H:i:s" , 1714295009);
+        dd($a);
+
+//        $xs = new XunSearch();
+//        $xs->clean();
+//        echo "完成".date('Y-m-d H:i:s',time());
     }
 
     public function test(Request $request) {
