@@ -93,7 +93,7 @@ Route::middleware('api')->group(function () {
     Route::middleware(JwtMiddleware::class)->get('loginout', [\App\Http\Controllers\UserController::class, 'loginout'])->name('退出登陆');
     Route::prefix('user')->group(function () {
         Route::middleware(JwtMiddleware::class)->get('info', [\App\Http\Controllers\UserController::class, 'Info'])->name('Info接口');
-        Route::post('coupons', [\App\Http\Controllers\UserController::class, 'Coupons'])->name('查询用户优惠卷');
+        Route::middleware(JwtMiddleware::class)->post('coupons', [\App\Http\Controllers\UserController::class, 'Coupons'])->name('查询用户优惠卷');
         Route::post('verify-email', [\App\Http\Controllers\UserController::class, 'VerifyEmail'])->name('注册验证邮箱');
         Route::middleware(JwtMiddleware::class)->post('update', [\App\Http\Controllers\UserController::class, 'update'])->name('用户信息修改');
     });
@@ -106,6 +106,14 @@ Route::middleware('api')->group(function () {
         Route::middleware(JwtMiddleware::class)->post('update', [\App\Http\Controllers\UserAddressController::class, 'update'])->name('修改收货地址');
         Route::middleware(JwtMiddleware::class)->get('delete/{id}', [\App\Http\Controllers\UserAddressController::class, 'delete'])->name('收货地址删除');
     });
+
+    //user-invoices 用户发票
+    Route::prefix('user-invoices')->group(function () {
+        Route::middleware(JwtMiddleware::class)->get('list', [\App\Http\Controllers\InvoicesController::class, 'list'])->name('发票列表');
+        Route::middleware(JwtMiddleware::class)->get('form/{id}', [\App\Http\Controllers\InvoicesController::class, 'form'])->name('发票详情');
+
+    });
+
 
     // Cart控制器(购物车模块)
     Route::prefix('cart')->group(function () {

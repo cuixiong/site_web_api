@@ -212,16 +212,13 @@ class UserController extends Controller {
     public function Coupons(Request $request) {
         $status = $request->status;
         $scene = $request->scene;
-        $price = $request->price;
         if (!isset($status)) { // 由于允许参数status的值为0，所以这里要用【!isset】
             ReturnJson(false, 'status');
         }
         if (!isset($scene)) {
             ReturnJson(false, 'scene');
         }
-        if (!isset($price)) {
-            ReturnJson(false, 'price');
-        }
+        $userId = $request->user()->id;
         $result = CouponUser::from('coupon_users as user')
                             ->select([
                                          'coupon.type',
@@ -233,16 +230,15 @@ class UserController extends Controller {
                                      ])
                             ->leftJoin('coupons as coupon', 'user.coupon_id', '=', 'coupon.id')
                             ->where([
-                                        // 'user.user_id' => $user->id,
-                                        // 'user.user_id' => 1,
-                                        // 'coupon.status' => 1,
+                                        'user.user_id'  => $userId,
+                                        'coupon.status' => 1,
                                     ]);
         switch ($status) {
             case 1: // 未使用的优惠券
-                $result = $result->where('user.is_used', 1);
+                $result = $result->where('user.is_used', CouponUser::isUsedNO);
                 break;
             case 2: // 已使用的优惠券
-                $result = $result->where('user.is_used', 2);
+                $result = $result->where('user.is_used', CouponUser::isUsedYes);
                 break;
             case 3: // 已过期的优惠券
                 $result = $result->where('coupon.time_end', '<', time());
@@ -250,29 +246,14 @@ class UserController extends Controller {
             default:// 全部优惠券
                 break;
         }
-        if ($scene == 1) {
-            $result = $result->where(function ($query) {
-                $query->where(['coupon.type' => 1, 'coupon.value' => ['>', 100]])
-                      ->orWhere(['coupon.type' => 2, 'coupon.value' => ['>', 0]]);
-            });
-        }
-        if ($scene == 2) {
-            $result = $result->where(function ($query, $price) {
-                $query->where(['coupon.type' => 1, 'coupon.value' => ['<', 100], 'coupon.time_end' => ['>=', time()]])
-                      ->orWhere(
-                          ['coupon.type'     => 2, 'coupon.value' => ['between', 0, $price],
-                           'coupon.time_end' => ['>=', time()]]
-                      );
-            });
-        }
         $result = $result->get()->toArray();
         $data = [];
         if (!empty($result) && is_array($result)) {
             foreach ($result as $key => $value) {
-                if ($value['is_used'] == 0) { // 该券未使用
+                if ($value['is_used'] == CouponUser::isUsedNO) { // 该券未使用
                     $couponStatus = 0;
                 }
-                if ($value['is_used'] == 1) { // 该券已使用
+                if ($value['is_used'] == CouponUser::isUsedYes) { // 该券已使用
                     $couponStatus = 1;
                 }
                 if ($value['time_end'] < time()) { // 该券已过期
@@ -281,14 +262,9 @@ class UserController extends Controller {
                 if ($value['is_used'] == 1 && $value['time_end'] < time()) { // 如果该券未使用但已过期，
                     $couponStatus = 3; // 就按照已过期处理
                 }
-                if ($value['is_used'] == 2 && $value['time_end'] < time()) { // 如果该券已使用并已过期，
-                    $couponStatus = 2; // 就按照已使用处理
-                }
-                $data[$key]['type'] = $value['type'];
                 $data[$key]['value'] = $value['type'] == 1 ? round($value['value'], 0) : (float)$value['value'];
                 $data[$key]['day_end'] = $value['time_end'] ? date('Y.m.d', $value['time_end']) : '';
                 $data[$key]['code'] = $value['code'];
-                $data[$key]['id'] = $value['id'];
                 $data[$key]['status'] = $couponStatus;
             }
         }

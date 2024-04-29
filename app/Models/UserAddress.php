@@ -5,9 +5,12 @@ namespace App\Models;
 use App\Models\Base;
 
 class UserAddress extends Base {
-    protected $fillable = ['user_id', 'address', 'city_id', 'province_id', 'consignee', 'contact_number', 'is_default'];
-    protected $table    = 'user_address';
-    protected $appends  = ['province_id', 'city_id'];
+    protected $fillable
+                       = ['user_id', 'address', 'city_id', 'province_id', 'consignee', 'contact_number', 'is_default',
+                          'email'];
+    protected $table   = 'user_address';
+    protected $appends = ['province_id', 'city_id'];
+
     /**
      * 省份获取器
      */
@@ -31,5 +34,4 @@ class UserAddress extends Base {
 
         return $text ?? '';
     }
-
 }
