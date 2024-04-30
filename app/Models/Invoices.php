@@ -5,6 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Invoices extends Base {
+    protected $fillable
+        = [
+            'company_name', 'company_address', 'tax_code', 'invoice_type', 'price', 'user_id', 'order_id', 'title',
+            'apply_status', 'phone', 'bank_name', 'bank_account'
+        ];
     const invoiceType
         = [
             '1' => '普通发票',

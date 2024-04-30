@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\InvoicesRequest;
 use App\Models\Invoices;
+use App\Models\Order;
 use Illuminate\Http\Request;
 
 class InvoicesController extends Controller {
@@ -49,6 +51,48 @@ class InvoicesController extends Controller {
             $record = $model->findOrFail($request->id);
             $rs = $record->toArray();
             ReturnJson(true, '获取成功', $rs);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function apply(Request $request) {
+        try {
+            (new InvoicesRequest())->apply($request);
+            $input = $request->all();
+            $model = new Order();
+            $orderObj = $model->findOrFail($input['order_id']);
+            $userId = $request->user->id;
+            if ($orderObj->user_id != $userId) {
+                ReturnJson(false, '非法操作');
+            }
+            if (!in_array($orderObj->is_pay, [Order::PAY_FINISH])) {
+                ReturnJson(false, '订单还未完成,不能申请');
+            }
+            $model = new Invoices();
+            $isExist = $model->where('order_id', $input['order_id'])->count();
+            if ($isExist) {
+                ReturnJson(false, '该订单已经申请过');
+            }
+            $addData = [
+                'company_name'    => $input['company_name'],
+                'company_address' => $input['company_address'],
+                'tax_code'        => $input['tax_code'],
+                'invoice_type'    => $input['invoice_type'],
+                'price'           => $orderObj->actually_paid,
+                'user_id'         => $userId,
+                'order_id'        => $input['order_id'],
+                'title'           => $orderObj->product_name,
+                'apply_status'    => 0,
+                'phone'           => $input['phone'],
+                'bank_name'       => $input['bank_name'],
+                'bank_account'    => $input['bank_account'],
+            ];
+            $rs = $model->create($addData);
+            if (!$rs) {
+                ReturnJson(false, '申请失败');
+            }
+            ReturnJson(true, '申请成功');
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
