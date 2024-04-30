@@ -59,7 +59,7 @@ class Wechatpay extends Pay
 
         try {
             if ($this->getOption(self::KEY_IS_MOBILE) == self::OPTION_ENABLE) { // h5 支付
-                
+
                 $wechat_type = 'h5';
                 if (empty($order->wechat_type)) {
                     //假设进来没有记录终端方式
@@ -109,7 +109,10 @@ class Wechatpay extends Pay
 
                 $orderNumber = $order->order_number;
                 $orderAmount = $order->actually_paid;
-                $orderCreateAt = date('Y-m-d H:i:s', $order->created_at->timestamp);
+                //$orderCreateAt = date('Y-m-d H:i:s', $order->created_at->timestamp);
+                $orderData = $order->toArray();
+                $orderCreateAt = $orderData['created_at'] ?? '';
+
                 $merchantName = env('WECHATPAY_MERCHANT_NAME','');
                 $qrcodeUrl = $qrCode->getDataUri();
                 $orderPaySuccess = Order::PAY_SUCCESS;
@@ -241,7 +244,7 @@ class Wechatpay extends Pay
                                     }
                                 }, 3000); // 每 3 秒轮询一次
                             }, 5000); // 等待 5 秒后开始轮询支付结果
-                        } 
+                        }
                     </script>
                 </html>
                 EOF;
@@ -525,7 +528,7 @@ class Wechatpay extends Pay
     public function getH5Url($order)
     {
         $client = $this->getGuzzleHttpClient();
-    
+
         $json = [
             'appid' => $this->wechatTool::$APPID,
             'mchid' => $this->wechatTool::$MERCHANT_ID, // 商户号
@@ -616,7 +619,7 @@ class Wechatpay extends Pay
 
         return $base64_signature;
     }
-    
+
 
     /**
      * @param Order $order
