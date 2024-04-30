@@ -215,9 +215,9 @@ class UserController extends Controller {
         if (!isset($status)) { // 由于允许参数status的值为0，所以这里要用【!isset】
             ReturnJson(false, 'status');
         }
-        if (!isset($scene)) {
-            ReturnJson(false, 'scene');
-        }
+//        if (!isset($scene)) {
+//            ReturnJson(false, 'scene');
+//        }
         $userId = $request->user()->id;
         $result = CouponUser::from('coupon_users as user')
                             ->select([
