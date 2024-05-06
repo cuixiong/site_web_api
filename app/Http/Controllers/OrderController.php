@@ -389,19 +389,14 @@ class OrderController extends Controller {
      */
     public function Details(Request $request) {
         $orderId = $request->order_id;
-        $order = Order::select([
-                                   'order_amount',
-                                   'actually_paid',
-                                   'is_pay',
-                                   'pay_type',
-                                   'order_number',
-                                   'pay_time',
-                                   'user_id',
-                                   'province_id',
-                                   'city_id',
-                                   'address',
-                                   'remarks',
-                               ])
+        $field = [
+            'order_amount', 'actually_paid',
+            'is_pay', 'pay_type',
+            'order_number', 'pay_time',
+            'user_id', 'province_id',
+            'city_id', 'address', 'remarks',
+        ];
+        $order = Order::select($field)
                       ->where(['id' => $orderId])
                       ->first();
         if (!$order) {
@@ -439,10 +434,10 @@ class OrderController extends Controller {
             $city = City::where('id', $order['city_id'])->value('name');
             $address = $province.$city.$order['address'];
             $_user = [
-                'name'    => $user['username'],
-                'email'   => $user['email'],
-                'phone'   => $user['phone'],
-                'company' => $user['company'],
+                'name'    => $user['username'] ?? '',
+                'email'   => $user['email'] ?? '',
+                'phone'   => $user['phone'] ?? '',
+                'company' => $user['company'] ?? '',
                 'address' => $address,
             ];
         }

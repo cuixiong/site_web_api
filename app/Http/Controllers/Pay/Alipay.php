@@ -20,7 +20,6 @@ class Alipay extends Pay
     public function __construct()
     {
         parent::__construct();
-        $payment = Payment::find(1);// 查了个寂寞
 
         $options = new Config();
         $options->protocol = 'https';
@@ -73,7 +72,7 @@ class Alipay extends Pay
         }
     }
 
-    
+
     /**
      * @param Order $order
      */
@@ -107,7 +106,7 @@ class Alipay extends Pay
             $outTradeNo = $order->order_number;
             $trade_no = $order->out_order_num;
             $result = Factory::payment()->common()->refund($outTradeNo, $refundAmount);
-            
+
             $responseChecker = new ResponseChecker();
             // 处理响应或异常
             if ($responseChecker->success($result)) {
@@ -132,7 +131,7 @@ class Alipay extends Pay
             $outTradeNo = $order->order_number;
             $trade_no = $order->out_order_num;  //外部订单号
             $result = Factory::payment()->common()->queryRefund($outTradeNo, $outTradeNo);
-            
+
             $responseChecker = new ResponseChecker();
             // 处理响应或异常
             if ($responseChecker->success($result)) {
