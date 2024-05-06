@@ -23,9 +23,7 @@ class InvoicesController extends Controller {
                     $query->where('apply_status', 0);
                 }
             })->orderBy('id', 'desc');
-
             $count = $model->count();
-
             // 查询偏移量
             if (!empty($request->pageNum) && !empty($request->pageSize)) {
                 $model->offset(($request->pageNum - 1) * $request->pageSize);
@@ -33,10 +31,9 @@ class InvoicesController extends Controller {
             // 查询条数
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
-            }else{
+            } else {
                 $model->limit(15);
             }
-
             $fields = ['id', 'created_at', 'invoice_type', 'company_name', 'tax_code', 'title',
                        'status', 'apply_status', 'price'];
             $model->select($fields);
@@ -75,8 +72,8 @@ class InvoicesController extends Controller {
             if ($orderObj->user_id != $userId) {
                 ReturnJson(false, '非法操作');
             }
-            if (!in_array($orderObj->is_pay, [Order::PAY_FINISH])) {
-                ReturnJson(false, '订单还未完成,不能申请');
+            if (!in_array($orderObj->is_pay, [Order::PAY_FINISH, Order::PAY_SUCCESS])) {
+                ReturnJson(false, '订单还未支付,不能申请');
             }
             $model = new Invoices();
             $isExist = $model->where('order_id', $input['order_id'])->count();
