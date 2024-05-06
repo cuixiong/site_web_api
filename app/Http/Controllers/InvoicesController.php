@@ -23,6 +23,9 @@ class InvoicesController extends Controller {
                     $query->where('apply_status', 0);
                 }
             })->orderBy('id', 'desc');
+
+            $count = $model->count();
+
             // 查询偏移量
             if (!empty($request->pageNum) && !empty($request->pageSize)) {
                 $model->offset(($request->pageNum - 1) * $request->pageSize);
@@ -30,13 +33,19 @@ class InvoicesController extends Controller {
             // 查询条数
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
+            }else{
+                $model->limit(15);
             }
+
             $fields = ['id', 'created_at', 'invoice_type', 'company_name', 'tax_code', 'title',
                        'status', 'apply_status', 'price'];
             $model->select($fields);
             $rs = $model->get();
+            $rdata = [];
+            $rdata['data'] = $rs;
+            $rdata['count'] = $count;
             if ($rs) {
-                ReturnJson(true, '获取成功', $rs);
+                ReturnJson(true, '获取成功', $rdata);
             } else {
                 ReturnJson(false, '获取失败');
             }
