@@ -256,9 +256,17 @@ class UserController extends Controller {
                     $couponStatus = 3;
                 } else if ($value['is_used'] == CouponUser::isUsedNO) { // 该券未使用
                     $couponStatus = 1;
-                }else{
-                    $couponStatus = 0;
                 }
+
+                //优惠券状态值：0全部，1未使用，2已使用，3已过期
+                if($status == 1 && $couponStatus != 1){
+                    continue;
+                }elseif ($status == 2 && $couponStatus != 2){
+                    continue;
+                }elseif ($status == 3 && $couponStatus != 3){
+                    continue;
+                }
+
                 $data[$key]['type'] = $value['type'];
                 $data[$key]['value'] = $value['type'] == 1 ? round($value['value'], 0) : (float)$value['value'];
                 $data[$key]['day_end'] = $value['time_end'] ? date('Y.m.d', $value['time_end']) : '';
