@@ -351,7 +351,7 @@ class UserController extends Controller {
             $user->company = $input['company'];
             $user->address = $input['address'];
             $user->province_id = $input['province_id'];
-            $user->city_id = $input['city'] ?? 0;
+            $user->city_id = $input['city_id'] ?? 0;
             $rs = $user->save();
             if ($rs) {
                 ReturnJson(true, '修改成功');
