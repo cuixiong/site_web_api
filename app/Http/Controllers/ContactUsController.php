@@ -17,6 +17,7 @@ class ContactUsController extends Controller
     public function Add(Request $request)
     {
         try {
+            $input = $request->input();
             $category_id = $request->category_id ? $request->category_id : 0; // 留言分类ID
             $product_id = $request->product_id; // 报告id
 
@@ -25,7 +26,8 @@ class ContactUsController extends Controller
             $company = $request->company; // 公司名称
             $channel = $request->channel; // 来源
             $buy_time = $request->buy_time; // 购买时间
-            $content = $request->content; // 备注/内容
+            //$content = $request->content; // 备注/内容
+            $content = $input['content']; // 备注/内容
             $country_id = $request->country_id ? $request->country_id : 0; // 国家ID
             $province_id = $request->province_id ? $request->province_id : 0; // 省份ID
             $city_id = $request->city_id ? $request->city_id : 0; // 城市ID
@@ -59,10 +61,10 @@ class ContactUsController extends Controller
         // 计划购买时间
         $result['buy_time'] = DictionaryValue::GetDicOptions('Buy_Time');
 
-        // 获知渠道 
+        // 获知渠道
         $result['channel'] = DictionaryValue::GetDicOptions('Channel_Type');
 
-        // 国家 
+        // 国家
         $result['country'] = Country::where('status', 1)->select('id as value', 'data as label', 'code')->orderBy('sort', 'asc')->get()->toArray();;
 
         $provinces = City::where(['status' => 1, 'type' => 1])->select('id as value', 'name as label')->orderBy('id', 'asc')->get()->toArray();

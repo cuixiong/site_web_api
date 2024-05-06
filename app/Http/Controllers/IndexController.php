@@ -82,7 +82,7 @@ class IndexController extends Controller
                 ])
                     ->where('category_id', $category['id'])
                     ->where('show_recommend', 1)
-                    ->orderBy('sort', 'asc')
+                    ->orderBy('published_date', 'desc')
                     ->first();
 
                 if (!empty($firstProduct)) {

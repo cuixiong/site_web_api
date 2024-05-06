@@ -353,6 +353,13 @@ class SendEmailController extends Controller
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
             // $data['country'] = Country::where('id',$data['country_id'])->value('name');
+
+            if(!empty($data['product_id'] )) {
+                $productsName = Products::query()->where("id" , $data['product_id'])->value("name");
+            }else{
+                $productsName = '';
+            }
+
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
             $token = $data['email'] . '&' . $data['id'];
@@ -371,7 +378,6 @@ class SendEmailController extends Controller
                 'plantTimeBuy' => $data['buy_time'],
                 'content' => $data['content'],
                 'backendUrl' => env('IMAGE_URL'),
-                'plantTimeBuy' => $data['buy_time'],
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')->toArray();
             if ($siteInfo) {
@@ -381,6 +387,11 @@ class SendEmailController extends Controller
             }
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', 'productSample')->select(['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id'])->first();
+            //邮件标题
+            $scene->title = $scene->title . ":  {$productsName}";
+
+
+
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             if (empty($scene)) {
@@ -530,6 +541,11 @@ class SendEmailController extends Controller
             $token = $data['email'] . '&' . $data['id'];
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
+            if(!empty($data['product_id'] )) {
+                $productsName = Products::query()->where("id" , $data['product_id'])->value("name");
+            }else{
+                $productsName = '';
+            }
             $data2 = [
                 'homePage' => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/') . '/account/account-infor',
@@ -553,6 +569,8 @@ class SendEmailController extends Controller
             }
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', 'customized')->select(['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id'])->first();
+            //邮件标题
+            $scene->title = $scene->title . ":  {$productsName}";
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             if (empty($scene)) {
@@ -802,6 +820,9 @@ class SendEmailController extends Controller
             }
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', 'payment')->select(['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id'])->first();
+            //邮件标题
+            $scene->title = $scene->title . ", 订单号是 " . $data['order_number'];
+
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             if (empty($scene)) {
