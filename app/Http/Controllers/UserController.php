@@ -252,17 +252,13 @@ class UserController extends Controller {
             foreach ($result as $key => $value) {
                 if ($value['is_used'] == CouponUser::isUsedNO) { // 该券未使用
                     $couponStatus = 0;
-                }
-                if ($value['is_used'] == CouponUser::isUsedYes) { // 该券已使用
+                } else if ($value['is_used'] == 1 && $value['time_end'] < time()) { // 如果该券未使用但已过期，
+                    $couponStatus = 3; // 就按照已过期处理
+                } else if ($value['is_used'] == CouponUser::isUsedYes) { // 该券已使用
                     $couponStatus = 1;
-                }
-                if ($value['time_end'] < time()) { // 该券已过期
+                } else if ($value['time_end'] < time()) { // 该券已过期
                     $couponStatus = 2;
                 }
-                if ($value['is_used'] == 1 && $value['time_end'] < time()) { // 如果该券未使用但已过期，
-                    $couponStatus = 3; // 就按照已过期处理
-                }
-
                 $data[$key]['type'] = $value['type'];
                 $data[$key]['value'] = $value['type'] == 1 ? round($value['value'], 0) : (float)$value['value'];
                 $data[$key]['day_end'] = $value['time_end'] ? date('Y.m.d', $value['time_end']) : '';
