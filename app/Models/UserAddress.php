@@ -9,12 +9,12 @@ class UserAddress extends Base {
                        = ['user_id', 'address', 'city_id', 'province_id', 'consignee', 'contact_number', 'is_default',
                           'email'];
     protected $table   = 'user_address';
-    protected $appends = ['province_id', 'city_id'];
+    protected $appends = ['province_name', 'city_name'];
 
     /**
      * 省份获取器
      */
-    public function getProvinceIdAttribute() {
+    public function getProvinceNameAttribute() {
         $text = '';
         if (isset($this->attributes['province_id']) && !empty($this->attributes['province_id'])) {
             $text = City::query()->where('id', $this->attributes['province_id'])->value('name') ?? '';
@@ -26,7 +26,7 @@ class UserAddress extends Base {
     /**
      * 城市获取器
      */
-    public function getCityIdAttribute() {
+    public function getCityNameAttribute() {
         $text = '';
         if (isset($this->attributes['city_id']) && !empty($this->attributes['city_id'])) {
             $text = City::query()->where('id', $this->attributes['city_id'])->value('name') ?? '';
