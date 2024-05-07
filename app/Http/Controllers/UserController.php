@@ -362,7 +362,15 @@ class UserController extends Controller {
             $model = new User();
             $user = $request->user;
             $user = $model->findOrFail($user->id);
-            $user->name = $input['name'];
+            $name = $input['name'];
+            $isExist = User::query()->where('username', $name)
+                         ->where('id', '<>', $user->id)
+                         ->count();
+            if ($isExist) {
+                ReturnJson(false, '用户名已存在');
+            }
+
+            $user->username = $name;
             $user->email = $input['email'];
             $user->phone = $input['phone'];
             $user->company = $input['company'];
