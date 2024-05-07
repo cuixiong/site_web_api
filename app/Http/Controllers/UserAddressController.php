@@ -64,6 +64,10 @@ class UserAddressController extends Controller {
             if ($userId != $record->user_id) {
                 ReturnJson(false, '非法操作');
             }
+            $rs['area_id'] = [
+                $record['province_id'],
+                $record['city_id'],
+            ];
             ReturnJson(true, '获取成功', $rs);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
