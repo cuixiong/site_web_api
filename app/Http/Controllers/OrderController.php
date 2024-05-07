@@ -473,6 +473,7 @@ class OrderController extends Controller {
                            ->when($status, function ($query) use ($status) {
                     $query->where('is_pay', $status);
                 })->orderBy('id', 'desc');
+            $count = $model->count();
             // 查询偏移量
             if (!empty($request->pageNum) && !empty($request->pageSize)) {
                 $model->offset(($request->pageNum - 1) * $request->pageSize);
@@ -484,8 +485,11 @@ class OrderController extends Controller {
             $fields = ['id', 'created_at', 'order_number', 'order_amount', 'is_pay'];
             $model->select($fields);
             $rs = $model->get();
+            $rdata = [];
+            $rdata['count'] = $count;
+            $rdata['data'] = $rs;
             if ($rs) {
-                ReturnJson(true, '获取成功', $rs);
+                ReturnJson(true, '获取成功', $rdata);
             } else {
                 ReturnJson(false, '获取失败');
             }
