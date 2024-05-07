@@ -257,16 +257,14 @@ class UserController extends Controller {
                 } else if ($value['is_used'] == CouponUser::isUsedNO) { // 该券未使用
                     $couponStatus = 1;
                 }
-
                 //优惠券状态值：0全部，1未使用，2已使用，3已过期
-                if($status == 1 && $couponStatus != 1){
+                if ($status == 1 && $couponStatus != 1) {
                     continue;
-                }elseif ($status == 2 && $couponStatus != 2){
+                } elseif ($status == 2 && $couponStatus != 2) {
                     continue;
-                }elseif ($status == 3 && $couponStatus != 3){
+                } elseif ($status == 3 && $couponStatus != 3) {
                     continue;
                 }
-
                 $data[$key]['type'] = $value['type'];
                 $data[$key]['value'] = $value['type'] == 1 ? round($value['value'], 0) : (float)$value['value'];
                 $data[$key]['day_end'] = $value['time_end'] ? date('Y.m.d', $value['time_end']) : '';
@@ -283,20 +281,26 @@ class UserController extends Controller {
      * @return array
      */
     public function Info(Request $request) {
-        $user = $request->user;
-        $data = [];
-        $data['userid'] = $user['id'];
-        $data['username'] = $user['username'];
-        $data['email'] = $user['email'];
-        $data['phone'] = $user['phone'];
-        $data['company'] = $user['company'];
-        $data['address'] = $user['address'];
-        $data['area'] = [
-            (string)$user['province_id'],
-            (string)$user['area_id']
-        ];
-        ReturnJson(true, '', $data);
-        die;
+        try {
+            $user = $request->user;
+            $userId = $user->id;
+            $user = User::findOrFail($userId);
+            $user = $user->toArray();
+            $data = [];
+            $data['userid'] = $user['id'];
+            $data['username'] = $user['username'];
+            $data['email'] = $user['email'];
+            $data['phone'] = $user['phone'];
+            $data['company'] = $user['company'];
+            $data['address'] = $user['address'];
+            $data['area'] = [
+                $user['province_id'],
+                $user['city_id']
+            ];
+            ReturnJson(true, '', $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage(), []);
+        }
     }
 
     /**
@@ -349,8 +353,8 @@ class UserController extends Controller {
             $user->email = $input['email'];
             $user->phone = $input['phone'];
             $user->company = $input['company'];
-            $user->address = $input['address'];
-            $user->province_id = $input['province_id'];
+            $user->address = $input['address'] ?? '';
+            $user->province_id = $input['province_id'] ?? 0;
             $user->city_id = $input['city_id'] ?? 0;
             $rs = $user->save();
             if ($rs) {
