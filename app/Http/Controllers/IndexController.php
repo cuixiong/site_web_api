@@ -39,7 +39,7 @@ class IndexController extends Controller {
             )->value('description');
             $value->published_date = date('Y-m-d', strtotime($published_date));
             $value->description = mb_substr($description, 0, 100, 'UTF-8');
-            $value->thumb = $value->thumb_img;
+            $value->thumb = Common::cutoffSiteUploadPathPrefix($value->thumb_img);
         }
         $list = $list ? $list : [];
         ReturnJson(true, '', $list);
@@ -77,7 +77,7 @@ class IndexController extends Controller {
                 if (!empty($firstProduct)) {
                     // 如果图片为空，则用分类图片
                     if (empty($firstProduct->thumb)) {
-                        $firstProduct['thumb'] = $category['thumb'];
+                        $firstProduct['thumb'] = Common::cutoffSiteUploadPathPrefix($category['thumb']);
                     }
                     $firstProduct['description'] = (new ProductDescription(
                         date('Y', strtotime($firstProduct['published_date']))
