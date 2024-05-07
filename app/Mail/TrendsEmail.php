@@ -70,7 +70,7 @@ class TrendsEmail extends Mailable
     public function content()
     {
         $name = 'email_'.time();// 文件名
-        $this->templetFile = '../resources/views/emails/'.$name.'.blade.php';// 文件路径+文件名
+        $this->templetFile = resource_path('views/emails/'.$name.'.blade.php');
         $view = 'emails.'.$name;// 渲染模板名称
         file_put_contents($this->templetFile,$this->templet);
         if(!file_exists($this->templetFile)){
