@@ -121,7 +121,11 @@ class UserController extends Controller {
 
     // 发送重置密码邮箱
     public function ResetPasswordEmail(Request $request) {
-        $email = $request->email;
+        if (!empty($request->user->email)) {
+            $email = $request->user->email;
+        } else {
+            $email = $request->email;
+        }
         $user = User::where('email', $email)->first();
         if (empty($user)) {
             ReturnJson(false, '邮箱不存在，请先去注册！');
@@ -140,18 +144,27 @@ class UserController extends Controller {
      */
     public function DoResetPassword(Request $request) {
         try {
-            $validator = Validator::make($request->all(), [
-                'password' => 'required',
-                'token'    => 'required',
-            ],                           [
-                                             'password.required' => '请输入密码',
-                                             'token.required'    => '请输入TOKEN',
-                                         ]);
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'password' => 'required',
+                    'token'    => 'required',
+                ],
+                [
+                    'password.required' => '请输入密码',
+                    'token.required'    => '请输入TOKEN',
+                ]
+            );
             if ($validator->fails()) {
                 ReturnJson(false, $validator->errors()->first());
             }
-            $token = base64_decode($request->token);
-            list($email, $id) = explode('&', $token);
+            $token = decrypt($request->token);
+            $tokenData = explode('&', $token);
+            if (empty($tokenData) || count($tokenData) != 2) {
+                ReturnJson(false, trans('lang.token_error'));
+            }
+            $email = $tokenData[1];
+            $id = $tokenData[0];
             $model = User::where('email', $email)->where('id', $id)->first();
             if (!$model) {
                 ReturnJson(false, trans('lang.eamail_undefined'));
@@ -358,6 +371,43 @@ class UserController extends Controller {
             $user->city_id = $input['city_id'] ?? 0;
             $rs = $user->save();
             if ($rs) {
+                ReturnJson(true, '修改成功');
+            } else {
+                ReturnJson(false, '修改失败');
+            }
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function changePassword(Request $request) {
+        try {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'old_password' => 'required',
+                    'new_password' => 'required|min:8',
+                ],
+                [
+                    'old_password.required' => '请输入旧密码',
+                    'new_password.required' => '请输入新密码',
+                    'new_password.min'      => '新密码不能少于8位',
+                ]
+            );
+            if ($validator->fails()) {
+                ReturnJson(false, $validator->errors()->first());
+            }
+            $input = $request->all();
+            $user = $request->user;
+            $user = User::findOrFail($user->id);
+            if (!Hash::check($input['old_password'], $user->password)) {
+                ReturnJson(false, '旧密码错误');
+            }
+            $user->password = Hash::make($input['new_password']);
+            $rs = $user->save();
+            if ($rs) {
+                //修改成功，退出登陆
+                auth('api')->logout();
                 ReturnJson(true, '修改成功');
             } else {
                 ReturnJson(false, '修改失败');

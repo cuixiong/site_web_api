@@ -113,9 +113,10 @@ Route::middleware('api')->group(function () {
     );
     Route::get('check-email', [\App\Http\Controllers\UserController::class, 'CheckEmail'])->name('验证邮箱');
     Route::post('exists-email', [\App\Http\Controllers\UserController::class, 'ExistsEmail'])->name('邮箱是否存在');
-    //退出登陆
+
     Route::middleware(JwtMiddleware::class)->get('loginout', [\App\Http\Controllers\UserController::class, 'loginout'])
          ->name('退出登陆');
+
     Route::prefix('user')->group(function () {
         Route::middleware(JwtMiddleware::class)->get('info', [\App\Http\Controllers\UserController::class, 'Info'])
              ->name('Info接口');
@@ -125,6 +126,8 @@ Route::middleware('api')->group(function () {
         Route::post('verify-email', [\App\Http\Controllers\UserController::class, 'VerifyEmail'])->name('注册验证邮箱');
         Route::middleware(JwtMiddleware::class)->post('update', [\App\Http\Controllers\UserController::class, 'update'])
              ->name('用户信息修改');
+        Route::middleware(JwtMiddleware::class)->post('change-password', [\App\Http\Controllers\UserController::class, 'changePassword'])
+             ->name('修改密码');
     });
     //user-address 用户收货地址
     Route::prefix('user-address')->middleware(JwtMiddleware::class)->group(function () {
@@ -133,6 +136,7 @@ Route::middleware('api')->group(function () {
         Route::get('form/{id}', [\App\Http\Controllers\UserAddressController::class, 'form'])->name('根据id查询');
         Route::post('update', [\App\Http\Controllers\UserAddressController::class, 'update'])->name('修改收货地址');
         Route::get('delete/{id}', [\App\Http\Controllers\UserAddressController::class, 'delete'])->name('收货地址删除');
+        Route::get('set-default/{id}', [\App\Http\Controllers\UserAddressController::class, 'setDefault'])->name('设置默认');
     });
     //user-invoices 用户发票
     Route::prefix('user-invoices')->middleware(JwtMiddleware::class)->group(function () {

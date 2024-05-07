@@ -11,7 +11,7 @@ class UserAddressController extends Controller {
         try {
             $userId = $request->user->id;
             $model = new UserAddress();
-            $model = $model->where('user_id', $userId)->orderBy('sort', 'desc');
+            $model = $model->where('user_id', $userId)->orderBy('sort', 'asc');
             // 查询偏移量
             if (!empty($request->pageNum) && !empty($request->pageSize)) {
                 $model->offset(($request->pageNum - 1) * $request->pageSize);
@@ -60,6 +60,10 @@ class UserAddressController extends Controller {
             $model = new UserAddress();
             $record = $model->findOrFail($request->id);
             $rs = $record->toArray();
+            $userId = $request->user->id;
+            if ($userId != $record->user_id) {
+                ReturnJson(false, '非法操作');
+            }
             ReturnJson(true, '获取成功', $rs);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -72,13 +76,17 @@ class UserAddressController extends Controller {
             $usersAddressRequest->update($request);
             $input = $request->all();
             $model = new UserAddress();
+            $record = $model->findOrFail($input['id']);
+            $userId = $request->user->id;
+            if ($userId != $record->user_id) {
+                ReturnJson(false, '非法操作');
+            }
             $is_default = $input['is_default'];
             $userId = $request->user->id;
             if ($is_default == 1) {
                 //如果有设置默认地址，则将之前默认地址改为非默认
                 $model->where('user_id', $userId)->update(['is_default' => 0]);
             }
-            $record = $model->findOrFail($input['id']);
             $rs = $record->update($input);
             if ($rs) {
                 ReturnJson(true, '修改成功');
@@ -94,11 +102,37 @@ class UserAddressController extends Controller {
         try {
             $model = new UserAddress();
             $record = $model->findOrFail($request->id);
+            $userId = $request->user->id;
+            if ($userId != $record->user_id) {
+                ReturnJson(false, '非法操作');
+            }
             $rs = $record->delete();
             if ($rs) {
                 ReturnJson(true, '删除成功');
             } else {
                 ReturnJson(false, '删除失败');
+            }
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function setDefault(Request $request) {
+        try {
+            $model = new UserAddress();
+            $record = $model->findOrFail($request->id);
+            $userId = $request->user->id;
+            if ($userId != $record->user_id) {
+                ReturnJson(false, '非法操作');
+            }
+            //其他设置非默认
+            $model->where('user_id', $userId)->update(['is_default' => 0]);
+            //当前设置默认
+            $rs = $record->update(['is_default' => 1]);
+            if ($rs) {
+                ReturnJson(true, '设置成功');
+            } else {
+                ReturnJson(false, '设置失败');
             }
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
