@@ -10,38 +10,34 @@ use App\Models\Products;
 use App\Http\Controllers\Controller;
 use App\Models\ProductDescription;
 use App\Models\ProductsCategory;
+use App\Services\SenWordsService;
 use Illuminate\Http\Request;
 
 class IndexController extends Controller {
     // 最新报告
     public function NewsProduct(Request $request) {
-        $list = Products::where('status', 1)
-                        ->select([
-                                     'id',
-                                     'thumb',
-                                     'name',
-                                     'category_id',
-                                     'published_date',
-                                     'price',
-                                     'url'
-                                 ])
-                        ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
-                        ->orderBy('published_date', 'desc')
-                        ->orderBy('id', 'desc')
-                        ->limit(6)->get();
+        $query = Products::where('status', 1)
+                         ->select(['id', 'thumb', 'name', 'category_id', 'published_date', 'price', 'url'])
+                         ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
+                         ->orderBy('published_date', 'desc')
+                         ->orderBy('id', 'desc');
+        $pageSize = 6;
+        $list = $query->limit($pageSize)->get();
+        //$filterCnt = 0;
         foreach ($list as $key => $value) {
-            /**
-             * @var $value Products
-             */
-            $published_date = $value['published_date'];
-            $description = (new ProductDescription(date('Y', strtotime($published_date))))->where(
-                'product_id', $value['id']
-            )->value('description');
-            $value->published_date = date('Y-m-d', strtotime($published_date));
-            $value->description = mb_substr($description, 0, 100, 'UTF-8');
-            $value->thumb = $value->thumb_img;
+            // 过滤敏感词(暂时不需要, 在上传, 新增做好过滤)
+//            $checkRes = SenWordsService::checkFitter($value->name);
+//            if ($checkRes) {
+//                $filterCnt++;
+//                unset($list[$key]);
+//                continue;
+//            }
+            $this->handlerNewProductList($value);
         }
-        $list = $list ? $list : [];
+        //说明有过滤掉的报告,那么需要补齐数量
+//        $forCnt = 3; //最多递归3次
+//        $this->handlerSurplusNewsList($filterCnt, 0, $pageSize, $query, $list, $forCnt);
+
         ReturnJson(true, '', $list);
     }
 
@@ -69,11 +65,15 @@ class IndexController extends Controller {
                 } else {
                     continue;
                 }
+
                 $firstProduct = Products::select($productFields)
-                                        ->where('category_id', $category['id'])
-                                        ->where('show_recommend', 1)
-                                        ->orderBy('published_date', 'desc')
-                                        ->first();
+                                            ->where('category_id', $category['id'])
+                                            ->where('show_recommend', 1)
+                                            ->orderBy('published_date', 'desc')
+                                            ->first();
+//                $firstProduct = [];
+//                $forFirstCnt = 0;
+//                $this->getRemProductFirst($productFields, $category['id'], $firstProduct, $forFirstCnt);
                 if (!empty($firstProduct)) {
                     // 如果图片为空，则用分类图片
                     if (empty($firstProduct->thumb)) {
@@ -87,14 +87,7 @@ class IndexController extends Controller {
                 }
                 if (!empty($firstProduct)) {
                     $data[$index]['firstProduct'] = $firstProduct;
-                    $otherProducts = Products::select(['name', 'keywords', 'id', 'url'])
-                                             ->where('category_id', $category['id'])
-                                             ->where('show_recommend', 1)
-                                             ->where('id', '<>', $firstProduct['id'])
-                                             ->orderBy('sort', 'asc')
-                                             ->limit(4)
-                                             ->get()
-                                             ->toArray();
+                    $otherProducts = $this->getRemProductOtherList($category['id'], $firstProduct['id']);
                 } else {
                     $data[$index]['firstProduct'] = [];
                 }
@@ -182,5 +175,180 @@ class IndexController extends Controller {
         if (empty($id)) {
             ReturnJson(false, 'ID不能为空！');
         }
+    }
+
+    /**
+     *
+     * @param Products $value
+     *
+     */
+    private function handlerNewProductList(Products $value): void {
+        /**
+         * @var $value Products
+         */
+        $published_date = $value['published_date'];
+        $description = (new ProductDescription(date('Y', strtotime($published_date))))->where(
+            'product_id', $value['id']
+        )->value('description');
+        $value->published_date = date('Y-m-d', strtotime($published_date));
+        $value->description = mb_substr($description, 0, 100, 'UTF-8');
+        $value->thumb = $value->thumb_img;
+    }
+
+    /**
+     * 处理最新剩余报告数据
+     *
+     * @param int   $filterCnt
+     * @param       $pageNum
+     * @param int   $pageSize
+     * @param       $query
+     * @param       $list
+     * @param       $forCnt
+     *
+     * @return mixed
+     */
+    private function handlerSurplusNewsList(
+        $filterCnt, $pageNum, $pageSize, $query,
+        &$list, &$forCnt
+    ) {
+        if ($forCnt <= 0 || (count($list) == $pageSize)) {
+            return $list;
+        }
+        if ($filterCnt > 0) {
+            //因为是下一页,所以不需要-1
+            $pageNum++;
+            $currentOffset = $pageNum * $pageSize;
+            $surplusList = $query->offset($currentOffset)->limit($pageSize)->get();
+            foreach ($surplusList as $key => $value) {
+                if ($filterCnt <= 0) {
+                    break;
+                }
+                // 过滤敏感词
+                $checkRes = SenWordsService::checkFitter($value->name);
+                if (!$checkRes) {
+                    //正常报告
+                    $this->handlerNewProductList($value);
+                    $list[] = $value;
+                    $filterCnt--;
+                }
+            }
+        }
+        if ($filterCnt > 0) {
+            $forCnt -= 1;
+
+            return $this->handlerSurplusNewsList($filterCnt, $pageNum, $pageSize, $query, $list, $forCnt);
+        }
+
+        return $list;
+    }
+
+    /**
+     *
+     * @param array $productFields
+     * @param       $id
+     * @param array $firstProduct
+     * @param int   $forCnt
+     *
+     * @return mixed
+     */
+    private function getRemProductFirst($productFields, $id, &$firstProduct, &$forCnt) {
+        if ($forCnt >= 6) {
+            return $firstProduct;
+        }
+        $tempFirstProduct = Products::select($productFields)
+                                    ->where('category_id', $id)
+                                    ->where('show_recommend', 1)
+                                    ->orderBy('published_date', 'desc')
+                                    ->offset($forCnt)
+                                    ->first();
+        $forCnt += 1;
+        if (!empty($tempFirstProduct)) {
+            $checkRes = SenWordsService::checkFitter($tempFirstProduct->name);
+            if ($checkRes) {
+                return $this->getRemProductFirst($productFields, $id, $firstProduct, $forCnt);
+            } else {
+                $firstProduct = $tempFirstProduct;
+
+                return $firstProduct;
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     *
+     * @param $id
+     * @param $id
+     *
+     * @return mixed
+     */
+    private function getRemProductOtherList($cate_id, $productId) {
+        $query = Products::select(['name', 'keywords', 'id', 'url'])
+                         ->where('category_id', $cate_id)
+                         ->where('show_recommend', 1)
+                         ->where('id', '<>', $productId)
+                         ->orderBy('sort', 'asc');
+        $pageSize = 4;
+        $otherProducts = $query->limit($pageSize)
+                               ->get()
+                               ->toArray();
+//        $filterCnt = 0;
+//        foreach ($otherProducts as $key => $value) {
+//            $checkRes = SenWordsService::checkFitter($value['name']);
+//            if ($checkRes) {
+//                $filterCnt++;
+//                unset($otherProducts[$key]);
+//            }
+//        }
+//        $forCnt = 4;
+//        $this->handlerSurplusRemList($filterCnt, 0, $pageSize, $query, $otherProducts, $forCnt);
+
+        return $otherProducts;
+    }
+
+    /**
+     * 处理推荐剩余报告数据
+     *
+     * @param int   $filterCnt
+     * @param       $pageNum
+     * @param int   $pageSize
+     * @param       $query
+     * @param       $list
+     * @param       $forCnt
+     *
+     * @return mixed
+     */
+    private function handlerSurplusRemList(
+        $filterCnt, $pageNum, $pageSize, $query,
+        &$list, &$forCnt
+    ) {
+        //循环次数超过直接返回
+        if ($forCnt <= 0 || (count($list) == $pageSize)) {
+            return $list;
+        }
+        if ($filterCnt > 0) {
+            //因为是下一页,所以不需要-1
+            $pageNum++;
+            $currentOffset = $pageNum * $pageSize;
+            $surplusList = $query->offset($currentOffset)->limit($pageSize)->get();
+            foreach ($surplusList as $key => $value) {
+                if ($filterCnt <= 0) {
+                    break;
+                }
+                $checkRes = SenWordsService::checkFitter($value['name']);
+                if (!$checkRes) {
+                    $filterCnt--;
+                    $list[] = $value;
+                }
+            }
+        }
+        if ($filterCnt > 0) {
+            $forCnt -= 1;
+
+            return $this->handlerSurplusRemList($filterCnt, $pageNum, $pageSize, $query, $list, $forCnt);
+        }
+
+        return $list;
     }
 }

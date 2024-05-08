@@ -4,7 +4,7 @@ class CommonConst {
     const CONST_DELETED        = 1; //已被删除
     const CONST_NOT_DELETE     = 2; //未删除
     const CONST_NORMAL_STATUS  = 1; /* 正常状态 */
-    const CONST_DISABLE_STATUS = 2;  /* 禁用状态 */
+    const CONST_DISABLE_STATUS = 0;  /* 禁用状态 */
     const CONST_IS_EXIST       = 2; /* 存在 */
     const CONST_IS_NO_EXIST    = 1; /* 不存在 */
     /**
