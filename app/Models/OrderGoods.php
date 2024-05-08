@@ -18,15 +18,16 @@ class OrderGoods extends Base {
             'thumb'          => '',
             'published_date' => '',
         ];
-        $data = Products::query()->where('id', $this->attributes['goods_id'])
-                        ->select('id', 'name', 'thumb', 'published_date')
-                        ->first();
-        if (!empty($data)) {
-            $data = $data->toArray();
+        $products = Products::query()->where('id', $this->attributes['goods_id'])
+                            ->select('id', 'name', 'thumb', 'category_id', 'published_date')
+                            ->first();
+        if (!empty($products)) {
+            $thumb_img = $products->thumb_img;
+            $data = $products->toArray();
             $rdata = [
                 'id'             => $data['id'],
                 'name'           => $data['name'],
-                'thumb'          => $data['thumb'],
+                'thumb'          => $thumb_img,
                 'published_date' => $data['published_date'],
             ];
 

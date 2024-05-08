@@ -6,15 +6,23 @@ use App\Models\Base;
 use Illuminate\Support\Facades\Redis;
 
 class Products extends Base {
-    protected $table   = 'product_routine';
+    protected $table = 'product_routine';
 
-
-
+    /**
+     * 获取缩略图 , 没有就取分类id的缩略图
+     *
+     * @return mixed
+     */
     public function getThumbImgAttribute() {
         if (!empty($this->attributes['thumb'])) {
-            return $this->attributes['thumb'];
+            return Common::cutoffSiteUploadPathPrefix($this->attributes['thumb']);
         } elseif ($this->attributes['category_id']) {
-            return ProductsCategory::where('id', $this->attributes['category_id'])->value('thumb');
+            $value = ProductsCategory::where('id', $this->attributes['category_id'])->value('thumb');
+            if (!empty($value)) {
+                return Common::cutoffSiteUploadPathPrefix($value);
+            } else {
+                return '';
+            }
         } else {
             return '';
         }
