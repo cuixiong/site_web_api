@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Base;
+use CommonConst;
 
 class Order extends Base {
     const PAY_UNPAID  = 1;
@@ -17,7 +18,7 @@ class Order extends Base {
             self::PAY_FINISH  => '已完成',
         ];
     protected $table       = 'orders';
-    protected $appends     = ['is_pay_text', 'create_date', 'product_name'];
+    protected $appends     = ['is_pay_text', 'create_date', 'is_invoice', 'order_product'];
     protected $addressInfo = [];
 
     public static function payType(): array {
@@ -25,10 +26,18 @@ class Order extends Base {
         if ($payType === null) {
             $payType = Pay::query()->pluck('code', 'id')->toArray();
         }
+
         return $payType;
     }
 
-
+    public function getIsInvoiceAttribute() {
+        $cnt = Invoices::query()->where("order_id", $this->attributes['id'])->count();
+        if ($cnt > 0) {
+            return CommonConst::CONST_IS_EXIST;
+        } else {
+            return CommonConst::CONST_IS_NO_EXIST;
+        }
+    }
 
     public function getPayTypeTextAttribute() {
         $payType = Pay::get()->pluck('name', 'id')->toArray();
@@ -57,6 +66,28 @@ class Order extends Base {
         return $text ?? '';
     }
 
+    /**
+     * 查找订单第一个商品信息
+     *
+     * @return mixed
+     */
+    public function getOrderProductAttribute() {
+        $goodsInfo = [];
+        if (isset($this->attributes['id']) && !empty($this->attributes['id'])) {
+            $goods_id = OrderGoods::where('order_id', $this->attributes['id'])->value('goods_id');
+            if (!empty($goods_id)) {
+                $goodsInfo = Products::query()->where('id', $goods_id)
+                                     ->select(['id', 'name', 'url'])
+                                     ->first();
+                if (!empty($goodsInfo)) {
+                    $goodsInfo = $goodsInfo->toArray();
+                }
+            }
+        }
+
+        return $goodsInfo ?? [];
+    }
+
     public function getAddressInfoAttribute() {
         $rdata = [
             'username' => $this->attributes['username'] ?? '',
@@ -65,6 +96,7 @@ class Order extends Base {
             'email'    => $this->attributes['email'] ?? '',
             'address'  => $this->attributes['address'] ?? '',
         ];
+
         // TODO: cuizhixiong 2024/4/30   province_id  city_id
         return $rdata;
     }

@@ -471,8 +471,8 @@ class OrderController extends Controller {
             $model = $model->where('user_id', $userId)
                            ->where('is_delete', 0) //是否被前台用户删除:0代表否,1代表是
                            ->when($status, function ($query) use ($status) {
-                    $query->where('is_pay', $status);
-                })->orderBy('id', 'desc');
+                                $query->where('is_pay', $status);})
+                           ->orderBy('id', 'desc');
             $count = $model->count();
             // 查询偏移量
             if (!empty($request->pageNum) && !empty($request->pageSize)) {
