@@ -111,7 +111,7 @@ class UserController extends Controller {
             'username'   => $user->username,// 用户名
             'email'      => $user->email,// 邮箱
             'phone'      => $user->phone,// 手机号
-            'area_id'    => $user->country_id ? [$user->country_id] : [],// 地区ID
+            'area_id'    => [$user->province_id, $user->city_id],
             'company'    => $user->company,// 公司
             'login_time' => $user->login_time,// 最近登陆的时间
             'token'      => $token,// token
@@ -364,12 +364,11 @@ class UserController extends Controller {
             $user = $model->findOrFail($user->id);
             $name = $input['name'];
             $isExist = User::query()->where('username', $name)
-                         ->where('id', '<>', $user->id)
-                         ->count();
+                           ->where('id', '<>', $user->id)
+                           ->count();
             if ($isExist) {
                 ReturnJson(false, '用户名已存在');
             }
-
             $user->username = $name;
             $user->email = $input['email'];
             $user->phone = $input['phone'];

@@ -508,6 +508,7 @@ class OrderController extends Controller {
             }
             $addressInfo = $record->addressInfo;
             $payTypeText = $record->PayTypeText ?? '';
+            $is_invoice = $record->is_invoice;
             $createDate = $record->create_date;
             $orderInfo = $record->toArray();
             $orderInfo = Arr::only($orderInfo, ['id', 'order_number', 'created_at', 'is_pay_text', 'is_pay', 'pay_type',
@@ -515,6 +516,7 @@ class OrderController extends Controller {
             );
             $orderInfo['pay_type_text'] = $payTypeText;
             $orderInfo['create_date'] = $createDate;
+            $orderInfo['is_invoice'] = $is_invoice;
             $orderGoodsMolde = new OrderGoods();
             $ogArrList = [];
             $ogList = $orderGoodsMolde->where("order_id", $orderInfo['id'])->get();
