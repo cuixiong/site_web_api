@@ -239,7 +239,7 @@ class OrderTrans extends Base {
         $lenShopCart = count($shopCartList);
         $goodsIdArr = array_column($shopCartList, 'goods_id');
         $goods = Products::query()
-                         ->select($this->productFields)
+                         ->select($this->baseProductFields)
                          ->whereIn('id', $goodsIdArr)
                          ->get()->toArray();
         if (count($goods) < 1) {
