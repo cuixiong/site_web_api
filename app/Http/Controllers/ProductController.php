@@ -116,6 +116,9 @@ class ProductController extends Controller {
         if ($keyword) {
             $query = $query->where(function ($query) use ($keyword) {
                 $query->where('name', 'like', '%'.$keyword.'%');
+                if(is_numeric($keyword)){
+                    $query->orWhere('id', $keyword);
+                }
             });
         }
         // 获取当前复合条件的总数量
