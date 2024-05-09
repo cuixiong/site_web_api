@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Pay\Pay;
 use App\Http\Controllers\Pay\PayFactory;
 use App\Http\Controllers\Pay\Wechatpay;
+use App\Http\Requests\InvoicesRequest;
+use App\Http\Requests\OrderRequest;
 use App\Models\City;
+use App\Models\Common;
 use App\Models\Coupon;
 use App\Models\CouponUser;
 use App\Models\Order;
@@ -165,48 +168,12 @@ class OrderController extends Controller {
         $address = $request->address ?? '';
         $city_id = $request->city_id ?? 0;
         $remarks = $request->remarks; // 订单备注
-        if (
-            empty($username) || empty($email) || empty($phone) || empty($company)
-        ) {
-            ReturnJson(false, '参数不正确');
-        }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            ReturnJson(false, '邮箱格式不正确');
-        }
-        if ($company == '') {
-            ReturnJson(false, '公司名称不能为空');
-        }
-        if (trim($phone) == '') {
-            ReturnJson(false, '手机号不能为空');
-        }
-        // 新需求：下单付款成功后自动给用户注册一个账户（实际情况是：还没付款） 开始
-        $user = new User();
-        $exist = User::where('email', $email)->first();
-        if (!$exist) {
-            // $user->id = 0;
-            $user->username = $username;
-            $user->email = $email;
-            $user->phone = $phone;
-            $user->company = $company;
-            $user->province_id = $province_id;
-            $user->area_id = $city_id;
-            $user->address = $address;
-            $user->password = Hash::make('123456'); // 帮用户自动生成一个初始密码123456
-            $user->created_at = time();
-            $user->created_by = 0;
-            $user->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
-            $user->save();
-        } else {
-            $user->id = $exist->id;
-            $user->username = $username;
-            $user->email = $email;
-            $user->phone = $phone;
-            $user->company = $company;
-            $user->province_id = $province_id;
-            $user->city_id = $city_id;
-            $user->address = $address;
-        }
-        // 新需求：下单付款成功后自动给用户注册一个账户 结束
+
+        (new OrderRequest())->createandpay($request);
+        $user = $this->getUser(
+            $email, $username, $phone, $company, $province_id, $city_id, $address
+        );
+
         $payType = $request->pay_type;
         $tempOrderId = $request->temp_order_id; // 临时订单号
         if (!empty($goodsId)) { // 直接下单
@@ -290,16 +257,14 @@ class OrderController extends Controller {
      * 支付方式
      */
     public function Payment() {
-        $data = ModelsPay::select([
-                                      'id',
-                                      'name',
-                                      'image as img',
-                                      'content as notice'
-                                  ])
+        $data = ModelsPay::select(['id', 'name', 'image as img', 'content as notice'])
                          ->where('status', 1)
                          ->orderBy('sort', 'asc')
                          ->get()
                          ->toArray();
+        foreach ($data as &$item){
+            $item['img'] = Common::cutoffSiteUploadPathPrefix($item['img']);
+        }
         ReturnJson(true, 'success', $data);
     }
 
@@ -633,5 +598,51 @@ class OrderController extends Controller {
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
+    }
+
+    /**
+     *
+     * @param mixed $email
+     * @param mixed $username
+     * @param mixed $phone
+     * @param mixed $company
+     * @param mixed $province_id
+     * @param mixed $city_id
+     * @param mixed $address
+     *
+     * @return User
+     */
+    private function getUser(
+        mixed $email, mixed $username, mixed $phone, mixed $company, mixed $province_id, mixed $city_id, mixed $address
+    ): User {
+        // 新需求：下单付款成功后自动给用户注册一个账户（实际情况是：还没付款） 开始
+        $user = new User();
+        $exist = User::where('email', $email)->first();
+        if (!$exist) {
+            // $user->id = 0;
+            $user->username = $username;
+            $user->email = $email;
+            $user->phone = $phone;
+            $user->company = $company;
+            $user->province_id = $province_id;
+            $user->area_id = $city_id;
+            $user->address = $address;
+            $user->password = Hash::make('123456'); // 帮用户自动生成一个初始密码123456
+            $user->created_at = time();
+            $user->created_by = 0;
+            $user->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
+            $user->save();
+        } else {
+            $user->id = $exist->id;
+            $user->username = $username;
+            $user->email = $email;
+            $user->phone = $phone;
+            $user->company = $company;
+            $user->province_id = $province_id;
+            $user->city_id = $city_id;
+            $user->address = $address;
+        }
+        // 新需求：下单付款成功后自动给用户注册一个账户 结束
+        return $user;
     }
 }

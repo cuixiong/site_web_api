@@ -115,6 +115,7 @@ class UserController extends Controller {
             'company'    => $user->company,// 公司
             'login_time' => $user->login_time,// 最近登陆的时间
             'token'      => $token,// token
+            'address'    => $user->address,
         ];
         ReturnJson(true, '', $data);
     }
@@ -284,6 +285,9 @@ class UserController extends Controller {
                 $data[$key]['code'] = $value['code'];
                 $data[$key]['status'] = $couponStatus;
             }
+        }
+        if(!empty($data )) {
+            $data = array_values($data);
         }
         ReturnJson(true, '', $data);
     }

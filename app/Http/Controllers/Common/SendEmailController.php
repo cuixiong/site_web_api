@@ -385,20 +385,26 @@ class SendEmailController extends Controller {
             } else {
                 $productsName = '';
             }
+
+            $provinceName = City::where('id', $data['province_id'])->value('name');
+            $cityName = '';
+            if(!empty($data['city_id'] )) {
+                $cityName = City::where('id', $data['city_id'])->value('name');
+            }
+            $area = $provinceName.' '.$cityName;
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
                 'contactUsUrl' => rtrim($data['domain'], '/').'/contact-us',
                 'homeUrl'      => $data['domain'],
-                'userName'     => $data['name'] ? $data['name'] : '',
+                'userName'     => $data['name'] ?: '',
                 'email'        => $data['email'],
                 'company'      => $data['company'],
-                'area'         => City::where('id', $data['area_id'])->value('name'),
-                'phone'        => $data['phone'] ? $data['phone'] : '',
+                'area'         => $area,
+                'phone'        => $data['phone'] ?: '',
                 'plantTimeBuy' => $data['buy_time'],
-                'content'      => $data['remarks'],
+                'content'      => $data['content'],
                 'backendUrl'   => env('IMAGE_URL'),
-                'plantTimeBuy' => $data['buy_time'],
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
                                    ->toArray();

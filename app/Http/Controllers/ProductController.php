@@ -56,13 +56,11 @@ class ProductController extends Controller {
                     $products[$key]['discount_time_start_date'] = date('m.d', $value['discount_time_begin']);
                     $products[$key]['discount_time_end_date'] = date('m.d', $value['discount_time_end']);
                 }
-                $category = ProductsCategory::select([
-                                                         'id',
-                                                         'name',
-                                                         'link',
-                                                         'thumb'
-                                                     ])->find($value['category_id']);
-                $products[$key]['thumb'] = $category ? $category['thumb'] : '';
+                $category = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->find($value['category_id']);
+
+                if(empty($value['thumb'] )){
+                    $products[$key]['thumb'] = $category ? $category['thumb'] : '';
+                }
                 $products[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($products[$key]['thumb']);
                 $products[$key]['name'] = $value['name'];
                 $products[$key]['english_name'] = $value['english_name'];

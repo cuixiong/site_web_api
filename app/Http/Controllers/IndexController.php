@@ -23,21 +23,9 @@ class IndexController extends Controller {
                          ->orderBy('id', 'desc');
         $pageSize = 6;
         $list = $query->limit($pageSize)->get();
-        //$filterCnt = 0;
         foreach ($list as $key => $value) {
-            // 过滤敏感词(暂时不需要, 在上传, 新增做好过滤)
-//            $checkRes = SenWordsService::checkFitter($value->name);
-//            if ($checkRes) {
-//                $filterCnt++;
-//                unset($list[$key]);
-//                continue;
-//            }
             $this->handlerNewProductList($value);
         }
-        //说明有过滤掉的报告,那么需要补齐数量
-//        $forCnt = 3; //最多递归3次
-//        $this->handlerSurplusNewsList($filterCnt, 0, $pageSize, $query, $list, $forCnt);
-
         ReturnJson(true, '', $list);
     }
 
@@ -65,23 +53,20 @@ class IndexController extends Controller {
                 } else {
                     continue;
                 }
-
                 $firstProduct = Products::select($productFields)
-                                            ->where('category_id', $category['id'])
-                                            ->where('show_recommend', 1)
-                                            ->orderBy('published_date', 'desc')
-                                            ->first();
-//                $firstProduct = [];
-//                $forFirstCnt = 0;
-//                $this->getRemProductFirst($productFields, $category['id'], $firstProduct, $forFirstCnt);
+                                        ->where('category_id', $category['id'])
+                                        ->where('show_recommend', 1)
+                                        ->orderBy('published_date', 'desc')
+                                        ->first();
                 if (!empty($firstProduct)) {
-                    // 如果图片为空，则用分类图片
                     if (empty($firstProduct->thumb)) {
-                        $firstProduct['thumb'] = Common::cutoffSiteUploadPathPrefix($category['thumb']);
+                        // 如果图片为空，则用分类图片
+                        $firstProduct->thumb = Common::cutoffSiteUploadPathPrefix($firstProduct->thumb_img);
+                    } else {
+                        $firstProduct->thumb = Common::cutoffSiteUploadPathPrefix($firstProduct->thumb);
                     }
-                    $firstProduct['description'] = (new ProductDescription(
-                        date('Y', strtotime($firstProduct['published_date']))
-                    ))
+                    $year = date('Y', strtotime($firstProduct['published_date']));
+                    $firstProduct['description'] = (new ProductDescription($year))
                         ->where('product_id', $firstProduct['id'])
                         ->value('description');
                 }
@@ -101,20 +86,10 @@ class IndexController extends Controller {
         ReturnJson(true, 'success', $data);
     }
 
-    public function getProductImg() {
-    }
-
     // 行业新闻
     public function RecommendNews(Request $request) {
         $list = News::where('status', 1)
-                    ->select([
-                                 'id',
-                                 'thumb',
-                                 'title',
-                                 'description',
-                                 'upload_at',
-                                 'url'
-                             ])
+                    ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url'])
                     ->where('show_home', 1) // 是否在首页显示
                     ->orderBy('sort', 'desc')
                     ->orderBy('upload_at', 'desc')
@@ -132,11 +107,7 @@ class IndexController extends Controller {
     // 合作伙伴
     public function partners(Request $request) {
         $list = Partner::where('status', 1)
-                       ->select([
-                                    'id',
-                                    'name',
-                                    'logo',
-                                ])
+                       ->select(['id', 'name', 'logo',])
                        ->orderBy('sort', 'desc')
                        ->orderBy('id', 'desc')
                        ->get();
@@ -146,21 +117,10 @@ class IndexController extends Controller {
     // 办公室
     public function office(Request $request) {
         $list = Office::where('status', 1)
-                      ->select([
-                                   'id',
-                                   'city',
-                                   'name',
-                                   'language_alias',
-                                   'region',
-                                   'area',
-                                   'image',
-                                   'national_flag',
-                                   'phone',
-                                   'address',
-                                   'working_language',
-                                   'working_time',
-                                   'time_zone',
-                               ])
+                      ->select(
+                          ['id', 'city', 'name', 'language_alias', 'region', 'area', 'image', 'national_flag', 'phone',
+                           'address', 'working_language', 'working_time', 'time_zone']
+                      )
                       ->orderBy('sort', 'desc')
                       ->orderBy('id', 'desc')
                       ->get();
@@ -288,11 +248,13 @@ class IndexController extends Controller {
                          ->where('category_id', $cate_id)
                          ->where('show_recommend', 1)
                          ->where('id', '<>', $productId)
-                         ->orderBy('sort', 'asc');
+                         ->orderBy('published_date', 'desc');
         $pageSize = 4;
         $otherProducts = $query->limit($pageSize)
                                ->get()
                                ->toArray();
+
+        return $otherProducts;
 //        $filterCnt = 0;
 //        foreach ($otherProducts as $key => $value) {
 //            $checkRes = SenWordsService::checkFitter($value['name']);
@@ -303,8 +265,6 @@ class IndexController extends Controller {
 //        }
 //        $forCnt = 4;
 //        $this->handlerSurplusRemList($filterCnt, 0, $pageSize, $query, $otherProducts, $forCnt);
-
-        return $otherProducts;
     }
 
     /**
