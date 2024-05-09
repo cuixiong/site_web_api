@@ -39,11 +39,16 @@ class Products extends Base {
      * @return int
      */
     public static function getPrice($priceEdition, $goods) {
-        $priceRule = Redis::hget(PriceEditionValues::RedisKey, $priceEdition);
-        $priceRule = json_decode($priceRule, true);
-        $priceRule = $priceRule['rules'];
-        $price = eval("return ".sprintf($priceRule, $goods['price']).";");
-
+        $priceEdition = PriceEditionValues::find($priceEdition);
+        $price = 0;
+        if (!empty($priceEdition)) {
+            $priceRule = $priceEdition['rules'];
+            $price = eval("return ".sprintf($priceRule, $goods['price']).";");
+        }
+//        $priceRule = Redis::hget(PriceEditionValues::RedisKey, $priceEdition);
+//        $priceRule = json_decode($priceRule, true);
+//        $priceRule = $priceRule['rules'];
+//        $price = eval("return ".sprintf($priceRule, $goods['price']).";");
         return $price;
     }
 
@@ -55,11 +60,13 @@ class Products extends Base {
             $timestamp = time();
         }
         $actuallyPaid = $price;
-        if ($timestamp >= $goods['discount_time_begin']
-            && $timestamp
-               <= $goods['discount_time_end']) { // 如果队列不能把discount_time_begin和discount_time_end的值恢复成null，就不能要这句代码了
+        $discount_time_begin = $goods['discount_time_begin'];
+        $discount_time_end = $goods['discount_time_end'];
+        if ($timestamp >= $discount_time_begin
+            && ($timestamp <= $discount_time_end)) {
+            // 如果队列不能把discount_time_begin和discount_time_end的值恢复成null，就不能要这句代码了
             if ($goods['discount_type'] == 1) {
-                $actuallyPaid = $price * $goods['discount'] / 100;
+                $actuallyPaid = common::getDiscountPrice($price, $goods['discount']);
             } else if ($goods['discount_type'] == 2) {
                 $actuallyPaid = bcsub($price, $goods['discount_amount'], 2);
             }

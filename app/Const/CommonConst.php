@@ -1,5 +1,6 @@
 <?php
 
+namespace App\Const;
 class CommonConst {
     const CONST_DELETED        = 1; //已被删除
     const CONST_NOT_DELETE     = 2; //未删除

@@ -19,7 +19,7 @@ class SenWordsService {
 
     public static function getSenWords() {
         if (empty(self::$senWords)) {
-            self::$senWords = SensitiveWords::query()->where("status", \CommonConst::CONST_NORMAL_STATUS)
+            self::$senWords = SensitiveWords::query()->where("status", \App\Const\CommonConst::CONST_NORMAL_STATUS)
                                             ->pluck("word")->toArray();
         }
 

@@ -26,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller {
     /**
@@ -154,76 +155,75 @@ class OrderController extends Controller {
      * 下单付款
      */
     public function CreateAndPay(Request $request) {
-        $goodsId = $request->goods_id;
-        $shopIdArr = $request->shop_id;
-        $shopcarJson = $request->shopcar_json;
-        $isMobile = $request->is_mobile;
-        $isWechat = $request->is_wechat;
-        $coupon_id = $request->coupon_id ?? ''; // 优惠券id：无论是用户输入优惠券码，还是用户选择某一种优惠券，都接收coupon_id
-        $username = $request->username;
-        $email = $request->email;
-        $phone = $request->phone;
-        $company = $request->company;
-        $province_id = $request->province_id ?? 0;
-        $address = $request->address ?? '';
-        $city_id = $request->city_id ?? 0;
-        $remarks = $request->remarks; // 订单备注
-
-        (new OrderRequest())->createandpay($request);
-        $user = $this->getUser(
-            $email, $username, $phone, $company, $province_id, $city_id, $address
-        );
-
-        $payType = $request->pay_type;
-        $tempOrderId = $request->temp_order_id; // 临时订单号
-        if (!empty($goodsId)) { // 直接下单
-            $priceEdition = $request->price_edition;
+        try {
+            $coupon_id = $request->coupon_id ?? ''; // 优惠券id：无论是用户输入优惠券码，还是用户选择某一种优惠券，都接收coupon_id
+            $remarks = $request->remarks; // 订单备注
+            $address = $request->address;
+            //校验请求参数
+            (new OrderRequest())->createandpay($request);
+            //校验支付方式
+            $payType = $request->pay_type;
             if (!array_key_exists($payType, Order::payType())) {
                 ReturnJson(false, '支付方式错误');
             }
-            if (!in_array($priceEdition, PriceEditionValues::GetPriceEditonsIds())) {
-                ReturnJson(false, '价格版本错误');
-            }
-            $orderTrans = new OrderTrans();
-            $order = $orderTrans->setUser($user)->createBySingle(
-                $goodsId, $priceEdition, $payType, $coupon_id, $address, $remarks
-            );
-        } elseif (!empty($shopIdArr)) { // 已登录，通过购物车下单
-            $shopIdArr = explode(',', $shopIdArr);
-            if (!array_key_exists($payType, Order::payType())) {
-                ReturnJson(false, '支付方式错误');
-            }
-            if (!is_array($shopIdArr) || count($shopIdArr) < 1) {
-                ReturnJson(false, '参数错误1');
-            }
-            foreach ($shopIdArr as $item) {
-                if (!preg_match("/^[1-9][0-9]*$/", $item)) {
-                    ReturnJson(false, '参数错误2');
+            //获取用户, 没有登录，则自动注册
+            $user = $this->getUser($request);
+            if (!empty($request->goods_id)) { // 直接下单
+                $priceEdition = $request->price_edition ?? 0;
+                $isExist = PriceEditionValues::query()->where("id", $priceEdition)->count();
+                if ($isExist <= 0) {
+                    ReturnJson(false, '价格版本错误');
                 }
+                $orderTrans = new OrderTrans();
+                $order = $orderTrans->setUser($user)->createBySingle(
+                    $request->goods_id, $priceEdition, $payType, $coupon_id, $address, $remarks
+                );
+            } elseif (!empty($request->shop_id)) { // 已登录，通过购物车下单
+                $shopIdArr = $request->shop_id;
+                $shopIdArr = explode(',', $shopIdArr);
+                if (!is_array($shopIdArr) || count($shopIdArr) < 1) {
+                    ReturnJson(false, '参数错误1');
+                }
+                $orderTrans = new OrderTrans();
+                $order = $orderTrans->setUser($user)->createByCart(
+                    $shopIdArr, $payType, $coupon_id, $address, $remarks
+                );
+            } elseif (!empty($request->shopcar_json)) { // 未登录，通过购物车下单
+                $shopcarJson = $request->shopcar_json;
+                $shopcarArr = json_decode($shopcarJson, true);
+                $orderTrans = new OrderTrans();
+                $order = $orderTrans->setUser($user)->createByCartWithoutLogin(
+                    $shopcarArr, $payType, $coupon_id, $address, $remarks
+                );
+            } else {
+                ReturnJson(false, '参数错误3');
             }
-            $orderTrans = new OrderTrans();
-            $order = $orderTrans->setUser($user)->createByCart($shopIdArr, $payType, $coupon_id, $address, $remarks);
-        } elseif (!empty($shopcarJson)) { // 未登录，通过购物车下单
-            $shopcarArr = json_decode($shopcarJson, true);
-            $orderTrans = new OrderTrans();
-            $order = $orderTrans->setUser($user)->createByCartWithoutLogin(
-                $shopcarArr, $payType, $coupon_id, $address, $remarks
-            );
-        } else {
-            ReturnJson(false, '参数错误3');
-        }
-        if ($order === null) {
-            return $this->echoMsg($orderTrans->getErrno());
-        }
-        // 把临时订单号加入缓存
-        Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
-        $pay = PayFactory::create($order->pay_type);
-        $isMobile = $isMobile == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
-        $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
-        $isWechat = $isWechat == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
-        $pay->setOption(Pay::KEY_IS_WECHAT, $isWechat);
+            if ($order === null) {
+                return $this->echoMsg($orderTrans->getErrno());
+            }
+            // 把临时订单号加入缓存
+            Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
+            $pay = PayFactory::create($order->pay_type);
+            $isMobile = $request->is_mobile;
+            $isWechat = $request->is_wechat;
+            $isMobile = $isMobile == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
+            $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
+            $isWechat = $isWechat == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
+            $pay->setOption(Pay::KEY_IS_WECHAT, $isWechat);
 
-        return $pay->do($order);
+            //拉起支付
+            return $pay->do($order);
+        } catch (\Exception $e) {
+            $errData = [
+                'error' => $e->getMessage(),
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'data'  => $request->all(),
+            ];
+            \Log::error('下单支付失败,错误信息:'.json_encode($errData));
+            ReturnJson(false, '未知错误');
+        }
     }
 
     /**
@@ -262,7 +262,7 @@ class OrderController extends Controller {
                          ->orderBy('sort', 'asc')
                          ->get()
                          ->toArray();
-        foreach ($data as &$item){
+        foreach ($data as &$item) {
             $item['img'] = Common::cutoffSiteUploadPathPrefix($item['img']);
         }
         ReturnJson(true, 'success', $data);
@@ -436,7 +436,8 @@ class OrderController extends Controller {
             $model = $model->where('user_id', $userId)
                            ->where('is_delete', 0) //是否被前台用户删除:0代表否,1代表是
                            ->when($status, function ($query) use ($status) {
-                                $query->where('is_pay', $status);})
+                    $query->where('is_pay', $status);
+                })
                            ->orderBy('id', 'desc');
             $count = $model->count();
             // 查询偏移量
@@ -601,20 +602,17 @@ class OrderController extends Controller {
     }
 
     /**
-     *
-     * @param mixed $email
-     * @param mixed $username
-     * @param mixed $phone
-     * @param mixed $company
-     * @param mixed $province_id
-     * @param mixed $city_id
-     * @param mixed $address
-     *
+     * $request
      * @return User
      */
-    private function getUser(
-        mixed $email, mixed $username, mixed $phone, mixed $company, mixed $province_id, mixed $city_id, mixed $address
-    ): User {
+    private function getUser($request) {
+        $email = $request->email;
+        $username = $request->username;
+        $phone = $request->phone;
+        $company = $request->company;
+        $province_id = $request->province_id ?? 0;
+        $address = $request->address ?? '';
+        $city_id = $request->city_id ?? 0;
         // 新需求：下单付款成功后自动给用户注册一个账户（实际情况是：还没付款） 开始
         $user = new User();
         $exist = User::where('email', $email)->first();
@@ -642,6 +640,7 @@ class OrderController extends Controller {
             $user->city_id = $city_id;
             $user->address = $address;
         }
+
         // 新需求：下单付款成功后自动给用户注册一个账户 结束
         return $user;
     }

@@ -2,8 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Base;
-use CommonConst;
+use App\Const\CommonConst;
 
 class Order extends Base {
     const PAY_UNPAID  = 1;
