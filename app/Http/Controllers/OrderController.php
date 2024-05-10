@@ -203,6 +203,8 @@ class OrderController extends Controller {
             }
             // 把临时订单号加入缓存
             Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
+
+            //拉起支付
             $pay = PayFactory::create($order->pay_type);
             $isMobile = $request->is_mobile;
             $isWechat = $request->is_wechat;
@@ -211,7 +213,6 @@ class OrderController extends Controller {
             $isWechat = $isWechat == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
             $pay->setOption(Pay::KEY_IS_WECHAT, $isWechat);
 
-            //拉起支付
             return $pay->do($order);
         } catch (\Exception $e) {
             $errData = [
@@ -613,10 +614,10 @@ class OrderController extends Controller {
         $province_id = $request->province_id ?? 0;
         $address = $request->address ?? '';
         $city_id = $request->city_id ?? 0;
-        // 新需求：下单付款成功后自动给用户注册一个账户（实际情况是：还没付款） 开始
         $user = new User();
         $exist = User::where('email', $email)->first();
         if (!$exist) {
+            // 新需求：下单付款成功后自动给用户注册一个账户（实际情况是：还没付款） 开始
             // $user->id = 0;
             $user->username = $username;
             $user->email = $email;
@@ -630,6 +631,7 @@ class OrderController extends Controller {
             $user->created_by = 0;
             $user->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
             $user->save();
+            // 新需求：下单付款成功后自动给用户注册一个账户 结束
         } else {
             $user->id = $exist->id;
             $user->username = $username;
@@ -641,7 +643,6 @@ class OrderController extends Controller {
             $user->address = $address;
         }
 
-        // 新需求：下单付款成功后自动给用户注册一个账户 结束
         return $user;
     }
 }

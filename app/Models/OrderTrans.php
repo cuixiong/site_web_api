@@ -70,9 +70,7 @@ class OrderTrans extends Base {
         $timestamp = time();
         $orderAmount = Products::getPrice($priceEdition, $goods); // 订单金额
         if (empty($coupon_id)) {
-            $actuallyPaid = Products::getPriceBy(
-                $orderAmount, $goods, $timestamp
-            );
+            $actuallyPaid = Products::getPriceBy($orderAmount, $goods, $timestamp);
         } else {
             // 就按照使用优惠券的价格，而不是按照产品自带的折后价
             $actuallyPaid = $this->couponPrice($orderAmount, $coupon_id);
@@ -99,9 +97,7 @@ class OrderTrans extends Base {
         $orderGoods->updated_at = $timestamp;
         if (!$orderGoods->save()) {
             DB::rollBack();
-            // $this->errno = ApiCode::INSERT_FAIL;
-            $this->errno = '';
-
+            $this->errno = ApiCode::INSERT_FAIL;
             return null;
         }
         //(new SendEmailController)->placeOrder($orderGoods->id);//暂时注释
@@ -241,6 +237,7 @@ class OrderTrans extends Base {
         $goodsIdArr = array_column($shopCartList, 'goods_id');
         $goods = Products::query()
                          ->select($this->baseProductFields)
+                         ->where('status' , 1)
                          ->whereIn('id', $goodsIdArr)
                          ->get()->toArray();
         if (count($goods) < 1) {
@@ -248,6 +245,7 @@ class OrderTrans extends Base {
 
             return null;
         }
+        // 获取购物车有效的商品
         $realShopArr = [];
         foreach ($shopCartList as $key => $item) {
             foreach ($goods as $good) {
