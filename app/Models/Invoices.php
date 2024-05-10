@@ -11,14 +11,16 @@ class Invoices extends Base {
             'apply_status', 'phone', 'bank_name', 'bank_account'
         ];
     const invoiceType
-        = [
+                               = [
             '1' => '普通发票',
             '2' => '增值税发票',
         ];
+    const applyInvoiceStatus   = 1;  //申请中
+    const alreadyInvoiceStatus = 2;  //已开票
     const invoiceStatus
-        = [
-            '0' => '待开票',
-            '1' => '已票中',
+                               = [
+            self::applyInvoiceStatus   => '申请中',
+            self::alreadyInvoiceStatus => '已开票',
         ];
     protected $table   = 'invoices';
     protected $appends = ['invoice_type_text', 'apply_status_text', 'apply_date'];

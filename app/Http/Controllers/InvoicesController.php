@@ -11,16 +11,18 @@ class InvoicesController extends Controller {
     public function list(Request $request) {
         try {
             $status = $request->input('status', '0');
-            if (empty($status) || !isset($status) || !in_array($status, [1, 2])) {
+            if (empty($status) || !isset($status)
+                || !in_array($status, [Invoices::alreadyInvoiceStatus,
+                                       Invoices::applyInvoiceStatus])) {
                 $status = 0;
             }
             $userId = $request->user->id;
             $model = new Invoices();
             $model = $model->where('user_id', $userId)->when($status, function ($query) use ($status) {
                 if ($status == 1) {
-                    $query->where('apply_status', 1);
+                    $query->where('apply_status', Invoices::applyInvoiceStatus);
                 } elseif ($status == 2) { //已开票
-                    $query->where('apply_status', 0);
+                    $query->where('apply_status', Invoices::alreadyInvoiceStatus);
                 }
             })->orderBy('id', 'desc');
             $count = $model->count();
