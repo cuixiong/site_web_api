@@ -36,6 +36,7 @@ class CartController extends Controller {
                                          'products.discount_time_begin',
                                          'products.discount_time_end',
                                          'products.published_date',
+                                         'products.publisher_id',
                                          'edition.rules',
                                          'products.category_id',
                                      ])
