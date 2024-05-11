@@ -27,6 +27,7 @@ class CartController extends Controller {
                                          'cart.number',
                                          'cart.price_edition',
                                          'edition.name as price_name',
+                                         'edition.rules',
                                          // 'language.language',
                                          'products.url',
                                          'products.name',
@@ -37,18 +38,15 @@ class CartController extends Controller {
                                          'products.discount_time_end',
                                          'products.published_date',
                                          'products.publisher_id',
-                                         'edition.rules',
                                          'products.category_id',
                                      ])
                             ->leftJoin('product_routine as products', 'products.id', '=', 'cart.goods_id')
-                            ->leftJoin('product_category as category', 'category.id', '=', 'products.category_id')
                             ->leftJoin('price_edition_values as edition', 'cart.price_edition', '=', 'edition.id')
-            // ->leftJoin('languages as language', 'edition.language_id','=','language.id')
                             ->where([
-                                        // 'cart.user_id' => $request->user->id,
+                                        //'cart.user_id'    => $request->user->id,
                                         'products.status' => 1 // product的status值如果是0，相当于删除这份报告
                                     ])->get()->toArray();
-        if (count($shopCart) < 1) { // 这个用户的购物车为空
+        if (empty($shopCart)) {
             $data = [
                 'result'     => [],
                 'goodsCount' => 0,
@@ -67,7 +65,6 @@ class CartController extends Controller {
             $shopCartData[$key]['goods_id'] = $value['goods_id'];
             $shopCartData[$key]['url'] = $value['url'];
             $shopCartData[$key]['published_date'] = $value['published_date'] ? $value['published_date'] : '';
-            // $shopCartData[$key]['languageId'] = $value['language']; // 原本是language，改为迁就前端的languageId
             $shopCartData[$key]['price_edition_cent'] = $value['price_name']; // 原本是edition，改为迁就前端的price_edition_cent
             $shopCartData[$key]['price_edition'] = $value['price_edition'];
             $shopCartData[$key]['price'] = eval("return ".sprintf($value['rules'], $value['price']).";");
@@ -83,13 +80,12 @@ class CartController extends Controller {
             ) : '';
             // 计算报告价格
             $languages = Languages::GetList();
-            $products[$key]['prices'] = Products::CountPrice(
+            $shopCartData[$key]['prices'] = Products::CountPrice(
                 $value['price'], $value['publisher_id'], $languages
             ) ?? [];
             $goodsCount += $value['number'];
-            $totalPrice += bcmul(eval("return ".sprintf($value['rules'], $value['price']).";"), $value['number']);
+            $totalPrice += bcmul($shopCartData[$key]['price'], $value['number']);
         }
-        // var_dump(1);die;
         $data = [
             'result'     => $shopCartData,
             'goodsCount' => $goodsCount,
@@ -394,8 +390,8 @@ class CartController extends Controller {
                 $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($results[$key]['thumb']);
                 $results[$key]['published_date'] = $product['published_date'] ? date(
                     'Y-m-d', strtotime(
-                    $product['published_date']
-                )
+                               $product['published_date']
+                           )
                 ) : '';
                 $results[$key]['discount_begin'] = $product['discount_begin'] ? date(
                     'Y-m-d', $product['discount_begin']
@@ -475,8 +471,8 @@ class CartController extends Controller {
                         $data[$index]['description_seo'] = $description;
                         $data[$index]['published_date'] = $product['published_date'] ? date(
                             'Y-m-d', strtotime(
-                            $product['published_date']
-                        )
+                                       $product['published_date']
+                                   )
                         ) : '';
                         $data[$index]['price'] = $product['price'];
                         $data[$index]['id'] = $product['id'];
