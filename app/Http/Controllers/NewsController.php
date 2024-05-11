@@ -23,47 +23,39 @@ class NewsController extends Controller {
         $keyword = $request->keyword;
         $industry_id = $request->industry_id;
         $tag = trim($request->tag);
+        $type_id = $request->type ?? 0;
         $where = [
             'status' => 1,
-            // 'category_id' => 1
         ];
-        $query = News::select([
-                                  'thumb',
-                                  'title',
-                                  'upload_at as release_at',
-                                  'tags',
-                                  'description',
-                                  'type as industry_id',
-                                  'id',
-                                  'url'
-                              ])
+        $field = ['thumb', 'title', 'upload_at as release_at', 'tags', 'description', 'category_id', 'id',
+                  'url'];
+        $query = News::select($field)
                      ->where($where)
                      ->where('upload_at', '<=', time());
-        $count = News::where($where);
+        if (!empty($type_id)) {
+            $query = $query->where('type', $type_id);
+        }
         if (!empty($keyword)) {
             $keyword = explode(" ", $keyword);
             for ($i = 0; $i <= count($keyword); $i++) {
                 if (!empty($keyword[$i])) {
                     $query = $query->where('title', 'LIKE', '%'.$keyword[$i].'%');
-                    $count = $count->where('title', 'LIKE', '%'.$keyword[$i].'%');
                 }
             }
         }
         if (!empty($industry_id)) {
-            $industryIdWhere = ['type' => $industry_id];
+            $industryIdWhere = ['category_id' => $industry_id];
             $query = $query->where($industryIdWhere);
-            $count = $count->where($industryIdWhere);
         }
         if (!empty($tag)) {
             $query = $query->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
-            $count = $count->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
         }
         $result = $query->orderBy('sort', 'asc')->orderBy('upload_at', 'desc')
                         ->offset(($page - 1) * $pageSize)
                         ->limit($pageSize)
                         ->get()
                         ->toArray();
-        $count = $count->count();
+        $count = $query->count();
         $news = [];
         if (!empty($result) && is_array($result)) {
             foreach ($result as $key => $value) {
@@ -73,8 +65,9 @@ class NewsController extends Controller {
                 $news[$key]['month_day'] = $value['release_at'] ? date('m-d', $value['release_at']) : '';
                 $news[$key]['year'] = $value['release_at'] ? date('Y', $value['release_at']) : '';
                 $news[$key]['category'] = ProductsCategory::select(['id', 'name', 'link'])->where(
-                    'id', $value['industry_id']
+                    'id', $value['category_id']
                 )->first();
+
                 $news[$key]['tags'] = $value['tags'] ? explode(',', $value['tags']) : [];
                 $news[$key]['description'] = $value['description'];
                 $news[$key]['id'] = $value['id'];

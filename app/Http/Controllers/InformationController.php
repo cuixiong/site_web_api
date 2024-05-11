@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Information;
 use App\Models\Languages;
+use App\Models\News;
 use App\Models\PriceEditionValues;
 use App\Models\Products;
 use App\Models\ProductsCategory;
@@ -25,45 +26,36 @@ class InformationController extends Controller {
         $tag = trim($request->tag);
         $where = [
             'status' => 1,
-            // 'category_id' => 1
         ];
-        $query = Information::select([
-                                         'thumb',
-                                         'title',
-                                         'upload_at as release_at',
-                                         'tags',
-                                         'description',
-                                         'type as industry_id',
-                                         'id',
-                                         'url'
-                                     ])
+        $field = ['thumb', 'title', 'upload_at as release_at', 'tags', 'description', 'category_id', 'id',
+                  'url'];
+        $query = Information::select($field)
                             ->where($where)
                             ->where('upload_at', '<=', time());
-        $count = Information::where($where);
+        if (!empty($type_id)) {
+            $query = $query->where('type', $type_id);
+        }
         if (!empty($keyword)) {
             $keyword = explode(" ", $keyword);
             for ($i = 0; $i <= count($keyword); $i++) {
                 if (!empty($keyword[$i])) {
                     $query = $query->where('title', 'LIKE', '%'.$keyword[$i].'%');
-                    $count = $count->where('title', 'LIKE', '%'.$keyword[$i].'%');
                 }
             }
         }
         if (!empty($industry_id)) {
-            $industryIdWhere = ['type' => $industry_id];
+            $industryIdWhere = ['category_id' => $industry_id];
             $query = $query->where($industryIdWhere);
-            $count = $count->where($industryIdWhere);
         }
         if (!empty($tag)) {
             $query = $query->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
-            $count = $count->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
         }
         $result = $query->orderBy('sort', 'asc')->orderBy('upload_at', 'desc')
                         ->offset(($page - 1) * $pageSize)
                         ->limit($pageSize)
                         ->get()
                         ->toArray();
-        $count = $count->count();
+        $count = $query->count();
         $news = [];
         if (!empty($result) && is_array($result)) {
             foreach ($result as $key => $value) {
@@ -73,7 +65,7 @@ class InformationController extends Controller {
                 $news[$key]['month_day'] = $value['release_at'] ? date('m-d', $value['release_at']) : '';
                 $news[$key]['year'] = $value['release_at'] ? date('Y', $value['release_at']) : '';
                 $news[$key]['category'] = ProductsCategory::select(['id', 'name', 'link'])->where(
-                    'id', $value['industry_id']
+                    'id', $value['category_id']
                 )->first();
                 $news[$key]['tags'] = $value['tags'] ? explode(',', $value['tags']) : [];
                 $news[$key]['description'] = $value['description'];
@@ -123,14 +115,14 @@ class InformationController extends Controller {
         //查询上一篇
         if (!empty($prevId)) {
             $prev = Information::select(['id', 'title', 'url', 'category_id'])
-                        ->where("id", $prevId)
-                        ->first();
+                               ->where("id", $prevId)
+                               ->first();
         }
         //查询下一篇
         if (!empty($nextId)) {
             $next = Information::select(['id', 'title', 'url', 'category_id'])
-                        ->where("id", $nextId)
-                        ->first();
+                               ->where("id", $nextId)
+                               ->first();
         }
         $prev_next = [];
         if (!empty($prev)) {
