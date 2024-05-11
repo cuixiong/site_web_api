@@ -33,9 +33,9 @@ class ProductController extends Controller {
             // 从redis中获取语言
             $languages = Languages::GetList();
             // redis中获取价格版本子项
-            $priceEditionsValue = Redis::hgetall(PriceEditionValues::RedisKey);
+            //$priceEditionsValue = Redis::hgetall(PriceEditionValues::RedisKey);
             // 从redis中获取价格版本父项
-            $priceEditions = Redis::hgetall(PriceEditions::RedisKey);
+            //$priceEditions = Redis::hgetall(PriceEditions::RedisKey);
             foreach ($result as $key => $value) {
                 //返回打折信息
                 $time = time();
@@ -83,7 +83,7 @@ class ProductController extends Controller {
                 $products[$key]['discount_amount'] = $value['discount_amount'];
                 $products[$key]['discount'] = $value['discount'];
                 $products[$key]['prices'] = Products::CountPrice(
-                    $value['price'], $value['publisher_id'], $languages, $priceEditionsValue, $priceEditions
+                    $value['price'], $value['publisher_id'], $languages
                 ) ?? [];
                 $products[$key]['id'] = $value['id'];
                 $products[$key]['url'] = $value['url'];
