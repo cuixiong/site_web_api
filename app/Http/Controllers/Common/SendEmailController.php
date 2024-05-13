@@ -182,7 +182,18 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
+            $domain = 'http://'.$_SERVER['SERVER_NAME'];
             $data = $user;
+            $data['homePage'] = $domain;
+            $data['myAccountUrl'] = rtrim($domain, '/').'/account/account-infor';
+            $data['contactUsUrl'] = rtrim($domain, '/').'/contact-us';
+            $data['homeUrl'] = $domain;
+            $data['backendUrl'] = env('IMAGE_URL');
+            $verifyUrl = $data['domain'].'/signIn/resetPassword?verifyemail=do-reset-register=&token='.$user['token'];
+            $data['verifyUrl'] = $verifyUrl;
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
+                                   ->toArray();
+            $data = array_merge($data, $siteInfo);
             $this->handlerSendEmail($scene, $user['email'], $data, $senderEmail);
             ReturnJson(true, trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
@@ -385,10 +396,9 @@ class SendEmailController extends Controller {
             } else {
                 $productsName = '';
             }
-
             $provinceName = City::where('id', $data['province_id'])->value('name');
             $cityName = '';
-            if(!empty($data['city_id'] )) {
+            if (!empty($data['city_id'])) {
                 $cityName = City::where('id', $data['city_id'])->value('name');
             }
             $area = $provinceName.' '.$cityName;
