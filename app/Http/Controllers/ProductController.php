@@ -57,8 +57,7 @@ class ProductController extends Controller {
                     $products[$key]['discount_time_end_date'] = date('m.d', $value['discount_time_end']);
                 }
                 $category = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->find($value['category_id']);
-
-                if(empty($value['thumb'] )){
+                if (empty($value['thumb'])) {
                     $products[$key]['thumb'] = $category ? $category['thumb'] : '';
                 }
                 $products[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($products[$key]['thumb']);
@@ -116,7 +115,7 @@ class ProductController extends Controller {
         if ($keyword) {
             $query = $query->where(function ($query) use ($keyword) {
                 $query->where('name', 'like', '%'.$keyword.'%');
-                if(is_numeric($keyword)){
+                if (is_numeric($keyword)) {
                     $query->orWhere('id', $keyword);
                 }
             });
@@ -128,7 +127,6 @@ class ProductController extends Controller {
         // 分页
         $offset = ($page - 1) * $pageSize;
         $list = $query->offset($offset)->limit($pageSize)->get()->toArray();
-
 //        过滤敏感词(暂时不需要, 在上传, 新增做好过滤)
 //        $filterCnt = 0;
 //        foreach ($list as $key => $value){
@@ -146,7 +144,6 @@ class ProductController extends Controller {
 //                $list, $forCnt
 //            );
 //        }
-
         return ['list' => $list, 'count' => $count];
     }
 
@@ -194,28 +191,12 @@ class ProductController extends Controller {
         $product = Products::where(['id' => $product_id, 'status' => 1])->select('id')->first();
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
         if (!empty($product)) {
-            $product_desc = (new Products)->from('product_routine as p')->select([
-                                                                                     'p.name',
-                                                                                     'p.english_name',
-                                                                                     'cate.thumb',
-                                                                                     'p.id',
-                                                                                     'p.published_date',
-                                                                                     'cate.name as category',
-                                                                                     'cate.keyword_suffix',
-                                                                                     'cate.product_tag',
-                                                                                     'p.pages',
-                                                                                     'p.tables',
-                                                                                     'p.url',
-                                                                                     'p.category_id',
-                                                                                     'p.keywords',
-                                                                                     'p.price',
-                                                                                     'p.discount_type',
-                                                                                     'p.discount',
-                                                                                     'p.discount_amount',
-                                                                                     'p.discount_time_begin',
-                                                                                     'p.discount_time_end',
-                                                                                     'p.publisher_id',
-                                                                                 ])->leftJoin(
+            $fieldList = ['p.name', 'p.english_name', 'cate.thumb', 'p.id', 'p.published_date', 'cate.name as category',
+                          'cate.keyword_suffix', 'cate.product_tag', 'p.pages', 'p.tables', 'p.url', 'p.category_id',
+                          'p.keywords', 'p.price', 'p.discount_type', 'p.discount', 'p.discount_amount',
+                          'p.discount_time_begin', 'p.discount_time_end', 'p.publisher_id',];
+
+            $product_desc = (new Products)->from('product_routine as p')->select($fieldList)->leftJoin(
                 'product_category as cate', 'cate.id', '=', 'p.category_id'
             )
                                           ->where(['p.id' => $product_id])
@@ -324,9 +305,9 @@ class ProductController extends Controller {
                                     ->first();
             unset($product_desc->published_date);
             if (!empty($product_desc)) {
-                ReturnJson(true, '', $product_desc);
+                ReturnJson(1, '', $product_desc);
             } else {
-                ReturnJson(false, '请求失败');
+                ReturnJson(2, '请求失败');
             }
         }
     }

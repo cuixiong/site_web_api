@@ -67,7 +67,6 @@ class NewsController extends Controller {
                 $news[$key]['category'] = ProductsCategory::select(['id', 'name', 'link'])->where(
                     'id', $value['category_id']
                 )->first();
-
                 $news[$key]['tags'] = $value['tags'] ? explode(',', $value['tags']) : [];
                 $news[$key]['description'] = $value['description'];
                 $news[$key]['id'] = $value['id'];
@@ -89,18 +88,11 @@ class NewsController extends Controller {
      */
     public function View(Request $request) {
         $id = $request->id;
+        $url = $request->url;
         if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = News::select([
-                                 'title',
-                                 'upload_at',
-                                 'hits',
-                                 'tags',
-                                 'content',
-                                 'keywords',
-                                 'description'
-                             ])
+        $data = News::select(['title', 'upload_at', 'hits', 'url', 'tags', 'content', 'keywords', 'description'])
                     ->where(['id' => $id, 'status' => 1])
                     ->first();
         if ($data) {
@@ -109,37 +101,46 @@ class NewsController extends Controller {
             News::where(['id' => $id])->increment('hits');
             $data['tags'] = $data['tags'] ? explode(',', $data['tags']) : [];
             $data['upload_at_format'] = $data['upload_at'] ? date('Y-m-d', $data['upload_at']) : '';
+            list($prevId, $nextId) = $this->getNextPrevId($request, $id);
+            //查询上一篇
+            if (!empty($prevId)) {
+                $prev = News::select(['id', 'title', 'url', 'category_id'])
+                            ->where("id", $prevId)
+                            ->first();
+            }
+            //查询下一篇
+            if (!empty($nextId)) {
+                $next = News::select(['id', 'title', 'url', 'category_id'])
+                            ->where("id", $nextId)
+                            ->first();
+            }
+            $prev_next = [];
+            if (!empty($prev)) {
+                $prev['routeName'] = $prev['category_id'];
+                $prev_next['prev'] = $prev;
+            } else {
+                $prev_next['prev'] = [];
+            }
+            if (!empty($next)) {
+                $next['routeName'] = $next['category_id'];
+                $prev_next['next'] = $next;
+            } else {
+                $prev_next['next'] = [];
+            }
+            $data['prev_next'] = $prev_next;
+            ReturnJson(true, 'success', $data);
         } else {
-            $data = [];
+            $news_relate = News::select(['id', 'url'])
+                               ->where(['url' => $url, 'status' => 1])
+                               ->orderBy('upload_at', 'desc')
+                               ->orderBy('id', 'desc')
+                               ->first();
+            if (!empty($news_relate)) {
+                ReturnJson(1, '', $news_relate);
+            } else {
+                ReturnJson(2, '请求失败');
+            }
         }
-        list($prevId, $nextId) = $this->getNextPrevId($request, $id);
-        //查询上一篇
-        if (!empty($prevId)) {
-            $prev = News::select(['id', 'title', 'url', 'category_id'])
-                        ->where("id", $prevId)
-                        ->first();
-        }
-        //查询下一篇
-        if (!empty($nextId)) {
-            $next = News::select(['id', 'title', 'url', 'category_id'])
-                        ->where("id", $nextId)
-                        ->first();
-        }
-        $prev_next = [];
-        if (!empty($prev)) {
-            $prev['routeName'] = $prev['category_id'];
-            $prev_next['prev'] = $prev;
-        } else {
-            $prev_next['prev'] = [];
-        }
-        if (!empty($next)) {
-            $next['routeName'] = $next['category_id'];
-            $prev_next['next'] = $next;
-        } else {
-            $prev_next['next'] = [];
-        }
-        $data['prev_next'] = $prev_next;
-        ReturnJson(true, 'success', $data);
     }
 
     /**
