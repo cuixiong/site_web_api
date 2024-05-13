@@ -35,4 +35,10 @@ class Languages extends Base
     {
         return self::select('id', 'name')->where(['status' => 1])->get()->toArray();
     }
+
+    public static function GetListById()
+    {
+        return self::where(['status' => 1])->pluck('name', 'id')->toArray();
+    }
+
 }

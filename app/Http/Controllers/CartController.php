@@ -59,6 +59,8 @@ class CartController extends Controller {
         $goodsCount = 0;
         $totalPrice = 0;
         $shopCartData = [];
+        $languageIdList = Languages::GetListById();
+
         foreach ($shopCart as $key => $value) {
             $shopCartData[$key]['thumb'] = ProductsCategory::where('id', $value['category_id'])->value('thumb');
             $shopCartData[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($shopCartData[$key]['thumb']);
@@ -68,6 +70,7 @@ class CartController extends Controller {
             $shopCartData[$key]['published_date'] = $value['published_date'] ? $value['published_date'] : '';
             $shopCartData[$key]['price_edition_cent'] = $value['price_name']; // 原本是edition，改为迁就前端的price_edition_cent
             $shopCartData[$key]['language_id'] = $value['language_id'];
+            $shopCartData[$key]['language_name'] = $languageIdList[$value['language_id']] ?? 0;
             $shopCartData[$key]['price_edition'] = $value['price_edition'];
             $shopCartData[$key]['price'] = eval("return ".sprintf($value['rules'], $value['price']).";");
             $shopCartData[$key]['number'] = intval($value['number']); // 把返回的number值由原来的字符类型变成整数类型
