@@ -6,7 +6,6 @@ use App\Models\ProductDescription;
 use App\Models\Products;
 use App\Models\XunsearchProductIndex;
 use Illuminate\Console\Command;
-use Illuminate\Support\Arr;
 
 class BuildIndexCommand extends Command {
     /**
@@ -25,11 +24,14 @@ class BuildIndexCommand extends Command {
         $products_list = Products::select($product_fields)->get()->toArray();
         $index = 0;
         foreach ($products_list as $key => $products_data) {
-
+            if(empty($products_data['published_date'] )){
+                $products_data['published_date'] = 0;
+            }
+            $products_data['published_date'] = intval($products_data['published_date']);
             $year = date('Y', $products_data['published_date']);
             $description = (new ProductDescription($year))->where('product_id', $products_data['id'])->value('description');
             $products_data['description'] = $description;
-            $xpiModel->create($products_data);
+            $xpiModel->insert($products_data);
             if (!empty($xpiModel)) {
                 $index++;
                 echo "成功处理{$index}条数据".PHP_EOL;
