@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\ProductDescription;
 use App\Models\Products;
+use App\Models\XunsearchProductIndex;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 
