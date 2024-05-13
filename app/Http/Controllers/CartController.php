@@ -28,6 +28,7 @@ class CartController extends Controller {
                                          'cart.price_edition',
                                          'edition.name as price_name',
                                          'edition.rules',
+                                         'edition.language_id',
                                          // 'language.language',
                                          'products.url',
                                          'products.name',
