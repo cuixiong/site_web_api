@@ -161,15 +161,16 @@ class UserController extends Controller {
             }
             $token = decrypt($request->token);
             $tokenData = explode('&', $token);
-            if (empty($tokenData) || count($tokenData) != 2) {
+            if (empty($tokenData)) {
                 ReturnJson(false, trans('lang.token_error'));
             }
+
             $id = $tokenData[1];
             $email = $tokenData[0];
             $endTime = $tokenData[2];
             $lastUpdTime = $tokenData[3];
             //有效期校验
-            if (time() > $endTime) {
+            if (empty($endTime) || time() > $endTime) {
                 ReturnJson(false, trans('lang.token_expired'));
             }
             $model = User::where('email', $email)->where('id', $id)->first();
@@ -177,7 +178,7 @@ class UserController extends Controller {
                 ReturnJson(false, trans('lang.eamail_undefined'));
             }
             // 一次token只能验证一次 , 防止盗号风险
-            if ($model->updated_at > $lastUpdTime) {
+            if (strtotime($model->updated_at) > strtotime($lastUpdTime)) {
                 ReturnJson(false, trans('lang.token_expired'));
             }
 
