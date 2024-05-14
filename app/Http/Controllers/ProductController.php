@@ -223,7 +223,7 @@ class ProductController extends Controller {
                                           ->where("keywords", $product_desc['keywords'])
                                           ->where("status", 1)
                                           ->orderBy("published_date", "desc")
-                                          ->limit(3)
+                                          ->limit(2)
                                           ->get();
                 foreach ($relatedProList as $item) {
                     $item->thumb = $item->getThumbImgAttribute();
