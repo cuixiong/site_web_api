@@ -219,7 +219,7 @@ class ProductController extends Controller {
             }
             //返回相关报告
             if (!empty($product_desc['keywords'])) {
-                $relatedProList = Products::query()->select(["id", "published_date", "name", "thumb" , "url", "english_name", "category_id" , "author"])
+                $relatedProList = Products::query()->select(["id", "published_date", "name", "thumb" , "url", "keywords", "english_name", "category_id" , "author"])
                                           ->where("keywords", $product_desc['keywords'])
                                           ->where("status", 1)
                                           ->orderBy("published_date", "desc")
