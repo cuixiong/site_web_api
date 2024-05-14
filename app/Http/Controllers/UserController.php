@@ -164,8 +164,8 @@ class UserController extends Controller {
             if (empty($tokenData) || count($tokenData) != 2) {
                 ReturnJson(false, trans('lang.token_error'));
             }
-            $email = $tokenData[1];
-            $id = $tokenData[0];
+            $id = $tokenData[1];
+            $email = $tokenData[0];
             $model = User::where('email', $email)->where('id', $id)->first();
             if (!$model) {
                 ReturnJson(false, trans('lang.eamail_undefined'));
