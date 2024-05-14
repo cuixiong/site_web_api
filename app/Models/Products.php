@@ -28,6 +28,26 @@ class Products extends Base {
         }
     }
 
+    public function getCategotyTextAttribute() {
+        $name = '';
+        if (!empty($this->attributes['category_id'])) {
+            $name = ProductsCategory::where('id', $this->attributes['category_id'])->value('name');
+        }
+
+        return $name;
+    }
+
+    public function getProShortDescAttribute() {
+        $description = (new ProductDescription(
+            date('Y', $this->attributes['published_date'])
+        ))->where('product_id', $this->attributes['id'])->value('description');
+        if (!empty($description)) {
+            return mb_substr($description, 0, 100, 'UTF-8');
+        }
+
+        return '';
+    }
+
     public function getPublishedDataAttributes($value) {
         return date('Y-m-d', $value);
     }

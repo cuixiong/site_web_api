@@ -219,7 +219,7 @@ class ProductController extends Controller {
             }
             //返回相关报告
             if (!empty($product_desc['keywords'])) {
-                $relatedProList = Products::query()->select(["id", "published_date", "name", "thumb" , "category_id"])
+                $relatedProList = Products::query()->select(["id", "published_date", "name", "thumb" , "url", "english_name", "category_id" , "author"])
                                           ->where("keywords", $product_desc['keywords'])
                                           ->where("status", 1)
                                           ->orderBy("published_date", "desc")
@@ -227,6 +227,8 @@ class ProductController extends Controller {
                                           ->get();
                 foreach ($relatedProList as $item) {
                     $item->thumb = $item->getThumbImgAttribute();
+                    $item->short_desc = $item->getProShortDescAttribute();
+                    $item->category_text = $item->getCategotyTextAttribute();
                 }
                 $product_desc['relatedProList'] = $relatedProList;
             } else {
