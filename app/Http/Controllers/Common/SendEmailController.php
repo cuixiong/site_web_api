@@ -170,9 +170,12 @@ class SendEmailController extends Controller {
                 ReturnJson(false, trans()->get('lang.eamail_undefined'));
             }
             $user = $user->toArray();
-            $token = $user['email'].'&'.$user['id'];
+            //过期时间一天后
+            $end_time = time() + 86400;
+            $token = $user['email'].'&'.$user['id'].'&'.$end_time.'&'.$user['updated_at'];
             $user['token'] = encrypt($token);
             $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+
             $scene = EmailScene::where('action', 'password')->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
             )->first();
@@ -189,7 +192,7 @@ class SendEmailController extends Controller {
             $data['contactUsUrl'] = rtrim($domain, '/').'/contact-us';
             $data['homeUrl'] = $domain;
             $data['backendUrl'] = env('IMAGE_URL');
-            $verifyUrl = $data['domain'].'/signIn/resetPassword?verifyemail=do-reset-register=&token='.$user['token'];
+            $verifyUrl = $data['domain'].'/signIn/resetPassword?verifyemail=do-reset-register=&email='.$user['email'].'&token='.$user['token'];
             $data['verifyUrl'] = $verifyUrl;
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
                                    ->toArray();
