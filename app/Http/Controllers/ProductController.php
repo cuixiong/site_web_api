@@ -221,6 +221,7 @@ class ProductController extends Controller {
             if (!empty($product_desc['keywords'])) {
                 $relatedProList = Products::query()->select(["id", "published_date", "name", "thumb" , "url", "keywords", "english_name", "category_id" , "author"])
                                           ->where("keywords", $product_desc['keywords'])
+                                          ->where("id" , "<>" , $product_id)
                                           ->where("status", 1)
                                           ->orderBy("published_date", "desc")
                                           ->limit(2)
