@@ -291,6 +291,7 @@ class UserController extends Controller {
                 } elseif ($status == 3 && $couponStatus != 3) {
                     continue;
                 }
+                $data[$key]['id'] = $value['id'];
                 $data[$key]['type'] = $value['type'];
                 $data[$key]['value'] = $value['type'] == 1 ? round($value['value'], 0) : (float)$value['value'];
                 $data[$key]['day_end'] = $value['time_end'] ? date('Y.m.d', $value['time_end']) : '';
