@@ -44,7 +44,7 @@ class CartController extends Controller {
                             ->leftJoin('product_routine as products', 'products.id', '=', 'cart.goods_id')
                             ->leftJoin('price_edition_values as edition', 'cart.price_edition', '=', 'edition.id')
                             ->where([
-                                        //'cart.user_id'    => $request->user->id,
+                                        'cart.user_id'    => $request->user->id,
                                         'products.status' => 1 // product的status值如果是0，相当于删除这份报告
                                     ])->get()->toArray();
         if (empty($shopCart)) {
@@ -60,7 +60,6 @@ class CartController extends Controller {
         $totalPrice = 0;
         $shopCartData = [];
         $languageIdList = Languages::GetListById();
-
         foreach ($shopCart as $key => $value) {
             $shopCartData[$key]['thumb'] = ProductsCategory::where('id', $value['category_id'])->value('thumb');
             $shopCartData[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($shopCartData[$key]['thumb']);
@@ -107,8 +106,7 @@ class CartController extends Controller {
         $number = $request->number ?? 0; // num 改为
         $price_edition = $request->price_edition;
         $data = ShopCart::where([
-                                    // 'user_id' => $request->user->id,
-                                    'user_id'       => 0,
+                                    'user_id'       => $request->user->id,
                                     'goods_id'      => $goods_id,
                                     'price_edition' => $price_edition
                                 ])->first();
@@ -119,8 +117,7 @@ class CartController extends Controller {
             }
         } else { // 新增
             $model = new ShopCart();
-            // $model->user_id = $request->user->id;
-            $model->user_id = 0;
+            $model->user_id = $request->user->id;
             $model->goods_id = $goods_id;
             $model->number = $number;
             $model->price_edition = $price_edition;
@@ -141,7 +138,7 @@ class CartController extends Controller {
         }
         DB::beginTransaction();
         try {
-            ShopCart::whereIn('id', $CartIds)->delete();
+            ShopCart::whereIn('id', $CartIds)->where("user_id", $request->user->id)->delete();
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -156,12 +153,11 @@ class CartController extends Controller {
     public function UpdataGoodsNumber(Request $request) {
         $id = $request->id;
         $number = $request->number;
-        if (!is_numeric($id) || $id < 1 || !is_numeric($number) || $number < 1) {
+        if (!empty($id)) {
             ReturnJson(false, '参数错误');
         }
-        $res = ShopCart::where('id', $id)->where([
-                                                     // 'user_id' => $request->user->id,
-                                                     'status' => 1])->update(['number' => $number]);
+        $res = ShopCart::where('id', $id)->where(['user_id' => $request->user->id, 'status' => 1])
+                       ->update(['number' => $number]);
         if (!$res) {
             ReturnJson(false, '修改失败');
         }
@@ -187,7 +183,7 @@ class CartController extends Controller {
         if (empty($price_edition)) {
             ReturnJson(false, '价格版本号不能为空');
         }
-        $data = ShopCart::where('id', $id)->first();
+        $data = ShopCart::where('id', $id)->where("user_id", $request->user->id)->first();
         if (!empty($data)) {
             $data->price_edition = $price_edition;
             $data->save();
@@ -217,34 +213,29 @@ class CartController extends Controller {
         }
         $goodsArr = [];
         for ($i = 0, $len = count($frontData); $i < $len; $i++) {
-            if (
-                !is_numeric($frontData[$i]['goods_id']) || $frontData[$i]['goods_id'] < 1
-                || !is_numeric(
-                    $frontData[$i]['number']
-                )
-                || $frontData[$i]['number'] < 1
-            ) {
+            if (empty($frontData[$i]['goods_id']) || empty($frontData[$i]['number'])) {
                 continue;
             }
             $goodsArr[] = $frontData[$i];
         }
-        if (count($goodsArr) < 1) {
+        if (empty($goodsArr)) {
             ReturnJson(false, '参数错误');
         }
         $goodsIdArr = array_column($goodsArr, 'goods_id', null);
         $goodsIdArr = Products::where('status', 1)->whereIn('id', $goodsIdArr)->pluck('id');
         // 会把无效的 good_id 过滤
-        if (count($goodsIdArr) < 1) {
-            ReturnJson(false, '参数错误');
+        if (empty($goodsIdArr)) {
+            ReturnJson(false, '报告编号有误或无效');
         }
+        // 过滤购物车无效的商品
         $len = count($goodsArr);
         for ($i = 0; $i < $len; $i++) {
             if (!in_array($goodsArr[$i]['goods_id'], $goodsIdArr)) {
                 unset($goodsArr[$i]);
             }
         }
-        if ($len < 1) {
-            ReturnJson(false, '参数错误');
+        if (empty($goodsArr)) {
+            ReturnJson(false, '参数错误,无有效的报告');
         }
         //开始数据库操作
         DB::beginTransaction();
@@ -252,36 +243,11 @@ class CartController extends Controller {
         $backData = $query->select(['id', 'goods_id', 'number', 'price_edition',])
                           ->keyBy('id')
                           ->get()->toArray();
-        $dbKey = [
-            'user_id',
-            'goods_id',
-            'number',
-            'price_edition',
-            'created_at',
-            'updated_at'
-        ];
         $timestamp = time();
         $backlen = count($backData);
-        if ($backlen < 1) { // 数据库里原本就没有数据
-            $row = [];
-            for ($i = 0; $i < $len; $i++) {
-                $row[] = [
-                    $user->id,
-                    $goodsArr[$i]['goods_id'],
-                    $goodsArr[$i]['number'],
-                    $goodsArr[$i]['price_edition'],
-                    $timestamp,
-                    $timestamp,
-                ];
-            }
-            $createShopCart = ShopCart::createMany($row);
-            $batchInsert = $createShopCart->count();
-            if ($batchInsert != $len) {
-                DB::rollback();
-                ReturnJson(false, '删除失败');
-            }
-            DB::commit();
-            ReturnJson(true);
+        if ($backlen < 1) { // 该用户没有购物车, 直接插入
+            $this->addCardByData($len, $user, $goodsArr, $timestamp);
+            ReturnJson(true, '请求成功');
         }
         // 筛选出 id和版本 不存在的记录，这是需要新增的记录
         $oldData = [];
@@ -363,6 +329,7 @@ class CartController extends Controller {
         if (!empty($cart_array)) {
             $Nonexistent = 0; // 设置“购物车对应的商品列表数据里不存在的商品的数量”为0
             $goods = [];
+            $languagesList = Languages::GetListById();
             foreach ($cart_array as $key => $value) {
                 $product = Products::from('product_routine as product')
                                    ->leftJoin('product_category as category', 'product.category_id', '=', 'category.id')
@@ -385,49 +352,41 @@ class CartController extends Controller {
                                    ->first()->toArray();
                 if (!empty($product)) {
                     $results[] = $product;
+                    $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($results[$key]['thumb']);
+                    $results[$key]['published_date'] = $product['published_date'] ? date(
+                        'Y-m-d', strtotime(
+                                   $product['published_date']
+                               )
+                    ) : '';
+                    $results[$key]['discount_begin'] = $product['discount_begin'] ? date(
+                        'Y-m-d', $product['discount_begin']
+                    ) : '';
+                    $results[$key]['discount_end'] = $product['discount_end'] ? date('Y-m-d', $product['discount_end'])
+                        : '';
+                    $results[$key]['number'] = $value['number'];
+                    $results[$key]['price_edition'] = $value['price_edition'];
+                    $priceEditionInfo = PriceEditionValues::find($value['price_edition']);
+                    if (!empty($priceEditionInfo)) {
+                        $price = $product['price'];
+                        $results[$key]['languageId'] = $priceEditionInfo->language_id;
+                        $results[$key]['price_edition_name'] = $priceEditionInfo->name;
+                        $results[$key]['price_edition_cent'] = $priceEditionInfo->edition_id;
+                        $results[$key]['price'] = eval("return ".sprintf($priceEditionInfo->rules, $price).";");
+                        $results[$key]['language_name'] = $languagesList[$priceEditionInfo->language_id];
+
+                    } else {
+                        $results[$key]['price_edition_name'] = '';
+                        $results[$key]['languageId'] = '';
+                        $results[$key]['price_edition_cent'] = '';
+                        $results[$key]['price'] = '';
+                        $results[$key]['language_name'] = '';
+                    }
                 } else {
                     $Nonexistent++;
                     $goods[] = [
                         'goods_id'      => $value['goods_id'],
                         'price_edition' => $value['price_edition'],
                     ];
-                }
-                $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($results[$key]['thumb']);
-                $results[$key]['published_date'] = $product['published_date'] ? date(
-                    'Y-m-d', strtotime(
-                               $product['published_date']
-                           )
-                ) : '';
-                $results[$key]['discount_begin'] = $product['discount_begin'] ? date(
-                    'Y-m-d', $product['discount_begin']
-                ) : '';
-                $results[$key]['discount_end'] = $product['discount_end'] ? date('Y-m-d', $product['discount_end'])
-                    : '';
-                $results[$key]['number'] = $value['number'];
-                $results[$key]['price_edition'] = $value['price_edition'];
-                $priceEdition = Redis::hget(PriceEditionValues::RedisKey, $value['price_edition']);
-                if ($priceEdition) {
-                    $priceEdition = json_decode($priceEdition, true);
-                    $priceRule = $priceEdition ? ['language_id' => $priceEdition['language_id'],
-                                                  'edition'     => $priceEdition['name'],
-                                                  'rule'        => $priceEdition['rules']] : [];
-                } else {
-                    $priceRule = [];
-                }
-                if (!empty($priceRule)) {
-                    $language = Redis::hget(Languages::RedisKey, $priceRule['language_id']);
-                    if ($language) {
-                        $language = json_decode($language, true);
-                        $language = $language['name'];
-                    } else {
-                        $language = '';
-                    }
-                    $results[$key]['languageId'] = $language;
-                    $results[$key]['price_edition_cent'] = $priceRule['edition'];
-                    $price = Products::where('id', $value['goods_id'])->value('price');
-                    if (!empty($price)) {
-                        $results[$key]['price'] = eval("return ".sprintf($priceRule['rule'], $price).";");
-                    }
                 }
             }
         }
@@ -487,5 +446,36 @@ class CartController extends Controller {
             }
         }
         ReturnJson(true, '', $data);
+    }
+
+    /**
+     *
+     * @param int   $len
+     * @param mixed $user
+     * @param array $goodsArr
+     * @param int   $timestamp
+     *
+     *
+     */
+    private function addCardByData(int $len, mixed $user, array $goodsArr, int $timestamp) {
+        $row = [];
+        for ($i = 0; $i < $len; $i++) {
+            $add_data = [
+                'user_id'       => $user->id,
+                'goods_id'      => $goodsArr[$i]['goods_id'],
+                'number'        => $goodsArr[$i]['number'],
+                'price_edition' => $goodsArr[$i]['price_edition'],
+                'created_at'    => $timestamp,
+                'updated_at'    => $timestamp,
+            ];
+            $row[] = $add_data;
+        }
+        $createShopCart = ShopCart::insert($row);
+        $batchInsert = $createShopCart->count();
+        if ($batchInsert != $len) {
+            DB::rollback();
+            ReturnJson(false, '新增失败');
+        }
+        DB::commit();
     }
 }

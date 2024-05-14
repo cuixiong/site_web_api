@@ -17,7 +17,7 @@ use App\Http\Middleware\JwtMiddleware;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-Route::middleware(['api' , LanguageMiddleware::class])->group(function () {
+Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     // Common 控制器
     Route::prefix('common')->group(function () {
         Route::get('top-menus', [\App\Http\Controllers\Common\CommonController::class, 'TopMenus'])->name('顶部导航栏');
@@ -114,10 +114,8 @@ Route::middleware(['api' , LanguageMiddleware::class])->group(function () {
     );
     Route::get('check-email', [\App\Http\Controllers\UserController::class, 'CheckEmail'])->name('验证邮箱');
     Route::post('exists-email', [\App\Http\Controllers\UserController::class, 'ExistsEmail'])->name('邮箱是否存在');
-
     Route::middleware(JwtMiddleware::class)->get('loginout', [\App\Http\Controllers\UserController::class, 'loginout'])
          ->name('退出登陆');
-
     Route::prefix('user')->group(function () {
         Route::middleware(JwtMiddleware::class)->get('info', [\App\Http\Controllers\UserController::class, 'Info'])
              ->name('Info接口');
@@ -127,7 +125,9 @@ Route::middleware(['api' , LanguageMiddleware::class])->group(function () {
         Route::post('verify-email', [\App\Http\Controllers\UserController::class, 'VerifyEmail'])->name('注册验证邮箱');
         Route::middleware(JwtMiddleware::class)->post('update', [\App\Http\Controllers\UserController::class, 'update'])
              ->name('用户信息修改');
-        Route::middleware(JwtMiddleware::class)->post('change-password', [\App\Http\Controllers\UserController::class, 'changePassword'])
+        Route::middleware(JwtMiddleware::class)->post(
+            'change-password', [\App\Http\Controllers\UserController::class, 'changePassword']
+        )
              ->name('修改密码');
     });
     //user-address 用户收货地址
@@ -137,7 +137,9 @@ Route::middleware(['api' , LanguageMiddleware::class])->group(function () {
         Route::get('form/{id}', [\App\Http\Controllers\UserAddressController::class, 'form'])->name('根据id查询');
         Route::post('update', [\App\Http\Controllers\UserAddressController::class, 'update'])->name('修改收货地址');
         Route::get('delete/{id}', [\App\Http\Controllers\UserAddressController::class, 'delete'])->name('收货地址删除');
-        Route::get('set-default/{id}', [\App\Http\Controllers\UserAddressController::class, 'setDefault'])->name('设置默认');
+        Route::get('set-default/{id}', [\App\Http\Controllers\UserAddressController::class, 'setDefault'])->name(
+            '设置默认'
+        );
     });
     //user-invoices 用户发票
     Route::prefix('user-invoices')->middleware(JwtMiddleware::class)->group(function () {
@@ -146,7 +148,7 @@ Route::middleware(['api' , LanguageMiddleware::class])->group(function () {
         Route::post('apply', [\App\Http\Controllers\InvoicesController::class, 'apply'])->name('申请发票');
     });
     // Cart控制器(购物车模块)
-    Route::prefix('cart')->group(function () {
+    Route::prefix('cart')->middleware(JwtMiddleware::class)->group(function () {
         Route::post('add', [\App\Http\Controllers\CartController::class, 'Add'])->name('购物车添加');
         Route::post('list', [\App\Http\Controllers\CartController::class, 'List'])->name('购物车列表');
         Route::post('delete', [\App\Http\Controllers\CartController::class, 'Delete'])->name('购物车删除');
@@ -156,24 +158,30 @@ Route::middleware(['api' , LanguageMiddleware::class])->group(function () {
         Route::post('change-edition', [\App\Http\Controllers\CartController::class, 'ChangeEdition'])->name(
             '购物车修改版本'
         );
-        Route::middleware(JwtMiddleware::class)->post('sync', [\App\Http\Controllers\CartController::class, 'Sync'])
-             ->name('购物车分享');
-        Route::get('relevant', [\App\Http\Controllers\CartController::class, 'Relevant'])->name('相关报告');
-        Route::post('share', [\App\Http\Controllers\CartController::class, 'Share'])->name('分享购物车数据');
+        Route::post('sync', [\App\Http\Controllers\CartController::class, 'Sync'])
+             ->name('购物车同步');
     });
+    Route::get('cart/relevant', [\App\Http\Controllers\CartController::class, 'Relevant'])->name('相关报告');
+    Route::post('cart/share', [\App\Http\Controllers\CartController::class, 'Share'])->name('分享购物车数据');
     // Order控制器
     Route::prefix('order')->group(function () {
         Route::middleware(JwtMiddleware::class)->get('list', [\App\Http\Controllers\OrderController::class, 'list'])
              ->name('用户订单列表');
-        Route::middleware(JwtMiddleware::class)->get('form/{id}', [\App\Http\Controllers\OrderController::class, 'form'])
+        Route::middleware(JwtMiddleware::class)->get('form/{id}', [\App\Http\Controllers\OrderController::class, 'form']
+        )
              ->name('订单详情');
-        Route::middleware(JwtMiddleware::class)->get('del/{id}', [\App\Http\Controllers\OrderController::class, 'delete'])
+        Route::middleware(JwtMiddleware::class)->get(
+            'del/{id}', [\App\Http\Controllers\OrderController::class, 'delete']
+        )
              ->name('订单删除');
-        Route::middleware(JwtMiddleware::class)->post('change-pay-type', [\App\Http\Controllers\OrderController::class, 'changePayType'])
+        Route::middleware(JwtMiddleware::class)->post(
+            'change-pay-type', [\App\Http\Controllers\OrderController::class, 'changePayType']
+        )
              ->name('更换支付方式');
-        Route::middleware(JwtMiddleware::class)->get('pull-pay', [\App\Http\Controllers\OrderController::class, 'pullPay'])
+        Route::middleware(JwtMiddleware::class)->get(
+            'pull-pay', [\App\Http\Controllers\OrderController::class, 'pullPay']
+        )
              ->name('拉起支付');
-
         Route::post('coupon', [\App\Http\Controllers\OrderController::class, 'Coupon'])->name('查询优惠卷');
         Route::post('create-and-pay', [\App\Http\Controllers\OrderController::class, 'CreateAndPay'])->name(
             '购物车结算产品列表'
