@@ -195,7 +195,6 @@ class ProductController extends Controller {
                           'cate.keyword_suffix', 'cate.product_tag', 'p.pages', 'p.tables', 'p.url', 'p.category_id',
                           'p.keywords', 'p.price', 'p.discount_type', 'p.discount', 'p.discount_amount',
                           'p.discount_time_begin', 'p.discount_time_end', 'p.publisher_id',];
-
             $product_desc = (new Products)->from('product_routine as p')->select($fieldList)->leftJoin(
                 'product_category as cate', 'cate.id', '=', 'p.category_id'
             )
@@ -218,6 +217,22 @@ class ProductController extends Controller {
                 $product_desc['discount_time_start_date'] = date('m.d', $product_desc['discount_time_begin']);
                 $product_desc['discount_time_end_date'] = date('m.d', $product_desc['discount_time_end']);
             }
+            //返回相关报告
+            if (!empty($product_desc['keywords'])) {
+                $relatedProList = Products::query()->select(["id", "published_date", "name", "thumb" , "category_id"])
+                                          ->where("keywords", $product_desc['keywords'])
+                                          ->where("status", 1)
+                                          ->orderBy("published_date", "desc")
+                                          ->limit(3)
+                                          ->get();
+                foreach ($relatedProList as $item) {
+                    $item->thumb = $item->getThumbImgAttribute();
+                }
+                $product_desc['relatedProList'] = $relatedProList;
+            } else {
+                $product_desc['relatedProList'] = [];
+            }
+            //报告详情数据处理
             $suffix = date('Y', strtotime($product_desc['published_date']));
             $description = (new ProductDescription($suffix))->select([
                                                                          'description',

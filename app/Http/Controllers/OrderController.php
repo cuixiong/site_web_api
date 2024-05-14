@@ -59,13 +59,10 @@ class OrderController extends Controller {
             // 如果值是2，代表这个用户输入的券码已被他使用过了，要提示不能再使用了。
             $userId = User::where('email', $email)->value('id');
             $ucouponId = Coupon::where('code', $code)->value('id');
-            $is_used = CouponUser::select('is_used')->where('user_id', $userId)->where('coupon_id', $ucouponId)->value(
-                'is_used'
-            );
-            if ($is_used == 2) {
+            $is_used = CouponUser::where('user_id', $userId)->where('coupon_id', $ucouponId)->value('is_used');
+            if ($is_used == CouponUser::isUsedYes) {
                 ReturnJson(true, '这张优惠券已被你使用过了');  // 提示'这张优惠券已被你使用过了',
             }
-            $coupon->save();
             $data = [
                 'id'        => $coupon->id,
                 'type'      => $coupon->type,
@@ -84,68 +81,21 @@ class OrderController extends Controller {
                     $user->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
                     $user->password = Hash::make('123456'); // 帮用户把他的密码改为初始密码123456，我不知道这样合不合理，但是生涛要求这样
                     $user->save();
-                    $user_ids = explode(',', $coupon->user_ids); // 把用户输入券码的这张优惠券的user_ids值转为数组
-                    if (in_array($user->id, $user_ids) != true) {
-                        array_push($user_ids, $user->id);
-                        $coupon->user_ids = implode(',', $user_ids);
-                        if ($coupon->save()) {            // 修改coupon表对应的数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会修改数据。
-                            $modelCouponUser->user_id = $user->id;
-                            $modelCouponUser->coupon_id = $coupon->id;
-                            $modelCouponUser->save();  // 给coupon_user表新增一条数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会新增一条数据。
-                        }
-                    }
-                } else {      // 如果user表不存在这个用户的数据，说明用户没有注册账户
-                    // 就帮用户自动生成一个账号
-                    if ($username == '') {
-                        ReturnJson(false, '姓名不能为空');
-                    }
-                    if (trim($phone) == '') {
-                        ReturnJson(false, '电话不能为空');
-                    }
-                    if ($email == '') {
-                        ReturnJson(false, '邮箱地址不能为空');
-                    }
-                    if ($company == '') {
-                        ReturnJson(false, '公司不能为空');
-                    }
-                    $model->username = $username;
-                    $model->province_id = $province_id;
-                    $model->area_id = $area_id;
-                    $model->phone = $phone;
-                    $model->email = $email;
-                    $model->company = $company;
-                    $model->password = Hash::make('123456'); // 帮用户自动生成一个初始密码123456
-                    $model->created_at = time();
-                    $model->created_by = 0;
-                    $model->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
-                    if ($model->save()) {
-                        $user_ids = explode(',', $coupon->user_ids); // 把用户输入券码的这张优惠券的user_ids值转为数组
-                        if (in_array($model->id, $user_ids) != true) {
-                            array_push($user_ids, $model->id);
-                            $coupon->user_ids = implode(',', $user_ids);
-                            if ($coupon->save()) {           // 修改coupon表对应是数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会修改数据。
-                                $modelCouponUser = new CouponUser();
-                                $modelCouponUser->user_id = $model->id;
-                                $modelCouponUser->coupon_id = $coupon->id;
-                                $modelCouponUser->created_by = 0;
-                                $modelCouponUser->save();  // 给coupon_user表新增一条数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会新增一条数据。
-                            }
-                        }
+                    $this->getCouponUser($coupon, $user, $modelCouponUser);
+                } else {
+                    // 无用户，就新增用户
+                    /**
+                     * @var User $user
+                     */
+                    $user = $this->addUser(
+                        $username, $phone, $email, $company, $model, $province_id, $area_id
+                    );
+                    if (!empty($user->id)) {
+                        $this->getCouponUser($coupon, $user, $modelCouponUser);
                     }
                 }
             } else { // 如果获取到头部token，说明此时用户已经登录
-                $user_ids = explode(',', $coupon->user_ids); // 把用户输入券码的这张优惠券的user_ids值转为数组
-                if (in_array($user->id, $user_ids) != true) {
-                    array_push($user_ids, $user->id);
-                    $coupon->user_ids = implode(',', $user_ids);
-                    if ($coupon->save()) {            // 修改coupon表对应的数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会修改数据。
-                        $modelCouponUser->user_id = $user->id;
-                        $modelCouponUser->coupon_id = $coupon->id;
-                        $modelCouponUser->created_by = $user->id;
-                        $modelCouponUser->created_by = 0;
-                        $modelCouponUser->save();  // 给coupon_user表新增一条数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会新增一条数据。
-                    }
-                }
+                $this->getCouponUser($coupon, $user, $modelCouponUser);
             }
             ReturnJson(true, '', $data);
         }
@@ -168,6 +118,7 @@ class OrderController extends Controller {
             }
             //获取用户, 没有登录，则自动注册
             $user = $this->getUser($request);
+            dd($request->input());
             if (!empty($request->goods_id)) { // 直接下单
                 $priceEdition = $request->price_edition ?? 0;
                 $isExist = PriceEditionValues::query()->where("id", $priceEdition)->count();
@@ -203,7 +154,6 @@ class OrderController extends Controller {
             }
             // 把临时订单号加入缓存
             Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
-
             //拉起支付
             $pay = PayFactory::create($order->pay_type);
             $isMobile = $request->is_mobile;
@@ -644,5 +594,69 @@ class OrderController extends Controller {
         }
 
         return $user;
+    }
+
+    /**
+     *
+     * @param mixed $username
+     * @param mixed $phone
+     * @param mixed $email
+     * @param mixed $company
+     * @param User  $model
+     * @param mixed $province_id
+     * @param mixed $area_id
+     *
+     */
+    public function addUser(
+        mixed $username, mixed $phone, mixed $email, mixed $company, User $model, mixed $province_id, mixed $area_id
+    ) {
+        // 如果user表不存在这个用户的数据，说明用户没有注册账户
+        // 就帮用户自动生成一个账号
+        if ($username == '') {
+            ReturnJson(false, '姓名不能为空');
+        }
+        if (trim($phone) == '') {
+            ReturnJson(false, '电话不能为空');
+        }
+        if ($email == '') {
+            ReturnJson(false, '邮箱地址不能为空');
+        }
+        if ($company == '') {
+            ReturnJson(false, '公司不能为空');
+        }
+        $model->username = $username;
+        $model->province_id = $province_id;
+        $model->area_id = $area_id;
+        $model->phone = $phone;
+        $model->email = $email;
+        $model->company = $company;
+        $model->password = Hash::make('123456'); // 帮用户自动生成一个初始密码123456
+        $model->created_at = time();
+        $model->created_by = 0;
+        $model->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
+
+        return $model->save();
+    }
+
+    /**
+     *
+     * @param Coupon     $coupon
+     * @param User       $user
+     * @param CouponUser $modelCouponUser
+     *
+     * @return mixed
+     */
+    private function getCouponUser($coupon, $user, CouponUser $modelCouponUser) {
+        $user_ids = explode(',', $coupon->user_ids); // 把用户输入券码的这张优惠券的user_ids值转为数组
+        if (!in_array($user->id, $user_ids)) {
+            array_push($user_ids, $user->id);
+            $coupon->user_ids = implode(',', $user_ids);
+            if ($coupon->save()) {            // 修改coupon表对应的数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会修改数据。
+                $modelCouponUser->user_id = $user->id;
+                $modelCouponUser->coupon_id = $coupon->id;
+                $modelCouponUser->is_used = CouponUser::isUsedNO;
+                $modelCouponUser->save();  // 给coupon_user表新增一条数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会新增一条数据。
+            }
+        }
     }
 }

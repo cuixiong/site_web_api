@@ -164,7 +164,6 @@ class UserController extends Controller {
             if (empty($tokenData)) {
                 ReturnJson(false, trans('lang.token_error'));
             }
-
             $id = $tokenData[1];
             $email = $tokenData[0];
             $endTime = $tokenData[2];
@@ -181,7 +180,6 @@ class UserController extends Controller {
             if (strtotime($model->updated_at) > strtotime($lastUpdTime)) {
                 ReturnJson(false, trans('lang.token_expired'));
             }
-
             $model->password = Hash::make($request->get('password'));
             $model->save();
             ReturnJson(true, trans('lang.request_success'));
@@ -299,7 +297,7 @@ class UserController extends Controller {
                 $data[$key]['status'] = $couponStatus;
             }
         }
-        if(!empty($data )) {
+        if (!empty($data)) {
             $data = array_values($data);
         }
         ReturnJson(true, '', $data);
@@ -380,12 +378,12 @@ class UserController extends Controller {
             $user = $request->user;
             $user = $model->findOrFail($user->id);
             $name = $input['name'];
-            $isExist = User::query()->where('username', $name)
-                           ->where('id', '<>', $user->id)
-                           ->count();
-            if ($isExist) {
-                ReturnJson(false, '用户名已存在');
-            }
+//            $isExist = User::query()->where('username', $name)
+//                           ->where('id', '<>', $user->id)
+//                           ->count();
+//            if ($isExist) {
+//                ReturnJson(false, '用户名已存在');
+//            }
             $user->username = $name;
             $user->email = $input['email'];
             $user->phone = $input['phone'];
