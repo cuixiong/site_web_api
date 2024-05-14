@@ -118,7 +118,6 @@ class OrderController extends Controller {
             }
             //获取用户, 没有登录，则自动注册
             $user = $this->getUser($request);
-            dd($request->input());
             if (!empty($request->goods_id)) { // 直接下单
                 $priceEdition = $request->price_edition ?? 0;
                 $isExist = PriceEditionValues::query()->where("id", $priceEdition)->count();
