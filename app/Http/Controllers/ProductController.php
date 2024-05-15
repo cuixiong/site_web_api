@@ -318,6 +318,7 @@ class ProductController extends Controller {
         } else {
             $product_desc = Products::select(['id', 'url', 'published_date'])
                                     ->where(['url' => $url, 'status' => 1])
+                                    ->where("id" , "<>" , $product_id)
                                     ->orderBy('published_date', 'desc')
                                     ->orderBy('id', 'desc')
                                     ->first();

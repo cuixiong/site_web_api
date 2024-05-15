@@ -131,6 +131,7 @@ class InformationController extends Controller {
         } else {
             $news_relate = Information::select(['id', 'url'])
                                       ->where(['url' => $url, 'status' => 1])
+                                      ->where("id" , "<>" , $id)
                                       ->orderBy('upload_at', 'desc')
                                       ->orderBy('id', 'desc')
                                       ->first();
