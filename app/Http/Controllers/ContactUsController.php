@@ -19,7 +19,11 @@ class ContactUsController extends Controller {
         $model->name = $params['name'] ?? '';
         $model->email = $params['email'] ?? '';
         $model->company = $params['company'] ?? '';
-        $model->buy_time = $params['plan_buy_time'] ?? '';
+        if(!empty($params['buy_time'])){
+            $model->buy_time = $params['buy_time'] ?? 0;
+        }else{
+            $model->buy_time = $params['plan_buy_time'] ?? 0;
+        }
         $model->province_id = $params['province_id'] ?? 0;
         $model->city_id = $params['city_id'] ?? 0;
         $model->category_id = $params['category_id'] ?? 0;

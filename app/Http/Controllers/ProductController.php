@@ -28,14 +28,9 @@ class ProductController extends Controller {
         $res = $this->GetProductResult($page, $pageSize, $keyword, $category_id);
         $result = $res['list'];
         $count = $res['count'];
+        $products = [];
         if ($result) {
-            $products = [];
-            // 从redis中获取语言
             $languages = Languages::GetList();
-            // redis中获取价格版本子项
-            //$priceEditionsValue = Redis::hgetall(PriceEditionValues::RedisKey);
-            // 从redis中获取价格版本父项
-            //$priceEditions = Redis::hgetall(PriceEditions::RedisKey);
             foreach ($result as $key => $value) {
                 //返回打折信息
                 $time = time();
@@ -45,51 +40,39 @@ class ProductController extends Controller {
                 if ((empty($value['discount_time_end']) || $time > $value['discount_time_end'])
                     || ($value['discount'] == 100
                         && $value['discount_amount'] == 0)) {
-                    // $productList[$key]['discount_time_end'] = '';
-                    // unset($value['discount_time_begin']);
-                    // unset($value['discount_time_end']);
                     $value['discount'] = 100;
                     $value['discount_amount'] = 0;
                 } else {
-                    $products[$key]['discount_time_begin'] = $value['discount_time_begin'];
-                    $products[$key]['discount_time_end'] = $value['discount_time_end'];
-                    $products[$key]['discount_time_start_date'] = date('m.d', $value['discount_time_begin']);
-                    $products[$key]['discount_time_end_date'] = date('m.d', $value['discount_time_end']);
+                    $value['discount_time_start_date'] = date('m.d', $value['discount_time_begin']);
+                    $value['discount_time_end_date'] = date('m.d', $value['discount_time_end']);
                 }
                 $category = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->find($value['category_id']);
-                if (empty($value['thumb'])) {
-                    $products[$key]['thumb'] = $category ? $category['thumb'] : '';
+                if (empty($value['thumb']) && !empty($category)) {
+                    $value['thumb'] = $category['thumb'];
                 }
-                $products[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($products[$key]['thumb']);
-                $products[$key]['name'] = $value['name'];
-                $products[$key]['english_name'] = $value['english_name'];
+                $value['thumb'] = Common::cutoffSiteUploadPathPrefix($value['thumb']);
                 $suffix = date('Y', strtotime($value['published_date']));
                 $description = (new ProductDescription($suffix))->where('product_id', $value['id'])->value(
                     'description'
                 );
                 $description = mb_substr($description, 0, 120, 'UTF-8');
-                $products[$key]['description'] = $description;
-                $products[$key]['published_date'] = $value['published_date'] ? date(
+                $value['description'] = $description;
+                $value['published_date'] = $value['published_date'] ? date(
                     'Y-m-d', strtotime($value['published_date'])
                 ) : '';
-                $products[$key]['category'] = $category ? [
+                $value['category'] = $category ? [
                     'id'   => $category['id'],
                     'name' => $category['name'],
                     'link' => $category['link'],
                 ] : [];
-                $products[$key]['keywords'] = $value['keywords'];
-                $products[$key]['discount_type'] = $value['discount_type'];
-                $products[$key]['discount_amount'] = $value['discount_amount'];
-                $products[$key]['discount'] = $value['discount'];
-                $products[$key]['prices'] = Products::CountPrice(
+                $value['prices'] = Products::CountPrice(
                     $value['price'], $value['publisher_id'], $languages
                 ) ?? [];
-                $products[$key]['id'] = $value['id'];
-                $products[$key]['url'] = $value['url'];
+                $products[] = $value;
             }
         }
         $data = [
-            'products'  => isset($products) && !empty($products) ? $products : [],
+            'products'  => $products,
             "page"      => intVal($page),
             "pageSize"  => intVal($pageSize),
             "count"     => intVal($count),
@@ -102,7 +85,7 @@ class ProductController extends Controller {
      * 搜索产品数据
      */
     private function GetProductResult($page, $pageSize, $keyword = '', $category_id = 0) {
-        $field = ['name', 'english_name', 'published_date', 'keywords', 'id', 'url', 'price', 'discount_type',
+        $field = ['name', 'english_name', 'thumb', 'published_date', 'keywords', 'id', 'url', 'price', 'discount_type',
                   'discount_time_begin', 'discount_time_end', 'discount', 'discount_amount', 'category_id',
                   'publisher_id'];
         $query = Products::where(['status' => 1])
@@ -219,9 +202,12 @@ class ProductController extends Controller {
             }
             //返回相关报告
             if (!empty($product_desc['keywords'])) {
-                $relatedProList = Products::query()->select(["id", "published_date", "name", "thumb" , "url", "keywords", "english_name", "category_id" , "author"])
+                $relatedProList = Products::query()->select(
+                    ["id", "published_date", "name", "thumb", "url", "keywords", "english_name", "category_id",
+                     "author"]
+                )
                                           ->where("keywords", $product_desc['keywords'])
-                                          ->where("id" , "<>" , $product_id)
+                                          ->where("id", "<>", $product_id)
                                           ->where("status", 1)
                                           ->orderBy("published_date", "desc")
                                           ->limit(2)
@@ -318,7 +304,7 @@ class ProductController extends Controller {
         } else {
             $product_desc = Products::select(['id', 'url', 'published_date'])
                                     ->where(['url' => $url, 'status' => 1])
-                                    ->where("id" , "<>" , $product_id)
+                                    ->where("id", "<>", $product_id)
                                     ->orderBy('published_date', 'desc')
                                     ->orderBy('id', 'desc')
                                     ->first();
