@@ -80,7 +80,7 @@ class OrderController extends Controller {
                     // 根据用户提交的邮箱地址到user表查询是否存在一条数据
                     $user = User::where('email', $email)->first();
                     if ($user) { // 如果user表存在这个用户的数据，说明用户有注册账户
-                        $user->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
+                        $user->status = 1; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
                         $user->password = Hash::make('123456'); // 帮用户把他的密码改为初始密码123456，我不知道这样合不合理，但是生涛要求这样
                         $user->save();
                         $this->getCouponUser($coupon, $user, $modelCouponUser);
@@ -594,7 +594,7 @@ class OrderController extends Controller {
             $user->password = Hash::make('123456'); // 帮用户自动生成一个初始密码123456
             $user->created_at = time();
             $user->created_by = 0;
-            $user->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
+            $user->status = 1; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
             $user->save();
             // 新需求：下单付款成功后自动给用户注册一个账户 结束
         } else {
@@ -648,7 +648,7 @@ class OrderController extends Controller {
         $userModel->password = Hash::make('123456'); // 帮用户自动生成一个初始密码123456
         $userModel->created_at = time();
         $userModel->created_by = 0;
-        $userModel->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
+        $userModel->status = 1; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
         if(!$userModel->save()){
             return false;
         }
