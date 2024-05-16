@@ -92,7 +92,7 @@ class OrderController extends Controller {
                         $user = $this->addUser(
                             $username, $phone, $email, $company, $model, $province_id, $city_id
                         );
-                        if (!empty($user->id)) {
+                        if (!empty($user)) {
                             $this->getCouponUser($coupon, $user, $modelCouponUser);
                         }
                     }
@@ -617,13 +617,13 @@ class OrderController extends Controller {
      * @param mixed $phone
      * @param mixed $email
      * @param mixed $company
-     * @param User  $model
+     * @param User  $userModel
      * @param mixed $province_id
      * @param mixed $city_id
      *
      */
     public function addUser(
-        mixed $username, mixed $phone, mixed $email, mixed $company, User $model, mixed $province_id, mixed $city_id
+        mixed $username, mixed $phone, mixed $email, mixed $company, User $userModel, mixed $province_id, mixed $city_id
     ) {
         // 如果user表不存在这个用户的数据，说明用户没有注册账户
         // 就帮用户自动生成一个账号
@@ -639,18 +639,20 @@ class OrderController extends Controller {
         if ($company == '') {
             ReturnJson(false, '公司不能为空');
         }
-        $model->username = $username;
-        $model->province_id = $province_id;
-        $model->city_id = $city_id;
-        $model->phone = $phone;
-        $model->email = $email;
-        $model->company = $company;
-        $model->password = Hash::make('123456'); // 帮用户自动生成一个初始密码123456
-        $model->created_at = time();
-        $model->created_by = 0;
-        $model->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
-
-        return $model->save();
+        $userModel->username = $username;
+        $userModel->province_id = $province_id;
+        $userModel->city_id = $city_id;
+        $userModel->phone = $phone;
+        $userModel->email = $email;
+        $userModel->company = $company;
+        $userModel->password = Hash::make('123456'); // 帮用户自动生成一个初始密码123456
+        $userModel->created_at = time();
+        $userModel->created_by = 0;
+        $userModel->status = 10; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
+        if(!$userModel->save()){
+            return false;
+        }
+        return  $userModel;
     }
 
     /**
@@ -672,10 +674,11 @@ class OrderController extends Controller {
                                            ->where("coupon_id", $coupon->id)
                                            ->count();
                 if (empty($isExist) || $isExist <= 0) {
-                    $modelCouponUser->user_id = $user->id;
-                    $modelCouponUser->coupon_id = $coupon->id;
-                    $modelCouponUser->is_used = CouponUser::isUsedNO;
-                    $modelCouponUser->save();  // 给coupon_user表新增一条数据，如果后台管理员之前已经给本用户发放这张优惠券，这里就不会新增一条数据。
+                    $add_data = [];
+                    $add_data['user_id'] = $user->id;
+                    $add_data['coupon_id'] = $coupon->id;
+                    $add_data['is_used'] = CouponUser::isUsedNO;
+                    $modelCouponUser->insert($add_data);
                 }
             }
         }
