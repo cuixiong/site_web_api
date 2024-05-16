@@ -204,11 +204,7 @@ class CartController extends Controller {
             ReturnJson(false, '用户未登录');
         }
         $frontData = $request->all();
-        if (!is_array($frontData)) {
-            ReturnJson(false, '参数错误');
-        }
-        $frontlen = count($frontData);
-        if ($frontlen < 1) {
+        if (empty($frontData)) {
             ReturnJson(false, '参数错误');
         }
         $goodsArr = [];
@@ -245,7 +241,7 @@ class CartController extends Controller {
                           ->get()->toArray();
         $timestamp = time();
         $backlen = count($backData);
-        if ($backlen < 1) { // 该用户没有购物车, 直接插入
+        if ($backlen < 1) { // 该用户当前没有购物车, 直接全部插入
             $this->addCardByData($len, $user, $goodsArr, $timestamp);
             ReturnJson(true, '请求成功');
         }
@@ -257,7 +253,7 @@ class CartController extends Controller {
         }
         $needInsert = [];
         $needUpdate = [];
-        for ($i = 0; $i < $len; $i++) {
+        for ($i = 0; $i < count($goodsArr); $i++) {
             $tempKey = $goodsArr[$i]['goods_id'].','.$goodsArr[$i]['price_edition'];
             if (!key_exists($tempKey, $oldData)) {
                 $needInsert[] = $goodsArr[$i];
@@ -270,24 +266,7 @@ class CartController extends Controller {
         }
         $insertlen = count($needInsert);
         if ($insertlen > 0) {
-            $row = [];
-            foreach ($needInsert as $k => $item) {
-                $row[] = [
-                    $user->id,
-                    $item['goods_id'],
-                    $item['number'],
-                    $item['price_edition'],
-                    $timestamp,
-                    $timestamp,
-                ];
-                array_splice($goodsArr, $k, 1);
-            }
-            $createShopCart = ShopCart::createMany($row);
-            $batchInsert = $createShopCart->count();
-            if ($batchInsert != $insertlen) {
-                DB::rollback();
-                ReturnJson(false, '删除失败');
-            }
+            $this->addCardByData($insertlen, $user, $needInsert, $timestamp);
         }
         // 对比 id和版本 存在的记录，主要是对比数量，数量大的覆盖数量少的，数量相等的不用理，这是需要更新的记录
         $updatelen = count($needUpdate);
@@ -334,11 +313,13 @@ class CartController extends Controller {
                 $product = Products::from('product_routine as product')
                                    ->leftJoin('product_category as category', 'product.category_id', '=', 'category.id')
                                    ->select([
-                                                'category.thumb',
+                                                'category.thumb as category_thumb',
                                                 'product.name',
                                                 'product.id as goods_id',
+                                                'product.thumb as thumb',
                                                 'product.published_date',
                                                 'product.discount_type',
+                                                'product.category_id',
                                                 'product.discount_amount as discount_value',
                                                 'product.discount_time_begin as discount_begin',
                                                 'product.discount_time_end as discount_end',
@@ -348,11 +329,16 @@ class CartController extends Controller {
                                    ->where([
                                                'product.id'     => $value['goods_id'],
                                                'product.status' => 1
-                                           ])
-                                   ->first()->toArray();
+                                           ])->first();
                 if (!empty($product)) {
-                    $results[] = $product;
-                    $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($results[$key]['thumb']);
+                    $product = $product->toArray();
+                    $results[$key] = $product;
+                    if(!empty($product['thumb'] )){
+                        $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($product['thumb']);
+                    }else{
+                        $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
+                    }
+
                     $results[$key]['published_date'] = $product['published_date'] ? date(
                         'Y-m-d', strtotime(
                                    $product['published_date']
@@ -373,7 +359,6 @@ class CartController extends Controller {
                         $results[$key]['price_edition_cent'] = $priceEditionInfo->edition_id;
                         $results[$key]['price'] = eval("return ".sprintf($priceEditionInfo->rules, $price).";");
                         $results[$key]['language_name'] = $languagesList[$priceEditionInfo->language_id];
-
                     } else {
                         $results[$key]['price_edition_name'] = '';
                         $results[$key]['languageId'] = '';
