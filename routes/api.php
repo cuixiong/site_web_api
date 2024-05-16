@@ -168,12 +168,10 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::middleware(JwtMiddleware::class)->get('list', [\App\Http\Controllers\OrderController::class, 'list'])
              ->name('用户订单列表');
         Route::middleware(JwtMiddleware::class)->get('form/{id}', [\App\Http\Controllers\OrderController::class, 'form']
-        )
-             ->name('订单详情');
+        )->name('订单详情');
         Route::middleware(JwtMiddleware::class)->get(
             'del/{id}', [\App\Http\Controllers\OrderController::class, 'delete']
-        )
-             ->name('订单删除');
+        )->name('订单删除');
         Route::middleware(JwtMiddleware::class)->post(
             'change-pay-type', [\App\Http\Controllers\OrderController::class, 'changePayType']
         )

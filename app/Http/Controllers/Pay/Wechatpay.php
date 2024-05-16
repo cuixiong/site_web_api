@@ -385,12 +385,6 @@ class Wechatpay extends Pay
         $order->pay_time = $success_time;
         $order->updated_at = time();
         if ($order->save()) {
-            if (!empty($order->coupon_id)) { // 如果这个订单有使用优惠券
-                $CouponUser = CouponUser::where(['user_id'=>$order->user_id,'coupon_id'=>$order->coupon_id])->first();
-                $CouponUser->is_used = 2;  // 改变该优惠券的使用状态为“已使用”
-                $CouponUser->usage_time = time();
-                $CouponUser->save();
-            }
             (new SendEmailController())->payment($order->id);
             // Order::sendPaymentEmail($order); // 发送已付款的邮件
         } else { // 订单状态更新失败

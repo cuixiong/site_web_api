@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Const\ApiCode;
 use App\Http\Controllers\Common\SendEmailController;
 use App\Models\Base;
+use App\Services\OrderService;
 use Illuminate\Support\Facades\DB;
 
 class OrderTrans extends Base {
@@ -78,9 +79,8 @@ class OrderTrans extends Base {
         $order = $this->addOrderData(
             $timestamp, $userId, $payType, $orderAmount, $actuallyPaid, $user, $address, $coupon_id, $remarks
         );
-        if (!$order->save()) {
-            DB::rollBack();
-            $this->errno = '';
+        if (empty($order)) {
+            $this->errno = ApiCode::INSERT_FAIL;
 
             return null;
         }
@@ -98,10 +98,10 @@ class OrderTrans extends Base {
         if (!$orderGoods->save()) {
             DB::rollBack();
             $this->errno = ApiCode::INSERT_FAIL;
+
             return null;
         }
         //(new SendEmailController)->placeOrder($orderGoods->id);//暂时注释
-
         // OrderModel::sendOrderEmail($order, $user);
         // OrderModel::sendPaymentEmail($order); // 发送已付款的邮件 // 记得把这行代码删掉
         DB::commit();
@@ -186,13 +186,13 @@ class OrderTrans extends Base {
      * @param       $coupon_id
      * @param       $remarks
      *
-     * @return Order
+     * @return mixed
      */
     private function addOrderData(
         int $timestamp, $userId, $payType, float $orderAmountAll, float $actuallyPaidAll, $user, $address, $coupon_id,
             $remarks
-    ): Order {
-// 插入订单表 order
+    ) {
+        // 插入订单表 order
         $order = new Order();
         $order->created_at = $timestamp;
         $order->updated_at = $timestamp;
@@ -212,6 +212,22 @@ class OrderTrans extends Base {
         $order->coupon_id = $coupon_id ? intval($coupon_id) : 0;
         $order->is_mobile_pay = $this->isMobileClient() == true ? 1 : 0; // 是否为移动端支付：0代表否，1代表是。
         $order->remarks = $remarks;
+        if (!$order->save()) {
+            DB::rollBack();
+            $this->errno = '插入订单失败';
+
+            return false;
+        }
+        //插入订单成功后, 且使用了优惠券, 标记使用优惠券
+        if (!empty($coupon_id)) {
+            list($useStatus, $msg) = (new OrderService())->useCouponByUser($userId, $coupon_id, $order->id);
+            if (empty($useStatus)) {
+                DB::rollBack();
+                $this->errno = '优惠券使用失败'.$msg;
+
+                return false;
+            }
+        }
 
         return $order;
     }
@@ -237,7 +253,7 @@ class OrderTrans extends Base {
         $goodsIdArr = array_column($shopCartList, 'goods_id');
         $goods = Products::query()
                          ->select($this->baseProductFields)
-                         ->where('status' , 1)
+                         ->where('status', 1)
                          ->whereIn('id', $goodsIdArr)
                          ->get()->toArray();
         if (count($goods) < 1) {
@@ -286,9 +302,10 @@ class OrderTrans extends Base {
         $order = $this->addOrderData(
             $timestamp, $userId, $payType, $orderAmountAll, $actuallyPaidAll, $user, $address, $coupon_id, $remarks
         );
-        if (!$order->save()) {
-            DB::rollBack();
-            ReturnJson(false, '新增失败');
+        if (empty($order)) {
+            $this->errno = ApiCode::INSERT_FAIL;
+
+            return null;
         }
         // 插入订单商品表 order_goods
         $row = [];

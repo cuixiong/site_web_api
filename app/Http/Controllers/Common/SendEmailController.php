@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Common;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\HandlerEmailJob;
+use App\Models\Common;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TrendsEmail;
@@ -175,7 +176,6 @@ class SendEmailController extends Controller {
             $token = $user['email'].'&'.$user['id'].'&'.$end_time.'&'.$user['updated_at'];
             $user['token'] = encrypt($token);
             $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-
             $scene = EmailScene::where('action', 'password')->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
             )->first();
@@ -192,7 +192,8 @@ class SendEmailController extends Controller {
             $data['contactUsUrl'] = rtrim($domain, '/').'/contact-us';
             $data['homeUrl'] = $domain;
             $data['backendUrl'] = env('IMAGE_URL');
-            $verifyUrl = $data['domain'].'/signIn/resetPassword?verifyemail=do-reset-register=&email='.$user['email'].'&token='.$user['token'];
+            $verifyUrl = $data['domain'].'/signIn/resetPassword?verifyemail=do-reset-register=&email='.$user['email']
+                         .'&token='.$user['token'];
             $data['verifyUrl'] = $verifyUrl;
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
                                    ->toArray();
@@ -337,6 +338,7 @@ class SendEmailController extends Controller {
             $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $area = $this->getAreaName($data);
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -345,9 +347,8 @@ class SendEmailController extends Controller {
                 'userName'     => $data['name'] ? $data['name'] : '',
                 'email'        => $data['email'],
                 'company'      => $data['company'],
-                //'area' => City::where('id', $data['area_id'])->value('name'),
-                'area'         => City::where('id', $data['city_id'])->value('name'),
-                'phone'        => $data['phone'] ? $data['phone'] : '',
+                'area'         => $area,
+                'phone'        => $data['phone'] ?: '',
                 'plantTimeBuy' => $data['buy_time'],
                 //'content' => $data['remarks'],
                 'content'      => $data['content'],
@@ -399,12 +400,7 @@ class SendEmailController extends Controller {
             } else {
                 $productsName = '';
             }
-            $provinceName = City::where('id', $data['province_id'])->value('name');
-            $cityName = '';
-            if (!empty($data['city_id'])) {
-                $cityName = City::where('id', $data['city_id'])->value('name');
-            }
-            $area = $provinceName.' '.$cityName;
+            $area = $this->getAreaName($data);
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -562,11 +558,9 @@ class SendEmailController extends Controller {
             $user = $user ? $user->toArray() : [];
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $PayName = Pay::where('id', $data['pay_type'])->value('name');
-            $priceEdition = Redis::hget(PriceEditionValues::RedisKey, $OrderGoods['price_edition']);
-            $priceEdition = json_decode($priceEdition, true);
+            $priceEdition = PriceEditionValues::find($OrderGoods['price_edition']);
             if (!empty($priceEdition['language_id'])) {
-                $language = Redis::hget(Languages::RedisKey, $priceEdition['language_id']);
-                $language = json_decode($language, true);
+                $language = Languages::find($priceEdition['language_id']);
             }
             $language = isset($language['name']) ? $language['name'] : '';
             $Products = Products::select(
@@ -585,9 +579,11 @@ class SendEmailController extends Controller {
                     $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
                     if (empty($value['thumb'])) {
                         $categoryThumb = ProductsCategory::where('id', $value['category_id'])->value('thumb');
-                        $Products[$key]['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$categoryThumb;
+                        $Products[$key]['thumb'] = rtrim(env('IMAGE_URL', ''), '/').
+                                                   Common::cutoffSiteUploadPathPrefix($categoryThumb);
                     } else {
-                        $Products[$key]['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$value['thumb'];
+                        $Products[$key]['thumb'] = rtrim(env('IMAGE_URL', ''), '/').
+                                                   Common::cutoffSiteUploadPathPrefix($value['thumb']);
                     }
                 }
             }
@@ -600,11 +596,11 @@ class SendEmailController extends Controller {
                 'contactUsUrl'       => rtrim($data['domain'], '/').'/contact-us',
                 'homeUrl'            => $data['domain'],
                 'backendUrl'         => env('IMAGE_URL', ''),
-                'userName'           => $data['username'] ? $data['username'] : '',
+                'userName'           => $data['username'] ?: '',
                 'userEmail'          => $data['email'],
                 'userCompany'        => $data['company'],
                 'userAddress'        => $addres,
-                'userPhone'          => $data['phone'] ? $data['phone'] : '',
+                'userPhone'          => $data['phone'] ?: '',
                 'orderStatus'        => '已付款',
                 'paymentMethod'      => $PayName,
                 'orderAmount'        => $data['order_amount'],
@@ -698,5 +694,23 @@ class SendEmailController extends Controller {
                 $this->SendEmail($email, $scene->body, $data, $scene->title, $BackupSenderEmail->email, 'backups');
             }
         }
+    }
+
+    /**
+     *
+     * @param array $data
+     *
+     * @return array
+     */
+    private function getAreaName($data) {
+        $area = '';
+        if (!empty($data['province_id'])) {
+            $area .= City::where('id', $data['province_id'])->value('name') ." ";
+        }
+        if (!empty($data['city_id'])) {
+            $area .= City::where('id', $data['city_id'])->value('name');
+        }
+
+        return $area;
     }
 }
