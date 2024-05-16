@@ -38,7 +38,7 @@ class OrderController extends Controller {
     public function Coupon(Request $request) {
         //校验请求参数
         try {
-            if(empty($request->user )) {
+            if(empty(User::IsLogin() )) {
                 (new OrderRequest())->Coupon($request);
             }
             $username = $request->username;
@@ -77,7 +77,6 @@ class OrderController extends Controller {
                 ];
                 $model = new User();
                 $modelCouponUser = new CouponUser();
-                $user = User::IsLogin();
                 if ($user == null) { // 如果获取不到头部token，说明此时用户没有登录，并不能说明用户有没有注册账户
                     // 根据用户提交的邮箱地址到user表查询是否存在一条数据
                     $user = User::where('email', $email)->first();
