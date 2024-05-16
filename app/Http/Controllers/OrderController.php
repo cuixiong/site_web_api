@@ -38,7 +38,9 @@ class OrderController extends Controller {
     public function Coupon(Request $request) {
         //校验请求参数
         try {
-            (new OrderRequest())->Coupon($request);
+            if(empty($request->user )) {
+                (new OrderRequest())->Coupon($request);
+            }
             $username = $request->username;
             $province_id = $request->province_id ?? 0;
             $city_id = $request->city_id;
