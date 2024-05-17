@@ -38,7 +38,7 @@ class OrderController extends Controller {
     public function Coupon(Request $request) {
         //校验请求参数
         try {
-            if(empty(User::IsLogin() )) {
+            if (empty(User::IsLogin())) {
                 (new OrderRequest())->Coupon($request);
             }
             $username = $request->username;
@@ -126,9 +126,11 @@ class OrderController extends Controller {
             //获取用户, 没有登录，则自动注册
             $user = $this->getUser($request);
             //校验该用户优惠券是否有效
-            list($checkRes, $checkMsg) = (new OrderService())->checkCoupon($user->id, $coupon_id);
-            if (empty($checkRes)) {
-                ReturnJson(false, $checkMsg);
+            if (!empty($coupon_id)) {
+                list($checkRes, $checkMsg) = (new OrderService())->checkCoupon($user->id, $coupon_id);
+                if (empty($checkRes)) {
+                    ReturnJson(false, $checkMsg);
+                }
             }
             if (!empty($request->goods_id)) { // 直接下单
                 $priceEdition = $request->price_edition ?? 0;
@@ -440,7 +442,7 @@ class OrderController extends Controller {
             $createDate = $record->create_date;
             $orderInfo = $record->toArray();
             $orderInfo = Arr::only($orderInfo, ['id', 'order_number', 'created_at', 'is_pay_text', 'is_pay', 'pay_type',
-                                                'order_amount', 'actually_paid' , 'coupon_id']
+                                                'order_amount', 'actually_paid', 'coupon_id']
             );
             $orderInfo['pay_type_text'] = $payTypeText;
             $orderInfo['create_date'] = $createDate;
@@ -651,10 +653,11 @@ class OrderController extends Controller {
         $userModel->created_at = time();
         $userModel->created_by = 0;
         $userModel->status = 1; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
-        if(!$userModel->save()){
+        if (!$userModel->save()) {
             return false;
         }
-        return  $userModel;
+
+        return $userModel;
     }
 
     /**
