@@ -29,21 +29,21 @@ class JwtMiddleware
             return $next($request);
         } catch (TokenExpiredException $e) {
             return response()->json([
-                'code' => -200,
+                'code' => 80001,
                 'message' => 'token 过期' , //token已过期
             ]);
- 
+
         } catch (TokenInvalidException $e) {
             return response()->json([
                 'code' => -200,
                 'message' => 'token 无效',  //token无效
             ]);
- 
+
         } catch (JWTException $e) {
             return response()->json([
                 'code' => -200,
                 'message' => '缺少token' , //token为空
             ]);
         }
-    }    
+    }
 }
