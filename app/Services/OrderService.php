@@ -23,10 +23,11 @@ class OrderService {
      *
      * @param $userId      int
      * @param $coupon_id   int
+     * @params $isRegister bool
      *
      * @return array
      */
-    public function checkCoupon($userId, $coupon_id) {
+    public function checkCoupon($userId, $coupon_id, $isRegister = false) {
         //优惠券是否存在
         $coupon = Coupon::query()->where("id", $coupon_id)
                         ->where("status", CommonConst::CONST_NORMAL_STATUS)
@@ -41,6 +42,10 @@ class OrderService {
         //优惠券起始时间
         if ($coupon->time_begin > time()) {
             return [false, '优惠券未到使用时间'];
+        }
+        if ($isRegister) {
+            //测试规定:  如果是刚注册的用户, 需要发放优惠券
+            $this->addUserCouon($coupon, $userId);
         }
         //优惠券是否被领取
         $coupon_user = CouponUser::query()->where("user_id", $userId)
@@ -91,5 +96,28 @@ class OrderService {
         $coupon_user->use_time = 0;
         $coupon_user->order_id = 0;
         $coupon_user->save();
+    }
+
+    public function addUserCouon($coupon, $userId) {
+        $user_ids = explode(',', $coupon->user_ids); // 把用户输入券码的这张优惠券的user_ids值转为数组
+        if (!in_array($userId, $user_ids)) {
+            array_push($user_ids, $userId);
+            $coupon->user_ids = implode(',', $user_ids);
+            if ($coupon->save()) {
+                //已存在不发放
+                $isExist = CouponUser::query()->where("user_id", $userId)
+                                     ->where("coupon_id", $coupon->id)
+                                     ->count();
+                if (empty($isExist) || $isExist <= 0) {
+                    $add_data = [];
+                    $add_data['user_id'] = $userId;
+                    $add_data['coupon_id'] = $coupon->id;
+                    $add_data['is_used'] = CouponUser::isUsedNO;
+                    $add_data['created_at'] = time();
+                    $add_data['updated_at'] = time();
+                    CouponUser::query()->insert($add_data);
+                }
+            }
+        }
     }
 }

@@ -451,10 +451,9 @@ class SendEmailController extends Controller {
     }
 
     // 下单后未付款
-    public function placeOrder($id) {
+    public function placeOrder($orderId) {
         try {
-            $OrderGoods = OrderGoods::where('id', $id)->first();
-            $Order = Order::where('id', $OrderGoods['order_id'])->first();
+            $Order = Order::where('id', $orderId)->first();
             $data = $Order ? $Order->toArray() : [];
             if (!$data) {
                 ReturnJson(false, '未找到订单数据');
@@ -463,33 +462,32 @@ class SendEmailController extends Controller {
             $user = $user ? $user->toArray() : [];
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $PayName = Pay::where('id', $data['pay_type'])->value('name');
-            $priceEdition = Redis::hget(PriceEditionValues::RedisKey, $OrderGoods['price_edition']);
-            $priceEdition = json_decode($priceEdition, true);
-            $language = Redis::hget(Languages::RedisKey, $priceEdition['language_id']);
-            $language = json_decode($language, true);
-            $language = isset($language['name']) ? $language['name'] : '';
-            $Products = Products::select(
-                ['url as link', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
-            )->whereIn('id', explode(',', $OrderGoods['goods_id']))->get()->toArray();
-            if ($Products) {
-                foreach ($Products as $key => $value) {
-                    $Products[$key]['goods_number'] = $OrderGoods['goods_number'] ? intval($OrderGoods['goods_number'])
-                        : 0;
-                    $Products[$key]['language'] = $language;
-                    $Products[$key]['price_edition'] = $priceEdition['name'];
-                    $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
-                    $Products[$key]['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$value['thumb'];
-                    if (empty($value['thumb'])) {
-                        $categoryThumb = ProductsCategory::where('id', $value['category_id'])->value('thumb');
-                        $Products[$key]['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$categoryThumb;
-                    } else {
-                        $Products[$key]['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$value['thumb'];
-                    }
+            $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
+            $languageList = Languages::GetListById();
+            $goods_data_list = [];
+            foreach ($orderGoodsList as $key => $OrderGoods) {
+                $goods_data = [];
+                $priceEditionId = $OrderGoods['price_edition'];
+                $priceEdition = PriceEditionValues::find($priceEditionId);
+                if (!empty($priceEdition)) {
+                    $language = $languageList[$priceEdition->language_id];
+                } else {
+                    $language = '';
                 }
+                $products = Products::select(
+                    ['url as link', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
+                )->where('id', $OrderGoods['goods_id'])->first();
+                $goods_data = $products;
+                $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
+                $goods_data['language'] = $language;
+                $goods_data['price_edition'] = $priceEdition['name'] ?: '';
+                $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
+                $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$products->getThumbImgAttribute();
+                $goods_data_list[] = $goods_data;
             }
-            $cityName = City::where('id', $data['city_id'])->value('name');
-            $provinceName = City::where('id', $data['province_id'])->value('name');
-            $addres = $provinceName.' '.$cityName.' '.$data['address'];
+
+            $areaInfo = $this->getAreaName($data);
+            $addres = $areaInfo.' '.$data['address'];
             $data2 = [
                 'homePage'           => $data['domain'],
                 'myAccountUrl'       => rtrim($data['domain'], '/').'/account/account-infor',
@@ -509,7 +507,7 @@ class SendEmailController extends Controller {
                 'orderNumber'        => $data['order_number'],
                 'paymentLink'        => $data['domain'].'/api/order/pay?order_id='.$data['id'],
                 'orderDetails'       => $data['domain'].'/account?orderdetails='.$data['id'],
-                'goods'              => $Products,
+                'goods'              => $goods_data_list,
                 'userId'             => $user['id']
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
@@ -705,7 +703,7 @@ class SendEmailController extends Controller {
     private function getAreaName($data) {
         $area = '';
         if (!empty($data['province_id'])) {
-            $area .= City::where('id', $data['province_id'])->value('name') ." ";
+            $area .= City::where('id', $data['province_id'])->value('name')." ";
         }
         if (!empty($data['city_id'])) {
             $area .= City::where('id', $data['city_id'])->value('name');

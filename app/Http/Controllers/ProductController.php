@@ -171,7 +171,8 @@ class ProductController extends Controller {
         if (empty($product_id)) {
             ReturnJson(false, '产品ID不允许为空！', []);
         }
-        $product = Products::where(['id' => $product_id, 'status' => 1])->select('id')->first();
+        $product = Products::where(['id' => $product_id, 'status' => 1])->select(['id', 'thumb', 'category_id'])->first(
+        );
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
         if (!empty($product)) {
             $fieldList = ['p.name', 'p.english_name', 'cate.thumb', 'p.id', 'p.published_date', 'cate.name as category',
@@ -268,8 +269,8 @@ class ProductController extends Controller {
             $product_desc['prices'] = Products::CountPrice($product_desc['price'], $product_desc['publisher_id']);
             $product_desc['description'] = $product_desc['description'];
             $product_desc['url'] = $product_desc['url'];
-            $product_desc['thumb'] = Common::cutoffSiteUploadPathPrefix($product_desc['thumb']);
-            $product_desc['thumb'] = $product_desc['thumb'] ? $request->thumbUrl.$product_desc['thumb'] : '';
+
+            $product_desc['thumb'] = Common::cutoffSiteUploadPathPrefix($product->getThumbImgAttribute());
             $product_desc['published_date'] = $product_desc['published_date'] ? date(
                 'Y-m-d', strtotime(
                            $product_desc['published_date']

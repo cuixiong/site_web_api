@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Const\CommonConst;
+use App\Http\Controllers\Common\SendEmailController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Pay\Pay;
 use App\Http\Controllers\Pay\PayFactory;
@@ -45,8 +46,8 @@ class OrderController extends Controller {
             $province_id = $request->province_id ?? 0;
             $city_id = $request->city_id;
             $phone = $request->phone;
-            $email = $request->email;
             $company = $request->company;
+            $email = $request->email;
             $code = trim($request->code);
             $now = time();
             $coupon = Coupon::where('code', $code)
@@ -65,7 +66,7 @@ class OrderController extends Controller {
                 $ucouponId = Coupon::where('code', $code)->value('id');
                 $is_used = CouponUser::where('user_id', $userId)->where('coupon_id', $ucouponId)->value('is_used');
                 if ($is_used == CouponUser::isUsedYes) {
-                    ReturnJson(true, '这张优惠券已被你使用过了');  // 提示'这张优惠券已被你使用过了',
+                    ReturnJson(false, '这张优惠券已被你使用过了');
                 }
                 $data = [
                     'id'        => $coupon->id,
@@ -87,16 +88,8 @@ class OrderController extends Controller {
                         $user->save();
                         $this->getCouponUser($coupon, $user, $modelCouponUser);
                     } else {
-                        // 无用户，就新增用户
-                        /**
-                         * @var User $user
-                         */
-                        $user = $this->addUser(
-                            $username, $phone, $email, $company, $model, $province_id, $city_id
-                        );
-                        if (!empty($user)) {
-                            $this->getCouponUser($coupon, $user, $modelCouponUser);
-                        }
+                        // 无用户，测试规定 : 不做任何操作
+
                     }
                 } else { // 如果获取到头部token，说明此时用户已经登录
                     $this->getCouponUser($coupon, $user, $modelCouponUser);
@@ -127,7 +120,7 @@ class OrderController extends Controller {
             $user = $this->getUser($request);
             //校验该用户优惠券是否有效
             if (!empty($coupon_id)) {
-                list($checkRes, $checkMsg) = (new OrderService())->checkCoupon($user->id, $coupon_id);
+                list($checkRes, $checkMsg) = (new OrderService())->checkCoupon($user->id, $coupon_id, $user->is_register);
                 if (empty($checkRes)) {
                     ReturnJson(false, $checkMsg);
                 }
@@ -165,6 +158,11 @@ class OrderController extends Controller {
             if ($order === null) {
                 return $this->echoMsg($orderTrans->getErrno());
             }
+
+            //发送邮件
+            (new SendEmailController)->placeOrder($order->id);
+
+
             // 把临时订单号加入缓存
             Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
             //拉起支付
@@ -587,7 +585,6 @@ class OrderController extends Controller {
         $exist = User::where('email', $email)->first();
         if (!$exist) {
             // 新需求：下单付款成功后自动给用户注册一个账户（实际情况是：还没付款） 开始
-            // $user->id = 0;
             $user->username = $username;
             $user->email = $email;
             $user->phone = $phone;
@@ -600,7 +597,10 @@ class OrderController extends Controller {
             $user->created_by = 0;
             $user->status = 1; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
             $user->save();
-            // 新需求：下单付款成功后自动给用户注册一个账户 结束
+
+            //如果是新注册的账号, 增加注册标识
+            $user->is_register = true;
+
         } else {
             $user->id = $exist->id;
             $user->username = $username;
@@ -610,6 +610,8 @@ class OrderController extends Controller {
             $user->province_id = $province_id;
             $user->city_id = $city_id;
             $user->address = $address;
+
+            $user->is_register = false;
         }
 
         return $user;
