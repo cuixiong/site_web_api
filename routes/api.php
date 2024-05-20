@@ -219,4 +219,5 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         '讯搜清空数据'
     );
     Route::get('xunsearch/test', [\App\Http\Controllers\XunSearchTestController::class, 'test'])->name('测试接口');
+    Route::get('/test1', [\App\Http\Controllers\TestController::class, 'test1'])->name('测试接口1');
 });
