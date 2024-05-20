@@ -50,12 +50,15 @@ class NewsController extends Controller {
         if (!empty($tag)) {
             $query = $query->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
         }
+        $count = $query->count();
+
         $result = $query->orderBy('sort', 'asc')->orderBy('upload_at', 'desc')
                         ->offset(($page - 1) * $pageSize)
                         ->limit($pageSize)
                         ->get()
                         ->toArray();
-        $count = $query->count();
+
+
         $news = [];
         if (!empty($result) && is_array($result)) {
             foreach ($result as $key => $value) {
