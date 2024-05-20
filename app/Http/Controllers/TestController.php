@@ -11,6 +11,7 @@
  */
 
 namespace App\Http\Controllers;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
 class TestController extends Controller {
