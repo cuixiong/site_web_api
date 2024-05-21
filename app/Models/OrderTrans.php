@@ -16,7 +16,7 @@ class OrderTrans extends Base {
     protected $baseProductFields
                      = ['id AS goods_id', 'price',
                         'discount_time_begin', 'discount_time_end', 'discount_type',
-                        'discount_amount'];
+                        'discount_amount' , 'discount'];
 
     public function setUser($user) {
         $this->user = $user;
