@@ -187,7 +187,7 @@ class OrderTrans extends Base {
      * @return mixed
      */
     private function addOrderData(
-        int $timestamp, $userId, $payType, float $orderAmountAll, float $actuallyPaidAll, $user, $address, $coupon_id,
+        int $timestamp, $userId, $payType, $orderAmountAll, $actuallyPaidAll, $user, $address, $coupon_id,
             $remarks
     ) {
         // 插入订单表 order
@@ -199,7 +199,7 @@ class OrderTrans extends Base {
         $order->is_pay = Order::PAY_UNPAID;
         $order->pay_type = $payType;
         $order->order_amount = $orderAmountAll; // 原价
-        $order->actually_paid = round($actuallyPaidAll, 2); // 折后
+        $order->actually_paid = $actuallyPaidAll; // 折后
         $order->username = $user->username;
         $order->email = $user->email;
         $order->phone = $user->phone;
