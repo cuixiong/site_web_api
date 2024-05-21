@@ -16,7 +16,7 @@ class OrderTrans extends Base {
     protected $baseProductFields
                      = ['id AS goods_id', 'price',
                         'discount_time_begin', 'discount_time_end', 'discount_type',
-                        'discount_amount' , 'discount'];
+                        'discount_amount', 'discount'];
 
     public function setUser($user) {
         $this->user = $user;
@@ -45,7 +45,7 @@ class OrderTrans extends Base {
             $coupon = Coupon::select(['type', 'value'])->where('id', $coupon_id)->first();
             if (!empty($coupon)) {
                 if ($coupon['type'] == 1) { // 如果优惠类型是打折
-                    $price = $price * $coupon['value'] / 100;
+                    $price = Common::getDiscountPrice($price, $coupon['value']);
                 } else if ($coupon['type'] == 2) { // 如果优惠类型是直减（type==2）
                     $price = bcsub($price, $coupon['value'], 2);
                 }
@@ -54,7 +54,7 @@ class OrderTrans extends Base {
             $price = $price;
         }
 
-        return round($price, 2); // round()函数能把金额四舍五入到两位小数，防止3位小数点的金额支付失败（实际情况是不会出现这种bug的）
+        return $price;
     }
 
     public function createBySingle($goodsId, $priceEdition, $payType, $coupon_id, $address, $remarks) {
@@ -101,7 +101,6 @@ class OrderTrans extends Base {
 
             return null;
         }
-
         DB::commit();
 
         return $order;
