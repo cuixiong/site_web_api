@@ -214,6 +214,7 @@ class OrderService {
         $user->created_at = time();
         $user->created_by = 0;
         $user->status = 1;
+        $user->check_email = 1; //默认已校验邮箱
         $user->save();
 
         return $user;
