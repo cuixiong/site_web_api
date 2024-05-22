@@ -465,6 +465,7 @@ class SendEmailController extends Controller {
             $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
             $languageList = Languages::GetListById();
             $goods_data_list = [];
+            $productsName = "";
             foreach ($orderGoodsList as $key => $OrderGoods) {
                 $goods_data = [];
                 $priceEditionId = $OrderGoods['price_edition'];
@@ -477,6 +478,11 @@ class SendEmailController extends Controller {
                 $products = Products::select(
                     ['url as link', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
                 )->where('id', $OrderGoods['goods_id'])->first();
+
+                //拼接产品名称
+                if (!empty($products->name)) {
+                    $productsName .= $products->name." ";
+                }
                 $goods_data = $products;
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
                 $goods_data['language'] = $language;
@@ -485,14 +491,13 @@ class SendEmailController extends Controller {
                 $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$products->getThumbImgAttribute();
                 $goods_data_list[] = $goods_data;
             }
-
             $areaInfo = $this->getAreaName($data);
             $addres = $areaInfo.' '.$data['address'];
             $data2 = [
                 'homePage'           => $data['domain'],
                 'myAccountUrl'       => rtrim($data['domain'], '/').'/account/account-infor',
                 'contactUsUrl'       => rtrim($data['domain'], '/').'/contact-us',
-                'homeUrl'            => $data['domain'],
+                'homeUrl'            => rtrim($data['domain'], '/').'/account/order',
                 'backendUrl'         => env('IMAGE_URL', ''),
                 'userName'           => $data['username'] ? $data['username'] : '',
                 'userEmail'          => $data['email'],
@@ -532,6 +537,7 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
+            $scene->title = $scene->title.":  {$productsName}";
             $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);

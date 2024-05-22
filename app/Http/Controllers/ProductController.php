@@ -338,8 +338,10 @@ class ProductController extends Controller {
                                          'product.price',
                                          'product.publisher_id',
                                          'product.published_date',
-                                         'category.thumb',
+                                         'product.thumb',
+                                         'product.category_id',
                                          'category.name as category_name',
+                                         'category.thumb as category_thumb',
                                      ])
                             ->leftJoin('product_category as category', 'category.id', '=', 'product.category_id')
                             ->where('product.keywords', $product['keywords'])
@@ -350,8 +352,13 @@ class ProductController extends Controller {
                             ->get()->toArray();
         $data = [];
         foreach ($products as $index => $product) {
-            $data[$index]['thumb'] = $product['thumb'];
-            $data[$index]['thumb'] = Common::cutoffSiteUploadPathPrefix($data[$index]['thumb']);
+            $tempThumb = '';
+            if(!empty($product['thumb'] )){
+                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['thumb']);
+            }elseif(!empty($product['category_thumb'] )){
+                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
+            }
+            $data[$index]['thumb'] = $tempThumb;
             $data[$index]['name'] = $product['name'];
             $data[$index]['keywords'] = $product['keywords'];
             $data[$index]['english_name'] = $product['english_name'];

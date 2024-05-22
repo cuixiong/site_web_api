@@ -59,12 +59,7 @@ class IndexController extends Controller {
                                         ->orderBy('published_date', 'desc')
                                         ->first();
                 if (!empty($firstProduct)) {
-                    if (empty($firstProduct->thumb)) {
-                        // 如果图片为空，则用分类图片
-                        $firstProduct->thumb = Common::cutoffSiteUploadPathPrefix($firstProduct->thumb_img);
-                    } else {
-                        $firstProduct->thumb = Common::cutoffSiteUploadPathPrefix($firstProduct->thumb);
-                    }
+                    $firstProduct->thumb = $firstProduct->getThumbImgAttribute();
                     $year = date('Y', strtotime($firstProduct['published_date']));
                     $firstProduct['description'] = (new ProductDescription($year))
                         ->where('product_id', $firstProduct['id'])

@@ -35,13 +35,13 @@ class JwtMiddleware
 
         } catch (TokenInvalidException $e) {
             return response()->json([
-                'code' => 80002,
+                'code' => 80001,
                 'message' => 'token 无效',  //token无效
             ]);
 
         } catch (JWTException $e) {
             return response()->json([
-                'code' => -200,
+                'code' => 80001,
                 'message' => '缺少token' , //token为空
             ]);
         }

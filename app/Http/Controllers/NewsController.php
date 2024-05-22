@@ -190,6 +190,7 @@ class NewsController extends Controller {
             $result = Products::select([
                                            'id',
                                            'name',
+                                           'thumb',
                                            'english_name',
                                            'keywords',
                                            'published_date',
@@ -209,8 +210,7 @@ class NewsController extends Controller {
                               ->toArray();
             if ($result) {
                 foreach ($result as $key => $value) {
-                    $data[$key]['thumb'] = ProductsCategory::where('id', $value['category_id'])->value('thumb');
-                    $data[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($data[$key]['thumb']);
+                    $data[$key]['thumb'] = Products::getThumbImgUrl($value);
                     $data[$key]['name'] = $value['name'];
                     $data[$key]['keyword'] = $value['keywords'];
                     $data[$key]['english_name'] = $value['english_name'];

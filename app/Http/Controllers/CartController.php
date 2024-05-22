@@ -63,9 +63,9 @@ class CartController extends Controller {
         $shopCartData = [];
         $languageIdList = Languages::GetListById();
         foreach ($shopCart as $key => $value) {
-            if(!empty($value['thumb'] )){
+            if (!empty($value['thumb'])) {
                 $thumbImg = $value['thumb'];
-            }else{
+            } else {
                 $thumbImg = ProductsCategory::where('id', $value['category_id'])->value('thumb');
             }
             $shopCartData[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($thumbImg);
@@ -341,20 +341,20 @@ class CartController extends Controller {
                 if (!empty($product)) {
                     $product = $product->toArray();
                     $results[$key] = $product;
-                    if(!empty($product['thumb'] )){
+                    if (!empty($product['thumb'])) {
                         $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($product['thumb']);
-                    }else{
+                    } else {
                         $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
                     }
-
                     $results[$key]['published_date'] = $product['published_date'];
-                    $results[$key]['discount_begin'] = $product['discount_begin'] ? date('Y-m-d', $product['discount_begin']) : '';
-                    $results[$key]['discount_end'] = $product['discount_end'] ? date('Y-m-d', $product['discount_end']) : '';
-
+                    $results[$key]['discount_begin'] = $product['discount_begin'] ? date(
+                        'Y-m-d', $product['discount_begin']
+                    ) : '';
+                    $results[$key]['discount_end'] = $product['discount_end'] ? date('Y-m-d', $product['discount_end'])
+                        : '';
                     $results[$key]['discount_type'] = $product['discount_type'];
                     $results[$key]['discount'] = $product['discount'];
                     $results[$key]['discount_amount'] = $product['discount_amount'];
-
                     $results[$key]['number'] = $value['number'];
                     $results[$key]['price_edition'] = $value['price_edition'];
                     $priceEditionInfo = PriceEditionValues::find($value['price_edition']);
@@ -401,8 +401,9 @@ class CartController extends Controller {
             $keywords = Products::whereIn('id', $goods_ids)->pluck('keywords')->toArray();
             if (!empty($keywords) && is_array($keywords)) {
                 $products = Products::select([
-                                                 'name',
                                                  'id',
+                                                 'name',
+                                                 'thumb',
                                                  'category_id',
                                                  'url',
                                                  'published_date',
@@ -416,8 +417,7 @@ class CartController extends Controller {
                 if (!empty($products) && is_array($products)) {
                     $data = [];
                     foreach ($products as $index => $product) {
-                        $data[$index]['thumb'] = ProductsCategory::where('id', $product['category_id'])->value('thumb');
-                        $data[$index]['thumb'] = Common::cutoffSiteUploadPathPrefix($data[$index]['thumb']);
+                        $data[$index]['thumb'] = Products::getThumbImgUrl($product);
                         $data[$index]['name'] = $product['name'];
                         $suffix = date('Y', strtotime($product['published_date']));
                         $description = (new ProductDescription($suffix))->where('product_id', $product['id'])->value(

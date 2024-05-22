@@ -28,6 +28,27 @@ class Products extends Base {
         }
     }
 
+    /**
+     * 获取缩略图
+     * @param $product
+     *
+     * @return array|mixed|string|string[]
+     */
+    public static function getThumbImgUrl($product) {
+        if (!empty($product['thumb'])) {
+            return Common::cutoffSiteUploadPathPrefix($product['thumb']);
+        } elseif ($product['category_id']) {
+            $value = ProductsCategory::where('id', $product['category_id'])->value('thumb');
+            if (!empty($value)) {
+                return Common::cutoffSiteUploadPathPrefix($value);
+            } else {
+                return '';
+            }
+        } else {
+            return '';
+        }
+    }
+
     public function getCategotyTextAttribute() {
         $name = '';
         if (!empty($this->attributes['category_id'])) {

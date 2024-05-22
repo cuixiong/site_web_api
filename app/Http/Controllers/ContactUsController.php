@@ -31,7 +31,13 @@ class ContactUsController extends Controller {
         $model->content = $params['content'] ?? '';
         $model->product_id = $params['product_id'] ?? 0;
         if ($model->save()) {
-            (new SendEmailController)->customized($model->id);
+            if($params['category_id'] == 4){
+                //申请样本
+                (new SendEmailController)->productSample($model->id);
+            }else{
+                //定制报告
+                (new SendEmailController)->customized($model->id);
+            }
             ReturnJson(true, '', $model);
         } else {
             ReturnJson(false, $model->getModelError());
