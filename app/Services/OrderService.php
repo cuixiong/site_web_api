@@ -15,7 +15,9 @@ namespace App\Services;
 use App\Const\CommonConst;
 use App\Models\Coupon;
 use App\Models\CouponUser;
+use App\Models\Order;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class OrderService {
     /**
@@ -27,7 +29,7 @@ class OrderService {
      *
      * @return array
      */
-    public function checkCoupon($userId, $coupon_id, $isRegister = false) {
+    public function checkCoupon($userId, $coupon_id) {
         //优惠券是否存在
         $coupon = Coupon::query()->where("id", $coupon_id)
                         ->where("status", CommonConst::CONST_NORMAL_STATUS)
@@ -43,9 +45,9 @@ class OrderService {
         if ($coupon->time_begin > time()) {
             return [false, '优惠券未到使用时间'];
         }
-        if ($isRegister) {
-            //测试规定:  如果是刚注册的用户, 需要发放优惠券
-            $this->addUserCouon($coupon, $userId);
+        //未登录状态, 只需要校验到这一步
+        if (empty($userId)) {
+            return [true, 'ok'];
         }
         //优惠券是否被领取
         $coupon_user = CouponUser::query()->where("user_id", $userId)
@@ -84,6 +86,38 @@ class OrderService {
         }
     }
 
+    public function addUseUserCoupon($userId, $orderId, $couponId) {
+        $coupon = Coupon::find($couponId);
+        if (empty($coupon) || empty($userId) || empty($orderId)) {
+            return false;
+        }
+        $user_ids = explode(',', $coupon->user_ids); // 把用户输入券码的这张优惠券的user_ids值转为数组
+        if (!in_array($userId, $user_ids)) {
+            array_push($user_ids, $userId);
+            $coupon->user_ids = implode(',', $user_ids);
+            $coupon->save();
+        }
+        //已存在不发放
+        $userCouponId = CouponUser::query()->where("user_id", $userId)
+                                  ->where("coupon_id", $coupon->id)
+                                  ->value("id");
+        if (empty($userCouponId)) {
+            $add_data = [];
+            $add_data['user_id'] = $userId;
+            $add_data['coupon_id'] = $coupon->id;
+            $add_data['is_used'] = CouponUser::isUsedYes;
+            $add_data['use_time'] = time();
+            $add_data['order_id'] = $orderId;
+            $add_data['created_at'] = time();
+            $add_data['updated_at'] = time();
+            CouponUser::query()->insert($add_data);
+        } else {
+            //存在修改状态
+            $updData = ['is_used' => CouponUser::isUsedYes, 'use_time' => time(), 'order_id' => $orderId];
+            CouponUser::where("id", $userCouponId)->update($updData);
+        }
+    }
+
     public function recoverCouponStatus($userId, $coupon_id, $orderId) {
         $coupon_user = CouponUser::query()->where("user_id", $userId)
                                  ->where("coupon_id", $coupon_id)
@@ -119,5 +153,69 @@ class OrderService {
                 }
             }
         }
+    }
+
+    /**
+     * 处理未注册用户的优惠券业务
+     *
+     * @param $orderId
+     *
+     */
+    public function handlerPayCouponUser($orderId) {
+        $order = Order::find($orderId);
+        if (empty($order)) {
+            return false;
+        }
+        //已注册的账号
+        if (!empty($order['user_id'])) {
+            return false;
+        }
+        //注册账号
+        $user = $this->getUserByOrder($order);
+        //订单归属用户
+        if (!empty($user) && !empty($user->id)) {
+            Order::where('id', $orderId)->update(['user_id' => $user->id]);
+        }
+        //没有使用优惠券, 没必要执行后续逻辑
+        if (empty($order['coupon_id'])) {
+            return false;
+        }
+        //增加用户优惠券(已使用)
+        $this->addUseUserCoupon($user->id, $orderId, $order['coupon_id']);
+        return true;
+    }
+
+    public function getUserByOrder($order) {
+        $email = $order->email;
+        $user = User::where('email', $email)->first();
+        if (!empty($user)) {
+            return $user;
+        } else {
+            return $this->registUserByOrder($order);
+        }
+    }
+
+    /**
+     *
+     * @param $order
+     *
+     */
+    public function registUserByOrder($order) {
+        $user = new User();
+        $user->username = $order->username;;
+        $user->email = $order->email;
+        $user->phone = $order->phone;
+        $user->company = $order->company;
+        $user->province_id = $order->province_id;
+        $user->city_id = $order->city_id;
+        $user->area_id = $order->country_id;
+        $user->address = $order->address;
+        $user->password = Hash::make('123456'); // 帮用户自动生成一个初始密码123456
+        $user->created_at = time();
+        $user->created_by = 0;
+        $user->status = 1;
+        $user->save();
+
+        return $user;
     }
 }

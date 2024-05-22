@@ -8,6 +8,7 @@ use Alipay\EasySDK\Kernel\Util\ResponseChecker;
 use Alipay\EasySDK\Kernel\Config;
 use App\Http\Controllers\Common\SendEmailController;
 use App\Models\Payment;
+use App\Services\OrderService;
 use Exception;
 use App\Http\Controllers\Pay\Pay;
 use App\Models\CouponUser;
@@ -236,6 +237,8 @@ class Alipay extends Pay
             $order->pay_time = $gmt_payment; // x_fp_timestamp 其实是订单创建的时间，回调的参数里没有具体的支付时间
             $order->updated_at = time();
             if ($order->save()) {
+                //处理未注册用户的优惠券业务
+                (new OrderService())->handlerPayCouponUser($order->id);
                 (new SendEmailController())->payment($order->id);
                 // Order::sendPaymentEmail($order); // 发送已付款的邮件
                 $paymentMsg .= 'success to update status' . PHP_EOL;

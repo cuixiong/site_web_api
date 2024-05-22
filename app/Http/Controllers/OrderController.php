@@ -120,7 +120,7 @@ class OrderController extends Controller {
             $user = $this->getUser($request);
             //校验该用户优惠券是否有效
             if (!empty($coupon_id)) {
-                list($checkRes, $checkMsg) = (new OrderService())->checkCoupon($user->id, $coupon_id, $user->is_register);
+                list($checkRes, $checkMsg) = (new OrderService())->checkCoupon($user->id, $coupon_id);
                 if (empty($checkRes)) {
                     ReturnJson(false, $checkMsg);
                 }
@@ -584,7 +584,6 @@ class OrderController extends Controller {
         $user = new User();
         $exist = User::where('email', $email)->first();
         if (!$exist) {
-            // 新需求：下单付款成功后自动给用户注册一个账户（实际情况是：还没付款） 开始
             $user->username = $username;
             $user->email = $email;
             $user->phone = $phone;
@@ -596,11 +595,8 @@ class OrderController extends Controller {
             $user->created_at = time();
             $user->created_by = 0;
             $user->status = 1; // 就把这个用户的邮箱验证状态改为“已验证通过（10）”，其实这样做有点不够安全
-            $user->save();
-
-            //如果是新注册的账号, 增加注册标识
-            $user->is_register = true;
-
+            //测试需求, 下单不注册账号
+            $user->id = 0;
         } else {
             $user->id = $exist->id;
             $user->username = $username;
@@ -610,8 +606,6 @@ class OrderController extends Controller {
             $user->province_id = $province_id;
             $user->city_id = $city_id;
             $user->address = $address;
-
-            $user->is_register = false;
         }
 
         return $user;

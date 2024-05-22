@@ -215,8 +215,8 @@ class OrderTrans extends Base {
 
             return false;
         }
-        //插入订单成功后, 且使用了优惠券, 标记使用优惠券
-        if (!empty($coupon_id)) {
+        //插入订单成功后, 且使用了优惠券 + 登陆状态 标记使用优惠券
+        if (!empty($coupon_id) && !empty($userId)) {
             list($useStatus, $msg) = (new OrderService())->useCouponByUser($userId, $coupon_id, $order->id);
             if (empty($useStatus)) {
                 DB::rollBack();

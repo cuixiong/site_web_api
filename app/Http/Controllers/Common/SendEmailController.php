@@ -458,8 +458,7 @@ class SendEmailController extends Controller {
             if (!$data) {
                 ReturnJson(false, '未找到订单数据');
             }
-            $user = User::find($data['user_id']);
-            $user = $user ? $user->toArray() : [];
+
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $PayName = Pay::where('id', $data['pay_type'])->value('name');
             $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
@@ -513,7 +512,7 @@ class SendEmailController extends Controller {
                 'paymentLink'        => $data['domain'].'/api/order/pay?order_id='.$data['id'],
                 'orderDetails'       => $data['domain'].'/account?orderdetails='.$data['id'],
                 'goods'              => $goods_data_list,
-                'userId'             => $user['id']
+                'userId'             => $data['user_id']
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
                                    ->toArray();

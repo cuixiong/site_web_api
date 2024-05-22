@@ -5,6 +5,7 @@ use App\Http\Controllers\Common\SendEmailController;
 use App\Models\CouponUser;
 use App\Models\Order;
 use App\Models\WechatTool;
+use App\Services\OrderService;
 use GuzzleHttp\Exception\RequestException;
 use WechatPay\GuzzleMiddleware\WechatPayMiddleware;
 use WechatPay\GuzzleMiddleware\Util\PemUtil;
@@ -385,6 +386,8 @@ class Wechatpay extends Pay
         $order->pay_time = $success_time;
         $order->updated_at = time();
         if ($order->save()) {
+            //处理未注册用户的优惠券业务
+            (new OrderService())->handlerPayCouponUser($order->id);
             (new SendEmailController())->payment($order->id);
             // Order::sendPaymentEmail($order); // 发送已付款的邮件
         } else { // 订单状态更新失败
