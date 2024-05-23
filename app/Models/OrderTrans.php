@@ -215,16 +215,16 @@ class OrderTrans extends Base {
 
             return false;
         }
-        //插入订单成功后, 且使用了优惠券 + 登陆状态 标记使用优惠券
-        if (!empty($coupon_id) && !empty($userId)) {
-            list($useStatus, $msg) = (new OrderService())->useCouponByUser($userId, $coupon_id, $order->id);
-            if (empty($useStatus)) {
-                DB::rollBack();
-                $this->errno = '优惠券使用失败'.$msg;
-
-                return false;
-            }
-        }
+        //插入订单成功后, 且使用了优惠券 + 登陆状态 标记使用优惠券  统一在订单回调中改变优惠券状态
+//        if (!empty($coupon_id) && !empty($userId)) {
+//            list($useStatus, $msg) = (new OrderService())->useCouponByUser($userId, $coupon_id, $order->id);
+//            if (empty($useStatus)) {
+//                DB::rollBack();
+//                $this->errno = '优惠券使用失败'.$msg;
+//
+//                return false;
+//            }
+//        }
 
         return $order;
     }
