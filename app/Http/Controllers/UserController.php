@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Common\SendEmailController;
 use App\Http\Requests\UsersRequest;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -183,6 +184,8 @@ class UserController extends Controller {
             $model->password = Hash::make($request->get('password'));
             $model->save();
             ReturnJson(true, trans('lang.request_success'));
+        }catch (DecryptException $de){
+            ReturnJson(false, trans('lang.token_error'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }

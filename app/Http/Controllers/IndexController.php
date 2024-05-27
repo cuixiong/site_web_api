@@ -106,6 +106,9 @@ class IndexController extends Controller {
                        ->orderBy('sort', 'desc')
                        ->orderBy('id', 'desc')
                        ->get();
+        foreach ($list as &$item){
+            $item['logo'] = Common::cutoffSiteUploadPathPrefix($item['logo']);
+        }
         ReturnJson(true, '', $list);
     }
 

@@ -536,7 +536,8 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $scene->title = $scene->title.":  {$productsName}";
+            //$scene->title = $scene->title.":  {$productsName}";
+            $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
             $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);

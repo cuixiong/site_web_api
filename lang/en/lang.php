@@ -87,5 +87,7 @@ return [
     'export_merging_msg'             => 'Merging file...',
     'export_complete_msg'            => 'Complete',
     'file_not_exist'                 => 'File is not exist',
-    'copy_success'                   => 'Copy Success'
+    'copy_success'                   => 'Copy Success',
+    'token_error'                    => 'Token error',
+    'token_expired'                  => 'Token expired'
 ];

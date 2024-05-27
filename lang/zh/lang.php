@@ -87,5 +87,7 @@ return [
     'export_merging_msg'             => '正在合并文件',
     'export_complete_msg'            => '完成',
     'file_not_exist'                 => '文件不存在',
-    'copy_success'                   => '复制成功'
+    'copy_success'                   => '复制成功',
+    'token_error'                    => 'Token错误',
+    'token_expired'                  => 'Token已失效'
 ];
