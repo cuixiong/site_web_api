@@ -86,7 +86,7 @@ class IndexController extends Controller {
         $list = News::where('status', 1)
                     ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url'])
                     ->where('show_home', 1) // 是否在首页显示
-                    ->orderBy('sort', 'desc')
+                    //->orderBy('sort', 'desc')
                     ->orderBy('upload_at', 'desc')
                     ->orderBy('id', 'desc')
                     ->limit(6)->get()->toArray();
