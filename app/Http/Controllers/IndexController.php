@@ -18,7 +18,7 @@ class IndexController extends Controller {
     public function NewsProduct(Request $request) {
         $query = Products::where('status', 1)
                          ->select(['id', 'thumb', 'name', 'category_id', 'published_date', 'price', 'url'])
-                         ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
+                         //->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
                          ->orderBy('published_date', 'desc')
                          ->orderBy('id', 'desc');
         $pageSize = 6;
