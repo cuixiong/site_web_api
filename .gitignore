@@ -10,6 +10,10 @@ app/storage/
 # Laravel 5 & Lumen specific
 public/storage
 public/hot
+config/crt
+config/crtback
+storage/log
+
 
 # Laravel 5 & Lumen specific with changed public path
 public_html/storage
@@ -23,7 +27,6 @@ Homestead.json
 .phpunit.result.cache
 .htaccess
 /resources/views/emails/
-storage/log/_notify_log/
 /public/nginx.htaccess
 /public/robots.txt
 /public/favicon.ico
