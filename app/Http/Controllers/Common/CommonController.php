@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Common;
 use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
 use App\Models\City;
+use App\Models\Common;
 use App\Models\LanguageWebsite;
 use App\Models\Link;
 use App\Models\Menu;
@@ -55,6 +56,9 @@ class CommonController extends Controller
             ReturnJson(false, '参数错误');
         }
         $result = Menu::select(['name', 'banner_pc', 'banner_mobile', 'banner_title', 'banner_short_title', 'seo_title', 'seo_keyword', 'seo_description'])->where(['link' => $link])->orderBy('sort', 'ASC')->first();
+        if(empty($result )){
+            ReturnJson(true, '', []);
+        }
         // 若有栏目ID则优先使用栏目的TKD
         if (!empty($params['category_id'])) {
             $category = ProductsCategory::where(['id' => $params['category_id']])->select('seo_title,seo_keyword,seo_description')->first();
@@ -62,6 +66,9 @@ class CommonController extends Controller
             $result['seo_keyword'] = $category['seo_keyword'] ? $category['seo_keyword'] : $result['seo_keyword'];
             $result['seo_description'] = $category['seo_description'] ? $category['seo_description'] : $result['seo_description'];
         }
+        $result['banner_pc'] =  Common::cutoffSiteUploadPathPrefix($result['banner_pc']);
+        $result['banner_mobile'] = Common::cutoffSiteUploadPathPrefix($result['banner_mobile']);
+
         // 若导航菜单的TKD为空则使用首页的TKD
         // $result['seo_title'] = $result['seo_title'] ? $result['seo_title'] : Setting::find()->select(['value'])->where(['alias' => 'seoTitle'])->scalar();
         // $result['seo_keyword'] = $result['seo_keyword'] ? $result['seo_keyword'] : Setting::find()->select(['value'])->where(['alias' => 'seoKeyword'])->scalar();
@@ -206,7 +213,7 @@ class CommonController extends Controller
         }
     }
 
-    /** 
+    /**
      * 中国省份、城市数据
      */
     public function ChinaRegions()
@@ -248,7 +255,14 @@ class CommonController extends Controller
                 ->select(['name', 'key', 'value'])
                 ->get()
                 ->toArray();
+            //图片后缀, 全部需要转换一遍
+            $imgExtList = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg'];
             foreach ($data as $key => $value) {
+                $ext = pathinfo($value['value'], PATHINFO_EXTENSION);
+                if(in_array($ext, $imgExtList)){
+                    $value['value'] = Common::cutoffSiteUploadPathPrefix($value['value']);
+                }
+
                 $result[$value['key']] = [
                     'name' => $value['name'],
                     'value' => $value['value']
@@ -273,7 +287,14 @@ class CommonController extends Controller
             ->select(['name', 'key', 'value'])
             ->get()
             ->toArray();
+
+        //图片后缀, 全部需要转换一遍
+        $imgExtList = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg'];
         foreach ($data as $key => $value) {
+            $ext = pathinfo($value['value'], PATHINFO_EXTENSION);
+            if(in_array($ext, $imgExtList)){
+                $value['value'] = Common::cutoffSiteUploadPathPrefix($value['value']);
+            }
             $result[] = [
                 'name' => $value['name'],
                 'value' => $value['value']

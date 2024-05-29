@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Common;
 use App\Models\PlateValue;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -26,6 +27,10 @@ class PlateController extends Controller
             ReturnJson(false,'data is empty');
         }
 
+        //转化图片路径
+        $ParentData->img = Common::cutoffSiteUploadPathPrefix($ParentData->img);
+        $ParentData->img_mobile = Common::cutoffSiteUploadPathPrefix($ParentData->img_mobile);
+
         $data = PlateValue::where('status',1)
                 ->where('parent_id',$ParentData->id)
                 ->select([
@@ -37,6 +42,12 @@ class PlateController extends Controller
                     'icon',
                     'content',
                 ])->get();
+
+        foreach ($data as &$value){
+            $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
+            $value['icon'] = Common::cutoffSiteUploadPathPrefix($value['icon']);
+        }
+
         $data = $data ? $data : [];
         $res = [
             'category' => $ParentData,

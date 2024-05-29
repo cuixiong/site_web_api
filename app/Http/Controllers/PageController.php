@@ -315,6 +315,10 @@ class PageController extends Controller
 
         $result = $query->offset(($page - 1) * $pageSize)->limit($pageSize)->get()->toArray();
 
+        foreach ($result as &$item){
+            $item['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
+        }
+
         $data = [
             'result' => $result,
             "page" => $page,

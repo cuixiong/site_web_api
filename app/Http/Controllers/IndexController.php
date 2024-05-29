@@ -33,7 +33,8 @@ class IndexController extends Controller {
     public function RecommendProduct(Request $request) {
         $categories = ProductsCategory::select(['id', 'name', 'link', 'thumb'])
                                       ->orderBy('sort', 'asc')
-                                      ->where('show_home', 1)
+                                      ->orderBy('updated_at', 'desc')
+                                      ->where('is_recommend', 1)
                                       ->where('pid', 0)
                                       ->limit(4)
                                       ->get()
@@ -122,6 +123,10 @@ class IndexController extends Controller {
                       ->orderBy('sort', 'desc')
                       ->orderBy('id', 'desc')
                       ->get();
+        foreach ($list as  &$value){
+            $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
+            $value['national_flag'] = Common::cutoffSiteUploadPathPrefix($value['national_flag']);
+        }
         ReturnJson(true, '', $list);
     }
 
