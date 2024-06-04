@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SearchRank;
 use App\Services\SenWordsService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -25,6 +26,11 @@ class ProductController extends Controller {
         $pageSize = $request->pageSize ? intval($request->pageSize) : 10; // 每页显示数量
         $category_id = $request->category_id ?? 0; // 分类ID
         $keyword = trim($request->keyword) ?? null; // 搜索关键词
+        if(!empty($keyword )){
+            //点击关键词一次, 需要增加一次点击次数
+            SearchRank::query()->where('keyword', $keyword)->increment('hits');
+        }
+
         $res = $this->GetProductResult($page, $pageSize, $keyword, $category_id);
         $result = $res['list'];
         $count = $res['count'];

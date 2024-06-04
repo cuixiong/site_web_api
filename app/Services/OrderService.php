@@ -168,12 +168,16 @@ class OrderService {
         }
         //已注册的账号
         if (!empty($order['user_id'])) {
-            return false;
+            if(!empty($order['coupon_id'] )){
+                //增加用户优惠券(已使用)
+                $this->addUseUserCoupon($order['user_id'], $orderId, $order['coupon_id']);
+            }
+            return true;
         }
         //注册账号
         $user = $this->getUserByOrder($order);
         //订单归属用户
-        if (!empty($user) && !empty($user->id)) {
+        if (empty($order['user_id']) && !empty($user) && !empty($user->id)) {
             Order::where('id', $orderId)->update(['user_id' => $user->id]);
         }
         //没有使用优惠券, 没必要执行后续逻辑

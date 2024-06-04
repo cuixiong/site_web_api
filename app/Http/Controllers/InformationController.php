@@ -12,6 +12,7 @@ use App\Models\Common;
 use App\Models\ProductDescription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use function PHPUnit\Framework\lessThanOrEqual;
 
 class InformationController extends Controller {
     /**
@@ -50,8 +51,9 @@ class InformationController extends Controller {
             $query = $query->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
         }
         $count = $query->count();
-
-        $result = $query->orderBy('sort', 'asc')->orderBy('upload_at', 'desc')
+        $result = $query->orderBy('sort', 'asc')
+                        ->orderBy('upload_at', 'desc')
+                        ->orderBy('id', 'desc')
                         ->offset(($page - 1) * $pageSize)
                         ->limit($pageSize)
                         ->get()
@@ -133,7 +135,7 @@ class InformationController extends Controller {
         } else {
             $news_relate = Information::select(['id', 'url'])
                                       ->where(['url' => $url, 'status' => 1])
-                                      ->where("id" , "<>" , $id)
+                                      ->where("id", "<>", $id)
                                       ->orderBy('upload_at', 'desc')
                                       ->orderBy('id', 'desc')
                                       ->first();
@@ -163,8 +165,7 @@ class InformationController extends Controller {
                            ->where('status', 1)
                            ->where('id', '<>', $id)
             // ->where($category_id)
-                           ->orderBy('sort', 'asc')
-                           ->orderBy('created_at', 'desc')
+                           ->orderBy('upload_at', 'desc')
                            ->limit(5)
                            ->get()
                            ->toArray();
@@ -214,7 +215,11 @@ class InformationController extends Controller {
                     $data[$key]['english_name'] = $value['english_name'];
                     // $data[$key]['description'] = $value['description_seo'];
                     $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
-                    $data[$key]['categoryName'] = ProductsCategory::where('id', $value['category_id'])->value('name');
+                    $productsCategory = ProductsCategory::query()->select(['id' , 'name' , 'link'])->where('id', $value['category_id'])->first();
+                    $data[$key]['categoryName'] = $productsCategory->name ?? '';
+                    $data[$key]['categoryId'] = $productsCategory->id ?? 0;
+                    $data[$key]['categoryLink'] = $productsCategory->link ?? '';
+
                     $data[$key]['discount_type'] = $value['discount_type'];
                     $data[$key]['discount_value'] = $value['discount_value'];
                     $data[$key]['description'] = (new ProductDescription(
@@ -268,11 +273,11 @@ class InformationController extends Controller {
         $pageSize = $request->pageSize ?? 10;
         //数据列表末尾一条， 下一篇需要这样处理
         $offset = ($page - 1) * $pageSize;
-        $pageSize += 2;
         //数据列表第一条， 上一篇需要这样处理
         if ($offset > 1) {
             $offset -= 1;
         }
+        $pageSize += 10;
         $keyword = $request->keyword;
         $industry_id = $request->industry_id;
         $tag = trim($request->tag);
@@ -295,6 +300,7 @@ class InformationController extends Controller {
         }
         $sortIdList = $query->orderBy('sort', 'asc')
                             ->orderBy('upload_at', 'desc')
+                            ->orderBy('id', 'desc')
                             ->offset($offset)
                             ->limit($pageSize)
                             ->pluck('id')

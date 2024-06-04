@@ -411,12 +411,12 @@ class UserController extends Controller {
                 $request->all(),
                 [
                     'old_password' => 'required',
-                    'new_password' => 'required|min:8',
+                    'new_password' => 'required|min:6',
                 ],
                 [
                     'old_password.required' => '请输入旧密码',
                     'new_password.required' => '请输入新密码',
-                    'new_password.min'      => '新密码不能少于8位',
+                    'new_password.min'      => '新密码不能少于6位',
                 ]
             );
             if ($validator->fails()) {

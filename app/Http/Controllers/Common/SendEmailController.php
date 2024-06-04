@@ -557,40 +557,42 @@ class SendEmailController extends Controller {
             if (!$data) {
                 ReturnJson(false, '未找到订单数据');
             }
-            $OrderGoods = OrderGoods::where('order_id', $Order['id'])->first();
             $user = User::find($data['user_id']);
             $user = $user ? $user->toArray() : [];
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $PayName = Pay::where('id', $data['pay_type'])->value('name');
-            $priceEdition = PriceEditionValues::find($OrderGoods['price_edition']);
-            if (!empty($priceEdition['language_id'])) {
-                $language = Languages::find($priceEdition['language_id']);
-            }
-            $language = isset($language['name']) ? $language['name'] : '';
-            $Products = Products::select(
-                ['url as link', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
-            )->whereIn('id', explode(',', $OrderGoods['goods_id']))->get()->toArray();
-            if ($Products) {
-                foreach ($Products as $key => $value) {
-                    $Products[$key]['goods_number'] = $OrderGoods['goods_number'] ? intval($OrderGoods['goods_number'])
-                        : 0;
-                    $Products[$key]['language'] = $language;
-                    if (!empty($priceEdition)) {
-                        $Products[$key]['price_edition'] = $priceEdition['name'];
-                    } else {
-                        $Products[$key]['price_edition'] = '';
-                    }
-                    $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
-                    if (empty($value['thumb'])) {
-                        $categoryThumb = ProductsCategory::where('id', $value['category_id'])->value('thumb');
-                        $Products[$key]['thumb'] = rtrim(env('IMAGE_URL', ''), '/').
-                                                   Common::cutoffSiteUploadPathPrefix($categoryThumb);
-                    } else {
-                        $Products[$key]['thumb'] = rtrim(env('IMAGE_URL', ''), '/').
-                                                   Common::cutoffSiteUploadPathPrefix($value['thumb']);
-                    }
+
+            $orderGoodsList = OrderGoods::where('order_id', $Order['id'])->get()->toArray();
+            $languageList = Languages::GetListById();
+            $goods_data_list = [];
+            $productsName = "";
+            foreach ($orderGoodsList as $key => $OrderGoods) {
+                $goods_data = [];
+                $priceEditionId = $OrderGoods['price_edition'];
+                $priceEdition = PriceEditionValues::find($priceEditionId);
+                if (!empty($priceEdition)) {
+                    $language = $languageList[$priceEdition->language_id];
+                } else {
+                    $language = '';
                 }
+                $products = Products::select(
+                    ['url as link', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
+                )->where('id', $OrderGoods['goods_id'])->first();
+
+                //拼接产品名称
+                if (!empty($products->name)) {
+                    $productsName .= $products->name." ";
+                }
+                $goods_data = $products;
+                $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
+                $goods_data['language'] = $language;
+                $goods_data['price_edition'] = $priceEdition['name'] ?: '';
+                $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
+                $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$products->getThumbImgAttribute();
+                $goods_data_list[] = $goods_data;
             }
+
+
             $cityName = City::where('id', $data['city_id'])->value('name');
             $provinceName = City::where('id', $data['province_id'])->value('name');
             $addres = $provinceName.' '.$cityName.' '.$data['address'];
@@ -613,7 +615,7 @@ class SendEmailController extends Controller {
                 'orderNumber'        => $data['order_number'],
                 'paymentLink'        => $data['domain'].'/api/order/pay?order_id='.$data['id'],
                 'orderDetails'       => $data['domain'].'/account?orderdetails='.$data['id'],
-                'goods'              => $Products,
+                'goods'              => $goods_data_list,
                 'userId'             => $data['user_id']
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
