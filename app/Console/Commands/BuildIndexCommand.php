@@ -6,6 +6,7 @@ use App\Models\ProductDescription;
 use App\Models\Products;
 use App\Models\XunsearchProductIndex;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class BuildIndexCommand extends Command {
     /**
@@ -19,11 +20,13 @@ class BuildIndexCommand extends Command {
         //抓取索引所需的数据 , 添加到新表里
         $product_fields = ['id', 'name', 'english_name', 'category_id', 'country_id', 'price', 'keywords', 'url',
                            'published_date', 'status', 'author', 'discount', 'discount_amount', 'show_hot',
-                           'show_recommend', 'sort'];
+                           'show_recommend', 'sort', 'created_at'];
         $xpiModel = new XunsearchProductIndex();
-        $products_list = Products::select($product_fields)->get()->toArray();
+        $products_list = DB::table('product_routine')->select($product_fields)->get()->toArray();
+
         $index = 0;
         foreach ($products_list as $key => $products_data) {
+            $products_data = (array)$products_data;
             if(empty($products_data['published_date'] )){
                 $products_data['published_date'] = 0;
             }

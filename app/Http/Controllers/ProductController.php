@@ -28,7 +28,7 @@ class ProductController extends Controller {
         $keyword = trim($request->keyword) ?? null; // 搜索关键词
         if(!empty($keyword )){
             //点击关键词一次, 需要增加一次点击次数
-            SearchRank::query()->where('keyword', $keyword)->increment('hits');
+            SearchRank::query()->where('name', $keyword)->increment('hits');
         }
 
         $res = $this->GetProductResult($page, $pageSize, $keyword, $category_id);
@@ -95,6 +95,7 @@ class ProductController extends Controller {
                   'discount_time_begin', 'discount_time_end', 'discount', 'discount_amount', 'category_id',
                   'publisher_id'];
         $query = Products::where(['status' => 1])
+                         ->where("published_date" , "<" , time())
                          ->select($field);
         // 分类ID
         if ($category_id) {

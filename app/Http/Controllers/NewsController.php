@@ -275,11 +275,14 @@ class NewsController extends Controller {
         $pageSize = $request->pageSize ?? 10;
         //数据列表末尾一条， 下一篇需要这样处理
         $offset = ($page - 1) * $pageSize;
-        $pageSize += 10;
         //数据列表第一条， 上一篇需要这样处理
         if ($offset > 1) {
             $offset -= 1;
         }
+
+        //避免用户,一直点击下一页,导致没有下一篇
+        $pageSize += 100;
+
         $keyword = $request->keyword;
         $industry_id = $request->industry_id;
         $tag = trim($request->tag);

@@ -277,7 +277,9 @@ class InformationController extends Controller {
         if ($offset > 1) {
             $offset -= 1;
         }
-        $pageSize += 10;
+        //避免用户,一直点击下一页,导致没有下一篇
+        $pageSize += 100;
+
         $keyword = $request->keyword;
         $industry_id = $request->industry_id;
         $tag = trim($request->tag);

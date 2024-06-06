@@ -90,7 +90,7 @@ class IndexController extends Controller {
                     //->orderBy('sort', 'desc')
                     ->orderBy('upload_at', 'desc')
                     ->orderBy('id', 'desc')
-                    ->limit(6)->get()->toArray();
+                    ->limit(4)->get()->toArray();
         if ($list) {
             foreach ($list as $key => $item) {
                 $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
