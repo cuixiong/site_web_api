@@ -14,9 +14,10 @@ use App\Services\SenWordsService;
 use Illuminate\Http\Request;
 
 class IndexController extends Controller {
-    // 最新报告
+    // 最新报告(热门报告)
     public function NewsProduct(Request $request) {
         $query = Products::where('status', 1)
+                         ->where("show_hot" , 1)
                          ->select(['id', 'thumb', 'name', 'category_id', 'published_date', 'price', 'url'])
                          //->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
                          ->orderBy('published_date', 'desc')
@@ -48,7 +49,11 @@ class IndexController extends Controller {
                     'name' => $category['name'],
                     'url'  => $category['link'],
                 ];
-                $keywords = Products::where('category_id', $category['id'])->limit(5)->pluck('keywords');
+                $keywords = Products::where('category_id', $category['id'])
+                                    ->where('show_recommend', 1)
+                                    ->orderBy('published_date', 'desc')
+                                    ->limit(5)
+                                    ->pluck('keywords');
                 if (!empty($keywords)) {
                     $data[$index]['keywords'] = $keywords;
                 } else {

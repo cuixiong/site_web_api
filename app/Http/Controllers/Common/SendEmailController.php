@@ -475,7 +475,7 @@ class SendEmailController extends Controller {
                     $language = '';
                 }
                 $products = Products::select(
-                    ['url as link', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
+                    ['url', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
                 )->where('id', $OrderGoods['goods_id'])->first();
 
                 //拼接产品名称
@@ -488,6 +488,7 @@ class SendEmailController extends Controller {
                 $goods_data['price_edition'] = $priceEdition['name'] ?: '';
                 $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$products->getThumbImgAttribute();
+                $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;
             }
             $areaInfo = $this->getAreaName($data);
@@ -576,7 +577,7 @@ class SendEmailController extends Controller {
                     $language = '';
                 }
                 $products = Products::select(
-                    ['url as link', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
+                    ['url', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
                 )->where('id', $OrderGoods['goods_id'])->first();
 
                 //拼接产品名称
@@ -589,6 +590,7 @@ class SendEmailController extends Controller {
                 $goods_data['price_edition'] = $priceEdition['name'] ?: '';
                 $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$products->getThumbImgAttribute();
+                $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;
             }
 
@@ -719,4 +721,11 @@ class SendEmailController extends Controller {
 
         return $area;
     }
+
+    public function getProductUrl($products) {
+        //https://mmgcn.marketmonitorglobal.com.cn/reports/332607/strain-wave-gear
+        $domain = env('DOMAIN_URL', 'https://mmgcn.marketmonitorglobal.com.cn');
+        return $domain."/reports/{$products->product_id}/{$products->url}";
+    }
+
 }

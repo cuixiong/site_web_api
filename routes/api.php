@@ -215,6 +215,14 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::prefix('sitemap')->group(function () {
         Route::get('make-site-map', [\App\Http\Controllers\SitemapController::class, 'MakeSiteMap'])->name('更新地图');
     });
+
+    //第三方接口
+    Route::prefix('third')->group(function () {
+        Route::post('send-email', [\App\Http\Controllers\Third\ThirdRespController::class, 'sendEmail'])->name(
+            '发送邮件'
+        );
+    });
+
     Route::get('xunsearch/clean', [\App\Http\Controllers\XunSearchTestController::class, 'clean'])->name(
         '讯搜清空数据'
     );
