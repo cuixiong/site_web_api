@@ -272,9 +272,16 @@ class SendEmailController extends Controller {
             $data = $ContactUs ? $ContactUs->toArray() : [];
             // $data['country'] = Country::where('id',$data['country_id'])->value('name');
             if (!empty($data['product_id'])) {
-                $productsName = Products::query()->where("id", $data['product_id'])->value("name");
+                $productsInfo = Products::query()->where("id", $data['product_id'])
+                                        ->select(
+                                            ['url', 'thumb', 'name', 'id as product_id', 'published_date',
+                                             'category_id']
+                                        )->first();
+                $productsName = $productsInfo->name ?? '';
+                $productLink = $this->getProductUrl($productsInfo);
             } else {
                 $productsName = '';
+                $productLink = '';
             }
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
@@ -294,6 +301,8 @@ class SendEmailController extends Controller {
                 'plantTimeBuy' => $data['buy_time'],
                 'content'      => $data['content'],
                 'backendUrl'   => env('IMAGE_URL'),
+                'link'         => $productLink,
+                'productsName' => $productsName,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
                                    ->toArray();
@@ -396,9 +405,16 @@ class SendEmailController extends Controller {
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             if (!empty($data['product_id'])) {
-                $productsName = Products::query()->where("id", $data['product_id'])->value("name");
+                $productsInfo = Products::query()->where("id", $data['product_id'])
+                                        ->select(
+                                            ['url', 'thumb', 'name', 'id as product_id', 'published_date',
+                                             'category_id']
+                                        )->first();
+                $productsName = $productsInfo->name ?? '';
+                $productLink = $this->getProductUrl($productsInfo);
             } else {
                 $productsName = '';
+                $productLink = '';
             }
             $area = $this->getAreaName($data);
             $data2 = [
@@ -414,6 +430,8 @@ class SendEmailController extends Controller {
                 'plantTimeBuy' => $data['buy_time'],
                 'content'      => $data['content'],
                 'backendUrl'   => env('IMAGE_URL'),
+                'link'         => $productLink,
+                'productsName' => $productsName,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
                                    ->toArray();
@@ -458,7 +476,6 @@ class SendEmailController extends Controller {
             if (!$data) {
                 ReturnJson(false, '未找到订单数据');
             }
-
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $PayName = Pay::where('id', $data['pay_type'])->value('name');
             $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
@@ -477,7 +494,6 @@ class SendEmailController extends Controller {
                 $products = Products::select(
                     ['url', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
                 )->where('id', $OrderGoods['goods_id'])->first();
-
                 //拼接产品名称
                 if (!empty($products->name)) {
                     $productsName .= $products->name." ";
@@ -562,7 +578,6 @@ class SendEmailController extends Controller {
             $user = $user ? $user->toArray() : [];
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $PayName = Pay::where('id', $data['pay_type'])->value('name');
-
             $orderGoodsList = OrderGoods::where('order_id', $Order['id'])->get()->toArray();
             $languageList = Languages::GetListById();
             $goods_data_list = [];
@@ -579,7 +594,6 @@ class SendEmailController extends Controller {
                 $products = Products::select(
                     ['url', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
                 )->where('id', $OrderGoods['goods_id'])->first();
-
                 //拼接产品名称
                 if (!empty($products->name)) {
                     $productsName .= $products->name." ";
@@ -593,8 +607,6 @@ class SendEmailController extends Controller {
                 $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;
             }
-
-
             $cityName = City::where('id', $data['city_id'])->value('name');
             $provinceName = City::where('id', $data['province_id'])->value('name');
             $addres = $provinceName.' '.$cityName.' '.$data['address'];
@@ -725,7 +737,7 @@ class SendEmailController extends Controller {
     public function getProductUrl($products) {
         //https://mmgcn.marketmonitorglobal.com.cn/reports/332607/strain-wave-gear
         $domain = env('DOMAIN_URL', 'https://mmgcn.marketmonitorglobal.com.cn');
+
         return $domain."/reports/{$products->product_id}/{$products->url}";
     }
-
 }
