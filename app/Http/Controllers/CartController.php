@@ -160,7 +160,7 @@ class CartController extends Controller {
     public function UpdataGoodsNumber(Request $request) {
         $id = $request->id;
         $number = $request->number;
-        if (!empty($id)) {
+        if (empty($id) || $number < 1) {
             ReturnJson(false, '参数错误');
         }
         $res = ShopCart::where('id', $id)->where(['user_id' => $request->user->id, 'status' => 1])
