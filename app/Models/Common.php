@@ -11,6 +11,8 @@ class Common extends Base {
     public static $siteUploadPathPrefix;
 
     public static function cutoffSiteUploadPathPrefix($path = '') {
+        // oss路径与后台路径保持一致， 因此不需要转换了
+        return $path;
         return str_replace(self::$siteUploadPathPrefix, '', $path);
     }
 

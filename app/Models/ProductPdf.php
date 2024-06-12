@@ -118,7 +118,7 @@ class ProductPdf extends Base
         // echo '<pre>';print_r($prices);exit;
 
         return [
-            'title' => 'MMG-CN',
+            'title' => env('APP_NAME'),
             'url' => env('APP_URL') . '/reports/' . $product_id . '/' . $product_url,
             'product_id' => $product_id,
             'product_name' => $product['name'] ?? '',

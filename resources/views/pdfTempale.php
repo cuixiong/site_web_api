@@ -7,7 +7,7 @@
         @page{
             size: auto A4 landscape; /* a4大小 横向打印 */
             /* margin: 3mm; 这个选项可以隐藏浏览器默认生成的页眉和页脚*/
-        } 
+        }
         * {
             padding: 0;
             margin: 0;
@@ -34,7 +34,7 @@
         position: relative;
     }
     .img_1 {
-         
+
          max-width: 205px;
         width: 100%;
         margin-left: 55px;
@@ -64,12 +64,12 @@ color: #197AAD;
         }
     }
     .content {
-        padding: 50px 50px; 
+        padding: 50px 50px;
         border-top: 2px solid #A8B9C6;
     }
     /* .list {
         display: flex;
-        align-items: center;   
+        align-items: center;
     } */
     .list {
          display: flex;
@@ -77,9 +77,9 @@ color: #197AAD;
         justify-content: space-around;
         /*flex-direction: row;*/
         /*display: grid;*/
-    
+
     }
-   
+
     .img_book {
         max-width: 110px;
         max-height: 150px;
@@ -89,7 +89,7 @@ color: #197AAD;
     @media screen and (max-width:1322px) {
         .en_text {
             margin: 20px 0;
-        } 
+        }
     }
     .list_text {
         margin-top: 20px;
@@ -119,7 +119,7 @@ color: #197AAD;
     .en_text {
         display: flex;
         margin: 5px 0;
-        align-items: center;      
+        align-items: center;
     }
     .img_en {
         width: 100%;
@@ -142,7 +142,7 @@ color: #197AAD;
       display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    flex-direction: column; 
+    flex-direction: column;
     justify-content: center;
     /*align-items: center;*/
     }
@@ -151,7 +151,7 @@ color: #197AAD;
     /*justify-content: space-between;*/
     justify-content: flex-start;
     flex-direction: row;
-    
+
     margin: 10px 0 10px 0;
 }
 span.fen_text {
@@ -160,7 +160,7 @@ span.fen_text {
 }
     .fen_text {
         font-size: 16px;
-        
+
         font-weight: 400;
         color: #333;
     }
@@ -196,7 +196,7 @@ span.fen_text {
         font-size: 18px;
         font-weight: bold;
         color: #333333;
-        
+
     }
     pre {
         overflow-wrap: break-word;
@@ -227,8 +227,8 @@ span.fen_text {
         width: 100%;
         align-items: center;
         top: 0%;
-        height: 90%;           
-    }    
+        height: 90%;
+    }
      h2 {
         font-size: 26px;
         font-weight: 300;
@@ -455,7 +455,7 @@ color: #333333;
     padding-right: 15px;
     margin: 0;
   }
-  
+
   .row .cell {
     border: none;
   }
@@ -463,7 +463,7 @@ color: #333333;
     text-align: center;
     font-size: 26px;
   }
-  
+
   .row .cell {
     font-family: open sans;
     font-size: 18px;
@@ -476,13 +476,13 @@ color: #333333;
   }
 }
     </style>
-    
+
     </head>
     <body>
     <div class="PDF">
         <div class="Top">
-            <img src="<?=env('IMAGE_URL');?>/pdf/yeMei.webp" alt="<?=env('IMAGE_URL');?>/pdf/yeMei.webp" class="img_2">
-            <img src="<?=env('IMAGE_URL');?>/pdf/logo.webp" alt="qyrLogo" class="img_1">
+            <img src="<?=env('IMAGE_URL');?>/site/<?=env('APP_NAME');?>/pdf/yeMei.webp" alt="<?=env('IMAGE_URL');?>/site/<?=env('APP_NAME');?>/pdf/yeMei.webp" class="img_2">
+            <img src="<?=env('IMAGE_URL');?>/site/<?=env('APP_NAME');?>/pdf/logo.webp" alt="qyrLogo" class="img_1">
             <p class="top_p">专注为企业提供资深报告，预测未来行业发展趋势</p>
         </div>
         <div class="content">
@@ -492,8 +492,8 @@ color: #333333;
                         <div class="en_text">
                             <p class="en_p"><?=$product_english_name?></p>
                         </div>
-                    
-                </div>   
+
+                </div>
                 <div class="grid-item-2">
                     <div class="list_text">
                         <img src="<?=$thumb;?>" alt="<?=$product_name?>" class="img_book">
@@ -502,7 +502,7 @@ color: #333333;
                                 <div><span class="fen_text">报告编码: <?=$product_id?></span></div>
                                 <div><span class="fen_text">出版时间: <?=$published_date?></span></div>
                                 <div><span class="fen_text">行业分类: <?=$category_name?></span></div>
-                                
+
                             </div>
                             <div class="fen">
                                 <div><span class="fen_text">服务方式：电子版或pdf版</span></div>
@@ -515,7 +515,7 @@ color: #333333;
                         </div>
                         </div>
                     </div>
-                </div>        
+                </div>
              </div>
             <div class="table_form">
                 <div class="limiter">
@@ -535,7 +535,7 @@ color: #333333;
                                         <div class="cell header_size back_color_2" style="font-size: 14px;
                                           font-family: HarmonyOS Sans SC;
                                           font-weight: 400;
-                                          color: #333333;">                                  
+                                          color: #333333;">
                                           <?=$price['edition']?>
                                         </div>
                                     <?php } ?>
@@ -550,7 +550,7 @@ color: #333333;
 
                                     <?php foreach($price['data'] as $value){ ?>
                                         <div class="cell"  style="color: #025ba0;text-align:center;font-weight:700;" data-title="<?=$value['edition']?>">
-                                            ￥ <?=$value['price']?>  
+                                            ￥ <?=$value['price']?>
                                         </div>
                                     <?php } ?>
                                 </div>
@@ -562,7 +562,7 @@ color: #333333;
             <div class="text_centen">
                 <div class="title">
                     <img
-                        src="<?=env('IMAGE_URL');?>/pdf/biaoTi.webp"
+                        src="<?=env('IMAGE_URL');?>/site/<?=env('APP_NAME');?>/pdf/biaoTi.webp"
                         alt="biaoTi"
                         class="text_img"
                     />
@@ -572,7 +572,7 @@ color: #333333;
 
                 <div class="title">
                     <img
-                        src="<?=env('IMAGE_URL');?>/pdf/biaoTi.webp"
+                        src="<?=env('IMAGE_URL');?>/site/<?=env('APP_NAME');?>/pdf/biaoTi.webp"
                         alt="biaoTi"
                         class="text_img"
                     />
@@ -582,7 +582,7 @@ color: #333333;
 
                 <div class="title">
                     <img
-                        src="<?=env('IMAGE_URL');?>/pdf/biaoTi.webp"
+                        src="<?=env('IMAGE_URL');?>/site/<?=env('APP_NAME');?>/pdf/biaoTi.webp"
                         alt="biaoTi"
                         class="text_img"
                     />
@@ -592,6 +592,6 @@ color: #333333;
             </div>
         </div>
     </div>
-        
+
     </body>
 </html>
