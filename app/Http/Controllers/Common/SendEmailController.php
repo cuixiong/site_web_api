@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Common;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\HandlerEmailJob;
-use App\Models\Common;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TrendsEmail;
@@ -315,20 +314,22 @@ class SendEmailController extends Controller {
             $scene = EmailScene::where('action', 'productSample')->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
             )->first();
-            //邮件标题
-            $scene->title = $scene->title.":  {$productsName}";
-            // 收件人的数组
-            $emails = explode(',', $scene->email_recipient);
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
             if ($scene->status == 0) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
+
+            //邮件标题
+            $scene->title = $scene->title.":  {$productsName}";
+            // 收件人的数组
+            $emails = explode(',', $scene->email_recipient);
+
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
+            //$this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
@@ -374,18 +375,19 @@ class SendEmailController extends Controller {
             $scene = EmailScene::where('action', 'contactUs')->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
             )->first();
-            // 收件人的数组
-            $emails = explode(',', $scene->email_recipient);
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
             if ($scene->status == 0) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
+            // 收件人的数组
+            $emails = explode(',', $scene->email_recipient);
+
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
+            //$this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
@@ -444,20 +446,21 @@ class SendEmailController extends Controller {
             $scene = EmailScene::where('action', 'customized')->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
             )->first();
-            //邮件标题
-            $scene->title = $scene->title.":  {$productsName}";
-            // 收件人的数组
-            $emails = explode(',', $scene->email_recipient);
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
             if ($scene->status == 0) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
+            //邮件标题
+            $scene->title = $scene->title.":  {$productsName}";
+            // 收件人的数组
+            $emails = explode(',', $scene->email_recipient);
+
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
+            //$this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
@@ -594,11 +597,17 @@ class SendEmailController extends Controller {
                 $products = Products::select(
                     ['url', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
                 )->where('id', $OrderGoods['goods_id'])->first();
+
+                if(empty($products )){
+                    continue;
+                }
+
                 //拼接产品名称
                 if (!empty($products->name)) {
                     $productsName .= $products->name." ";
                 }
-                $goods_data = $products;
+
+                $goods_data = $products->toArray();
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
                 $goods_data['language'] = $language;
                 $goods_data['price_edition'] = $priceEdition['name'] ?: '';

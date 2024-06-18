@@ -51,6 +51,7 @@ class IndexController extends Controller {
                 ];
                 $keywords = Products::where('category_id', $category['id'])
                                     ->where('show_recommend', 1)
+                                    ->where("status" , 1)
                                     ->orderBy('published_date', 'desc')
                                     ->limit(5)
                                     ->pluck('keywords');
@@ -62,6 +63,7 @@ class IndexController extends Controller {
                 $firstProduct = Products::select($productFields)
                                         ->where('category_id', $category['id'])
                                         ->where('show_recommend', 1)
+                                        ->where("status" , 1)
                                         ->orderBy('published_date', 'desc')
                                         ->first();
                 if (!empty($firstProduct)) {
@@ -255,6 +257,7 @@ class IndexController extends Controller {
         $query = Products::select(['name', 'keywords', 'id', 'url'])
                          ->where('category_id', $cate_id)
                          ->where('show_recommend', 1)
+                         ->where("status" , 1)
                          ->where('id', '<>', $productId)
                          ->orderBy('published_date', 'desc');
         $pageSize = 4;
