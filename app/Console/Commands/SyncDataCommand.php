@@ -42,8 +42,8 @@ class SyncDataCommand extends Command {
         foreach ($list as $for_info) {
             $data = [
                 'id'          => $for_info->id,
-                'category_id' => $for_info->category_id,
-                //'industry_id' => $for_info->industry_id,
+                'category_id' => $for_info->industry_id,
+                'type'        => $for_info->category_id,
                 'title'       => $for_info->title,
                 'keywords'    => $for_info->keyword,
                 'thumb'       => $for_info->thumb,
@@ -72,11 +72,10 @@ class SyncDataCommand extends Command {
         }
         //切换本地数据库
         $this->uslocalDb();
-        foreach ($newsList as $news){
+        foreach ($newsList as $news) {
             News::insert($news);
         }
-
-        foreach ($infoMationList as $infomat){
+        foreach ($infoMationList as $infomat) {
             Information::insert($infomat);
         }
         echo "ok".PHP_EOL;
