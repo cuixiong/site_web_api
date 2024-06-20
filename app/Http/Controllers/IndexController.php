@@ -17,9 +17,9 @@ class IndexController extends Controller {
     // 最新报告(热门报告)
     public function NewsProduct(Request $request) {
         $query = Products::where('status', 1)
-                         ->where("show_hot" , 1)
+                         ->where("show_hot", 1)
                          ->select(['id', 'thumb', 'name', 'category_id', 'published_date', 'price', 'url'])
-                         //->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
+                         ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
                          ->orderBy('published_date', 'desc')
                          ->orderBy('id', 'desc');
         $pageSize = 6;
@@ -49,41 +49,41 @@ class IndexController extends Controller {
                     'name' => $category['name'],
                     'url'  => $category['link'],
                 ];
-                $keywords = Products::where('category_id', $category['id'])
-                                    ->where('show_recommend', 1)
-                                    ->where("status" , 1)
-                                    ->orderBy('published_date', 'desc')
-                                    ->limit(5)
-                                    ->pluck('keywords');
-                if (!empty($keywords)) {
-                    $data[$index]['keywords'] = $keywords;
-                } else {
+                $pageSize = 5;
+                $productList = Products::select($productFields)
+                                       ->where('category_id', $category['id'])
+                                       ->where('show_recommend', 1)
+                                       ->where("status", 1)
+                                       ->orderBy('sort', 'asc')
+                                       ->orderBy('published_date', 'desc')
+                                       ->orderBy('id', 'desc')
+                                       ->limit($pageSize)
+                                       ->get()
+                                       ->toArray();
+                if (empty($productList)) {
                     continue;
                 }
-                $firstProduct = Products::select($productFields)
-                                        ->where('category_id', $category['id'])
-                                        ->where('show_recommend', 1)
-                                        ->where("status" , 1)
-                                        ->orderBy('published_date', 'desc')
-                                        ->first();
+                $keywords = array_column($productList, 'keywords');
+                $data[$index]['keywords'] = $keywords;
+                $firstProduct = array_shift($productList);
                 if (!empty($firstProduct)) {
-                    $firstProduct->thumb = $firstProduct->getThumbImgAttribute();
+                    $thumb = '';
+                    if (!empty($firstProduct['thumb'])) {
+                        $thumb = Common::cutoffSiteUploadPathPrefix($firstProduct['thumb']);
+                    } elseif ($firstProduct['category_id']) {
+                        $thumb = $category['thumb'];
+                    }
+                    $firstProduct['thumb'] = $thumb;
+
                     $year = date('Y', strtotime($firstProduct['published_date']));
-                    $firstProduct['description'] = (new ProductDescription($year))
+                    $description = (new ProductDescription($year))
                         ->where('product_id', $firstProduct['id'])
                         ->value('description');
+                    $description = mb_substr($description, 0, 300, 'UTF-8');
+                    $firstProduct['description'] = $description;
                 }
-                if (!empty($firstProduct)) {
-                    $data[$index]['firstProduct'] = $firstProduct;
-                    $otherProducts = $this->getRemProductOtherList($category['id'], $firstProduct['id']);
-                } else {
-                    $data[$index]['firstProduct'] = [];
-                }
-                if (!empty($otherProducts)) {
-                    $data[$index]['otherProducts'] = $otherProducts;
-                } else {
-                    $data[$index]['otherProducts'] = [];
-                }
+                $data[$index]['firstProduct'] = $firstProduct;
+                $data[$index]['otherProducts'] = $productList;
             }
         }
         ReturnJson(true, 'success', $data);
@@ -94,7 +94,7 @@ class IndexController extends Controller {
         $list = News::where('status', 1)
                     ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url'])
                     ->where('show_home', 1) // 是否在首页显示
-                    //->orderBy('sort', 'desc')
+            //->orderBy('sort', 'desc')
                     ->orderBy('upload_at', 'desc')
                     ->orderBy('id', 'desc')
                     ->limit(4)->get()->toArray();
@@ -114,7 +114,7 @@ class IndexController extends Controller {
                        ->orderBy('sort', 'desc')
                        ->orderBy('id', 'desc')
                        ->get();
-        foreach ($list as &$item){
+        foreach ($list as &$item) {
             $item['logo'] = Common::cutoffSiteUploadPathPrefix($item['logo']);
         }
         ReturnJson(true, '', $list);
@@ -130,7 +130,7 @@ class IndexController extends Controller {
                       ->orderBy('sort', 'desc')
                       ->orderBy('id', 'desc')
                       ->get();
-        foreach ($list as  &$value){
+        foreach ($list as &$value) {
             $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
             $value['national_flag'] = Common::cutoffSiteUploadPathPrefix($value['national_flag']);
         }
@@ -257,7 +257,7 @@ class IndexController extends Controller {
         $query = Products::select(['name', 'keywords', 'id', 'url'])
                          ->where('category_id', $cate_id)
                          ->where('show_recommend', 1)
-                         ->where("status" , 1)
+                         ->where("status", 1)
                          ->where('id', '<>', $productId)
                          ->orderBy('published_date', 'desc');
         $pageSize = 4;
