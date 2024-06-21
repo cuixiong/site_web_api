@@ -497,11 +497,15 @@ class SendEmailController extends Controller {
                 $products = Products::select(
                     ['url', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
                 )->where('id', $OrderGoods['goods_id'])->first();
+
+                if(empty($products )){
+                    continue;
+                }
                 //拼接产品名称
                 if (!empty($products->name)) {
                     $productsName .= $products->name." ";
                 }
-                $goods_data = $products;
+                $goods_data = $products->toArray();
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
                 $goods_data['language'] = $language;
                 $goods_data['price_edition'] = $priceEdition['name'] ?: '';
