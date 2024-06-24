@@ -228,4 +228,13 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     );
     Route::get('xunsearch/test', [\App\Http\Controllers\XunSearchTestController::class, 'test'])->name('测试接口');
     Route::get('/test1', [\App\Http\Controllers\TestController::class, 'test1'])->name('测试接口1');
+
+
+    //微信授权
+    Route::prefix('wx-empower')->group(function () {
+        Route::any('index1', [\App\Http\Controllers\WxAuthController::class, 'getWxAuthCode'])->name(
+            '获取微信授权码'
+        );
+    });
+
 });

@@ -44,12 +44,10 @@ class WechatTool extends Base
         $url = 'https://open.weixin.qq.com/connect/oauth2/authorize';
         $query = http_build_query([
                 'appid' => self::$APPID,
-                // 'redirect_uri' => Yii::$app->params['frontend_domain'].'/api/order/we2?referer='.urlencode($referer),
                 'redirect_uri' => $redirectUri,
                 'response_type' => 'code',
                 'scope' => $scope,
                 'state' => $state,
-                // 'connect_redirect' => '1',
             ]);
         $url = $url.'?'.$query.'#wechat_redirect';
 
