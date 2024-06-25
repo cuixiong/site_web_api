@@ -22,7 +22,6 @@ use App\Models\ProductsCategory;
 use App\Models\SystemValue;
 use App\Models\User;
 use Illuminate\Support\Facades\Redis;
-use function Psy\debug;
 
 class SendEmailController extends Controller {
     /**
@@ -671,10 +670,10 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail,true);
-//            foreach ($emails as $email) {
-//                $this->handlerSendEmail($scene, $email, $data, $senderEmail,true);
-//            }
+            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
+            foreach ($emails as $email) {
+                $this->handlerSendEmail($scene, $email, $data, $senderEmail);
+            }
 
             return true;
         } catch (\Exception $e) {
