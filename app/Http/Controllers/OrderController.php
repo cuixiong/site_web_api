@@ -89,7 +89,6 @@ class OrderController extends Controller {
                         $this->getCouponUser($coupon, $user, $modelCouponUser);
                     } else {
                         // 无用户，测试规定 : 不做任何操作
-
                     }
                 } else { // 如果获取到头部token，说明此时用户已经登录
                     $this->getCouponUser($coupon, $user, $modelCouponUser);
@@ -107,10 +106,15 @@ class OrderController extends Controller {
     public function CreateAndPay(Request $request) {
         try {
             $coupon_id = $request->coupon_id ?? ''; // 优惠券id：无论是用户输入优惠券码，还是用户选择某一种优惠券，都接收coupon_id
-            $remarks = $request->remarks; // 订单备注
-            $address = $request->address;
+            $inputParams = $request->input();
             //校验请求参数
-            (new OrderRequest())->createandpay($request);
+
+            try{
+                (new OrderRequest())->createandpay($request);
+            }catch (\Exception $e){
+                ReturnJson(false, $e->getMessage());
+            }
+
             //校验支付方式
             $payType = $request->pay_type;
             if (!array_key_exists($payType, Order::payType())) {
@@ -133,7 +137,7 @@ class OrderController extends Controller {
                 }
                 $orderTrans = new OrderTrans();
                 $order = $orderTrans->setUser($user)->createBySingle(
-                    $request->goods_id, $priceEdition, $payType, $coupon_id, $address, $remarks
+                    $request->goods_id, $priceEdition, $payType, $coupon_id, $inputParams
                 );
             } elseif (!empty($request->shop_id)) { // 已登录，通过购物车下单
                 $shopIdArr = $request->shop_id;
@@ -143,14 +147,14 @@ class OrderController extends Controller {
                 }
                 $orderTrans = new OrderTrans();
                 $order = $orderTrans->setUser($user)->createByCart(
-                    $shopIdArr, $payType, $coupon_id, $address, $remarks
+                    $shopIdArr, $payType, $coupon_id, $inputParams
                 );
             } elseif (!empty($request->shopcar_json)) { // 未登录，通过购物车下单
                 $shopcarJson = $request->shopcar_json;
                 $shopcarArr = json_decode($shopcarJson, true);
                 $orderTrans = new OrderTrans();
                 $order = $orderTrans->setUser($user)->createByCartWithoutLogin(
-                    $shopcarArr, $payType, $coupon_id, $address, $remarks
+                    $shopcarArr, $payType, $coupon_id, $inputParams
                 );
             } else {
                 ReturnJson(false, '参数错误3');
@@ -158,11 +162,8 @@ class OrderController extends Controller {
             if ($order === null) {
                 return $this->echoMsg($orderTrans->getErrno());
             }
-
             //发送邮件
             (new SendEmailController)->placeOrder($order->id);
-
-
             // 把临时订单号加入缓存
             Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
             //拉起支付
@@ -316,14 +317,7 @@ class OrderController extends Controller {
      */
     public function Details(Request $request) {
         $orderId = $request->order_id;
-        $field = [
-            'order_amount', 'actually_paid',
-            'is_pay', 'pay_type',
-            'order_number', 'pay_time',
-            'user_id', 'province_id',
-            'city_id', 'address', 'remarks',
-        ];
-        $order = Order::select($field)
+        $order = Order::query()
                       ->where(['id' => $orderId])
                       ->first();
         if (!$order) {
@@ -359,13 +353,14 @@ class OrderController extends Controller {
             )->first();
             $province = City::where('id', $order['province_id'])->value('name');
             $city = City::where('id', $order['city_id'])->value('name');
-            $address = $province.$city.$order['address'];
             $_user = [
-                'name'    => $user['username'] ?? '',
-                'email'   => $user['email'] ?? '',
-                'phone'   => $user['phone'] ?? '',
-                'company' => $user['company'] ?? '',
-                'address' => $address,
+                'name'     => $user['username'] ?? '',
+                'email'    => $user['email'] ?? '',
+                'phone'    => $user['phone'] ?? '',
+                'company'  => $user['company'] ?? '',
+                'province' => $province,
+                'city_id'  => $city,
+                'address'  => $order['address'],
             ];
         }
         $discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);

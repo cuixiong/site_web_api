@@ -239,7 +239,8 @@ class PageController extends Controller
             'name',
             'position as post',
             'image as img',
-            'custom as sketch'
+            'custom as sketch',
+            'describe'
         ])
             ->where('status', 1)
             ->orderBy('sort', 'asc')

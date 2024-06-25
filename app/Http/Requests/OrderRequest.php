@@ -13,17 +13,21 @@ class OrderRequest extends FormRequest {
      */
     public function createandpay($request) {
         $rules = [
-            'username' => 'required',
-            'email'    => 'required',
-            'phone'    => 'required',
-            'company'  => 'required',
+            'username'    => 'required',
+            'email'       => 'required',
+            'phone'       => 'required',
+            'company'     => 'required',
+            'province_id' => 'required',
+//            'address'     => 'required',
         ];
         $message = [
-            'username.required' => '用户名不能为空',
-            'email.required'    => '邮箱不能为空',
-            'email.email'       => '邮箱格式错误',
-            'phone.required'    => '联系电话不能为空',
-            'company.required'  => '公司名不能为空',
+            'username.required'    => '用户名不能为空',
+            'email.required'       => '邮箱不能为空',
+            'email.email'          => '邮箱格式错误',
+            'phone.required'       => '联系电话不能为空',
+            'company.required'     => '公司名不能为空',
+            'province_id.required' => '省份不能为空',
+//            'address.required'     => '收货地址不能为空',
         ];
 
         return $this->validateRequest($request, $rules, $message);

@@ -57,7 +57,17 @@ class OrderTrans extends Base {
         return $price;
     }
 
-    public function createBySingle($goodsId, $priceEdition, $payType, $coupon_id, $address, $remarks) {
+    /**
+     *
+     * @param $goodsId
+     * @param $priceEdition
+     * @param $payType
+     * @param $coupon_id
+     * @param $inputParams array 前端传递过来的参数
+     *
+     * @return Order|mixed|null
+     */
+    public function createBySingle($goodsId, $priceEdition, $payType, $coupon_id, $inputParams) {
         $user = $this->user;
         $userId = $user->id;
         // 判断商品是否存在
@@ -77,7 +87,7 @@ class OrderTrans extends Base {
             $actuallyPaid = $this->couponPrice($orderAmount, $coupon_id);
         }
         $order = $this->addOrderData(
-            $timestamp, $userId, $payType, $orderAmount, $actuallyPaid, $user, $address, $coupon_id, $remarks
+            $timestamp, $userId, $payType, $orderAmount, $actuallyPaid, $user, $coupon_id, $inputParams
         );
         if (empty($order)) {
             $this->errno = ApiCode::INSERT_FAIL;
@@ -106,7 +116,16 @@ class OrderTrans extends Base {
         return $order;
     }
 
-    public function createByCart($shopIdArr, $payType, $coupon_id, $address, $remarks) {
+    /**
+     *
+     * @param $shopIdArr
+     * @param $payType
+     * @param $coupon_id
+     * @param $inputParams array 前端传递过来的参数
+     *
+     * @return Order|null
+     */
+    public function createByCart($shopIdArr, $payType, $coupon_id, $inputParams) {
         $user = $this->user;
         $userId = $user->id;
         $shopCartList = ShopCart::query()->where(['user_id' => $userId])
@@ -114,13 +133,22 @@ class OrderTrans extends Base {
                                 ->where("status", 1)
                                 ->get()->toArray();
 
-        return $this->shopCartSubmitOrder($shopCartList, $coupon_id, $payType, $user, $address, $remarks);
+        return $this->shopCartSubmitOrder($shopCartList, $coupon_id, $payType, $user, $inputParams);
     }
 
-    public function createByCartWithoutLogin($shopcarArr, $payType, $coupon_id, $address, $remarks) {
+    /**
+     *
+     * @param $shopcarArr
+     * @param $payType
+     * @param $coupon_id
+     * @param $inputParams array 前端传递过来的参数
+     *
+     * @return Order|null
+     */
+    public function createByCartWithoutLogin($shopcarArr, $payType, $coupon_id, $inputParams) {
         $user = $this->user;
 
-        return $this->shopCartSubmitOrder($shopcarArr, $coupon_id, $payType, $user, $address, $remarks);
+        return $this->shopCartSubmitOrder($shopcarArr, $coupon_id, $payType, $user, $inputParams);
     }
 
     /**
@@ -173,21 +201,19 @@ class OrderTrans extends Base {
 
     /**
      *
-     * @param int   $timestamp
-     * @param       $userId
-     * @param       $payType
-     * @param float $orderAmountAll
-     * @param float $actuallyPaidAll
-     * @param       $user
-     * @param       $address
-     * @param       $coupon_id
-     * @param       $remarks
+     * @param int $timestamp
+     * @param     $userId
+     * @param     $payType
+     * @param     $orderAmountAll
+     * @param     $actuallyPaidAll
+     * @param     $user
+     * @param     $coupon_id
+     * @param     $inputParams array 前端传递过来的参数
      *
-     * @return mixed
+     * @return Order|false
      */
     private function addOrderData(
-        int $timestamp, $userId, $payType, $orderAmountAll, $actuallyPaidAll, $user, $address, $coupon_id,
-            $remarks
+        int $timestamp, $userId, $payType, $orderAmountAll, $actuallyPaidAll, $user, $coupon_id, $inputParams
     ) {
         // 插入订单表 order
         $order = new Order();
@@ -199,16 +225,16 @@ class OrderTrans extends Base {
         $order->pay_type = $payType;
         $order->order_amount = $orderAmountAll; // 原价
         $order->actually_paid = $actuallyPaidAll; // 折后
-        $order->username = $user->username;
-        $order->email = $user->email;
-        $order->phone = $user->phone;
-        $order->company = $user->company;
-        $order->province_id = $user->province_id;
-        $order->city_id = $user->city_id;
-        $order->address = $address;
+        $order->username = $inputParams['username'];
+        $order->email = $inputParams['email'];
+        $order->phone = $inputParams['phone'];
+        $order->company = $inputParams['company'];
+        $order->province_id = $inputParams['province_id'];
+        $order->city_id = $inputParams['city_id'] ?? 0;
+        $order->address = $inputParams['address'] ?? '';
+        $order->remarks = $inputParams['remarks'] ?? '';
         $order->coupon_id = $coupon_id ? intval($coupon_id) : 0;
         $order->is_mobile_pay = $this->isMobileClient() == true ? 1 : 0; // 是否为移动端支付：0代表否，1代表是。
-        $order->remarks = $remarks;
         if (!$order->save()) {
             DB::rollBack();
             $this->errno = '插入订单失败';
@@ -231,17 +257,16 @@ class OrderTrans extends Base {
 
     /**
      *
-     * @param array $shopCartList
-     * @param       $coupon_id
-     * @param       $payType
-     * @param       $user
-     * @param       $address
-     * @param       $remarks
+     * @param $shopCartList
+     * @param $coupon_id
+     * @param $payType
+     * @param $user
+     * @param $inputParams array 前端传递过来的参数
      *
-     * @return Order|null
+     * @return Order|mixed|null
      */
     private function shopCartSubmitOrder(
-        $shopCartList, $coupon_id, $payType, $user, $address, $remarks
+        $shopCartList, $coupon_id, $payType, $user, $inputParams
     ) {
         $userId = $user->id;
         DB::beginTransaction();
@@ -297,7 +322,7 @@ class OrderTrans extends Base {
             return null;
         }
         $order = $this->addOrderData(
-            $timestamp, $userId, $payType, $orderAmountAll, $actuallyPaidAll, $user, $address, $coupon_id, $remarks
+            $timestamp, $userId, $payType, $orderAmountAll, $actuallyPaidAll, $user, $coupon_id, $inputParams
         );
         if (empty($order)) {
             $this->errno = ApiCode::INSERT_FAIL;
