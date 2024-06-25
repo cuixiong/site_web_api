@@ -7,6 +7,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Mail\Mailables\Address;
 
 /**
  * 动态发邮类
@@ -21,6 +22,7 @@ class TrendsEmail extends Mailable
     public $title;
     public $EmailUser;
     public $templetFile;
+    public $sendUserName;
     /**
      * Create a new message instance.
      * @param string $templet
@@ -30,12 +32,13 @@ class TrendsEmail extends Mailable
      * @param string $templetFile
      * @return void
      */
-    public function __construct($templet,$data,$title,$EmailUser)
+    public function __construct($templet,$data,$title,$EmailUser,$sendUserName='')
     {
         $this->templet = $templet;
         $this->data = $data;
         $this->title = $title;
         $this->EmailUser = $EmailUser;
+        $this->sendUserName = $sendUserName;
     }
 
     /**
@@ -57,7 +60,8 @@ class TrendsEmail extends Mailable
     public function envelope()
     {
         return new Envelope(
-            from: $this->EmailUser,
+            //from: $this->EmailUser,
+            from: new Address($this->EmailUser , $this->sendUserName),
             subject: $this->title,
         );
     }

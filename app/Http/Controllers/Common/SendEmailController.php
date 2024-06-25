@@ -22,6 +22,7 @@ use App\Models\ProductsCategory;
 use App\Models\SystemValue;
 use App\Models\User;
 use Illuminate\Support\Facades\Redis;
+use function Psy\debug;
 
 class SendEmailController extends Controller {
     /**
@@ -48,9 +49,10 @@ class SendEmailController extends Controller {
      * @param array  $data      渲染模板需要的数据
      * @param string $subject   邮箱标题
      * @param string $EmailUser 邮箱发件人
+     * @param string $sendUserName 发件人昵称
      */
-    private function SendEmail($email, $templet, $data, $subject, $EmailUser, $name = 'trends') {
-        $res = Mail::mailer($name)->to($email)->send(new TrendsEmail($templet, $data, $subject, $EmailUser));
+    private function SendEmail($email, $templet, $data, $subject, $EmailUser, $name = 'trends', $SendEmailNickName = '') {
+        $res = Mail::mailer($name)->to($email)->send(new TrendsEmail($templet, $data, $subject, $EmailUser, $SendEmailNickName));
 
         return $res;
     }
@@ -669,10 +671,10 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
-            foreach ($emails as $email) {
-                $this->handlerSendEmail($scene, $email, $data, $senderEmail);
-            }
+            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail,true);
+//            foreach ($emails as $email) {
+//                $this->handlerSendEmail($scene, $email, $data, $senderEmail,true);
+//            }
 
             return true;
         } catch (\Exception $e) {
@@ -721,10 +723,10 @@ class SendEmailController extends Controller {
             $this->SetConfig($BackupConfig, 'backups'); // 若发送失败，则使用备用邮箱发送
         }
         try {
-            $this->SendEmail($email, $scene->body, $data, $scene->title, $senderEmail->email);
+            $this->SendEmail($email, $scene->body, $data, $scene->title, $senderEmail->email, 'trends', $senderEmail->name);
         } catch (\Exception $e) {
             if ($scene->alternate_email_id) {
-                $this->SendEmail($email, $scene->body, $data, $scene->title, $BackupSenderEmail->email, 'backups');
+                $this->SendEmail($email, $scene->body, $data, $scene->title, $BackupSenderEmail->email, 'backups', $BackupSenderEmail->name);
             }
         }
     }

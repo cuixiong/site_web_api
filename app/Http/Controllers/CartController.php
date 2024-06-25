@@ -62,6 +62,7 @@ class CartController extends Controller {
         $totalPrice = 0;
         $shopCartData = [];
         $languageIdList = Languages::GetListById();
+        $time = time();
         foreach ($shopCart as $key => $value) {
             if (!empty($value['thumb'])) {
                 $thumbImg = $value['thumb'];
@@ -89,6 +90,12 @@ class CartController extends Controller {
             $shopCartData[$key]['discount_time_end'] = $value['discount_time_end'] ? date(
                 'Y-m-d', $value['discount_time_end']
             ) : '';
+            //判断当前报告是否在优惠时间内
+            if($value['discount_time_begin'] <= $time && $value['discount_time_end'] >= $time){
+                $shopCartData[$key]['discount_status'] = 1;
+            }else{
+                $shopCartData[$key]['discount_status'] = 0;
+            }
             // 计算报告价格
             $languages = Languages::GetList();
             $shopCartData[$key]['prices'] = Products::CountPrice(
