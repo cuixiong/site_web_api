@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\SearchRank;
 use App\Services\SenWordsService;
+use App\Services\SphinxService;
+use Foolz\SphinxQL\Drivers\Mysqli\Connection;
+use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
@@ -26,11 +29,24 @@ class ProductController extends Controller {
         $pageSize = $request->pageSize ? intval($request->pageSize) : 10; // 每页显示数量
         $category_id = $request->category_id ?? 0; // 分类ID
         $keyword = trim($request->keyword) ?? null; // 搜索关键词
-        if(!empty($keyword )){
+        if (!empty($keyword)) {
             //点击关键词一次, 需要增加一次点击次数
             SearchRank::query()->where('name', $keyword)->increment('hits');
         }
 
+        $categorySeoInfo = [
+            'seo_title'       => '',
+            'seo_keyword'     => '',
+            'seo_description' => '',
+        ];
+        if (!empty($category_id)) {
+            $categorySeoData = ProductsCategory::query()
+                                               ->select(['seo_title', 'seo_keyword', 'seo_description'])
+                                               ->where('id', $category_id)->first();
+            if (!empty($categorySeoData)) {
+                $categorySeoInfo = $categorySeoData->toArray();
+            }
+        }
         $res = $this->GetProductResult($page, $pageSize, $keyword, $category_id);
         $result = $res['list'];
         $count = $res['count'];
@@ -71,18 +87,21 @@ class ProductController extends Controller {
                     'name' => $category['name'],
                     'link' => $category['link'],
                 ] : [];
+
+                $publisher_id = Products::query()->where('id', $value['id'])->value('publisher_id');
                 $value['prices'] = Products::CountPrice(
-                    $value['price'], $value['publisher_id'], $languages
+                    $value['price'], $publisher_id, $languages
                 ) ?? [];
                 $products[] = $value;
             }
         }
         $data = [
-            'products'  => $products,
-            "page"      => intVal($page),
-            "pageSize"  => intVal($pageSize),
-            "count"     => intVal($count),
-            'pageCount' => ceil($count / $pageSize),
+            'products'        => $products,
+            "page"            => intVal($page),
+            "pageSize"        => intVal($pageSize),
+            "count"           => intVal($count),
+            'pageCount'       => ceil($count / $pageSize),
+            'categorySeoInfo' => $categorySeoInfo,
         ];
         ReturnJson(true, '请求成功', $data);
     }
@@ -91,50 +110,17 @@ class ProductController extends Controller {
      * 搜索产品数据
      */
     private function GetProductResult($page, $pageSize, $keyword = '', $category_id = 0) {
-        $field = ['name', 'english_name', 'thumb', 'published_date', 'keywords', 'id', 'url', 'price', 'discount_type',
-                  'discount_time_begin', 'discount_time_end', 'discount', 'discount_amount', 'category_id',
-                  'publisher_id'];
-        $query = Products::where(['status' => 1])
-                         ->where("published_date" , "<" , time())
-                         ->select($field);
-        // 分类ID
-        if ($category_id) {
-            $query = $query->where('category_id', $category_id);
+        try {
+            $hidden = SystemValue::where('key', 'sphinx')->value('hidden');
+            if ($hidden == 1) {
+                return $this->SearchForSphinx($category_id, $keyword, $page, $pageSize);
+            } else {
+                return $this->SearchForMysql($category_id, $keyword, $page, $pageSize);
+            }
+        } catch (\Exception $e) {
+            \Log::error('应用端查询失败,异常信息为:'.json_encode([$e->getMessage()]));
+            ReturnJson(false, '请求失败,请稍后再试');
         }
-        // 关键词
-        if ($keyword) {
-            $query = $query->where(function ($query) use ($keyword) {
-                $query->where('name', 'like', '%'.$keyword.'%');
-                if (is_numeric($keyword)) {
-                    $query->orWhere('id', $keyword);
-                }
-            });
-        }
-        // 获取当前复合条件的总数量
-        $count = $query->count();
-        // 排序 显示发布时间 》 排序 》 id
-        $query = $query->orderBy('published_date', 'desc')->orderBy('sort', 'asc');
-        // 分页
-        $offset = ($page - 1) * $pageSize;
-        $list = $query->offset($offset)->limit($pageSize)->get()->toArray();
-//        过滤敏感词(暂时不需要, 在上传, 新增做好过滤)
-//        $filterCnt = 0;
-//        foreach ($list as $key => $value){
-//            $cheRes = SenWordsService::checkFitter($value['name']);
-//            if($cheRes){
-//                $filterCnt +=1;
-//                unset($list[$key]);
-//            }
-//        }
-//
-//        if($filterCnt > 0){
-//            $forCnt = 3;
-//            $this->handlerSurplusProductList(
-//                $filterCnt, ($page-1), $pageSize, $query,
-//                $list, $forCnt
-//            );
-//        }
-        return ['list' => $list, 'count' => $count];
     }
 
     public function handlerSurplusProductList(
@@ -276,7 +262,6 @@ class ProductController extends Controller {
             $product_desc['prices'] = Products::CountPrice($product_desc['price'], $product_desc['publisher_id']);
             $product_desc['description'] = $product_desc['description'];
             $product_desc['url'] = $product_desc['url'];
-
             $product_desc['thumb'] = Common::cutoffSiteUploadPathPrefix($product->getThumbImgAttribute());
             $product_desc['published_date'] = $product_desc['published_date'] ? date(
                 'Y-m-d', strtotime(
@@ -360,9 +345,9 @@ class ProductController extends Controller {
         $data = [];
         foreach ($products as $index => $product) {
             $tempThumb = '';
-            if(!empty($product['thumb'] )){
+            if (!empty($product['thumb'])) {
                 $tempThumb = Common::cutoffSiteUploadPathPrefix($product['thumb']);
-            }elseif(!empty($product['category_thumb'] )){
+            } elseif (!empty($product['category_thumb'])) {
                 $tempThumb = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
             }
             $data[$index]['thumb'] = $tempThumb;
@@ -545,5 +530,116 @@ class ProductController extends Controller {
         $model->save();
 
         return $productsPdf->frontBuild();
+    }
+
+    /**
+     *
+     * @param mixed $category_id
+     * @param mixed $keyword
+     * @param       $page
+     * @param       $pageSize
+     *
+     * @return array
+     */
+    private function SearchForMysql(mixed $category_id, mixed $keyword, $page, $pageSize): array {
+        $field = ['name', 'english_name', 'thumb', 'published_date', 'keywords', 'id', 'url', 'price', 'discount_type',
+                  'discount_time_begin', 'discount_time_end', 'discount', 'discount_amount', 'category_id',
+                  'publisher_id'];
+        $query = Products::where(['status' => 1])
+                         ->where("published_date", "<", time())
+                         ->select($field);
+        // 分类ID
+        if ($category_id) {
+            $query = $query->where('category_id', $category_id);
+        }
+        // 关键词
+        if ($keyword) {
+            $query = $query->where(function ($query) use ($keyword) {
+                $query->where('name', 'like', '%'.$keyword.'%');
+                if (is_numeric($keyword)) {
+                    $query->orWhere('id', $keyword);
+                }
+            });
+        }
+        // 获取当前复合条件的总数量
+        $count = $query->count();
+        // 排序 显示发布时间 》 排序 》 id
+        $query = $query->orderBy('published_date', 'desc')->orderBy('sort', 'asc');
+        // 分页
+        $offset = ($page - 1) * $pageSize;
+        $list = $query->offset($offset)->limit($pageSize)->get()->toArray();
+
+        return ['list' => $list, 'count' => $count];
+    }
+
+    public function SearchForSphinx($category_id, $keyword, $page, $pageSize) {
+        $sphinxSrevice = new SphinxService();
+        $conn = $sphinxSrevice->getConnection();
+        $idProducts = $this->getProductById($conn, $category_id, $keyword);
+
+        //报告昵称,英文昵称匹配查询
+        $query = (new SphinxQL($conn))->select('*')
+                                      ->from('products_rt')
+                                      ->orderBy('sort', 'asc')
+                                      ->orderBy('published_date', 'desc');
+        $query = $query->where('status', '=', 1);
+        // 分类ID
+        if (!empty($category_id)) {
+            $query = $query->where('category_id', intval($category_id));
+        }
+        //精确搜索, 多字段匹配
+        $val = '"'.$keyword.'"';
+        $query->match(['name', 'english_name'], $val);
+        //查询总数
+        $countQuery = $query->setSelect('COUNT(*) as cnt');
+        $fetchNum = $countQuery->execute()->fetchNum();
+        $count = $fetchNum[0] ?? 0;
+        //查询结果分页
+        $query->limit(($page - 1) * $pageSize, $pageSize);
+        $query->setSelect('*');
+        $result = $query->execute();
+        $products = $result->fetchAllAssoc();
+        if(!empty($idProducts )){
+            foreach ($idProducts as $forIdProducts){
+                array_unshift($products , $forIdProducts);
+            }
+        }
+
+        $data = [
+            'list'  => $products,
+            'count' => intval($count) + count($idProducts),
+            'type'  => 'sphinx'
+        ];
+        return $data;
+    }
+
+    /**
+     *
+     * @param Connection|bool $conn
+     * @param                 $category_id
+     * @param                 $keyword
+     *
+     * @return array
+     */
+    private function getProductById(Connection|bool $conn, $category_id, $keyword): array {
+        $query = (new SphinxQL($conn))->select('*')
+                                      ->from('products_rt')
+                                      ->orderBy('sort', 'asc')
+                                      ->orderBy('published_date', 'desc');
+        $query = $query->where('status', '=', 1);
+        // 分类ID
+        if (!empty($category_id)) {
+            $query = $query->where('category_id', intval($category_id));
+        }
+        //id查询
+        $idProducts = [];
+        if (is_numeric($keyword)) {
+            $idQuery = $query;
+            $idQuery->where('id', intval($keyword));
+            $idResult = $idQuery->execute();
+            $idProducts = $idResult->fetchAllAssoc();
+        }
+
+        return $idProducts;
     }
 }

@@ -7,6 +7,7 @@
     "require": {
         "php": "^8.0.2",
         "alipaysdk/easysdk": "^2.2",
+        "foolz/sphinxql-query-builder": "^3.0",
         "guzzlehttp/guzzle": "^7.2",
         "hightman/xunsearch": "^1.4",
         "laravel/framework": "^9.19",
