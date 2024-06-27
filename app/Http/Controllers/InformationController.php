@@ -164,6 +164,7 @@ class InformationController extends Controller {
                                     ])
                            ->where('status', 1)
                            ->where('id', '<>', $id)
+                           ->where('upload_at', '<=' , time())
             // ->where($category_id)
                            ->orderBy('upload_at', 'desc')
                            ->limit(5)

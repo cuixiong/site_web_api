@@ -33,7 +33,6 @@ class ProductController extends Controller {
             //点击关键词一次, 需要增加一次点击次数
             SearchRank::query()->where('name', $keyword)->increment('hits');
         }
-
         $categorySeoInfo = [
             'seo_title'       => '',
             'seo_keyword'     => '',
@@ -50,6 +49,7 @@ class ProductController extends Controller {
         $res = $this->GetProductResult($page, $pageSize, $keyword, $category_id);
         $result = $res['list'];
         $count = $res['count'];
+        $searchEngine = $res['type'] ?? '';
         $products = [];
         if ($result) {
             $languages = Languages::GetList();
@@ -73,21 +73,28 @@ class ProductController extends Controller {
                     $value['thumb'] = $category['thumb'];
                 }
                 $value['thumb'] = Common::cutoffSiteUploadPathPrefix($value['thumb']);
-                $suffix = date('Y', strtotime($value['published_date']));
+                //\Log::error('发布时间返回结果数据:'.$value['published_date']);
+                if (is_numeric($value['published_date'])) {
+                    $suffix = date('Y', $value['published_date']);
+                    $value['published_date'] = $value['published_date'] ? date(
+                        'Y-m-d', $value['published_date']
+                    ) : '';
+                } else {
+                    $suffix = date('Y', strtotime($value['published_date']));
+                    $value['published_date'] = $value['published_date'] ? date(
+                        'Y-m-d', strtotime($value['published_date'])
+                    ) : '';
+                }
                 $description = (new ProductDescription($suffix))->where('product_id', $value['id'])->value(
                     'description'
                 );
                 $description = mb_substr($description, 0, 120, 'UTF-8');
                 $value['description'] = $description;
-                $value['published_date'] = $value['published_date'] ? date(
-                    'Y-m-d', strtotime($value['published_date'])
-                ) : '';
                 $value['category'] = $category ? [
                     'id'   => $category['id'],
                     'name' => $category['name'],
                     'link' => $category['link'],
                 ] : [];
-
                 $publisher_id = Products::query()->where('id', $value['id'])->value('publisher_id');
                 $value['prices'] = Products::CountPrice(
                     $value['price'], $publisher_id, $languages
@@ -102,6 +109,7 @@ class ProductController extends Controller {
             "count"           => intVal($count),
             'pageCount'       => ceil($count / $pageSize),
             'categorySeoInfo' => $categorySeoInfo,
+            'searchEngine'    => $searchEngine //搜索引擎
         ];
         ReturnJson(true, '请求成功', $data);
     }
@@ -569,14 +577,13 @@ class ProductController extends Controller {
         $offset = ($page - 1) * $pageSize;
         $list = $query->offset($offset)->limit($pageSize)->get()->toArray();
 
-        return ['list' => $list, 'count' => $count];
+        return ['list' => $list, 'count' => $count, 'type' => 'mysql'];
     }
 
     public function SearchForSphinx($category_id, $keyword, $page, $pageSize) {
         $sphinxSrevice = new SphinxService();
         $conn = $sphinxSrevice->getConnection();
         $idProducts = $this->getProductById($conn, $category_id, $keyword);
-
         //报告昵称,英文昵称匹配查询
         $query = (new SphinxQL($conn))->select('*')
                                       ->from('products_rt')
@@ -588,28 +595,33 @@ class ProductController extends Controller {
             $query = $query->where('category_id', intval($category_id));
         }
         //精确搜索, 多字段匹配
-        $val = '"'.$keyword.'"';
-        $query->match(['name', 'english_name'], $val);
+        if (!empty($keyword)) {
+            $val = '"'.$keyword.'"';
+            $query->match(['name', 'english_name'], $val , true);
+        }
+
         //查询总数
         $countQuery = $query->setSelect('COUNT(*) as cnt');
         $fetchNum = $countQuery->execute()->fetchNum();
         $count = $fetchNum[0] ?? 0;
         //查询结果分页
-        $query->limit(($page - 1) * $pageSize, $pageSize);
+        $offset = ($page - 1) * $pageSize;
+        $query->limit($offset, $pageSize);
+        $query->option('max_matches' , $offset + $pageSize);
         $query->setSelect('*');
         $result = $query->execute();
         $products = $result->fetchAllAssoc();
-        if(!empty($idProducts )){
-            foreach ($idProducts as $forIdProducts){
-                array_unshift($products , $forIdProducts);
+        if (!empty($idProducts)) {
+            foreach ($idProducts as $forIdProducts) {
+                array_unshift($products, $forIdProducts);
             }
         }
-
         $data = [
             'list'  => $products,
             'count' => intval($count) + count($idProducts),
             'type'  => 'sphinx'
         ];
+
         return $data;
     }
 
