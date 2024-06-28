@@ -18,6 +18,7 @@ class IndexController extends Controller {
     public function NewsProduct(Request $request) {
         $query = Products::where('status', 1)
                          ->where("show_hot", 1)
+                         ->where("published_date" , "<=", time())
                          ->select(['id', 'thumb', 'name', 'category_id', 'published_date', 'price', 'url'])
                          ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
                          ->orderBy('published_date', 'desc')
@@ -54,6 +55,7 @@ class IndexController extends Controller {
                                        ->where('category_id', $category['id'])
                                        ->where('show_recommend', 1)
                                        ->where("status", 1)
+                                       ->where("published_date" , "<=", time())
                                        ->orderBy('sort', 'asc')
                                        ->orderBy('published_date', 'desc')
                                        ->orderBy('id', 'desc')
@@ -94,7 +96,8 @@ class IndexController extends Controller {
         $list = News::where('status', 1)
                     ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url'])
                     ->where('show_home', 1) // 是否在首页显示
-            //->orderBy('sort', 'desc')
+                    ->where('upload_at', '<=', time())
+                    //->orderBy('sort', 'desc')
                     ->orderBy('upload_at', 'desc')
                     ->orderBy('id', 'desc')
                     ->limit(4)->get()->toArray();

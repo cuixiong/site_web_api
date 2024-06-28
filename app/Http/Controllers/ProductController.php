@@ -324,10 +324,10 @@ class ProductController extends Controller {
         if (empty($product_id)) {
             ReturnJson(false, '产品ID不允许为空！', []);
         }
-        $product = Products::select(['keywords', 'published_date'])->where('id', $product_id)->first()->toArray(
-        ); //根据详情页这份报告的关键词匹配到其它报告（同一个关键词的一些报告，除了自己，其它报告就是相关报告）
-        $start_time = date('Y-01-01 00:00:00', strtotime($product['published_date']));
-        $end_time = date('Y-12-31 23:59:59', strtotime($product['published_date']));
+        //$product = Products::select(['keywords', 'published_date'])->where('id', $product_id)->first()->toArray(); //根据详情页这份报告的关键词匹配到其它报告（同一个关键词的一些报告，除了自己，其它报告就是相关报告）
+//        $start_time = date('Y-01-01 00:00:00', strtotime($product['published_date']));
+//        $end_time = date('Y-12-31 23:59:59', strtotime($product['published_date']));
+        $keywords =  Products::query()->where('id', $product_id)->value('keywords');
         $products = Products::from('product_routine as product')
                             ->select([
                                          'product.name',
@@ -344,10 +344,11 @@ class ProductController extends Controller {
                                          'category.thumb as category_thumb',
                                      ])
                             ->leftJoin('product_category as category', 'category.id', '=', 'product.category_id')
-                            ->where('product.keywords', $product['keywords'])
+                            ->where('product.keywords', $keywords)
                             ->where('product.id', '<>', $product_id)
-                            ->where('product.published_date', 'between', [strtotime($start_time), strtotime($end_time)]
-                            ) // 只取与这份报告同年份的两份报告数据
+                            ->where('product.published_date' , "<=" , time())
+                            ->orderBy('product.published_date', 'desc')
+                            //->where('product.published_date', 'between', [strtotime($start_time), strtotime($end_time)]) // 只取与这份报告同年份的两份报告数据
                             ->limit(2)
                             ->get()->toArray();
         $data = [];
@@ -366,6 +367,7 @@ class ProductController extends Controller {
             $data[$index]['description'] = (new ProductDescription($suffix))->where('product_id', $product['id'])
                                                                             ->value('description');
             $data[$index]['description'] = $data[$index]['description'] ? $data[$index]['description'] : '';
+            $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
             $data[$index]['id'] = $product['id'];
             $data[$index]['url'] = $product['url'];
             $data[$index]['category_name'] = $product['category_name'];
@@ -387,6 +389,7 @@ class ProductController extends Controller {
                                  'category_id as type'
                              ])
                     ->where(['status' => 1])
+                    ->where('upload_at', '<=', time())
                     ->orderBy('created_at', 'desc')
                     ->limit(8)
                     ->get()
@@ -590,6 +593,7 @@ class ProductController extends Controller {
                                       ->orderBy('sort', 'asc')
                                       ->orderBy('published_date', 'desc');
         $query = $query->where('status', '=', 1);
+        $query = $query->where("published_date", "<", time());
         // 分类ID
         if (!empty($category_id)) {
             $query = $query->where('category_id', intval($category_id));
@@ -639,6 +643,7 @@ class ProductController extends Controller {
                                       ->orderBy('sort', 'asc')
                                       ->orderBy('published_date', 'desc');
         $query = $query->where('status', '=', 1);
+        $query = $query->where("published_date", "<", time());
         // 分类ID
         if (!empty($category_id)) {
             $query = $query->where('category_id', intval($category_id));
