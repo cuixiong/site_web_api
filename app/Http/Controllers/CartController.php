@@ -323,6 +323,7 @@ class CartController extends Controller {
             $Nonexistent = 0; // 设置“购物车对应的商品列表数据里不存在的商品的数量”为0
             $goods = [];
             $languagesList = Languages::GetListById();
+            $time = time();
             foreach ($cart_array as $key => $value) {
                 $product = Products::from('product_routine as product')
                                    ->leftJoin('product_category as category', 'product.category_id', '=', 'category.id')
@@ -362,6 +363,14 @@ class CartController extends Controller {
                     $results[$key]['discount_type'] = $product['discount_type'];
                     $results[$key]['discount'] = $product['discount'];
                     $results[$key]['discount_amount'] = $product['discount_amount'];
+                    //判断当前报告是否在优惠时间内
+                    if($product['discount_begin'] <= $time && $product['discount_end'] >= $time){
+                        $results[$key]['discount_status'] = 1;
+                    }else{
+                        $results[$key]['discount_status'] = 0;
+                    }
+
+
                     $results[$key]['number'] = $value['number'];
                     $results[$key]['price_edition'] = $value['price_edition'];
                     $priceEditionInfo = PriceEditionValues::find($value['price_edition']);
