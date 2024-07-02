@@ -176,7 +176,7 @@ class ProductController extends Controller {
         );
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
         if (!empty($product)) {
-            $fieldList = ['p.name', 'p.english_name', 'cate.thumb', 'p.id', 'p.published_date', 'cate.name as category',
+            $fieldList = ['p.name', 'p.english_name', 'cate.thumb', 'cate.home_thumb', 'p.id', 'p.published_date', 'cate.name as category',
                           'cate.keyword_suffix', 'cate.product_tag', 'p.pages', 'p.tables', 'p.url', 'p.category_id',
                           'p.keywords', 'p.price', 'p.discount_type', 'p.discount', 'p.discount_amount',
                           'p.discount_time_begin', 'p.discount_time_end', 'p.publisher_id',];
@@ -271,7 +271,13 @@ class ProductController extends Controller {
             $product_desc['prices'] = Products::CountPrice($product_desc['price'], $product_desc['publisher_id']);
             $product_desc['description'] = $product_desc['description'];
             $product_desc['url'] = $product_desc['url'];
-            $product_desc['thumb'] = Common::cutoffSiteUploadPathPrefix($product->getThumbImgAttribute());
+            //$product_desc['thumb'] = Common::cutoffSiteUploadPathPrefix($product->getThumbImgAttribute());
+            if(!empty($product->thumb )){
+                $product_desc['thumb'] = $product->thumb;
+            }else{
+                $product_desc['thumb'] = $product_desc['home_thumb'];
+            }
+
             $product_desc['published_date'] = $product_desc['published_date'] ? date(
                 'Y-m-d', strtotime(
                            $product_desc['published_date']
