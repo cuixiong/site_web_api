@@ -105,6 +105,7 @@ class OrderController extends Controller {
      */
     public function CreateAndPay(Request $request) {
         try {
+            $this->securityCheck();
             $coupon_id = $request->coupon_id ?? ''; // 优惠券id：无论是用户输入优惠券码，还是用户选择某一种优惠券，都接收coupon_id
             $inputParams = $request->input();
             //校验请求参数
