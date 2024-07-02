@@ -210,6 +210,7 @@ class ProductController extends Controller {
                 )
                                           ->where("keywords", $product_desc['keywords'])
                                           ->where("id", "<>", $product_id)
+                                          ->where("published_date" , "<=" , time())
                                           ->where("status", 1)
                                           ->orderBy("published_date", "desc")
                                           ->limit(2)

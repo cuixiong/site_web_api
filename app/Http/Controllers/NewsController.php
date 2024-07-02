@@ -188,7 +188,7 @@ class NewsController extends Controller {
         }
         $data = [];
         if ($keyword) {
-            $begin = strtotime("-2 year", strtotime(date('Y-01-01', time()))); // 前两年
+            //$begin = strtotime("-2 year", strtotime(date('Y-01-01', time()))); // 前两年
             $result = Products::select([
                                            'id',
                                            'name',
@@ -204,7 +204,9 @@ class NewsController extends Controller {
                                            // 'description_seo'
                                        ])
                               ->whereIn('keywords', $keyword)
-                              ->where('published_date', '>', $begin)
+                              ->where("status" , 1)
+                              //->where('published_date', '>', $begin)
+                              ->where("published_date" , "<=" , time())
                               ->orderBy('published_date', 'desc')
                               ->orderBy('id', 'desc')
                               ->limit(2)
