@@ -50,8 +50,6 @@ class OrderTrans extends Base {
                     $price = bcsub($price, $coupon['value'], 2);
                 }
             }
-        } else {
-            $price = $price;
         }
 
         return $price;
@@ -306,11 +304,10 @@ class OrderTrans extends Base {
             ); // 新增一个参数：$coupon_id(优惠券id)
             $shopItem['order_amount'] = $orderAmount;
             $shopItem['actually_paid'] = $actuallyPaid;
-            $orderAmountAll = bcadd($orderAmountAll, bcmul($orderAmount, $shopItem['number'], 3), 3);
-            $actuallyPaidAll = bcadd($actuallyPaidAll, bcmul($actuallyPaid, $shopItem['number'], 3), 3);
+            $orderAmountAll = bcadd($orderAmountAll, bcmul($orderAmount, $shopItem['number'], 2), 2);
+            $actuallyPaidAll = bcadd($actuallyPaidAll, bcmul($actuallyPaid, $shopItem['number'], 2), 2);
         }
-        $orderAmountAll = floatval($orderAmountAll);
-        $actuallyPaidAll = floatval($actuallyPaidAll);
+
         if (!empty($coupon_id)) {
             // 如果用户下单时没有使用优惠券或优惠券折后价不如产品原本的折后价便宜（前端会处理这一逻辑），那么，$coupon_id的值是空。
             $actuallyPaidAll = $this->couponPrice($orderAmountAll, $coupon_id);

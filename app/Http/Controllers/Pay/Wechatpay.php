@@ -505,7 +505,7 @@ class Wechatpay extends Pay
             'out_trade_no' => $order->order_number,
             'notify_url' => rtrim(env('APP_URL',''),'/').'/api/notify/wechatpay',
             'amount' => [
-                'total' => $order->actually_paid * 100, // 单位为分
+                'total' => intval(bcmul($order->actually_paid, 100)),// 单位为分
                 'currency' => 'CNY',
             ],
         ];
@@ -535,7 +535,7 @@ class Wechatpay extends Pay
             'out_trade_no' => $order->order_number,
             'notify_url' => rtrim(env('APP_URL',''),'/').'/api/notify/wechatpay',
             'amount' => [
-                'total' => $order->actually_paid * 100, // 单位为分
+                'total' => intval(bcmul($order->actually_paid, 100)),// 单位为分
                 'currency' => 'CNY',
             ],
             'scene_info' => [
@@ -576,7 +576,7 @@ class Wechatpay extends Pay
             'out_trade_no' => $order->order_number,
             'notify_url' => rtrim(env('APP_URL',''),'/').'/api/notify/wechatpay',
             'amount' => [
-                'total' => $order->actually_paid * 100, // 单位为分
+                'total' => intval(bcmul($order->actually_paid, 100)),// 单位为分
                 'currency' => 'CNY',
             ],
             'payer' => [

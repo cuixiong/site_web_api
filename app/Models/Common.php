@@ -23,7 +23,7 @@ class Common extends Base {
      *
      * @return mixed
      */
-    public static function getDiscountPrice($price, $discount) {
+    public static function getDiscountPrice($price, $discount = 100) {
         $discountPrice = bcmul($price, $discount, 2);
         $actuallyPaid = bcdiv($discountPrice, 100, 2);
 
