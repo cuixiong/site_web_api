@@ -61,8 +61,10 @@ class PageController extends Controller
         $category_id = !empty($request->category_id) ? $request->category_id : 0;
 
         //权威引用分类
-        $category = DictionaryValue::GetDicOptions('quote_cage');
-        // $category = QuoteCategory::select(['id', 'name'])->orderBy('sort', 'asc')->get()->toArray() ?? [];
+        //$category = DictionaryValue::GetDicOptions('quote_cage');
+         $category = QuoteCategory::select(['id', 'name'])
+                                  ->where("status" , 1)
+                                  ->orderBy('sort', 'asc')->get()->toArray() ?? [];
         array_unshift($category, ['value' => '0', 'label' => '全部']);
 
         // 数据
@@ -97,7 +99,7 @@ class PageController extends Controller
         if (empty($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = Authority::select(['name as title', 'description as content'])->where('id', $id)->first();
+        $data = Authority::select(['name as title', 'body as content'])->where('id', $id)->first();
         ReturnJson(true, '', $data);
     }
 
