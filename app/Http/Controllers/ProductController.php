@@ -598,7 +598,8 @@ class ProductController extends Controller {
         $query = (new SphinxQL($conn))->select('*')
                                       ->from('products_rt')
                                       ->orderBy('sort', 'asc')
-                                      ->orderBy('published_date', 'desc');
+                                      ->orderBy('published_date', 'desc')
+                                      ->orderBy('id', 'desc');
         $query = $query->where('status', '=', 1);
         $query = $query->where("published_date", "<", time());
         // 分类ID
