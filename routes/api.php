@@ -161,6 +161,9 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::post('sync', [\App\Http\Controllers\CartController::class, 'Sync'])
              ->name('购物车同步');
     });
+
+
+    Route::post('cart/goods-exist', [\App\Http\Controllers\CartController::class, 'goodsExist'])->name('购物车添加');
     Route::get('cart/relevant', [\App\Http\Controllers\CartController::class, 'Relevant'])->name('相关报告');
     Route::post('cart/share', [\App\Http\Controllers\CartController::class, 'Share'])->name('分享购物车数据');
     // Order控制器
@@ -220,6 +223,9 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::prefix('third')->group(function () {
         Route::post('send-email', [\App\Http\Controllers\Third\ThirdRespController::class, 'sendEmail'])->name(
             '发送邮件'
+        );
+        Route::post('test-send-email', [\App\Http\Controllers\Third\ThirdRespController::class, 'testSendEmail'])->name(
+            '测试场景发送邮件'
         );
     });
 

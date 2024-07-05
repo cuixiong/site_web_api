@@ -13,6 +13,8 @@
 namespace App\Http\Controllers\Third;
 
 use App\Http\Controllers\Common\SendEmailController;
+use App\Models\ContactUs;
+use App\Models\Order;
 
 class ThirdRespController extends BaseThirdController {
     public function sendEmail() {
@@ -29,4 +31,47 @@ class ThirdRespController extends BaseThirdController {
 
         ReturnJson($res);
     }
+
+    public function testSendEmail() {
+        $inputParams = request()->input();
+        $code = $inputParams['action'];
+        $testEmail = $inputParams['testEmail'];
+        if(empty($code ) || empty($testEmail )){
+            ReturnJson(false, '参数错误');
+        }
+        $sendEmailController = new SendEmailController();
+        $sendEmailController->testEmail = $testEmail;
+        $res = true;
+        if($code == 'placeOrder'){
+            //未下单
+            $orderId = Order::query()->orderBy('id', 'asc')->value('id');
+            $res = ($sendEmailController)->placeOrder($orderId);
+        } elseif($code == 'password'){
+            //重置密码
+            $res = ($sendEmailController)->ResetPassword($testEmail);
+        } elseif($code == 'contactUs'){
+            //定制报告
+            $id = ContactUs::query()->orderBy('id', 'asc')->value("id");
+            $res = ($sendEmailController)->contactUs($id);
+        } elseif($code == 'productSample'){
+            //留言
+            $id = ContactUs::query()->orderBy('id', 'asc')->value("id");
+            $res = ($sendEmailController)->Message($id);
+        } elseif($code == 'sampleRequest'){
+            //申请样本
+            $id = ContactUs::query()->orderBy('id', 'asc')->value("id");
+            $res = ($sendEmailController)->productSample($id);
+        } elseif($code == 'customized'){
+            //定制报告
+            $id = ContactUs::query()->orderBy('id', 'asc')->value("id");
+            $res = ($sendEmailController)->customized($id);
+        } elseif($code == 'payment'){
+            //已下单
+            $orderId = Order::query()->orderBy('id', 'asc')->value('id');
+            $res = ($sendEmailController)->payment($orderId);
+        }
+
+        ReturnJson($res);
+    }
+
 }

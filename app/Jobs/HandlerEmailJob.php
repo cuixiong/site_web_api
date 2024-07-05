@@ -32,17 +32,21 @@ class HandlerEmailJob implements ShouldQueue {
      * @var object $senderEmail 发邮件配置信息
      */
     public $senderEmail;
-
+    /**
+     * @var  测试邮件
+     */
+    public $testEmail = '';
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($scene, $email, $data, $senderEmail) {
+    public function __construct($scene, $email, $data, $senderEmail, $testEmail = '') {
         $this->scene = $scene;
         $this->email = $email;
         $this->data = $data;
         $this->senderEmail = $senderEmail;
+        $this->testEmail = $testEmail;
     }
 
     /**
@@ -53,7 +57,7 @@ class HandlerEmailJob implements ShouldQueue {
     public function handle() {
         try {
             (new SendEmailController())->handlerSendEmail(
-                $this->scene, $this->email, $this->data, $this->senderEmail, true
+                $this->scene, $this->email, $this->data, $this->senderEmail, true, $this->testEmail
             );
         } catch (\Exception $e) {
             $errData = [

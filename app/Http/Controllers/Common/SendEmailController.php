@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Common;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\HandlerEmailJob;
+use App\Models\Country;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TrendsEmail;
@@ -24,6 +25,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Redis;
 
 class SendEmailController extends Controller {
+    public $testEmail   = '';
+    public $testSendcnt = 0; //测试邮箱发送次数
+
     /**
      * 动态配置邮箱参数
      *
@@ -43,15 +47,18 @@ class SendEmailController extends Controller {
     /**
      * 发送邮箱
      *
-     * @param string $email     接收邮箱号
-     * @param string $templet   邮箱字符串的模板
-     * @param array  $data      渲染模板需要的数据
-     * @param string $subject   邮箱标题
-     * @param string $EmailUser 邮箱发件人
+     * @param string $email        接收邮箱号
+     * @param string $templet      邮箱字符串的模板
+     * @param array  $data         渲染模板需要的数据
+     * @param string $subject      邮箱标题
+     * @param string $EmailUser    邮箱发件人
      * @param string $sendUserName 发件人昵称
      */
-    private function SendEmail($email, $templet, $data, $subject, $EmailUser, $name = 'trends', $SendEmailNickName = '') {
-        $res = Mail::mailer($name)->to($email)->send(new TrendsEmail($templet, $data, $subject, $EmailUser, $SendEmailNickName));
+    private function SendEmail($email, $templet, $data, $subject, $EmailUser, $name = 'trends', $SendEmailNickName = ''
+    ) {
+        $res = Mail::mailer($name)->to($email)->send(
+            new TrendsEmail($templet, $data, $subject, $EmailUser, $SendEmailNickName)
+        );
 
         return $res;
     }
@@ -210,7 +217,20 @@ class SendEmailController extends Controller {
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
-            $result['country'] = DictionaryValue::GetDicOptions('Country');
+            //$result['country'] = DictionaryValue::GetDicOptions('Country');
+            if (!empty($data['product_id'])) {
+                $productsInfo = Products::query()->where("id", $data['product_id'])
+                                        ->select(
+                                            ['url', 'thumb', 'name', 'id as product_id', 'published_date',
+                                             'category_id']
+                                        )->first();
+                $productsName = $productsInfo->name ?? '';
+                $productLink = $this->getProductUrl($productsInfo);
+            } else {
+                $productsName = '';
+                $productLink = '';
+            }
+
             $data['country'] = Country::where('id', $data['country_id'])->value('name');
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
@@ -230,7 +250,8 @@ class SendEmailController extends Controller {
                 'plantTimeBuy' => $data['buy_time'],
                 'content'      => $data['content'],
                 'backendUrl'   => env('IMAGE_URL'),
-                'plantTimeBuy' => $data['buy_time'],
+                'link'         => $productLink,
+                'productsName' => $productsName
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
                                    ->toArray();
@@ -254,9 +275,9 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
+            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail, true, $this->testEmail);
             foreach ($emails as $email) {
-                $this->handlerSendEmail($scene, $email, $data, $senderEmail);
+                $this->handlerSendEmail($scene, $email, $data, $senderEmail, true, $this->testEmail);
             }
 
             return true;
@@ -321,12 +342,10 @@ class SendEmailController extends Controller {
             if ($scene->status == 0) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
-
             //邮件标题
             $scene->title = $scene->title.":  {$productsName}";
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
-
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
@@ -384,7 +403,6 @@ class SendEmailController extends Controller {
             }
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
-
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
@@ -457,7 +475,6 @@ class SendEmailController extends Controller {
             $scene->title = $scene->title.":  {$productsName}";
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
-
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
@@ -498,8 +515,7 @@ class SendEmailController extends Controller {
                 $products = Products::select(
                     ['url', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
                 )->where('id', $OrderGoods['goods_id'])->first();
-
-                if(empty($products )){
+                if (empty($products)) {
                     continue;
                 }
                 //拼接产品名称
@@ -602,16 +618,13 @@ class SendEmailController extends Controller {
                 $products = Products::select(
                     ['url', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
                 )->where('id', $OrderGoods['goods_id'])->first();
-
-                if(empty($products )){
+                if (empty($products)) {
                     continue;
                 }
-
                 //拼接产品名称
                 if (!empty($products->name)) {
                     $productsName .= $products->name." ";
                 }
-
                 $goods_data = $products->toArray();
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
                 $goods_data['language'] = $language;
@@ -688,13 +701,26 @@ class SendEmailController extends Controller {
      * @param array  $data        邮件模板数据
      * @param object $senderEmail 发邮件配置信息
      * @param bool   $isQueue     是否队列执行
+     * @params string $testEmail  测试邮件
      *
      * @return mixed
      */
-    public function handlerSendEmail($scene, $email, $data, $senderEmail, $isQueue = false) {
+    public function handlerSendEmail($scene, $email, $data, $senderEmail, $isQueue = false, $testEmail = '') {
+        //如果是测试邮件,用于cli
+        if (!empty($testEmail)) {
+            $email = $testEmail;
+        }
+        //fpm场景
+        if (!empty($this->testEmail)) {
+            $this->testSendcnt += 1;
+            if ($this->testSendcnt >= 2) {
+                //测试邮件发送次数限制1次
+                return true;
+            }
+        }
         if (!$isQueue) {
             //让队列执行, 需要放入队列
-            HandlerEmailJob::dispatch($scene, $email, $data, $senderEmail);
+            HandlerEmailJob::dispatch($scene, $email, $data, $senderEmail, $this->testEmail);
 
             return true;
         }
@@ -722,10 +748,15 @@ class SendEmailController extends Controller {
             $this->SetConfig($BackupConfig, 'backups'); // 若发送失败，则使用备用邮箱发送
         }
         try {
-            $this->SendEmail($email, $scene->body, $data, $scene->title, $senderEmail->email, 'trends', $senderEmail->name);
+            $this->SendEmail(
+                $email, $scene->body, $data, $scene->title, $senderEmail->email, 'trends', $senderEmail->name
+            );
         } catch (\Exception $e) {
             if ($scene->alternate_email_id) {
-                $this->SendEmail($email, $scene->body, $data, $scene->title, $BackupSenderEmail->email, 'backups', $BackupSenderEmail->name);
+                $this->SendEmail(
+                    $email, $scene->body, $data, $scene->title, $BackupSenderEmail->email, 'backups',
+                    $BackupSenderEmail->name
+                );
             }
         }
     }

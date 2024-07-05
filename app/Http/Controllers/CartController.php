@@ -485,4 +485,21 @@ class CartController extends Controller {
         }
         DB::commit();
     }
+
+    public function goodsExist(Request $request) {
+        $goods_id_list = $request->goods_id_list ?? [];
+        if(empty($goods_id_list )){
+            ReturnJson(false, '参数异常');
+        }
+
+        //new Products();
+        $existGoodsIdlist = Products::query()->whereIn("id" , $goods_id_list)
+            ->where("status" , 1)
+            ->where("published_date" , "<=", time())
+            ->pluck("id")->toArray();
+
+        $data['goods_id_list'] = $existGoodsIdlist;
+        ReturnJson(true, 'ok' , $data);
+
+    }
 }
