@@ -275,9 +275,9 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail, true, $this->testEmail);
+            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
-                $this->handlerSendEmail($scene, $email, $data, $senderEmail, true, $this->testEmail);
+                $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
 
             return true;
