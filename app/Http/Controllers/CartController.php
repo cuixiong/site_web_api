@@ -327,6 +327,8 @@ class CartController extends Controller {
             $goods = [];
             $languagesList = Languages::GetListById();
             $time = time();
+            //语言列表
+            $languages = Languages::GetList();
             foreach ($cart_array as $key => $value) {
                 $product = Products::from('product_routine as product')
                                    ->leftJoin('product_category as category', 'product.category_id', '=', 'category.id')
@@ -343,6 +345,7 @@ class CartController extends Controller {
                                                 'product.discount_time_begin as discount_begin',
                                                 'product.discount_time_end as discount_end',
                                                 'product.price',
+                                                'product.publisher_id',
                                                 'product.url'
                                             ])
                                    ->where([
@@ -380,6 +383,12 @@ class CartController extends Controller {
                     $results[$key]['number'] = $value['number'];
                     $results[$key]['price_edition'] = $value['price_edition'];
                     $priceEditionInfo = PriceEditionValues::find($value['price_edition']);
+
+
+                    $results[$key]['prices'] = Products::CountPrice(
+                        $product['price'], $product['publisher_id'], $languages
+                    ) ?? [];
+
                     if (!empty($priceEditionInfo)) {
                         $price = $product['price'];
                         $results[$key]['languageId'] = $priceEditionInfo->language_id;
