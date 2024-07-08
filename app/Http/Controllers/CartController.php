@@ -20,6 +20,7 @@ class CartController extends Controller {
      * 购物车列表
      */
     public function List(Request $request) {
+        $time = time();
         $shopCart = ShopCart::from('shop_carts as cart')
                             ->select([
                                          'cart.id',
@@ -48,7 +49,9 @@ class CartController extends Controller {
                             ->where([
                                         'cart.user_id'    => $request->user->id,
                                         'products.status' => 1 // product的status值如果是0，相当于删除这份报告
-                                    ])->get()->toArray();
+                                    ])
+                            ->where('products.published_date' , '<=' , $time)
+                            ->get()->toArray();
         if (empty($shopCart)) {
             $data = [
                 'result'     => [],
@@ -319,8 +322,8 @@ class CartController extends Controller {
         $cart = $request->cart;
         $cart_array = json_decode($cart, true);   // 把接收到的参数通过英文分号分割成一个或多个数组
         $results = [];
+        $Nonexistent = 0; // 设置“购物车对应的商品列表数据里不存在的商品的数量”为0
         if (!empty($cart_array)) {
-            $Nonexistent = 0; // 设置“购物车对应的商品列表数据里不存在的商品的数量”为0
             $goods = [];
             $languagesList = Languages::GetListById();
             $time = time();
@@ -344,8 +347,11 @@ class CartController extends Controller {
                                             ])
                                    ->where([
                                                'product.id'     => $value['goods_id'],
-                                               'product.status' => 1
-                                           ])->first();
+                                               'product.status' => 1,
+                                           ])
+                                    ->where('product.published_date' , '<=' , $time)
+                                    ->first();
+
                 if (!empty($product)) {
                     $product = $product->toArray();
                     $results[$key] = $product;
@@ -397,11 +403,12 @@ class CartController extends Controller {
                 }
             }
         }
-        if ($Nonexistent > 0) {
-            ReturnJson(false, $goods); // 产品不存在
-        } else {
-            ReturnJson(true, '', $results);
-        }
+        ReturnJson(true, '', $results);
+//        if ($Nonexistent > 0) {
+//            ReturnJson(false, $goods); // 产品不存在
+//        } else {
+//            ReturnJson(true, '', $results);
+//        }
     }
 
     /**

@@ -54,26 +54,33 @@ class ProductController extends Controller {
         if ($result) {
             $languages = Languages::GetList();
             foreach ($result as $key => $value) {
-                //返回打折信息
+                //报告数据
                 $time = time();
-                if (empty($value['discount_time_end']) || time() > $value['discount_time_end']) {
-                    unset($value['discount_time_end']);
+                $productsData = Products::query()->where('id', $value['id'])->first();
+                if(empty($productsData )){
+                    unset($result[$key]);
+                    continue;
                 }
-                if ((empty($value['discount_time_end']) || $time > $value['discount_time_end'])
-                    || ($value['discount'] == 100
-                        && $value['discount_amount'] == 0)) {
-                    $value['discount'] = 100;
-                    $value['discount_amount'] = 0;
-                } else {
-                    $value['discount_time_start_date'] = date('m.d', $value['discount_time_begin']);
-                    $value['discount_time_end_date'] = date('m.d', $value['discount_time_end']);
+
+                //判断当前报告是否在优惠时间内
+                if($productsData['discount_time_begin'] <= $time && $productsData['discount_time_end'] >= $time){
+                    $value['discount_status'] = 1;
+                }else{
+                    $value['discount_status'] = 0;
                 }
+                $value['discount'] = $productsData['discount'];
+                $value['discount_amount'] = $productsData['discount_amount'];
+                $value['discount_type'] = $productsData['discount_type'];
+                $value['discount_time_begin'] = $productsData['discount_time_begin'];
+                $value['discount_time_end'] = $productsData['discount_time_end'];
+
+                //分类
                 $category = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->find($value['category_id']);
                 if (empty($value['thumb']) && !empty($category)) {
                     $value['thumb'] = $category['thumb'];
                 }
                 $value['thumb'] = Common::cutoffSiteUploadPathPrefix($value['thumb']);
-                //\Log::error('发布时间返回结果数据:'.$value['published_date']);
+
                 if (is_numeric($value['published_date'])) {
                     $suffix = date('Y', $value['published_date']);
                     $value['published_date'] = $value['published_date'] ? date(
@@ -95,7 +102,7 @@ class ProductController extends Controller {
                     'name' => $category['name'],
                     'link' => $category['link'],
                 ] : [];
-                $publisher_id = Products::query()->where('id', $value['id'])->value('publisher_id');
+                $publisher_id = $productsData['publisher_id'];
                 $value['prices'] = Products::CountPrice(
                     $value['price'], $publisher_id, $languages
                 ) ?? [];
@@ -188,20 +195,13 @@ class ProductController extends Controller {
                                           ->first()->toArray();
             //返回打折信息
             $time = time();
-            if (empty($product_desc['discount_time_end']) || time() > $product_desc['discount_time_end']) {
-                unset($product_desc['discount_time_end']);
+            //判断当前报告是否在优惠时间内
+            if($product_desc['discount_time_begin'] <= $time && $product_desc['discount_time_end'] >= $time){
+                $product_desc['discount_status'] = 1;
+            }else{
+                $product_desc['discount_status'] = 0;
             }
-            if ((empty($product_desc['discount_time_end']) || $time > $product_desc['discount_time_end'])
-                || ($product_desc['discount'] == 100 && $product_desc['discount_amount'] == 0)) {
-                // $productList[$key]['discount_time_end'] = '';
-                unset($product_desc['discount_time_begin']);
-                unset($product_desc['discount_time_end']);
-                $product_desc['discount'] = 100;
-                $product_desc['discount_amount'] = 0;
-            } else {
-                $product_desc['discount_time_start_date'] = date('m.d', $product_desc['discount_time_begin']);
-                $product_desc['discount_time_end_date'] = date('m.d', $product_desc['discount_time_end']);
-            }
+
             //返回相关报告
             if (!empty($product_desc['keywords'])) {
                 $relatedProList = Products::query()->select(
