@@ -99,6 +99,10 @@ class InformationController extends Controller {
                            ->where(['id' => $id, 'status' => 1])
                            ->first();
         if ($data) {
+            if(!empty($data->upload_at ) && $data->upload_at > time()){
+                ReturnJson(false, '新闻未发布，请稍后查看！');
+            }
+
             // real_hits + 1
             Information::where(['id' => $id])->increment('real_hits');
             Information::where(['id' => $id])->increment('hits');

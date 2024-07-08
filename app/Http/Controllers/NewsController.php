@@ -101,6 +101,11 @@ class NewsController extends Controller {
                     ->where(['id' => $id, 'status' => 1])
                     ->first();
         if ($data) {
+            if(!empty($data->upload_at ) && $data->upload_at > time()){
+                ReturnJson(false, '新闻未发布，请稍后查看！');
+            }
+
+
             // real_hits + 1
             News::where(['id' => $id])->increment('real_hits');
             News::where(['id' => $id])->increment('hits');
