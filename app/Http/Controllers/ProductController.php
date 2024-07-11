@@ -23,6 +23,7 @@ use App\Models\ProductsCategory;
 use App\Models\SystemValue;
 use Illuminate\Support\Facades\Redis;
 use IP2Location\Database;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class ProductController extends Controller {
     // 获取报告列表信息
@@ -671,8 +672,26 @@ class ProductController extends Controller {
             return false;
         }
         $view_date_str = date("Y-m-d");
-        $userId = request()->user->id ?? 0;
-        $ip = request()->ip();
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+            if(empty($user )){
+                $userId = 0;
+            }else{
+                $userId = $user->id;
+            }
+        }catch (\Exception $e){
+            $userId = 0;
+        }
+
+
+        $request = request();
+        if(!empty($request->header('x-forwarded-for') )){
+            $ip = $request->header('x-forwarded-for');
+        }elseif(!empty($request->header('client-ip') )){
+            $ip = $request->header('client-ip');
+        }else{
+            $ip = request()->ip();
+        }
         $model = ViewProductsLog::query()->where("product_id", $productInfo['id'])
                                 ->where("view_date_str", $view_date_str);
         if (!empty($userId)) {
@@ -715,6 +734,7 @@ class ProductController extends Controller {
      * @throws \Exception
      */
     public function getAddrByIp($ip) {
+        if(empty($ip )) return [];
         // 设置 IP2Location 数据库文件路径
         $databasePath = resource_path('IP2LOCATION-LITE-DB3.BIN');
         // 创建 IP2Location 数据库实例
