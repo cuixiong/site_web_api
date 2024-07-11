@@ -229,6 +229,9 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         );
     });
 
+
+    Route::get('get/client-ip', [\App\Http\Controllers\PublicController::class, 'getClientIp'])->name('获取客户端IP');
+
     Route::get('xunsearch/clean', [\App\Http\Controllers\XunSearchTestController::class, 'clean'])->name(
         '讯搜清空数据'
     );

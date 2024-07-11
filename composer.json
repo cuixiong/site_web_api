@@ -10,6 +10,7 @@
         "foolz/sphinxql-query-builder": "^3.0",
         "guzzlehttp/guzzle": "^7.2",
         "hightman/xunsearch": "^1.4",
+        "ip2location/ip2location-php": "^9.7",
         "laravel/framework": "^9.19",
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",

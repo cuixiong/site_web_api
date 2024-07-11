@@ -12,6 +12,12 @@ class Controller extends BaseController
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
 
+    public function __construct() {
+//        $route = request()->route();
+//        $action = $route->getAction();
+//        \Log::error('返回结果数据:'.json_encode([$_SERVER,  request()->header() , $action ]));
+    }
+
     // TODO: cuizhixiong 2024/6/28 暂时写死,后期弄成可配置的签名key
     public $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
 

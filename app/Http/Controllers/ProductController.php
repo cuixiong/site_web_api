@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SearchRank;
+use App\Models\ViewProductsLog;
 use App\Services\SenWordsService;
 use App\Services\SphinxService;
 use Foolz\SphinxQL\Drivers\Mysqli\Connection;
@@ -21,6 +22,7 @@ use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\SystemValue;
 use Illuminate\Support\Facades\Redis;
+use IP2Location\Database;
 
 class ProductController extends Controller {
     // 获取报告列表信息
@@ -57,15 +59,14 @@ class ProductController extends Controller {
                 //报告数据
                 $time = time();
                 $productsData = Products::query()->where('id', $value['id'])->first();
-                if(empty($productsData )){
+                if (empty($productsData)) {
                     unset($result[$key]);
                     continue;
                 }
-
                 //判断当前报告是否在优惠时间内
-                if($productsData['discount_time_begin'] <= $time && $productsData['discount_time_end'] >= $time){
+                if ($productsData['discount_time_begin'] <= $time && $productsData['discount_time_end'] >= $time) {
                     $value['discount_status'] = 1;
-                }else{
+                } else {
                     $value['discount_status'] = 0;
                 }
                 $value['discount'] = $productsData['discount'];
@@ -73,14 +74,12 @@ class ProductController extends Controller {
                 $value['discount_type'] = $productsData['discount_type'];
                 $value['discount_time_begin'] = $productsData['discount_time_begin'];
                 $value['discount_time_end'] = $productsData['discount_time_end'];
-
                 //分类
                 $category = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->find($value['category_id']);
                 if (empty($value['thumb']) && !empty($category)) {
                     $value['thumb'] = $category['thumb'];
                 }
                 $value['thumb'] = Common::cutoffSiteUploadPathPrefix($value['thumb']);
-
                 if (is_numeric($value['published_date'])) {
                     $suffix = date('Y', $value['published_date']);
                     $value['published_date'] = $value['published_date'] ? date(
@@ -179,11 +178,13 @@ class ProductController extends Controller {
         if (empty($product_id)) {
             ReturnJson(false, '产品ID不允许为空！', []);
         }
-        $product = Products::where(['id' => $product_id, 'status' => 1])->select(['id', 'thumb', 'category_id'])->first(
+        $product = Products::where(['id' => $product_id, 'status' => 1])->select(['id', 'thumb', 'name', 'keywords', 'category_id'])->first(
         );
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
         if (!empty($product)) {
-            $fieldList = ['p.name', 'p.english_name', 'cate.thumb', 'cate.home_thumb', 'p.id', 'p.published_date', 'cate.name as category',
+            $this->viewLog($product);
+            $fieldList = ['p.name', 'p.english_name', 'cate.thumb', 'cate.home_thumb', 'p.id', 'p.published_date',
+                          'cate.name as category',
                           'cate.keyword_suffix', 'cate.product_tag', 'p.pages', 'p.tables', 'p.url', 'p.category_id',
                           'p.keywords', 'p.price', 'p.discount_type', 'p.discount', 'p.discount_amount',
                           'p.discount_time_begin', 'p.discount_time_end', 'p.publisher_id',];
@@ -196,12 +197,11 @@ class ProductController extends Controller {
             //返回打折信息
             $time = time();
             //判断当前报告是否在优惠时间内
-            if($product_desc['discount_time_begin'] <= $time && $product_desc['discount_time_end'] >= $time){
+            if ($product_desc['discount_time_begin'] <= $time && $product_desc['discount_time_end'] >= $time) {
                 $product_desc['discount_status'] = 1;
-            }else{
+            } else {
                 $product_desc['discount_status'] = 0;
             }
-
             //返回相关报告
             if (!empty($product_desc['keywords'])) {
                 $relatedProList = Products::query()->select(
@@ -210,7 +210,7 @@ class ProductController extends Controller {
                 )
                                           ->where("keywords", $product_desc['keywords'])
                                           ->where("id", "<>", $product_id)
-                                          ->where("published_date" , "<=" , time())
+                                          ->where("published_date", "<=", time())
                                           ->where("status", 1)
                                           ->orderBy("published_date", "desc")
                                           ->limit(2)
@@ -272,12 +272,11 @@ class ProductController extends Controller {
             $product_desc['description'] = $product_desc['description'];
             $product_desc['url'] = $product_desc['url'];
             //$product_desc['thumb'] = Common::cutoffSiteUploadPathPrefix($product->getThumbImgAttribute());
-            if(!empty($product->thumb )){
+            if (!empty($product->thumb)) {
                 $product_desc['thumb'] = $product->thumb;
-            }else{
+            } else {
                 $product_desc['thumb'] = $product_desc['home_thumb'];
             }
-
             $product_desc['published_date'] = $product_desc['published_date'] ? date(
                 'Y-m-d', strtotime(
                            $product_desc['published_date']
@@ -334,7 +333,7 @@ class ProductController extends Controller {
         //$product = Products::select(['keywords', 'published_date'])->where('id', $product_id)->first()->toArray(); //根据详情页这份报告的关键词匹配到其它报告（同一个关键词的一些报告，除了自己，其它报告就是相关报告）
 //        $start_time = date('Y-01-01 00:00:00', strtotime($product['published_date']));
 //        $end_time = date('Y-12-31 23:59:59', strtotime($product['published_date']));
-        $keywords =  Products::query()->where('id', $product_id)->value('keywords');
+        $keywords = Products::query()->where('id', $product_id)->value('keywords');
         $products = Products::from('product_routine as product')
                             ->select([
                                          'product.name',
@@ -353,9 +352,9 @@ class ProductController extends Controller {
                             ->leftJoin('product_category as category', 'category.id', '=', 'product.category_id')
                             ->where('product.keywords', $keywords)
                             ->where('product.id', '<>', $product_id)
-                            ->where('product.published_date' , "<=" , time())
+                            ->where('product.published_date', "<=", time())
                             ->orderBy('product.published_date', 'desc')
-                            //->where('product.published_date', 'between', [strtotime($start_time), strtotime($end_time)]) // 只取与这份报告同年份的两份报告数据
+            //->where('product.published_date', 'between', [strtotime($start_time), strtotime($end_time)]) // 只取与这份报告同年份的两份报告数据
                             ->limit(2)
                             ->get()->toArray();
         $data = [];
@@ -609,9 +608,8 @@ class ProductController extends Controller {
         //精确搜索, 多字段匹配
         if (!empty($keyword)) {
             $val = '"'.$keyword.'"';
-            $query->match(['name', 'english_name'], $val , true);
+            $query->match(['name', 'english_name'], $val, true);
         }
-
         //查询总数
         $countQuery = $query->setSelect('COUNT(*) as cnt');
         $fetchNum = $countQuery->execute()->fetchNum();
@@ -619,7 +617,7 @@ class ProductController extends Controller {
         //查询结果分页
         $offset = ($page - 1) * $pageSize;
         $query->limit($offset, $pageSize);
-        $query->option('max_matches' , $offset + $pageSize);
+        $query->option('max_matches', $offset + $pageSize);
         $query->setSelect('*');
         $result = $query->execute();
         $products = $result->fetchAllAssoc();
@@ -667,4 +665,68 @@ class ProductController extends Controller {
 
         return $idProducts;
     }
+
+    public function viewLog($productInfo) {
+        if (empty($productInfo['id'])) {
+            return false;
+        }
+        $view_date_str = date("Y-m-d");
+        $userId = request()->user->id ?? 0;
+        $ip = request()->ip();
+        $model = ViewProductsLog::query()->where("product_id", $productInfo['id'])
+                                ->where("view_date_str", $view_date_str);
+        if (!empty($userId)) {
+            //同一个用户, 同一天, 同一个报告 , 只需要记录一次ip , 剩下的增加次数
+            $model = $model->where('user_id', $userId);
+        } else {
+            $model = $model->where('ip', $ip);
+        }
+        $logId = $model->value("id");
+        if ($logId > 0) {
+            //增加次数
+            ViewProductsLog::where(['id' => $logId])->increment('view_cnt');
+        } else {
+            //调用ip地址库的接口
+            //$ip = '112.25.79.65';
+            $ipAddrInfo = $this->getAddrByIp($ip);
+            $ipAddr = $ipAddrInfo['country'] ?? '';
+            if(!empty($ipAddrInfo['region'] )){
+                $ipAddr = $ipAddr . " - ".$ipAddrInfo['region'];
+            }
+            if(!empty($ipAddrInfo['city'] )){
+                $ipAddr = $ipAddr . " - ".$ipAddrInfo['city'];
+            }
+            //增加日志
+            $addData = [
+                'user_id'       => $userId,
+                'product_id'    => $productInfo['id'],
+                'ip'            => $ip,
+                'ip_addr'       => $ipAddr,
+                'product_name'  => $productInfo['name'],
+                'keyword'       => $productInfo['keywords'],
+                'view_cnt'      => 1,
+                'view_date_str' => $view_date_str,
+            ];
+            ViewProductsLog::create($addData);
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function getAddrByIp($ip) {
+        // 设置 IP2Location 数据库文件路径
+        $databasePath = resource_path('IP2LOCATION-LITE-DB3.BIN');
+        // 创建 IP2Location 数据库实例
+        $ip2location = new Database($databasePath, Database::FILE_IO);
+        // 查询 IP 地址
+        $records = $ip2location->lookup($ip, Database::ALL);
+
+        return [
+            'country'   => $records['countryName'],
+            'region'    => $records['regionName'],
+            'city'      => $records['cityName'],
+        ];
+    }
+
 }
