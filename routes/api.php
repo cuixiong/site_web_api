@@ -73,6 +73,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::prefix('product')->group(function () {
         Route::get('list', [\App\Http\Controllers\ProductController::class, 'List'])->name('报告列表');
         Route::get('description', [\App\Http\Controllers\ProductController::class, 'Description'])->name('报告详情');
+        Route::get('view-log', [\App\Http\Controllers\ProductController::class, 'viewProductLog'])->name('详情浏览记录');
         Route::get('relevant', [\App\Http\Controllers\ProductController::class, 'Relevant'])->name('相关报告');
         Route::get('news', [\App\Http\Controllers\ProductController::class, 'News'])->name('更多资讯');
         Route::get('filters', [\App\Http\Controllers\ProductController::class, 'Filters'])->name('筛选条件');

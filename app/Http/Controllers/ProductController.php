@@ -179,11 +179,12 @@ class ProductController extends Controller {
         if (empty($product_id)) {
             ReturnJson(false, '产品ID不允许为空！', []);
         }
-        $product = Products::where(['id' => $product_id, 'status' => 1])->select(['id', 'thumb', 'name', 'keywords', 'category_id'])->first(
-        );
+        $product = Products::where(['id' => $product_id, 'status' => 1])->select(
+            ['id', 'thumb', 'name', 'keywords', 'category_id']
+        )->first();
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
         if (!empty($product)) {
-            $this->viewLog($product);
+            //$this->viewLog($product);
             $fieldList = ['p.name', 'p.english_name', 'cate.thumb', 'cate.home_thumb', 'p.id', 'p.published_date',
                           'cate.name as category',
                           'cate.keyword_suffix', 'cate.product_tag', 'p.pages', 'p.tables', 'p.url', 'p.category_id',
@@ -667,6 +668,24 @@ class ProductController extends Controller {
         return $idProducts;
     }
 
+    public function viewProductLog(Request $request) {
+        $product_id = $request->product_id;
+        if (empty($product_id)) {
+            ReturnJson(false, 'product_id is empty');
+        }
+        $productInfo = Products::find($product_id);
+        if (empty($productInfo)) {
+            ReturnJson(false, '数据不存在');
+        }
+        $productInfo = $productInfo->toArray();
+        $published_date = strtotime($productInfo['published_date']);
+        if ($productInfo['status'] != 1 || $published_date > time()) {
+            ReturnJson(false, '当前报告不被记录');
+        }
+        $this->viewLog($productInfo);
+        ReturnJson(true, 'success');
+    }
+
     public function viewLog($productInfo) {
         if (empty($productInfo['id'])) {
             return false;
@@ -674,22 +693,22 @@ class ProductController extends Controller {
         $view_date_str = date("Y-m-d");
         try {
             $user = JWTAuth::parseToken()->authenticate();
-            if(empty($user )){
+            if (empty($user)) {
                 $userId = 0;
-            }else{
+            } else {
                 $userId = $user->id;
             }
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             $userId = 0;
         }
-
-
         $request = request();
-        if(!empty($request->header('x-forwarded-for') )){
+        if (!empty($request->header('x-forwarded-for'))) {
             $ip = $request->header('x-forwarded-for');
-        }elseif(!empty($request->header('client-ip') )){
+        } elseif (!empty($request->header('client-ip'))) {
             $ip = $request->header('client-ip');
-        }else{
+        } elseif (!empty($request->ip)) {
+            $ip = $request->ip;
+        } else {
             $ip = request()->ip();
         }
         $model = ViewProductsLog::query()->where("product_id", $productInfo['id'])
@@ -698,7 +717,7 @@ class ProductController extends Controller {
             //同一个用户, 同一天, 同一个报告 , 只需要记录一次ip , 剩下的增加次数
             $model = $model->where('user_id', $userId);
         } else {
-            $model = $model->where('ip', $ip);
+            $model = $model->where('user_id', 0)->where('ip', $ip);
         }
         $logId = $model->value("id");
         if ($logId > 0) {
@@ -709,11 +728,11 @@ class ProductController extends Controller {
             //$ip = '112.25.79.65';
             $ipAddrInfo = $this->getAddrByIp($ip);
             $ipAddr = $ipAddrInfo['country'] ?? '';
-            if(!empty($ipAddrInfo['region'] )){
-                $ipAddr = $ipAddr . " - ".$ipAddrInfo['region'];
+            if (!empty($ipAddrInfo['region'])) {
+                $ipAddr = $ipAddr." - ".$ipAddrInfo['region'];
             }
-            if(!empty($ipAddrInfo['city'] )){
-                $ipAddr = $ipAddr . " - ".$ipAddrInfo['city'];
+            if (!empty($ipAddrInfo['city'])) {
+                $ipAddr = $ipAddr." - ".$ipAddrInfo['city'];
             }
             //增加日志
             $addData = [
@@ -734,7 +753,9 @@ class ProductController extends Controller {
      * @throws \Exception
      */
     public function getAddrByIp($ip) {
-        if(empty($ip )) return [];
+        if (empty($ip)) {
+            return [];
+        }
         // 设置 IP2Location 数据库文件路径
         $databasePath = resource_path('IP2LOCATION-LITE-DB3.BIN');
         // 创建 IP2Location 数据库实例
@@ -743,10 +764,9 @@ class ProductController extends Controller {
         $records = $ip2location->lookup($ip, Database::ALL);
 
         return [
-            'country'   => $records['countryName'],
-            'region'    => $records['regionName'],
-            'city'      => $records['cityName'],
+            'country' => $records['countryName'],
+            'region'  => $records['regionName'],
+            'city'    => $records['cityName'],
         ];
     }
-
 }
