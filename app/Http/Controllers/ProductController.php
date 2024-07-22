@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SearchRank;
 use App\Models\ViewProductsLog;
+use App\Services\IPAddrService;
 use App\Services\SenWordsService;
 use App\Services\SphinxService;
 use Foolz\SphinxQL\Drivers\Mysqli\Connection;
@@ -109,7 +110,9 @@ class ProductController extends Controller {
                 $products[] = $value;
             }
         }
+        $productCagory = $this->getProductCagory();
         $data = [
+            'productCagory'   => $productCagory,
             'products'        => $products,
             "page"            => intVal($page),
             "pageSize"        => intVal($pageSize),
@@ -308,6 +311,9 @@ class ProductController extends Controller {
             }
             unset($product_desc['product_tag']);
             $product_desc['isSphinx'] = false;
+            //相关报告
+            $product_desc['relevant_products'] = $this->getRelevantByProduct($product['keywords'], $product_id);
+
             //产品标签 结束
             ReturnJson(true, '', $product_desc);
         } else {
@@ -336,54 +342,7 @@ class ProductController extends Controller {
 //        $start_time = date('Y-01-01 00:00:00', strtotime($product['published_date']));
 //        $end_time = date('Y-12-31 23:59:59', strtotime($product['published_date']));
         $keywords = Products::query()->where('id', $product_id)->value('keywords');
-        $products = Products::from('product_routine as product')
-                            ->select([
-                                         'product.name',
-                                         'product.english_name',
-                                         'product.keywords',
-                                         'product.id',
-                                         'product.url',
-                                         'product.price',
-                                         'product.publisher_id',
-                                         'product.published_date',
-                                         'product.thumb',
-                                         'product.category_id',
-                                         'category.name as category_name',
-                                         'category.thumb as category_thumb',
-                                     ])
-                            ->leftJoin('product_category as category', 'category.id', '=', 'product.category_id')
-                            ->where('product.keywords', $keywords)
-                            ->where('product.id', '<>', $product_id)
-                            ->where('product.published_date', "<=", time())
-                            ->orderBy('product.published_date', 'desc')
-            //->where('product.published_date', 'between', [strtotime($start_time), strtotime($end_time)]) // 只取与这份报告同年份的两份报告数据
-                            ->limit(2)
-                            ->get()->toArray();
-        $data = [];
-        foreach ($products as $index => $product) {
-            $tempThumb = '';
-            if (!empty($product['thumb'])) {
-                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['thumb']);
-            } elseif (!empty($product['category_thumb'])) {
-                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
-            }
-            $data[$index]['thumb'] = $tempThumb;
-            $data[$index]['name'] = $product['name'];
-            $data[$index]['keywords'] = $product['keywords'];
-            $data[$index]['english_name'] = $product['english_name'];
-            $suffix = date('Y', strtotime($product['published_date']));
-            $data[$index]['description'] = (new ProductDescription($suffix))->where('product_id', $product['id'])
-                                                                            ->value('description');
-            $data[$index]['description'] = $data[$index]['description'] ? $data[$index]['description'] : '';
-            $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
-            $data[$index]['id'] = $product['id'];
-            $data[$index]['url'] = $product['url'];
-            $data[$index]['category_name'] = $product['category_name'];
-            $data[$index]['published_date'] = $product['published_date'] ? date(
-                'Y-m-d', strtotime($product['published_date'])
-            ) : '';
-            $data[$index]['prices'] = Products::CountPrice($product['price'], $product['publisher_id']);
-        }
+        $data = $this->getRelevantByProduct($keywords, $product_id);
         ReturnJson(true, '获取成功', $data);
     }
 
@@ -725,15 +684,7 @@ class ProductController extends Controller {
             ViewProductsLog::where(['id' => $logId])->increment('view_cnt');
         } else {
             //调用ip地址库的接口
-            //$ip = '112.25.79.65';
-            $ipAddrInfo = $this->getAddrByIp($ip);
-            $ipAddr = $ipAddrInfo['country'] ?? '';
-            if (!empty($ipAddrInfo['region'])) {
-                $ipAddr = $ipAddr." - ".$ipAddrInfo['region'];
-            }
-            if (!empty($ipAddrInfo['city'])) {
-                $ipAddr = $ipAddr." - ".$ipAddrInfo['city'];
-            }
+            $ipAddr =   (new IPAddrService($ip))->getAddrStrByIp();
             //增加日志
             $addData = [
                 'user_id'       => $userId,
@@ -749,24 +700,84 @@ class ProductController extends Controller {
         }
     }
 
-    /**
-     * @throws \Exception
-     */
-    public function getAddrByIp($ip) {
-        if (empty($ip)) {
-            return [];
-        }
-        // 设置 IP2Location 数据库文件路径
-        $databasePath = resource_path('IP2LOCATION-LITE-DB3.BIN');
-        // 创建 IP2Location 数据库实例
-        $ip2location = new Database($databasePath, Database::FILE_IO);
-        // 查询 IP 地址
-        $records = $ip2location->lookup($ip, Database::ALL);
 
-        return [
-            'country' => $records['countryName'],
-            'region'  => $records['regionName'],
-            'city'    => $records['cityName'],
-        ];
+    /**
+     *
+     *
+     * @return mixed
+     */
+    private function getProductCagory() {
+        $field = ['id', 'name', 'link'];
+        $data = ProductsCategory::select($field)
+                                ->where('status', 1)
+                                ->get()
+                                ->toArray();
+        array_unshift($data, [
+            'id'   => '0',
+            'name' => '全部',
+            'link' => '',
+        ]);
+
+        return $data;
+    }
+
+    /**
+     *
+     * @param mixed $keywords
+     * @param mixed $product_id
+     *
+     * @return array
+     */
+    private function getRelevantByProduct(mixed $keywords, mixed $product_id): array {
+        $products = Products::from('product_routine as product')
+                            ->select([
+                                         'product.name',
+                                         'product.english_name',
+                                         'product.keywords',
+                                         'product.id',
+                                         'product.url',
+                                         'product.price',
+                                         'product.publisher_id',
+                                         'product.published_date',
+                                         'product.thumb',
+                                         'product.category_id',
+                                         'category.name as category_name',
+                                         'category.thumb as category_thumb',
+                                     ])
+                            ->leftJoin('product_category as category', 'category.id', '=', 'product.category_id')
+                            ->where('product.keywords', $keywords)
+                            ->where('product.id', '<>', $product_id)
+                            ->where('product.published_date', "<=", time())
+                            ->orderBy('product.published_date', 'desc')
+            //->where('product.published_date', 'between', [strtotime($start_time), strtotime($end_time)]) // 只取与这份报告同年份的两份报告数据
+                            ->limit(2)
+                            ->get()->toArray();
+        $data = [];
+        foreach ($products as $index => $product) {
+            $tempThumb = '';
+            if (!empty($product['thumb'])) {
+                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['thumb']);
+            } elseif (!empty($product['category_thumb'])) {
+                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
+            }
+            $data[$index]['thumb'] = $tempThumb;
+            $data[$index]['name'] = $product['name'];
+            $data[$index]['keywords'] = $product['keywords'];
+            $data[$index]['english_name'] = $product['english_name'];
+            $suffix = date('Y', strtotime($product['published_date']));
+            $data[$index]['description'] = (new ProductDescription($suffix))->where('product_id', $product['id'])
+                                                                            ->value('description');
+            $data[$index]['description'] = $data[$index]['description'] ? $data[$index]['description'] : '';
+            $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
+            $data[$index]['id'] = $product['id'];
+            $data[$index]['url'] = $product['url'];
+            $data[$index]['category_name'] = $product['category_name'];
+            $data[$index]['published_date'] = $product['published_date'] ? date(
+                'Y-m-d', strtotime($product['published_date'])
+            ) : '';
+            $data[$index]['prices'] = Products::CountPrice($product['price'], $product['publisher_id']);
+        }
+
+        return $data;
     }
 }

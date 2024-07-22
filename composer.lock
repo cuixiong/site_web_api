@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c646f1db8a9ea3e2d8ba578e05c56d0d",
+    "content-hash": "eb5ca517c01cd69a357841a5b2d6af85",
     "packages": [
         {
             "name": "adbario/php-dot-notation",
@@ -1547,16 +1547,16 @@
         },
         {
             "name": "ip2location/ip2location-php",
-            "version": "9.7.3",
+            "version": "8.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/chrislim2888/IP2Location-PHP-Module.git",
-                "reference": "67c7bf13b0571b70925435e640ea5598e9fdeee9"
+                "reference": "4c501aa1f666ae85eab84d4df9d19399f2e6ce15"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/chrislim2888/IP2Location-PHP-Module/zipball/67c7bf13b0571b70925435e640ea5598e9fdeee9",
-                "reference": "67c7bf13b0571b70925435e640ea5598e9fdeee9",
+                "url": "https://api.github.com/repos/chrislim2888/IP2Location-PHP-Module/zipball/4c501aa1f666ae85eab84d4df9d19399f2e6ce15",
+                "reference": "4c501aa1f666ae85eab84d4df9d19399f2e6ce15",
                 "shasum": "",
                 "mirrors": [
                     {
@@ -1565,20 +1565,11 @@
                     }
                 ]
             },
-            "require": {
-                "ext-bcmath": "*",
-                "ext-curl": "*",
-                "ext-json": "*",
-                "php": ">=7.2"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^9.5"
-            },
             "type": "library",
             "autoload": {
-                "psr-4": {
-                    "IP2Location\\": "src"
-                }
+                "classmap": [
+                    "IP2Location.php"
+                ]
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -1588,29 +1579,139 @@
                 {
                     "name": "IP2Location",
                     "email": "support@ip2location.com",
-                    "homepage": "https://www.ip2location.com"
+                    "homepage": "http://www.ip2location.com"
                 }
             ],
             "description": "[Official Release] IP2Location PHP API to get location info from IPv4 and IPv6 address.",
-            "homepage": "https://www.ip2location.com",
+            "homepage": "http://www.ip2location.com",
             "keywords": [
-                "area code",
                 "geolocation",
-                "ip geolocation",
                 "ip2location",
-                "ip2locationlite",
-                "isp",
-                "mcc",
-                "mnc",
-                "time zone",
-                "usage type",
-                "zip code"
+                "ip2locationlite"
             ],
             "support": {
                 "issues": "https://github.com/chrislim2888/IP2Location-PHP-Module/issues",
-                "source": "https://github.com/chrislim2888/IP2Location-PHP-Module/tree/9.7.3"
+                "source": "https://github.com/chrislim2888/IP2Location-PHP-Module/tree/8.3.0"
             },
-            "time": "2024-02-26T22:30:40+00:00"
+            "time": "2020-11-23T04:30:39+00:00"
+        },
+        {
+            "name": "ipip/db",
+            "version": "v1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ipipdotnet/ipdb-php.git",
+                "reference": "9be2e284369c34267487487f4492de26e20a7735"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ipipdotnet/ipdb-php/zipball/9be2e284369c34267487487f4492de26e20a7735",
+                "reference": "9be2e284369c34267487487f4492de26e20a7735",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=5.4.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "ipip\\db\\": "src/ipip/db/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "IPIP.net",
+                    "email": "frk@ipip.net",
+                    "homepage": "https://www.ipip.net"
+                }
+            ],
+            "description": "IPIP.net officially supported IP database ipdb format parsing library",
+            "homepage": "https://www.ipip.net",
+            "keywords": [
+                "IP",
+                "geo",
+                "geoip",
+                "geolocation",
+                "ipdb",
+                "ipip.net"
+            ],
+            "support": {
+                "issues": "https://github.com/ipipdotnet/ipdb-php/issues",
+                "source": "https://github.com/ipipdotnet/ipdb-php/tree/v1.0.1"
+            },
+            "time": "2023-02-09T06:59:46+00:00"
+        },
+        {
+            "name": "itbdw/ip-database",
+            "version": "v2.0.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/itbdw/ip-database.git",
+                "reference": "1b074df1e8092eb0a19abef288b8a47abdba0ae3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/itbdw/ip-database/zipball/1b074df1e8092eb0a19abef288b8a47abdba0ae3",
+                "reference": "1b074df1e8092eb0a19abef288b8a47abdba0ae3",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "itbdw\\Ip\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "itbdw",
+                    "email": "itbudaoweng@gmail.com",
+                    "homepage": "http://github.com/itbdw",
+                    "role": "Developer"
+                },
+                {
+                    "name": "马秉尧"
+                }
+            ],
+            "description": "IP位置数据库（解析为国家、省、市、县、运营商）",
+            "keywords": [
+                "China",
+                "Chinese",
+                "IP",
+                "database",
+                "location",
+                "位置",
+                "地区",
+                "数据库",
+                "纯真"
+            ],
+            "support": {
+                "issues": "https://github.com/itbdw/ip-database/issues",
+                "source": "https://github.com/itbdw/ip-database/tree/master"
+            },
+            "time": "2018-03-25T06:41:36+00:00"
         },
         {
             "name": "laravel/framework",
@@ -2651,6 +2752,77 @@
             "time": "2022-08-08T14:17:24+00:00"
         },
         {
+            "name": "maxmind-db/reader",
+            "version": "v1.11.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/maxmind/MaxMind-DB-Reader-php.git",
+                "reference": "b1f3c0699525336d09cc5161a2861268d9f2ae5b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/maxmind/MaxMind-DB-Reader-php/zipball/b1f3c0699525336d09cc5161a2861268d9f2ae5b",
+                "reference": "b1f3c0699525336d09cc5161a2861268d9f2ae5b",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=7.2"
+            },
+            "conflict": {
+                "ext-maxminddb": "<1.10.1,>=2.0.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "3.*",
+                "php-coveralls/php-coveralls": "^2.1",
+                "phpstan/phpstan": "*",
+                "phpunit/phpcov": ">=6.0.0",
+                "phpunit/phpunit": ">=8.0.0,<10.0.0",
+                "squizlabs/php_codesniffer": "3.*"
+            },
+            "suggest": {
+                "ext-bcmath": "bcmath or gmp is required for decoding larger integers with the pure PHP decoder",
+                "ext-gmp": "bcmath or gmp is required for decoding larger integers with the pure PHP decoder",
+                "ext-maxminddb": "A C-based database decoder that provides significantly faster lookups"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "MaxMind\\Db\\": "src/MaxMind/Db"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Gregory J. Oschwald",
+                    "email": "goschwald@maxmind.com",
+                    "homepage": "https://www.maxmind.com/"
+                }
+            ],
+            "description": "MaxMind DB Reader API",
+            "homepage": "https://github.com/maxmind/MaxMind-DB-Reader-php",
+            "keywords": [
+                "database",
+                "geoip",
+                "geoip2",
+                "geolocation",
+                "maxmind"
+            ],
+            "support": {
+                "issues": "https://github.com/maxmind/MaxMind-DB-Reader-php/issues",
+                "source": "https://github.com/maxmind/MaxMind-DB-Reader-php/tree/v1.11.0"
+            },
+            "time": "2021-10-18T15:23:10+00:00"
+        },
+        {
             "name": "monolog/monolog",
             "version": "2.9.2",
             "source": {
@@ -3264,6 +3436,55 @@
                 "source": "https://github.com/php-amqplib/php-amqplib/tree/master"
             },
             "time": "2016-04-11T14:30:01+00:00"
+        },
+        {
+            "name": "php-cpm/ip-address",
+            "version": "v1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-cpm/ip-address.git",
+                "reference": "43fe52f8865b34be057a23f1fe0e104f966b5b8c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-cpm/ip-address/zipball/43fe52f8865b34be057a23f1fe0e104f966b5b8c",
+                "reference": "43fe52f8865b34be057a23f1fe0e104f966b5b8c",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "ext-json": "*",
+                "ip2location/ip2location-php": "^8.3",
+                "ipip/db": "^1.0",
+                "itbdw/ip-database": "^2.0",
+                "maxmind-db/reader": "^1.9",
+                "zoujingli/ip2region": "^1.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PhpCpm\\IpAddress\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Get Real Ip Region",
+            "keywords": [
+                "IP",
+                "Ip2Region"
+            ],
+            "support": {
+                "issues": "https://github.com/php-cpm/ip-address/issues",
+                "source": "https://github.com/php-cpm/ip-address/tree/v1.0.1"
+            },
+            "time": "2021-01-31T10:35:52+00:00"
         },
         {
             "name": "phpoption/phpoption",
@@ -7182,6 +7403,57 @@
                 "source": "https://github.com/wechatpay-apiv3/wechatpay-guzzle-middleware/tree/v0.2.2"
             },
             "time": "2021-03-05T03:09:29+00:00"
+        },
+        {
+            "name": "zoujingli/ip2region",
+            "version": "v1.0.13",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zoujingli/ip2region.git",
+                "reference": "c02c74571ad665745e57db5d04efa165e543fade"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zoujingli/ip2region/zipball/c02c74571ad665745e57db5d04efa165e543fade",
+                "reference": "c02c74571ad665745e57db5d04efa165e543fade",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=5.3"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "Ip2Region.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Anyon",
+                    "email": "zoujingli@qq.com",
+                    "homepage": "http://ctolog.com"
+                }
+            ],
+            "description": "Ip2Region for PHP",
+            "homepage": "https://github.com/zoujingli/Ip2Region",
+            "keywords": [
+                "Ip2Region"
+            ],
+            "support": {
+                "issues": "https://github.com/zoujingli/ip2region/issues",
+                "source": "https://github.com/zoujingli/ip2region/tree/v1.0.13"
+            },
+            "time": "2023-03-13T05:18:05+00:00"
         }
     ],
     "packages-dev": [

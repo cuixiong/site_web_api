@@ -14,112 +14,50 @@ use App\Services\SenWordsService;
 use Illuminate\Http\Request;
 
 class IndexController extends Controller {
+    /**
+     * 首页报告
+     * @param Request $request
+     *
+     */
+    public function index(Request $request) {
+        //最新报告(热门报告)
+        $data['hot_product_list'] = $this->getHotProductList();
+
+        //获取推荐报告
+        $data['recommend_product_list'] = $this->getRecommendProductList();
+
+        //合作伙伴接口
+        $data['partner_list'] = $this->getPartnerList();
+
+        //行业新闻
+        $data['industry_news_list'] = $this->getIndustryNews();
+
+        ReturnJson(true, '', $data);
+    }
+
+
+
     // 最新报告(热门报告)
     public function NewsProduct(Request $request) {
-        $query = Products::where('status', 1)
-                         ->where("show_hot", 1)
-                         ->where("published_date" , "<=", time())
-                         ->select(['id', 'thumb', 'name', 'category_id', 'published_date', 'price', 'url'])
-                         ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
-                         ->orderBy('published_date', 'desc')
-                         ->orderBy('id', 'desc');
-        $pageSize = 6;
-        $list = $query->limit($pageSize)->get();
-        foreach ($list as $key => $value) {
-            $this->handlerNewProductList($value);
-        }
+        $list = $this->getHotProductList();
         ReturnJson(true, '', $list);
     }
 
     // 推荐报告
     public function RecommendProduct(Request $request) {
-        $categories = ProductsCategory::select(['id', 'name', 'link', 'thumb'])
-                                      ->orderBy('sort', 'asc')
-                                      ->orderBy('updated_at', 'desc')
-                                      ->where('is_recommend', 1)
-                                      ->where('pid', 0)
-                                      ->limit(4)
-                                      ->get()
-                                      ->toArray();
-        $productFields = ['name', 'keywords', 'price', 'id', 'url', 'category_id', 'published_date', 'thumb'];
-        $data = [];
-        if (!empty($categories) && is_array($categories)) {
-            foreach ($categories as $index => $category) {
-                $data[$index]['category'] = [
-                    'id'   => $category['id'],
-                    'name' => $category['name'],
-                    'url'  => $category['link'],
-                ];
-                $pageSize = 5;
-                $productList = Products::select($productFields)
-                                       ->where('category_id', $category['id'])
-                                       ->where('show_recommend', 1)
-                                       ->where("status", 1)
-                                       ->where("published_date" , "<=", time())
-                                       ->orderBy('sort', 'asc')
-                                       ->orderBy('published_date', 'desc')
-                                       ->orderBy('id', 'desc')
-                                       ->limit($pageSize)
-                                       ->get()
-                                       ->toArray();
-                if (empty($productList)) {
-                    continue;
-                }
-                $keywords = array_column($productList, 'keywords');
-                $data[$index]['keywords'] = $keywords;
-                $firstProduct = array_shift($productList);
-                if (!empty($firstProduct)) {
-                    $thumb = '';
-                    if (!empty($firstProduct['thumb'])) {
-                        $thumb = Common::cutoffSiteUploadPathPrefix($firstProduct['thumb']);
-                    } elseif ($firstProduct['category_id']) {
-                        $thumb = $category['thumb'];
-                    }
-                    $firstProduct['thumb'] = $thumb;
-
-                    $year = date('Y', strtotime($firstProduct['published_date']));
-                    $description = (new ProductDescription($year))
-                        ->where('product_id', $firstProduct['id'])
-                        ->value('description');
-                    $description = mb_substr($description, 0, 300, 'UTF-8');
-                    $firstProduct['description'] = $description;
-                }
-                $data[$index]['firstProduct'] = $firstProduct;
-                $data[$index]['otherProducts'] = $productList;
-            }
-        }
+        $data = $this->getRecommendProductList();
         ReturnJson(true, 'success', $data);
     }
 
     // 行业新闻
     public function RecommendNews(Request $request) {
-        $list = News::where('status', 1)
-                    ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url'])
-                    ->where('show_home', 1) // 是否在首页显示
-                    ->where('upload_at', '<=', time())
-                    //->orderBy('sort', 'desc')
-                    ->orderBy('upload_at', 'desc')
-                    ->orderBy('id', 'desc')
-                    ->limit(4)->get()->toArray();
-        if ($list) {
-            foreach ($list as $key => $item) {
-                $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
-                $list[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
-            }
-        }
+        $list = $this->getIndustryNews();
         ReturnJson(true, '', $list);
     }
 
     // 合作伙伴
     public function partners(Request $request) {
-        $list = Partner::where('status', 1)
-                       ->select(['id', 'name', 'logo',])
-                       ->orderBy('sort', 'desc')
-                       ->orderBy('id', 'desc')
-                       ->get();
-        foreach ($list as &$item) {
-            $item['logo'] = Common::cutoffSiteUploadPathPrefix($item['logo']);
-        }
+        $list = $this->getPartnerList();
         ReturnJson(true, '', $list);
     }
 
@@ -321,6 +259,129 @@ class IndexController extends Controller {
             $forCnt -= 1;
 
             return $this->handlerSurplusRemList($filterCnt, $pageNum, $pageSize, $query, $list, $forCnt);
+        }
+
+        return $list;
+    }
+
+    private function getHotProductList(){
+        $newProductList = Products::where('status', 1)
+                                  ->where("show_hot", 1)
+                                  ->where("published_date", "<=", time())
+                                  ->select(['id', 'thumb', 'name', 'category_id', 'published_date', 'price', 'url'])
+                                  ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
+                                  ->orderBy('published_date', 'desc')
+                                  ->orderBy('id', 'desc')
+                                  ->limit(6)->get();
+        foreach ($newProductList as $value) {
+            $this->handlerNewProductList($value);
+        }
+        return $newProductList;
+    }
+
+    /**
+     *
+     *
+     * @return array
+     */
+    private function getRecommendProductList(){
+        //获取推荐分类
+        $categories = ProductsCategory::select(['id', 'name', 'link', 'thumb'])
+                                      ->orderBy('sort', 'asc')
+                                      ->orderBy('updated_at', 'desc')
+                                      ->where('is_recommend', 1)
+                                      ->where('pid', 0)
+                                      ->limit(4)
+                                      ->get()
+                                      ->toArray();
+        $productFields = ['name', 'keywords', 'price', 'id', 'url', 'category_id', 'published_date', 'thumb'];
+        $data = [];
+        //遍历分类获取,分类报告
+        if (!empty($categories) && is_array($categories)) {
+            foreach ($categories as $index => $category) {
+                $data[$index]['category'] = [
+                    'id'   => $category['id'],
+                    'name' => $category['name'],
+                    'url'  => $category['link'],
+                ];
+                $pageSize = 5;
+                $productList = Products::select($productFields)
+                                       ->where('category_id', $category['id'])
+                                       ->where('show_recommend', 1)
+                                       ->where("status", 1)
+                                       ->where("published_date", "<=", time())
+                                       ->orderBy('sort', 'asc')
+                                       ->orderBy('published_date', 'desc')
+                                       ->orderBy('id', 'desc')
+                                       ->limit($pageSize)
+                                       ->get()
+                                       ->toArray();
+                if (empty($productList)) {
+                    continue;
+                }
+                $keywords = array_column($productList, 'keywords');
+                $data[$index]['keywords'] = $keywords;
+                $firstProduct = array_shift($productList);
+                if (!empty($firstProduct)) {
+                    $thumb = '';
+                    if (!empty($firstProduct['thumb'])) {
+                        $thumb = Common::cutoffSiteUploadPathPrefix($firstProduct['thumb']);
+                    } elseif ($firstProduct['category_id']) {
+                        $thumb = $category['thumb'];
+                    }
+                    $firstProduct['thumb'] = $thumb;
+                    $year = date('Y', strtotime($firstProduct['published_date']));
+                    $description = (new ProductDescription($year))
+                        ->where('product_id', $firstProduct['id'])
+                        ->value('description');
+                    $description = mb_substr($description, 0, 300, 'UTF-8');
+                    $firstProduct['description'] = $description;
+                }
+                $data[$index]['firstProduct'] = $firstProduct;
+                $data[$index]['otherProducts'] = $productList;
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     *
+     *
+     * @return array
+     */
+    private function getPartnerList(): array {
+        $list = Partner::where('status', 1)
+                       ->select(['id', 'name', 'logo',])
+                       ->orderBy('sort', 'desc')
+                       ->orderBy('id', 'desc')
+                       ->get()->toArray();
+//        foreach ($list as &$item) {
+//            $item['logo'] = Common::cutoffSiteUploadPathPrefix($item['logo']);
+//        }
+
+        return $list;
+    }
+
+    /**
+     *
+     *
+     * @return array
+     */
+    private function getIndustryNews(): array {
+        $list = News::where('status', 1)
+                    ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url'])
+                    ->where('show_home', 1) // 是否在首页显示
+                    ->where('upload_at', '<=', time())
+            //->orderBy('sort', 'desc')
+                    ->orderBy('upload_at', 'desc')
+                    ->orderBy('id', 'desc')
+                    ->limit(4)->get()->toArray();
+        if ($list) {
+            foreach ($list as $key => $item) {
+                $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
+                $list[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
+            }
         }
 
         return $list;

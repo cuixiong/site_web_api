@@ -8,73 +8,107 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Plate;
 
-class PlateController extends Controller
-{
-    // 获取页面板块信息
-    public function PlateValue(Request $request){
-        $name = $request->name;
-        if(empty($name)){
-            ReturnJson(false,'名称不允许空');
-        }
-        $ParentData = Plate::select([
-            'id',
-            'pc_image as img',
-            'mb_image as img_mobile',
-            'name as title',
-            'content as description'
-        ])->where('alias',$name)->first();
-        if(empty($ParentData)){
-            ReturnJson(false,'data is empty');
+class PlateController extends Controller {
+    /**
+     * 板块信息列表
+     */
+    public function PlateValueList(Request $request) {
+        $nameList = ['indexabout', 'contact_us', 'reportbanner2', 'reports_special_statement', 'serviceSales', 'entity',
+                     'customized', 'about_us', 'service', 'information', 'process'];
+
+        //分类列表
+        $categoryList = Plate::select([
+                                        'id',
+                                        'alias',
+                                        'pc_image as img',
+                                        'mb_image as img_mobile',
+                                        'name as title',
+                                        'content as description'
+                                    ])->whereIn('alias', $nameList)->get()->toArray();
+
+        $data = [];
+        foreach ($categoryList as &$category){
+            $forData = [];
+            $forData['category'] = $category;
+            $forData['items'] = PlateValue::where('status', 1)
+                                          ->where('parent_id', $category['id'])
+                                          ->select([
+                                                       'title',
+                                                       'short_title',
+                                                       'link',
+                                                       'alias',
+                                                       'image',
+                                                       'icon',
+                                                       'content',
+                                                   ])->get()->toArray();
+            $alias = $category['alias'];
+            $data[$alias] = $forData;
         }
 
+
+        ReturnJson(true, '请求成功', $data);
+    }
+
+    // 获取页面板块信息
+    public function PlateValue(Request $request) {
+        $name = $request->name;
+        if (empty($name)) {
+            ReturnJson(false, '名称不允许空');
+        }
+        $ParentData = Plate::select([
+                                        'id',
+                                        'pc_image as img',
+                                        'mb_image as img_mobile',
+                                        'name as title',
+                                        'content as description'
+                                    ])->where('alias', $name)->first();
+        if (empty($ParentData)) {
+            ReturnJson(false, 'data is empty');
+        }
         //转化图片路径
         $ParentData->img = Common::cutoffSiteUploadPathPrefix($ParentData->img);
         $ParentData->img_mobile = Common::cutoffSiteUploadPathPrefix($ParentData->img_mobile);
-
-        $data = PlateValue::where('status',1)
-                ->where('parent_id',$ParentData->id)
-                ->select([
-                    'title',
-                    'short_title',
-                    'link',
-                    'alias',
-                    'image',
-                    'icon',
-                    'content',
-                ])->get();
-
-        foreach ($data as &$value){
+        $data = PlateValue::where('status', 1)
+                          ->where('parent_id', $ParentData->id)
+                          ->select([
+                                       'title',
+                                       'short_title',
+                                       'link',
+                                       'alias',
+                                       'image',
+                                       'icon',
+                                       'content',
+                                   ])->get();
+        foreach ($data as &$value) {
             $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
             $value['icon'] = Common::cutoffSiteUploadPathPrefix($value['icon']);
         }
-
         $data = $data ? $data : [];
         $res = [
             'category' => $ParentData,
-            'items' => $data
+            'items'    => $data
         ];
-        ReturnJson(true,'请求成功',$res);
+        ReturnJson(true, '请求成功', $res);
     }
 
-    public function Form(Request $request)
-    {
+    public function Form(Request $request) {
         $id = $request->id;
-        if(empty($id)){
-            ReturnJson(false,'ID不允许为空');
+        if (empty($id)) {
+            ReturnJson(false, 'ID不允许为空');
         }
-        $data['category'] = Plate::where('status',1)->select([
-            'title',
-            'pc_image',
-            'mb_image',
-            'content',
-            ])->first();
-        $data['items'] = PlateValue::where('status',1)
-        ->where('parent_id',$id)
-        ->select([
-            'title',
-            'short_title',
-            'icon'
-        ])->get()->toArray();
-        ReturnJson(true,'请求成功',$data);
+        $data['category'] = Plate::where('status', 1)->select([
+                                                                  'title',
+                                                                  'pc_image',
+                                                                  'mb_image',
+                                                                  'content',
+                                                              ])->first();
+        $data['items'] = PlateValue::where('status', 1)
+                                   ->where('parent_id', $id)
+                                   ->select([
+                                                'title',
+                                                'short_title',
+                                                'icon'
+                                            ])->get()->toArray();
+        ReturnJson(true, '请求成功', $data);
     }
 }

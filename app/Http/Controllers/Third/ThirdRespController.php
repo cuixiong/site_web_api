@@ -15,6 +15,7 @@ namespace App\Http\Controllers\Third;
 use App\Http\Controllers\Common\SendEmailController;
 use App\Models\ContactUs;
 use App\Models\Order;
+use Illuminate\Support\Facades\Redis;
 
 class ThirdRespController extends BaseThirdController {
     public function sendEmail() {
@@ -72,6 +73,17 @@ class ThirdRespController extends BaseThirdController {
         }
 
         ReturnJson($res);
+    }
+
+    public function syncRedisVal() {
+        $inputParams = request()->input();
+        $key = $inputParams['key'];
+        $val = $inputParams['val'];
+        if(empty($key) || empty($val)){
+            ReturnJson(false, '参数错误');
+        }
+        Redis::set($key, $val);
+        ReturnJson(true, '请求成功');
     }
 
 }

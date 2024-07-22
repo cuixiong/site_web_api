@@ -9,6 +9,7 @@ use App\Models\Common;
 use App\Models\LanguageWebsite;
 use App\Models\Link;
 use App\Models\Menu;
+use App\Models\News;
 use App\Models\PlateValue;
 use App\Models\ProductsCategory;
 use App\Models\SearchRank;
@@ -16,26 +17,118 @@ use App\Models\System;
 use App\Models\SystemValue;
 use Illuminate\Http\Request;
 
-class CommonController extends Controller
-{
+class CommonController extends Controller {
+    /**
+     *  主页接口
+     */
+    public function index(Request $request) {
+        $data = [];
+        //seo 信息
+        $data['seo_info'] = $this->getSeoInfo($request);
+        //友情链接
+        $data['link_list'] = $this->getLinkList();
+        //中国省市地区
+        $data['chian_region'] = $this->getChianRegionData();
+        //获取热门关键词
+        $data['hot_keywords'] = $this->getKeyWords();
+        //产品标签
+        $data['product_tags'] = $this->getProductTags($request);
+        //语言网站
+        $data['language_website'] = $this->getWebSiteLan();
+        //获取顶部菜单
+        $data['top_menu'] = $this->getTopMenus();
+
+        //获取网站站点配置
+        $data['site_set_info'] = $this->getSiteSetInfo();
+
+        //网站设置
+        $data['product_page_set_info'] = $this->getControlPageSet();
+
+        //底部菜单
+        $data['buttom_menu'] = $this->getButtonMenus();
+
+        //更多资讯
+        $data['news_list'] = $this->getNewsList();
+
+        ReturnJson(true, '', $data);
+    }
+
+    // 更多资讯
+    public function getNewsList() {
+        $data = News::select([
+                                 'id',
+                                 'title',
+                                 'url',
+                                 'category_id as type'
+                             ])
+                    ->where(['status' => 1])
+                    ->where('upload_at', '<=', time())
+                    ->orderBy('created_at', 'desc')
+                    ->limit(8)
+                    ->get()
+                    ->toArray();
+        return $data;
+    }
+
+
+    public function getSiteSetInfo() {
+        $siteInfoKey = 'site_info';
+        $setId = System::select(['id'])
+                       ->where('status', 1)
+                       ->where('alias', $siteInfoKey)
+                       ->get()
+                       ->value('id');
+        $result = [];
+        if ($setId) {
+            $data = SystemValue::where('parent_id', $setId)
+                               ->where('status', 1)
+                               ->select(['name', 'key', 'value'])
+                               ->get()
+                               ->toArray();
+            //图片后缀, 全部需要转换一遍
+            $imgExtList = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg'];
+            foreach ($data as $key => $value) {
+                $ext = pathinfo($value['value'], PATHINFO_EXTENSION);
+                if (in_array($ext, $imgExtList)) {
+                    $value['value'] = Common::cutoffSiteUploadPathPrefix($value['value']);
+                }
+                $result[$value['key']] = [
+                    'name'  => $value['name'],
+                    'value' => $value['value']
+                ];
+            }
+        }
+        return $result;
+    }
+
+    public function getControlPageSet() {
+        $siteInfoKey = 'reports';
+        $setId = System::select(['id'])
+                       ->where('status', 1)
+                       ->where('alias', $siteInfoKey)
+                       ->get()
+                       ->value('id');
+
+        $data = SystemValue::where('parent_id', $setId)
+                           ->where('status', 1)
+                           ->select(['key', 'value'])
+                           ->get()
+                           ->toArray();
+        return $data;
+    }
+
     /**
      * 顶部导航栏
      */
-    public function TopMenus(Request $request)
-    {
-        $menus = Menu::where('status', 1)
-            ->whereIn('type', [1, 3])
-            ->select(['id', 'link', 'name', 'banner_title', 'banner_short_title', 'parent_id', 'seo_title', 'seo_keyword', 'seo_description'])
-            ->get();
-        $menus = $this->MenusTree($menus->toArray());
-        ReturnJson(TRUE, '', $menus);
+    public function TopMenus(Request $request) {
+        $menus = $this->getTopMenus();
+        ReturnJson(true, '', $menus);
     }
 
     /**
      * 顶部导航栏递归方法
      */
-    private function MenusTree($list, $parent = 0)
-    {
+    private function MenusTree($list, $parent = 0) {
         $result = [];
         foreach ($list as $key => $value) {
             if ($value['id'] == $parent) {
@@ -43,32 +136,15 @@ class CommonController extends Controller
             }
             $result[] = $value;
         }
+
         return $result;
     }
 
     /**
      * SEO信息获取
      */
-    public function info(Request $request)
-    {
-        $link = $request->link ?? 'index';
-        if (empty($link)) {
-            ReturnJson(false, '参数错误');
-        }
-        $result = Menu::select(['name', 'banner_pc', 'banner_mobile', 'banner_title', 'banner_short_title', 'seo_title', 'seo_keyword', 'seo_description'])->where(['link' => $link])->orderBy('sort', 'ASC')->first();
-        if(empty($result )){
-            ReturnJson(true, '', []);
-        }
-        // 若有栏目ID则优先使用栏目的TKD
-        if (!empty($params['category_id'])) {
-            $category = ProductsCategory::where(['id' => $params['category_id']])->select('seo_title,seo_keyword,seo_description')->first();
-            $result['seo_title'] = $category['seo_title'] ? $category['seo_title'] : $result['seo_title'];
-            $result['seo_keyword'] = $category['seo_keyword'] ? $category['seo_keyword'] : $result['seo_keyword'];
-            $result['seo_description'] = $category['seo_description'] ? $category['seo_description'] : $result['seo_description'];
-        }
-        $result['banner_pc'] =  Common::cutoffSiteUploadPathPrefix($result['banner_pc']);
-        $result['banner_mobile'] = Common::cutoffSiteUploadPathPrefix($result['banner_mobile']);
-
+    public function info(Request $request) {
+        $result = $this->getSeoInfo($request);
         // 若导航菜单的TKD为空则使用首页的TKD
         // $result['seo_title'] = $result['seo_title'] ? $result['seo_title'] : Setting::find()->select(['value'])->where(['alias' => 'seoTitle'])->scalar();
         // $result['seo_keyword'] = $result['seo_keyword'] ? $result['seo_keyword'] : Setting::find()->select(['value'])->where(['alias' => 'seoKeyword'])->scalar();
@@ -80,82 +156,44 @@ class CommonController extends Controller
     /**
      * 底部导航
      */
-    public function BottomMenus(Request $request)
-    {
-        $frontMenus = Menu::select([
-            'id',
-            'name'
-        ])
-            ->where('parent_id', 0)
-            ->whereIn('type', [2, 3])
-            ->where('status', 1)
-            ->orderBy('type', 'DESC')
-            ->orderBy('sort', 'ASC')
-            ->get()
-            ->toArray();
-        foreach ($frontMenus as $key => $frontMenu) {
-            $sonMenus = Menu::select([
-                'id',
-                'name',
-                'link',
-                'seo_title',
-                'seo_keyword',
-                'seo_description'
-            ])
-                ->where('parent_id', $frontMenu['id'])
-                ->whereIn('type', [2, 3])
-                ->where('status', 1)
-                ->orderBy('sort', 'ASC')
-                ->get()
-                ->toArray();
-            $frontMenus[$key]['menus'] = $sonMenus;
-        }
-        ReturnJson(TRUE, '', $frontMenus);
+    public function BottomMenus(Request $request) {
+        $frontMenus = $this->getButtonMenus();
+        ReturnJson(true, '', $frontMenus);
     }
 
     /**
      * 报告设置
      * 打开新标签页、能否用F12键、能否用鼠标右键、复制【报告详情】页内容的控制开关
      */
-    public function ControlPage(Request $request)
-    {
+    public function ControlPage(Request $request) {
         $id = $request->id;
         if (empty($id)) {
             ReturnJson(false, 'ID不允许为空');
         }
         $data = SystemValue::where('parent_id', $id)
-            ->where('status', 1)
-            ->select(['key', 'value'])
-            ->get()
-            ->toArray();
-        $result = [];
-        foreach ($data as $key => &$value) {
-            $result[$value['key']] = intval($value['value']);
-        }
-        ReturnJson(true, '', $result);
+                           ->where('status', 1)
+                           ->select(['key', 'value'])
+                           ->get()
+                           ->toArray();
+        ReturnJson(true, '', $data);
     }
 
     /**
      * 友情链接
      */
-    public function Link(Request $request)
-    {
-        $link = Link::where('status', 1)
-            ->select(['name', 'link'])
-            ->orderBy('sort', 'ASC')
-            ->get()
-            ->toArray();
+    public function Link(Request $request) {
+        $link = $this->getLinkList();
         ReturnJson(true, '', $link);
     }
 
     // 购买流程
-    public function PurchaseProcess(Request $request)
-    {
+    public function PurchaseProcess(Request $request) {
         $id = $request->parentId;
         if (empty($id)) {
             ReturnJson(false, 'ID不允许为空');
         }
-        $res = PlateValue::where('parent_id', $id)->where('status', 1)->select(['id', 'title', 'image as link'])->get()->toArray();
+        $res = PlateValue::where('parent_id', $id)->where('status', 1)->select(['id', 'title', 'image as link'])->get()
+                         ->toArray();
         foreach ($res as $key => $value) {
             # code...
         }
@@ -166,31 +204,8 @@ class CommonController extends Controller
     /**
      * 产品标签
      */
-    public function ProductTag(Request $request)
-    {
-        $category_id = $request->category_id;
-        if (!empty($category_id)) { // 某个行业分类的全部标签
-            $tags = ProductsCategory::select('product_tag')->where(['id' => $category_id])->value('product_tag');
-            if (!empty($tags)) {
-                $data = explode(',', $tags);
-            } else {
-                $data = [];
-            }
-        } else { // 全部行业分类的全部标签
-            $tags = ProductsCategory::where('status', 1)->pluck('product_tag')->toArray();
-            $result = '';
-            $separator = ''; // 分隔符
-            $tags = Array_filter($tags);
-            if (!empty($tags) && is_array($tags)) {
-                foreach ($tags as $tag) {
-                    $result .= $separator . $tag;
-                    $separator = ',';
-                }
-                $data = explode(',', $result);
-            } else {
-                $data = [];
-            }
-        }
+    public function ProductTag(Request $request) {
+        $data = $this->getProductTags($request);
         ReturnJson(true, '', $data);
     }
 
@@ -198,8 +213,7 @@ class CommonController extends Controller
      * 测试
      * 讯搜测试搜索
      */
-    public function TestXunSearch(Request $request)
-    {
+    public function TestXunSearch(Request $request) {
         $keyword = $request->keyword;
         if (empty($keyword)) {
             ReturnJson(false, '关键字不允许为空');
@@ -216,55 +230,41 @@ class CommonController extends Controller
     /**
      * 中国省份、城市数据
      */
-    public function ChinaRegions()
-    {
-        $provinces = City::select(['id', 'name'])->where(['type' => 1])->get()->toArray();
-        foreach ($provinces as $province) {
-            $data[] = [
-                "id" => $province["id"],
-                "name" => $province["name"],
-                'sons' => City::select(['id', 'name'])->where(['type' => 2, 'pid' => $province['id']])->get()->toArray(),
-            ];
-        }
+    public function ChinaRegions() {
+        $data = $this->getChianRegionData();
         ReturnJson(true, '', $data);
     }
-
 
     /**
      * 网站设置（包括了seo三要素）
      * 因为由于API端可能会接入多个个站点，所以当前需要前端当前站点的“站点设置”的ID来获取信息
      */
-    public function Set(Request $request)
-    {
+    public function Set(Request $request) {
         $name = $request->name;
         if (empty($name)) {
             ReturnJson(false, 'name is empty');
         }
-
         $setId = System::select(['id'])
-            ->where('status', 1)
-            ->where('alias', $name)
-            ->get()
-            ->value('id');
-
+                       ->where('status', 1)
+                       ->where('alias', $name)
+                       ->get()
+                       ->value('id');
         $result = [];
         if ($setId) {
-
             $data = SystemValue::where('parent_id', $setId)
-                ->where('status', 1)
-                ->select(['name', 'key', 'value'])
-                ->get()
-                ->toArray();
+                               ->where('status', 1)
+                               ->select(['name', 'key', 'value'])
+                               ->get()
+                               ->toArray();
             //图片后缀, 全部需要转换一遍
             $imgExtList = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg'];
             foreach ($data as $key => $value) {
                 $ext = pathinfo($value['value'], PATHINFO_EXTENSION);
-                if(in_array($ext, $imgExtList)){
+                if (in_array($ext, $imgExtList)) {
                     $value['value'] = Common::cutoffSiteUploadPathPrefix($value['value']);
                 }
-
                 $result[$value['key']] = [
-                    'name' => $value['name'],
+                    'name'  => $value['name'],
                     'value' => $value['value']
                 ];
             }
@@ -273,56 +273,230 @@ class CommonController extends Controller
     }
 
     // 获取页面板块信息
-    public function SettingValue(Request $request)
-    {
+    public function SettingValue(Request $request) {
         $key = $request->key;
         if (empty($key)) {
             ReturnJson(false, 'key is empty');
         }
-
         $result = [];
-
         $data = SystemValue::where('key', $key)
-            ->where('status', 1)
-            ->select(['name', 'key', 'value'])
-            ->get()
-            ->toArray();
-
+                           ->where('status', 1)
+                           ->select(['name', 'key', 'value'])
+                           ->get()
+                           ->toArray();
         //图片后缀, 全部需要转换一遍
         $imgExtList = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg'];
         foreach ($data as $key => $value) {
             $ext = pathinfo($value['value'], PATHINFO_EXTENSION);
-            if(in_array($ext, $imgExtList)){
+            if (in_array($ext, $imgExtList)) {
                 $value['value'] = Common::cutoffSiteUploadPathPrefix($value['value']);
             }
             $result[] = [
-                'name' => $value['name'],
+                'name'  => $value['name'],
                 'value' => $value['value']
             ];
         }
-
         ReturnJson(true, '请求成功', $result);
     }
 
     /**
      * 热搜关键词
      */
-    public function ProductKeyword()
-    {
-        $data = SearchRank::where('status', 1)->orderBy('hits', 'desc')->pluck('name');
+    public function ProductKeyword() {
+        $data = $this->getKeyWords();
         ReturnJson(true, '', $data);
     }
 
     /**
      * 其他语言网站
      */
-    public function OtherWebsite()
-    {
-        $data = LanguageWebsite::where('status', 1)
-            ->select(['name', 'url'])
-            ->orderBy('sort', 'ASC')
-            ->get()
-            ->toArray();
+    public function OtherWebsite() {
+        $data = $this->getWebSiteLan();
         ReturnJson(true, '', $data ?? []);
+    }
+
+    /**
+     *
+     * @param Request $request
+     *
+     * @return mixed
+     */
+    private function getSeoInfo(Request $request) {
+        $link = $request->link ?? 'index';
+        if (empty($link)) {
+            ReturnJson(false, '参数错误');
+        }
+        $result = Menu::select(
+            ['name', 'banner_pc', 'banner_mobile', 'banner_title', 'banner_short_title', 'seo_title', 'seo_keyword',
+             'seo_description']
+        )->where(['link' => $link])->orderBy('sort', 'ASC')->first();
+        if (empty($result)) {
+            ReturnJson(true, '', []);
+        }
+        // 若有栏目ID则优先使用栏目的TKD
+        if (!empty($params['category_id'])) {
+            $category = ProductsCategory::where(['id' => $params['category_id']])->select(
+                'seo_title,seo_keyword,seo_description'
+            )->first();
+            $result['seo_title'] = $category['seo_title'] ? $category['seo_title'] : $result['seo_title'];
+            $result['seo_keyword'] = $category['seo_keyword'] ? $category['seo_keyword'] : $result['seo_keyword'];
+            $result['seo_description'] = $category['seo_description'] ? $category['seo_description']
+                : $result['seo_description'];
+        }
+        $result['banner_pc'] = Common::cutoffSiteUploadPathPrefix($result['banner_pc']);
+        $result['banner_mobile'] = Common::cutoffSiteUploadPathPrefix($result['banner_mobile']);
+
+        return $result;
+    }
+
+    /**
+     *
+     *
+     * @return mixed
+     */
+    private function getLinkList() {
+        $link = Link::where('status', 1)
+                    ->select(['name', 'link'])
+                    ->orderBy('sort', 'ASC')
+                    ->get()
+                    ->toArray();
+
+        return $link;
+    }
+
+    /**
+     *
+     *
+     * @return array
+     */
+    private function getChianRegionData() {
+        $provinces = City::select(['id', 'name'])->where(['type' => 1])->get()->toArray();
+        $data = [];
+        foreach ($provinces as $province) {
+            $data[] = [
+                "id"   => $province["id"],
+                "name" => $province["name"],
+                'sons' => City::select(['id', 'name'])->where(['type' => 2, 'pid' => $province['id']])->get()->toArray(
+                ),
+            ];
+        }
+
+        return $data;
+    }
+
+    /**
+     *
+     *
+     * @return mixed
+     */
+    private function getKeyWords() {
+        $data = SearchRank::where('status', 1)->orderBy('hits', 'desc')->pluck('name');
+
+        return $data;
+    }
+
+    /**
+     *
+     * @param Request $request
+     *
+     * @return array|string[]
+     */
+    private function getProductTags(Request $request): array {
+        $category_id = $request->category_id;
+        if (!empty($category_id)) { // 某个行业分类的全部标签
+            $tags = ProductsCategory::select('product_tag')->where(['id' => $category_id])->value('product_tag');
+            if (!empty($tags)) {
+                $data = explode(',', $tags);
+            } else {
+                $data = [];
+            }
+        } else { // 全部行业分类的全部标签
+            $tags = ProductsCategory::where('status', 1)->pluck('product_tag')->toArray();
+            $result = '';
+            $separator = ''; // 分隔符
+            $tags = Array_filter($tags);
+            if (!empty($tags) && is_array($tags)) {
+                foreach ($tags as $tag) {
+                    $result .= $separator.$tag;
+                    $separator = ',';
+                }
+                $data = explode(',', $result);
+            } else {
+                $data = [];
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     *
+     *
+     * @return mixed
+     */
+    private function getWebSiteLan() {
+        $data = LanguageWebsite::where('status', 1)
+                               ->select(['name', 'url'])
+                               ->orderBy('sort', 'ASC')
+                               ->get()
+                               ->toArray();
+
+        return $data;
+    }
+
+    /**
+     *
+     *
+     * @return array
+     */
+    private function getTopMenus() {
+        $menus = Menu::where('status', 1)
+                     ->whereIn('type', [1, 3])
+                     ->select(
+                         ['id', 'link', 'name', 'banner_title', 'banner_short_title', 'parent_id', 'seo_title',
+                          'seo_keyword', 'seo_description']
+                     )
+                     ->get()->toArray();
+        $menus = $this->MenusTree($menus);
+
+        return $menus;
+    }
+
+    /**
+     *
+     *
+     * @return array
+     */
+    private function getButtonMenus() {
+        $frontMenus = Menu::select([
+                                       'id',
+                                       'name'
+                                   ])
+                          ->where('parent_id', 0)
+                          ->whereIn('type', [2, 3])
+                          ->where('status', 1)
+                          ->orderBy('type', 'DESC')
+                          ->orderBy('sort', 'ASC')
+                          ->get()
+                          ->toArray();
+        foreach ($frontMenus as $key => $frontMenu) {
+            $sonMenus = Menu::select([
+                                         'id',
+                                         'name',
+                                         'link',
+                                         'seo_title',
+                                         'seo_keyword',
+                                         'seo_description'
+                                     ])
+                            ->where('parent_id', $frontMenu['id'])
+                            ->whereIn('type', [2, 3])
+                            ->where('status', 1)
+                            ->orderBy('sort', 'ASC')
+                            ->get()
+                            ->toArray();
+            $frontMenus[$key]['menus'] = $sonMenus;
+        }
+
+        return $frontMenus;
     }
 }

@@ -20,6 +20,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     // Common 控制器
     Route::prefix('common')->group(function () {
+        Route::get('main-data', [\App\Http\Controllers\Common\CommonController::class, 'index'])->name('组件导航主数据接口');
+
         Route::get('top-menus', [\App\Http\Controllers\Common\CommonController::class, 'TopMenus'])->name('顶部导航栏');
         Route::get('info', [\App\Http\Controllers\Common\CommonController::class, 'info'])->name('SEO信息');
         Route::get('bottom-menus', [\App\Http\Controllers\Common\CommonController::class, 'BottomMenus'])->name(
@@ -54,6 +56,8 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     });
     // index控制器(首页)
     Route::prefix('index')->group(function () {
+        Route::get('main-data', [\App\Http\Controllers\IndexController::class, 'index'])->name('首页接口主要数据');
+
         Route::get('news-product', [\App\Http\Controllers\IndexController::class, 'NewsProduct'])->name('最新报告');
         Route::get('recommend-product', [\App\Http\Controllers\IndexController::class, 'RecommendProduct'])->name(
             '推荐报告'
@@ -66,6 +70,9 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::prefix('plate')->group(function () {
         Route::get('plate-value', [\App\Http\Controllers\PlateController::class, 'PlateValue'])->name(
             '页面板块子级的值'
+        );
+        Route::get('plate-value-list', [\App\Http\Controllers\PlateController::class, 'PlateValueList'])->name(
+            '页面板块子级的值列表'
         );
         Route::get('form', [\App\Http\Controllers\PlateController::class, 'Form'])->name('页面板块（包含父级和子级）');
     });
@@ -228,6 +235,11 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::post('test-send-email', [\App\Http\Controllers\Third\ThirdRespController::class, 'testSendEmail'])->name(
             '测试场景发送邮件'
         );
+
+        Route::post('sync-redis-val', [\App\Http\Controllers\Third\ThirdRespController::class, 'syncRedisVal'])->name(
+            '发送邮件'
+        );
+
     });
 
 
