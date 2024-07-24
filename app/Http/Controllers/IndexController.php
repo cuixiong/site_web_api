@@ -32,6 +32,10 @@ class IndexController extends Controller {
         //行业新闻
         $data['industry_news_list'] = $this->getIndustryNews();
 
+        // 客户评价
+
+        // 广告图
+
         ReturnJson(true, '', $data);
     }
 
