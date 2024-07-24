@@ -21,24 +21,24 @@ class Controller extends BaseController {
 
         //\Log::error('返回结果数据:'.json_encode([$action['controller'] , request()->ip()]));
 
-        $whiteIplist = Redis::get('ip_white_rules') ?? [];
-        //ip白名单验证
-        $checkRes = $this->isIpAllowed($ip, $whiteIplist);
-        if (!$checkRes) {
-            //获取封禁配置
-            $windowsTime = Redis::get('window_time') ?? 5;
-            $reqLimit = Redis::get('req_limit') ?? 10;
-            $expireTime = Redis::get('expire_time') ?? 60;
-            $ip = $ip.':'.$routeUril;
-            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->slideIsAllowed($ip);
-//            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->simpleIsAllowed($ip);
-            if (!$res) {
-                //添加封禁日志
-                $this->addBanLog($ip, $routeUril);
-                http_response_code(429);
-                ReturnJson(false, '请求频率过快~');
-            }
-        }
+//         $whiteIplist = Redis::get('ip_white_rules') ?? [];
+//         //ip白名单验证
+//         $checkRes = $this->isIpAllowed($ip, $whiteIplist);
+//         if (!$checkRes) {
+//             //获取封禁配置
+//             $windowsTime = Redis::get('window_time') ?? 5;
+//             $reqLimit = Redis::get('req_limit') ?? 10;
+//             $expireTime = Redis::get('expire_time') ?? 60;
+//             $ip = $ip.':'.$routeUril;
+//             $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->slideIsAllowed($ip);
+// //            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->simpleIsAllowed($ip);
+//             if (!$res) {
+//                 //添加封禁日志
+//                 $this->addBanLog($ip, $routeUril);
+//                 http_response_code(429);
+//                 ReturnJson(false, '请求频率过快~');
+//             }
+//         }
     }
 
     /**

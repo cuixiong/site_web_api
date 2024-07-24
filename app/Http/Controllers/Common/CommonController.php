@@ -111,10 +111,20 @@ class CommonController extends Controller {
                 if (in_array($ext, $imgExtList)) {
                     $value['value'] = Common::cutoffSiteUploadPathPrefix($value['value']);
                 }
-                $result[$value['key']] = [
+                $newItem = [
                     'name'  => $value['name'],
                     'value' => $value['value']
                 ];
+                if(isset($result[$value['key']]) && isset($result[$value['key']]['name'])){
+                    $oldItem = $result[$value['key']];
+                    $result[$value['key']]= [];
+                    $result[$value['key']][] = $oldItem;
+                    $result[$value['key']][] = $newItem;
+                }elseif(isset($result[$value['key']]) && !isset($result[$value['key']]['name'])){
+                    $result[$value['key']][] = $newItem;
+                }else{
+                    $result[$value['key']] = $newItem;
+                }
             }
         }
 
@@ -351,7 +361,8 @@ class CommonController extends Controller {
              'seo_description']
         )->where(['link' => $link])->orderBy('sort', 'ASC')->first();
         if (empty($result)) {
-            ReturnJson(true, '', []);
+            return [];
+            // ReturnJson(true, '', []);
         }
         // 若有栏目ID则优先使用栏目的TKD
         if (!empty($params['category_id'])) {
@@ -483,7 +494,7 @@ class CommonController extends Controller {
         //大部分网站的研究报告菜单栏会有下拉报告分类
         if($menus){
             foreach ($menus as $key => $item) {
-                if($item['name'] == 'report-categories' ){
+                if($item['link'] == 'report-categories' ){
                     $menus[$key]['children'] = ProductsCategory::getProductCategory();
                     break;
                 }
