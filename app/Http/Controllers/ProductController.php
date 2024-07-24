@@ -183,10 +183,10 @@ class ProductController extends Controller {
             ReturnJson(false, '产品ID不允许为空！', []);
         }
         $product = Products::where(['id' => $product_id, 'status' => 1])->select(
-            ['id', 'thumb', 'name', 'keywords', 'category_id']
+            ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date']
         )->first();
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
-        if (!empty($product)) {
+        if (!empty($product) && $product->published_date->timestamp < time()) {
             //$this->viewLog($product);
             $fieldList = ['p.name', 'p.english_name', 'cate.thumb', 'cate.home_thumb', 'p.id', 'p.published_date',
                           'cate.name as category',
@@ -248,6 +248,7 @@ class ProductController extends Controller {
                 $description['companies_mentioned'] = '';
                 $description['description_en'] = '';
                 $description['tables_and_figures_en'] = '';
+                $description['table_of_content_en'] = '';
             }
             $desc = [];
             if (!empty($product_desc) && !empty($description)) {

@@ -42,7 +42,9 @@ class PriceEditionValues extends Base {
         if (!empty($priceEditionsPid)) {
             $lists = $priceEditionsPid;
         } else {
-            $lists = PriceEditions::query()->where("status", 1)->get()->toArray();
+            $lists = PriceEditions::query()
+                                  ->where("is_deleted" , 1)
+                                  ->where("status", 1)->get()->toArray();
         }
         foreach ($lists as $key => $value) {
             if (!empty($priceEditionsPid)) {
@@ -66,6 +68,7 @@ class PriceEditionValues extends Base {
             $priceEditionsList = $priceEditionsValue;
         } else {
             $priceEditionsList = PriceEditionValues::query()->where("status", 1)
+                                                   ->where("is_deleted" , 1)
                                                    ->where("language_id", $languageId)
                                                    ->whereIn("edition_id", $edition_id_list)
                                                    ->select("id", "name", "notice", "sort", "rules")
