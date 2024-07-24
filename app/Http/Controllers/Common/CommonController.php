@@ -457,7 +457,19 @@ class CommonController extends Controller {
                           'seo_keyword', 'seo_description']
                      )
                      ->get()->toArray();
+                     
         $menus = $this->MenusTree($menus);
+
+        //大部分网站的研究报告菜单栏会有下拉报告分类
+        if($menus){
+            foreach ($menus as $key => $item) {
+                if($item['name'] == 'report-categories' ){
+                    $menus[$key]['children'] = ProductsCategory::getProductCategory();
+                    break;
+                }
+            }
+        }
+
 
         return $menus;
     }
