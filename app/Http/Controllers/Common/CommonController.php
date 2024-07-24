@@ -37,21 +37,40 @@ class CommonController extends Controller {
         $data['language_website'] = $this->getWebSiteLan();
         //获取顶部菜单
         $data['top_menu'] = $this->getTopMenus();
-
         //获取网站站点配置
         $data['site_set_info'] = $this->getSiteSetInfo();
-
         //网站设置
         $data['product_page_set_info'] = $this->getControlPageSet();
-
         //底部菜单
         $data['buttom_menu'] = $this->getButtonMenus();
-
         //更多资讯
         $data['news_list'] = $this->getNewsList();
+        //报告分类
+        $data['product_cagory'] = $this->getProductCagory();
 
         ReturnJson(true, '', $data);
     }
+
+    /**
+     *
+     *
+     * @return mixed
+     */
+    private function getProductCagory() {
+        $field = ['id', 'name', 'link'];
+        $data = ProductsCategory::select($field)
+                                ->where('status', 1)
+                                ->get()
+                                ->toArray();
+        array_unshift($data, [
+            'id'   => '0',
+            'name' => '全部',
+            'link' => '',
+        ]);
+
+        return $data;
+    }
+
 
     // 更多资讯
     public function getNewsList() {
@@ -67,9 +86,9 @@ class CommonController extends Controller {
                     ->limit(8)
                     ->get()
                     ->toArray();
+
         return $data;
     }
-
 
     public function getSiteSetInfo() {
         $siteInfoKey = 'site_info';
@@ -98,6 +117,7 @@ class CommonController extends Controller {
                 ];
             }
         }
+
         return $result;
     }
 
@@ -108,12 +128,12 @@ class CommonController extends Controller {
                        ->where('alias', $siteInfoKey)
                        ->get()
                        ->value('id');
-
         $data = SystemValue::where('parent_id', $setId)
                            ->where('status', 1)
                            ->select(['key', 'value'])
                            ->get()
                            ->toArray();
+
         return $data;
     }
 

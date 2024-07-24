@@ -16,9 +16,11 @@ class Controller extends BaseController {
     public function __construct() {
         //log
         $route = request()->route();
-        $action = $route->getAction();
-        \Log::error('返回结果数据:'.json_encode([$action['controller'] , request()->ip()]));
+        $routeUril = $route->uri;
         $ip = request()->ip();
+
+        //\Log::error('返回结果数据:'.json_encode([$action['controller'] , request()->ip()]));
+
         $whiteIplist = Redis::get('ip_white_rules') ?? [];
         //ip白名单验证
         $checkRes = $this->isIpAllowed($ip, $whiteIplist);
@@ -26,13 +28,13 @@ class Controller extends BaseController {
             //获取封禁配置
             $windowsTime = Redis::get('window_time') ?? 5;
             $reqLimit = Redis::get('req_limit') ?? 10;
-            $windowsTime = 10;
-            $reqLimit = 1;
-            //$res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit))->slideIsAllowed($ip);
-            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit))->simpleIsAllowed($ip);
+            $expireTime = Redis::get('expire_time') ?? 60;
+            $ip = $ip.':'.$routeUril;
+            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->slideIsAllowed($ip);
+//            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->simpleIsAllowed($ip);
             if (!$res) {
                 //添加封禁日志
-                $this->addBanLog($ip, $action['controller']);
+                $this->addBanLog($ip, $routeUril);
                 http_response_code(429);
                 ReturnJson(false, '请求频率过快~');
             }
@@ -145,6 +147,15 @@ class Controller extends BaseController {
     }
 
     public function isIpAllowed($ip, $whitelist) {
+        if(empty($whitelist )){
+            return false;
+        }
+
+        $whitelist = explode("\n" , $whitelist);
+        if(!is_array($whitelist)){
+            return false;
+        }
+
         // 将IP地址分割为四部分
         $ipParts = explode('.', $ip);
         if (count($ipParts) !== 4) {

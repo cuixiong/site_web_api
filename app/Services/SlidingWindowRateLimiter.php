@@ -6,11 +6,13 @@ class SlidingWindowRateLimiter {
     private $windowSize;
     private $limit;
     private $prefix;
+    private $expireTime;
 
-    public function __construct($windowSize, $limit, $prefix = 'rate_limit:') {
+    public function __construct($windowSize, $limit, $expireTime, $prefix = 'rate_limit:') {
         $this->windowSize = $windowSize; // 窗口大小，单位秒
         $this->limit = $limit; // 最大请求数
         $this->prefix = $prefix; // Redis 键前缀
+        $this->expireTime = $expireTime;
     }
 
     /**
@@ -19,30 +21,36 @@ class SlidingWindowRateLimiter {
      * @return bool
      */
     public function slideIsAllowed($key) {
-        $currentTimestamp = time();
-        $key = $this->prefix . $key;
-        $windowStartTimestamp = $currentTimestamp - $this->windowSize;
+        $currentTimestamp = microtime(true);
+        $uniqueId = $currentTimestamp . '-' . uniqid();
+        $key = $this->prefix.$key;
+        $luaScript = '
+            local key = KEYS[1]
+            local currentTimestamp = tonumber(ARGV[1])
+            local windowSize = tonumber(ARGV[2])
+            local maxRequests = tonumber(ARGV[3])
+            local uniqueId = ARGV[4]
+            local ttl = tonumber(ARGV[5])
 
-        // 启用 Redis 事务
-        Redis::multi();
+            -- 删除窗口外的请求记录
+            redis.call("ZREMRANGEBYSCORE", key, 0, currentTimestamp - windowSize)
+            -- 添加当前请求计数
+            redis.call("ZADD", key, currentTimestamp, uniqueId)
+            -- 设置键的过期时间
+            redis.call("EXPIRE", key, ttl)
+            -- 获取当前窗口内的请求数
+            local requestCount = redis.call("ZCARD", key)
 
-        // 移除窗口外的请求计数
-        Redis::zRemRangeByScore($key, 0, $windowStartTimestamp);
-        // 获取窗口内的请求计数
-        Redis::zCard($key);
-        // 添加当前请求计数
-        Redis::zAdd($key, $currentTimestamp, $currentTimestamp);
-        // 设置键的过期时间为窗口大小
-        Redis::expire($key, $this->windowSize);
+            if requestCount <= maxRequests then
+                return 1
+            else
+                return 0
+            end
+        ';
 
-        // 执行事务
-        $results = Redis::exec();
-        //\Log::error('返回结果数据$results:'.json_encode([$results]));
-        // 获取当前窗口内的请求计数
-        $currentCount = $results[1];
+        $result = Redis::eval($luaScript, 1, $key, $currentTimestamp, $this->windowSize, $this->limit, $uniqueId, $this->expireTime);
 
-        // 判断是否超过限流阈值
-        return $currentCount <= $this->limit;
+        return $result == 1;
     }
 
     //简单校验
