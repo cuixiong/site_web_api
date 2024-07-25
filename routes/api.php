@@ -65,6 +65,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::get('recommend-news', [\App\Http\Controllers\IndexController::class, 'RecommendNews'])->name('行业新闻');
         Route::get('partners', [\App\Http\Controllers\IndexController::class, 'partners'])->name('合作伙伴');
         Route::get('office', [\App\Http\Controllers\IndexController::class, 'office'])->name('办公室');
+        Route::get('customers-comments', [\App\Http\Controllers\IndexController::class, 'customersComments'])->name('客户评价');
     });
     // Plate控制器(页面板块)
     Route::prefix('plate')->group(function () {

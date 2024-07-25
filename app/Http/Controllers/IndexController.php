@@ -8,6 +8,7 @@ use App\Models\Office;
 use App\Models\Partner;
 use App\Models\Products;
 use App\Http\Controllers\Controller;
+use App\Models\Comment;
 use App\Models\ProductDescription;
 use App\Models\ProductsCategory;
 use App\Services\SenWordsService;
@@ -29,12 +30,14 @@ class IndexController extends Controller
         $data['recommend_product_list'] = $this->getRecommendProductList($request);
 
         //合作伙伴接口
-        $data['partner_list'] = $this->getPartnerList();
+        $data['partner_list'] = $this->getPartnerList($request);
 
         //行业新闻
-        $data['industry_news_list'] = $this->getIndustryNews();
+        $data['industry_news_list'] = $this->getIndustryNews($request);
 
         // 客户评价
+        $data['comment'] = $this->getCustomersComment($request);
+
 
         // 广告图
 
@@ -60,14 +63,21 @@ class IndexController extends Controller
     // 行业新闻
     public function RecommendNews(Request $request)
     {
-        $list = $this->getIndustryNews();
+        $list = $this->getIndustryNews($request);
         ReturnJson(true, '', $list);
     }
 
     // 合作伙伴
     public function partners(Request $request)
     {
-        $list = $this->getPartnerList();
+        $list = $this->getPartnerList($request);
+        ReturnJson(true, '', $list);
+    }
+
+    // 客户评价
+    public function customersComments(Request $request)
+    {
+        $list = $this->getCustomersComment($request);
         ReturnJson(true, '', $list);
     }
 
@@ -313,7 +323,7 @@ class IndexController extends Controller
         $data = [];
 
         // 报告基本查询
-        $productSelect = ['id', 'thumb', 'name','keywords', 'category_id', 'published_date', 'price', 'url',];
+        $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',];
         $productQuery = Products::where('status', 1)
             ->where("show_hot", 1)
             ->where("published_date", "<=", time())
@@ -323,7 +333,7 @@ class IndexController extends Controller
             ->limit($productLimit);
 
         // 分类基本查询
-        $categoryQuery = ProductsCategory::select(['id', 'name', 'link', 'thumb'])
+        $categoryQuery = ProductsCategory::select(['id', 'name', 'link', 'thumb', 'icon'])
             ->where('is_hot', 1)
             ->where('status', 1)
             ->where('pid', 0)
@@ -428,19 +438,19 @@ class IndexController extends Controller
         $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',];
 
         $productQuery = Products::where("status", 1)
-        ->where('show_recommend', 1)
-        ->where("published_date", "<=", time())
+            ->where('show_recommend', 1)
+            ->where("published_date", "<=", time())
             ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
             ->orderBy('published_date', 'desc')
             ->orderBy('id', 'desc')
             ->limit($productLimit);
 
         // 分类基本查询
-        $categoryQuery = ProductsCategory::select(['id', 'name', 'link', 'thumb'])
-        ->where('status', 1)
-        ->where('is_recommend', 1)
-        ->where('pid', 0)
-        ->orderBy('sort', 'asc')
+        $categoryQuery = ProductsCategory::select(['id', 'name', 'link', 'thumb', 'icon'])
+            ->where('status', 1)
+            ->where('is_recommend', 1)
+            ->where('pid', 0)
+            ->orderBy('sort', 'asc')
             ->orderBy('updated_at', 'desc')
             ->limit($categoryLimit);
 
@@ -520,13 +530,16 @@ class IndexController extends Controller
      *
      * @return array
      */
-    private function getPartnerList(): array
+    private function getPartnerList(Request $request): array
     {
+        $limit = $request->partner_size ?? 20;
         $list = Partner::where('status', 1)
             ->select(['id', 'name', 'logo',])
             ->orderBy('sort', 'desc')
             ->orderBy('id', 'desc')
-            ->get()->toArray();
+            ->limit($limit)
+            ->get()
+            ->toArray();
         //        foreach ($list as &$item) {
         //            $item['logo'] = Common::cutoffSiteUploadPathPrefix($item['logo']);
         //        }
@@ -539,8 +552,11 @@ class IndexController extends Controller
      *
      * @return array
      */
-    private function getIndustryNews(): array
+    private function getIndustryNews(Request $request): array
     {
+        
+        $limit = $request->news_size ?? 4;
+
         $list = News::where('status', 1)
             ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url'])
             ->where('show_home', 1) // 是否在首页显示
@@ -548,7 +564,9 @@ class IndexController extends Controller
             //->orderBy('sort', 'desc')
             ->orderBy('upload_at', 'desc')
             ->orderBy('id', 'desc')
-            ->limit(4)->get()->toArray();
+            ->limit($limit)
+            ->get()
+            ->toArray();
         if ($list) {
             foreach ($list as $key => $item) {
                 $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
@@ -558,4 +576,34 @@ class IndexController extends Controller
 
         return $list;
     }
+
+    
+    /**
+     *
+     *
+     * @return array
+     */
+    private function getCustomersComment(Request $request): array
+    {
+        
+        $limit = $request->comment_size ?? 4;
+
+        $list = Comment::where('status', 1)
+            ->select(['id', 'image', 'title', 'notes', 'comment_at'])
+            ->where('status', 1) 
+            //->orderBy('sort', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit($limit)
+            ->get()
+            ->toArray();
+        if ($list) {
+            foreach ($list as $key => $item) {
+                $list[$key]['comment_at_format'] = date('Y-m-d', $item['comment_at']);
+                $list[$key]['image'] = Common::cutoffSiteUploadPathPrefix($item['image']);
+            }
+        }
+
+        return $list;
+    }
+
 }
