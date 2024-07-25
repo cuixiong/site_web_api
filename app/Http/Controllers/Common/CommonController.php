@@ -130,7 +130,7 @@ class CommonController extends Controller {
                        ->get()
                        ->value('id');
         $data = SystemValue::where('parent_id', $setId)
-                           ->where('status', 1)
+                           ->where('hidden', 1)
                            ->select(['key', 'value'])
                            ->get()
                            ->toArray();

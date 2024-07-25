@@ -14,7 +14,12 @@ class Controller extends BaseController {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
     public function __construct() {
-        //log
+        if (in_array(request()->ip(), ['127.0.0.1', '14.145.51.181'])) {
+
+        }else {
+            $this->securityCheck();
+        }
+
         $route = request()->route();
         $routeUril = $route->uri;
         $ip = request()->ip();
@@ -29,9 +34,9 @@ class Controller extends BaseController {
             $windowsTime = Redis::get('window_time') ?? 5;
             $reqLimit = Redis::get('req_limit') ?? 10;
             $expireTime = Redis::get('expire_time') ?? 60;
-            $ip = $ip.':'.$routeUril;
-            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->slideIsAllowed($ip);
-//            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->simpleIsAllowed($ip);
+            $ipCacheKey = $ip.':'.$routeUril;
+            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->slideIsAllowed($ipCacheKey);
+//            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->simpleIsAllowed($ipCacheKey);
             if (!$res) {
                 //添加封禁日志
                 $this->addBanLog($ip, $routeUril);
@@ -87,7 +92,9 @@ class Controller extends BaseController {
      */
     public function checkSign() {
         $params = request()->input();
-        $sign = $params['sign'] ?? '';
+        $sign = request()->header('sign' , '');
+        $ts = request()->header('ts' , 0);
+        $params['ts'] = $ts;
         $checkRes = $this->verifySign($params, $this->signKey, $sign);
         if (!$checkRes) {
             ReturnJson(false, '签名错误');
@@ -98,8 +105,9 @@ class Controller extends BaseController {
      * 校验请求事件
      */
     protected function checkTime() {
-        $params = request()->input();
-        $ts = $params['ts'] ?? 0;
+        $ts = request()->header('ts' , 0);
+        //$params = request()->input();
+        //$ts = $params['ts'] ?? 0;
         if (time() - $ts > 5) {
             ReturnJson(false, '接口参数已过期');
         }
