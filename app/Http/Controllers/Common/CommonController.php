@@ -353,7 +353,7 @@ class CommonController extends Controller {
      */
     private function getSeoInfo(Request $request)
     {
-        $link = !empty($request->link) ? 'index' : $request->link;
+        $link = !empty($request->link) ? $request->link : 'index';
         if (empty($link)) {
             ReturnJson(false, '参数错误');
         }
