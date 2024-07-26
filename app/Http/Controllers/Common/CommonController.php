@@ -488,8 +488,32 @@ class CommonController extends Controller {
                           'seo_keyword', 'seo_description']
                      )
                      ->get()->toArray();
+        $result = []; 
+        foreach ($menus as $key => $value) {
+            if($value['parent_id'] == 0 || $value['parent_id'] == null){
+                $result[$value['id']] = $value;
+            }
+        }
+
+        foreach ($menus as $key => $value) {
+            if($value['parent_id'] > 0 && isset($result[$value['parent_id']])){
+                if(!isset($result[$value['parent_id']]['children'])){
+                    $result[$value['parent_id']]['children'] = [];
+                }
+                $result[$value['parent_id']]['children'][] = $value;
+            }
+        }
+        
+
+        return array_values($result);
+
+        // foreach ($menus as $key => $value) {
+        //     if($value['parent_id'] == 0 || $value['parent_id'] == null){
+        //         $result[] = $value;
+        //     }
+        // }
                      
-        $menus = $this->MenusTree($menus);
+        // $menus = $this->MenusTree($menus);
 
         // //大部分网站的研究报告菜单栏会有下拉报告分类
         // if($menus){
@@ -502,7 +526,7 @@ class CommonController extends Controller {
         // }
 
 
-        return $menus;
+        // return $menus;
     }
 
     /**
