@@ -399,10 +399,14 @@ class IndexController extends Controller
 
         if ($dataType == 0 || $dataType == 1) {
 
+            //返回分类名
+            $categoryNames = ProductsCategory::query()->select(['id', 'name'])->get()->toArray();
+            $categoryNames = array_column($categoryNames, 'name', 'id');
+            
             $newProductList = $productQuery->select($productSelect)->get();
-
             foreach ($newProductList as $value) {
                 $this->handlerNewProductList($value);
+                $value['category_name'] = isset($categoryNames[$value->category_id]) ? $categoryNames[$value->category_id] : '';
             }
             $data['products'] = $newProductList;
         }
