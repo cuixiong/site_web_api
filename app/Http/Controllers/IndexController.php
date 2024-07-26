@@ -38,9 +38,6 @@ class IndexController extends Controller
         // 客户评价
         $data['comment'] = $this->getCustomersComment($request);
 
-
-        // 广告图
-
         ReturnJson(true, '', $data);
     }
 

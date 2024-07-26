@@ -75,6 +75,10 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::get('plate-value-list', [\App\Http\Controllers\PlateController::class, 'PlateValueList'])->name(
             '页面板块子级的值列表'
         );
+        
+        Route::get('plate-value-list-by-link', [\App\Http\Controllers\PlateController::class, 'PlateValueByLink'])->name(
+            '页面板块子级的值列表-通过页面link'
+        );
         Route::get('form', [\App\Http\Controllers\PlateController::class, 'Form'])->name('页面板块（包含父级和子级）');
     });
     // Product控制器(报告)
