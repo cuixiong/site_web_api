@@ -330,7 +330,7 @@ class IndexController extends Controller
             ->limit($productLimit);
 
         // 分类基本查询
-        $categoryQuery = ProductsCategory::select(['id', 'name', 'link', 'thumb', 'icon'])
+        $categoryQuery = ProductsCategory::select(['id', 'name', 'link', 'thumb', 'icon', 'icon_hover'])
             ->where('is_hot', 1)
             ->where('status', 1)
             ->where('pid', 0)
@@ -443,7 +443,7 @@ class IndexController extends Controller
             ->limit($productLimit);
 
         // 分类基本查询
-        $categoryQuery = ProductsCategory::select(['id', 'name', 'link', 'thumb', 'icon'])
+        $categoryQuery = ProductsCategory::select(['id', 'name', 'link', 'thumb', 'icon', 'icon_hover'])
             ->where('status', 1)
             ->where('is_recommend', 1)
             ->where('pid', 0)
@@ -551,13 +551,14 @@ class IndexController extends Controller
      */
     private function getIndustryNews(Request $request): array
     {
-        
+
         $limit = $request->news_size ?? 4;
 
+        // 这里keywords可能改成tags，都是逗号分割取第一个
         $list = News::where('status', 1)
-            ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url'])
-            ->where('show_home', 1) // 是否在首页显示
-            ->where('upload_at', '<=', time())
+        ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url', 'keywords'])
+        ->where('show_home', 1) // 是否在首页显示
+        ->where('upload_at', '<=', time())
             //->orderBy('sort', 'desc')
             ->orderBy('upload_at', 'desc')
             ->orderBy('id', 'desc')
@@ -568,6 +569,9 @@ class IndexController extends Controller
             foreach ($list as $key => $item) {
                 $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
                 $list[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
+
+                $keywords = explode(',', $list[$key]['keywords'] ?? '');
+                $list[$key]['keywords'] = count($keywords) > 0 ? $keywords[0] : '';
             }
         }
 
