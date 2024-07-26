@@ -351,15 +351,19 @@ class CommonController extends Controller {
      *
      * @return mixed
      */
-    private function getSeoInfo(Request $request) {
-        $link = $request->link ?? 'index';
+    private function getSeoInfo(Request $request)
+    {
+        $link = !empty($request->link) ? 'index' : $request->link;
         if (empty($link)) {
             ReturnJson(false, '参数错误');
         }
         $result = Menu::select(
-            ['name', 'banner_pc', 'banner_mobile', 'banner_title', 'banner_short_title', 'seo_title', 'seo_keyword',
-             'seo_description']
+            [
+                'name', 'banner_pc', 'banner_mobile', 'banner_title', 'banner_short_title', 'seo_title', 'seo_keyword',
+                'seo_description'
+            ]
         )->where(['link' => $link])->orderBy('sort', 'ASC')->first();
+        // 没有则取id第一条记录，
         if (empty($result)) {
             return [];
             // ReturnJson(true, '', []);
@@ -372,7 +376,7 @@ class CommonController extends Controller {
             $result['seo_title'] = $category['seo_title'] ? $category['seo_title'] : $result['seo_title'];
             $result['seo_keyword'] = $category['seo_keyword'] ? $category['seo_keyword'] : $result['seo_keyword'];
             $result['seo_description'] = $category['seo_description'] ? $category['seo_description']
-                : $result['seo_description'];
+            : $result['seo_description'];
         }
         $result['banner_pc'] = Common::cutoffSiteUploadPathPrefix($result['banner_pc']);
         $result['banner_mobile'] = Common::cutoffSiteUploadPathPrefix($result['banner_mobile']);
@@ -488,6 +492,8 @@ class CommonController extends Controller {
                           'seo_keyword', 'seo_description']
                      )
                      ->get()->toArray();
+        
+        // 这里只处理两层，等需要多层再用递归
         $result = []; 
         foreach ($menus as $key => $value) {
             if($value['parent_id'] == 0 || $value['parent_id'] == null){
@@ -503,7 +509,6 @@ class CommonController extends Controller {
                 $result[$value['parent_id']]['children'][] = $value;
             }
         }
-        
 
         return array_values($result);
 
@@ -534,33 +539,34 @@ class CommonController extends Controller {
      *
      * @return array
      */
-    private function getButtonMenus() {
+    private function getButtonMenus()
+    {
         $frontMenus = Menu::select([
-                                       'id',
-                                       'name'
-                                   ])
-                          ->where('parent_id', 0)
-                          ->whereIn('type', [2, 3])
-                          ->where('status', 1)
-                          ->orderBy('type', 'DESC')
-                          ->orderBy('sort', 'ASC')
-                          ->get()
-                          ->toArray();
+            'id',
+            'name'
+        ])
+            ->where('parent_id', 0)
+            ->whereIn('type', [2, 3])
+            ->where('status', 1)
+            ->orderBy('type', 'DESC')
+            ->orderBy('sort', 'ASC')
+            ->get()
+            ->toArray();
         foreach ($frontMenus as $key => $frontMenu) {
             $sonMenus = Menu::select([
-                                         'id',
-                                         'name',
-                                         'link',
-                                         'seo_title',
-                                         'seo_keyword',
-                                         'seo_description'
-                                     ])
-                            ->where('parent_id', $frontMenu['id'])
-                            ->whereIn('type', [2, 3])
-                            ->where('status', 1)
-                            ->orderBy('sort', 'ASC')
-                            ->get()
-                            ->toArray();
+                'id',
+                'name',
+                'link',
+                'seo_title',
+                'seo_keyword',
+                'seo_description'
+            ])
+                ->where('parent_id', $frontMenu['id'])
+                ->whereIn('type', [2, 3])
+                ->where('status', 1)
+                ->orderBy('sort', 'ASC')
+                ->get()
+                ->toArray();
             $frontMenus[$key]['menus'] = $sonMenus;
         }
 
