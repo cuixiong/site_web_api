@@ -496,6 +496,10 @@ class CommonController extends Controller {
         // 这里只处理两层，等需要多层再用递归
         $result = []; 
         foreach ($menus as $key => $value) {
+            // 首页返回的link改成空字符串
+            if($value['link'] == 'index'){
+                $value['link'] = '';
+            }
             if($value['parent_id'] == 0 || $value['parent_id'] == null){
                 $result[$value['id']] = $value;
             }
