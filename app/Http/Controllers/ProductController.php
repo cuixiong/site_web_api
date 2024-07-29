@@ -302,13 +302,18 @@ class ProductController extends Controller {
             }
             $product_desc['prices'] = Products::CountPrice($product_desc['price'], $product_desc['publisher_id']);
             $product_desc['description'] = $product_desc['description'];
+            $product_desc['seo_description'] = is_array($product_desc['description']) && count($product_desc['description'])>0 ?$product_desc['description'][0]:'';
             $product_desc['url'] = $product_desc['url'];
             //$product_desc['thumb'] = Common::cutoffSiteUploadPathPrefix($product->getThumbImgAttribute());
-            if (!empty($product->thumb)) {
-                $product_desc['thumb'] = $product->thumb;
-            } else {
-                $product_desc['thumb'] = $product_desc['home_thumb'];
+            
+            $product_desc['thumb'] = $product->thumb;
+            
+            if (empty($product->thumb)) {
+                // 若报告图片为空，则使用系统设置的默认报告高清图
+                $defaultImg = SystemValue::where('key', 'default_report_high_img')->value('value');
+                $product_desc['thumb'] = !empty($defaultImg)?$defaultImg:'';
             }
+
             $product_desc['published_date'] = $product_desc['published_date'] ? date(
                 'Y-m-d',
                 strtotime(

@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\ProductDescription;
 use App\Models\ProductsCategory;
+use App\Models\SystemValue;
 use App\Services\SenWordsService;
 use Illuminate\Http\Request;
 
@@ -402,15 +403,23 @@ class IndexController extends Controller
             //返回分类名
             $categoryNames = ProductsCategory::query()->select(['id', 'name'])->get()->toArray();
             $categoryNames = array_column($categoryNames, 'name', 'id');
-            
+            // gir用的两张默认图...
+            $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+
             $newProductList = $productQuery->select($productSelect)->get();
-            foreach ($newProductList as $value) {
+            foreach ($newProductList as $key => $value) {
                 $this->handlerNewProductList($value);
-                $value['category_name'] = isset($categoryNames[$value->category_id]) ? $categoryNames[$value->category_id] : '';
+                $newProductList[$key]['category_name'] = isset($categoryNames[$value->category_id]) ? $categoryNames[$value->category_id] : '';
+                if (empty($value->thumb)) {
+                    // 若报告图片为空，则使用系统设置的默认报告高清图
+                    $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
+                }
             }
             $data['products'] = $newProductList;
         }
         return $data;
+        
+
     }
 
     /**
@@ -514,11 +523,19 @@ class IndexController extends Controller
         }
 
         if ($dataType == 0 || $dataType == 1) {
+            
+            // gir用的两张默认图...
+            $defaultImg = SystemValue::where('key', 'default_report_img2')->value('value');
 
             $newProductList = $productQuery->select($productSelect)->get();
 
-            foreach ($newProductList as $value) {
+            foreach ($newProductList as $key => $value) {
                 $this->handlerNewProductList($value);
+                
+                if (empty($value->thumb)) {
+                    // 若报告图片为空，则使用系统设置的默认报告高清图
+                    $newProductList[$key]['thumb'] = !empty($defaultImg)?$defaultImg:'';
+                }
             }
             $data['products'] = $newProductList;
         }
