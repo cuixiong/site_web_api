@@ -28,6 +28,7 @@ class PlateController extends Controller
             'pc_image as img',
             'mb_image as img_mobile',
             'title',
+            'icon',
             'content as description'
         ])
         // ->whereIn('alias', $nameList)
@@ -113,6 +114,7 @@ class PlateController extends Controller
             'alias',
             'pc_image as img',
             'mb_image as img_mobile',
+            'icon',
             'title',
             'content as description'
         ])->where('page_id', $menu_id)->get()->toArray();

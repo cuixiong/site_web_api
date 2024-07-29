@@ -38,13 +38,14 @@ class ProductController extends Controller {
             SearchRank::query()->where('name', $keyword)->increment('hits');
         }
         $categorySeoInfo = [
+            'category_name'   => '',
             'seo_title'       => '',
             'seo_keyword'     => '',
             'seo_description' => '',
         ];
         if (!empty($category_id)) {
             $categorySeoData = ProductsCategory::query()
-                                               ->select(['seo_title', 'seo_keyword', 'seo_description'])
+                                               ->select(['name as category_name','seo_title', 'seo_keyword', 'seo_description'])
                                                ->where('id', $category_id)->first();
             if (!empty($categorySeoData)) {
                 $categorySeoInfo = $categorySeoData->toArray();
