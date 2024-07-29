@@ -177,7 +177,8 @@ class ProductController extends Controller {
     }
 
     // 报告详情
-    public function Description(Request $request) {
+    public function Description(Request $request)
+    {
         $product_id = $request->product_id;
         $url = $request->url;
         if (empty($product_id)) {
@@ -189,17 +190,22 @@ class ProductController extends Controller {
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
         if (!empty($product) && $product->published_date->timestamp < time()) {
             //$this->viewLog($product);
-            $fieldList = ['p.name', 'p.english_name', 'cate.thumb', 'cate.home_thumb', 'p.id', 'p.published_date',
-                          'cate.name as category',
-                          'cate.keyword_suffix', 'cate.product_tag', 'p.pages', 'p.tables', 'p.url', 'p.category_id',
-                          'p.keywords', 'p.price', 'p.discount_type', 'p.discount', 'p.discount_amount',
-                          'p.discount_time_begin', 'p.discount_time_end', 'p.publisher_id',];
+            $fieldList = [
+                'p.name', 'p.english_name', 'cate.thumb', 'cate.home_thumb', 'p.id', 'p.published_date',
+                'cate.name as category',
+                'cate.keyword_suffix', 'cate.product_tag', 'p.pages', 'p.tables', 'p.url', 'p.category_id',
+                'p.keywords', 'p.price', 'p.discount_type', 'p.discount', 'p.discount_amount',
+                'p.discount_time_begin', 'p.discount_time_end', 'p.publisher_id',
+            ];
             $product_desc = (new Products)->from('product_routine as p')->select($fieldList)->leftJoin(
-                'product_category as cate', 'cate.id', '=', 'p.category_id'
+                'product_category as cate',
+                'cate.id',
+                '=',
+                'p.category_id'
             )
-                                          ->where(['p.id' => $product_id])
-                                          ->where('p.status', 1)
-                                          ->first()->toArray();
+            ->where(['p.id' => $product_id])
+            ->where('p.status', 1)
+                ->first()->toArray();
             //返回打折信息
             $time = time();
             //判断当前报告是否在优惠时间内
@@ -211,16 +217,18 @@ class ProductController extends Controller {
             //返回相关报告
             if (!empty($product_desc['keywords'])) {
                 $relatedProList = Products::query()->select(
-                    ["id", "published_date", "name", "thumb", "url", "keywords", "english_name", "category_id",
-                     "author"]
+                    [
+                        "id", "published_date", "name", "thumb", "url", "keywords", "english_name", "category_id",
+                        "author"
+                    ]
                 )
-                                          ->where("keywords", $product_desc['keywords'])
-                                          ->where("id", "<>", $product_id)
-                                          ->where("published_date", "<=", time())
-                                          ->where("status", 1)
-                                          ->orderBy("published_date", "desc")
-                                          ->limit(2)
-                                          ->get();
+                ->where("keywords", $product_desc['keywords'])
+                    ->where("id", "<>", $product_id)
+                    ->where("published_date", "<=", time())
+                    ->where("status", 1)
+                    ->orderBy("published_date", "desc")
+                    ->limit(2)
+                    ->get();
                 foreach ($relatedProList as $item) {
                     $item->thumb = $item->getThumbImgAttribute();
                     $item->short_desc = $item->getProShortDescAttribute();
@@ -233,14 +241,14 @@ class ProductController extends Controller {
             //报告详情数据处理
             $suffix = date('Y', strtotime($product_desc['published_date']));
             $description = (new ProductDescription($suffix))->select([
-                                                                         'description',
-                                                                         'description_en',
-                                                                         'table_of_content',
-                                                                         'table_of_content_en',
-                                                                         'tables_and_figures',
-                                                                         'tables_and_figures_en',
-                                                                         'companies_mentioned',
-                                                                     ])->where('product_id', $product_id)->first();
+                'description',
+                'description_en',
+                'table_of_content',
+                'table_of_content_en',
+                'tables_and_figures',
+                'tables_and_figures_en',
+                'companies_mentioned',
+            ])->where('product_id', $product_id)->first();
             if ($description === null) {
                 $description = [];
                 $description['description'] = '';
@@ -261,19 +269,36 @@ class ProductController extends Controller {
                 $product_desc['table_of_content'] = $this->titleToDeep($description['table_of_content']);
                 $product_desc['table_of_content_en'] = $this->titleToDeep($description['table_of_content_en']);
                 $product_desc['table_of_content2'] = $this->titleToDeep(
-                    $_description, $description['table_of_content']
+                    $_description,
+                    $description['table_of_content']
                 );
                 $product_desc['table_of_catalogue'] = $product_desc['table_of_content2'];
-                $product_desc['tables_and_figures'] = str_replace(['<pre>', '</pre>'], '',
-                                                                  $description['tables_and_figures']);
-                $product_desc['tables_and_figures_en'] = str_replace(['<pre>', '</pre>'], '',
-                                                                     $description['tables_and_figures_en']);
-                $product_desc['companies_mentioned'] = str_replace(['<pre>', '</pre>'], '',
-                                                                   $description['companies_mentioned']);
+                $product_desc['tables_and_figures'] = str_replace(
+                    ['<pre>', '</pre>'],
+                    '',
+                    $description['tables_and_figures']
+                );
+                $product_desc['tables_and_figures_en'] = str_replace(
+                    ['<pre>', '</pre>'],
+                    '',
+                    $description['tables_and_figures_en']
+                );
+                $product_desc['companies_mentioned'] = str_replace(
+                    ['<pre>', '</pre>'],
+                    '',
+                    $description['companies_mentioned']
+                );
+                // 服务方式文本
                 $serviceMethod = SystemValue::select(['name as key', 'value'])->where(
                     ['key' => 'Service', 'status' => 1]
                 )->first();
                 $product_desc['serviceMethod'] = $serviceMethod ?? '';
+
+                // 支付方式文本
+                $payMethod = SystemValue::select(['name as key', 'value'])->where(
+                    ['key' => 'PayMethod', 'status' => 1]
+                )->first();
+                $product_desc['payMethod'] = $payMethod ?? '';
             }
             $product_desc['prices'] = Products::CountPrice($product_desc['price'], $product_desc['publisher_id']);
             $product_desc['description'] = $product_desc['description'];
@@ -285,9 +310,10 @@ class ProductController extends Controller {
                 $product_desc['thumb'] = $product_desc['home_thumb'];
             }
             $product_desc['published_date'] = $product_desc['published_date'] ? date(
-                'Y-m-d', strtotime(
-                           $product_desc['published_date']
-                       )
+                'Y-m-d',
+                strtotime(
+                    $product_desc['published_date']
+                )
             ) : '';
             //产品关键词 开始
             if (!empty($product_desc['keyword_suffix'])) {
@@ -297,7 +323,7 @@ class ProductController extends Controller {
                     $separator = ''; // 分隔符
                     // echo '<pre>';print_r($keyword_suffixs);exit;
                     foreach ($keyword_suffixs as $keyword_suffix) {
-                        $seo_keyword .= $separator.$product_desc['keywords'].$keyword_suffix;
+                        $seo_keyword .= $separator . $product_desc['keywords'] . $keyword_suffix;
                         $separator = '，';
                     }
                 }
@@ -320,11 +346,11 @@ class ProductController extends Controller {
             ReturnJson(true, '', $product_desc);
         } else {
             $product_desc = Products::select(['id', 'url', 'published_date'])
-                                    ->where(['url' => $url, 'status' => 1])
-                                    ->where("id", "<>", $product_id)
-                                    ->orderBy('published_date', 'desc')
-                                    ->orderBy('id', 'desc')
-                                    ->first();
+            ->where(['url' => $url, 'status' => 1])
+                ->where("id", "<>", $product_id)
+                ->orderBy('published_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
             unset($product_desc->published_date);
             if (!empty($product_desc)) {
                 ReturnJson(1, '', $product_desc);
