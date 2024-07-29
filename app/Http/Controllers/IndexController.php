@@ -418,8 +418,6 @@ class IndexController extends Controller
             $data['products'] = $newProductList;
         }
         return $data;
-        
-
     }
 
     /**
@@ -523,7 +521,7 @@ class IndexController extends Controller
         }
 
         if ($dataType == 0 || $dataType == 1) {
-            
+
             // gir用的两张默认图...
             $defaultImg = SystemValue::where('key', 'default_report_img2')->value('value');
 
@@ -531,10 +529,10 @@ class IndexController extends Controller
 
             foreach ($newProductList as $key => $value) {
                 $this->handlerNewProductList($value);
-                
+
                 if (empty($value->thumb)) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
-                    $newProductList[$key]['thumb'] = !empty($defaultImg)?$defaultImg:'';
+                    $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                 }
             }
             $data['products'] = $newProductList;
@@ -577,9 +575,9 @@ class IndexController extends Controller
 
         // 这里keywords可能改成tags，都是逗号分割取第一个
         $list = News::where('status', 1)
-        ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url', 'keywords'])
-        ->where('show_home', 1) // 是否在首页显示
-        ->where('upload_at', '<=', time())
+            ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url', 'keywords'])
+            ->where('show_home', 1) // 是否在首页显示
+            ->where('upload_at', '<=', time())
             //->orderBy('sort', 'desc')
             ->orderBy('upload_at', 'desc')
             ->orderBy('id', 'desc')
@@ -599,7 +597,7 @@ class IndexController extends Controller
         return $list;
     }
 
-    
+
     /**
      *
      *
@@ -607,12 +605,12 @@ class IndexController extends Controller
      */
     private function getCustomersComment(Request $request): array
     {
-        
+
         $limit = $request->comment_size ?? 4;
 
         $list = Comment::where('status', 1)
-            ->select(['id', 'image', 'title', 'notes', 'comment_at'])
-            ->where('status', 1) 
+            ->select(['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at'])
+            ->where('status', 1)
             //->orderBy('sort', 'desc')
             ->orderBy('id', 'desc')
             ->limit($limit)
@@ -627,5 +625,4 @@ class IndexController extends Controller
 
         return $list;
     }
-
 }

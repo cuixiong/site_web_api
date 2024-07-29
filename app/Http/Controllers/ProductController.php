@@ -58,7 +58,7 @@ class ProductController extends Controller {
         $products = [];
         if ($result) {
             $languages = Languages::GetList();
-            $defaultImg = SystemValue::where('key', 'default_report_high_img')->value('value');
+            $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
             foreach ($result as $key => $value) {
                 //报告数据
                 $time = time();
@@ -70,7 +70,7 @@ class ProductController extends Controller {
                 //判断当前报告是否在优惠时间内
                 if ($productsData['discount_time_begin'] <= $time && $productsData['discount_time_end'] >= $time) {
                     $value['discount_status'] = 1;
-                } else {
+                } else {    
                     $value['discount_status'] = 0;
                 }
                 $value['discount'] = $productsData['discount'];
