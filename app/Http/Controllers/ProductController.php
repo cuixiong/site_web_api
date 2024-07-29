@@ -58,6 +58,7 @@ class ProductController extends Controller {
         $products = [];
         if ($result) {
             $languages = Languages::GetList();
+            $defaultImg = SystemValue::where('key', 'default_report_high_img')->value('value');
             foreach ($result as $key => $value) {
                 //报告数据
                 $time = time();
@@ -81,6 +82,11 @@ class ProductController extends Controller {
                 $category = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->find($value['category_id']);
                 if (empty($value['thumb']) && !empty($category)) {
                     $value['thumb'] = $category['thumb'];
+                }
+
+                if (empty($value['thumb'])) {
+                    // 若报告图片为空，则使用系统设置的默认报告高清图
+                    $value['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                 }
                 $value['thumb'] = Common::cutoffSiteUploadPathPrefix($value['thumb']);
                 if (is_numeric($value['published_date'])) {
@@ -307,7 +313,7 @@ class ProductController extends Controller {
             //$product_desc['thumb'] = Common::cutoffSiteUploadPathPrefix($product->getThumbImgAttribute());
             
             $product_desc['thumb'] = $product->thumb;
-            
+
             if (empty($product->thumb)) {
                 // 若报告图片为空，则使用系统设置的默认报告高清图
                 $defaultImg = SystemValue::where('key', 'default_report_high_img')->value('value');
