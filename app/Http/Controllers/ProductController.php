@@ -671,11 +671,11 @@ class ProductController extends Controller {
         $query = $query->where("published_date", "<", time());
         
         // 排除本报告
-        $query = $query->where('id', '<>', $id);
+        $query = $query->where('id', '<>', intval($id));
         // 精确查询
         if (!empty($keyword)) {
-            $val = '"'.$keyword.'"';
-            $query->where([$searchField], '=', $val);
+            $val = addslashes($keyword);
+            $query->where($searchField, '=', $val);
         }
 
         //查询结果分页
