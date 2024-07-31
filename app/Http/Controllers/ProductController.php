@@ -162,6 +162,7 @@ class ProductController extends Controller {
                 return $this->SearchRelevantForMysql($id, $keyword, $page, $pageSize,$searchField, $selectField);
             }
         } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
             \Log::error('应用端查询失败,异常信息为:' . json_encode([$e->getMessage()]));
             ReturnJson(false, '请求失败,请稍后再试');
         }
@@ -655,22 +656,23 @@ class ProductController extends Controller {
         return $data;
     }
 
-    
-    public function SearchRelevantForSphinx($id, $keyword, $page, $pageSize, $searchField, $selectField) {
-        if(empty($id) || empty($keyword)){
+
+    public function SearchRelevantForSphinx($id, $keyword, $page, $pageSize, $searchField, $selectField)
+    {
+        if (empty($id) || empty($keyword)) {
             return [];
         }
         $sphinxSrevice = new SphinxService();
         $conn = $sphinxSrevice->getConnection();
         //报告昵称,英文昵称匹配查询
-        $query = (new SphinxQL($conn))->select('*')
-            ->from('products_rt')
-            ->orderBy('sort', 'asc')
-            ->orderBy('published_date', 'desc')
-            ->orderBy('id', 'desc');
+        $query = (new SphinxQL($conn))->select('id')
+        ->from('products_rt')
+        ->orderBy('sort', 'asc')
+        ->orderBy('published_date', 'desc')
+        ->orderBy('id', 'desc');
         $query = $query->where('status', '=', 1);
         $query = $query->where("published_date", "<=", time());
-        
+
         // 排除本报告
         $query = $query->where('id', '<>', intval($id));
         // 精确查询
@@ -684,24 +686,35 @@ class ProductController extends Controller {
         $query->limit($offset, $pageSize);
         // $query->option('max_matches', $offset + $pageSize);
 
-        $query->setSelect($selectField);
-        $result = $query->execute();
-        $products = $result->fetchAllAssoc();
+        // $query->setSelect($selectField);
+        // $result = $query->execute();
+        // $products = $result->fetchAllAssoc();
 
+        // 因为有些字段sphinx没有，所以sphinx查出id后再去mysql查询
+        $query->setSelect('id');
+        $result = $query->execute();
+        $productsIds = $result->fetchAllAssoc();
+        if (!empty($productsIds) && count($productsIds) > 0) {
+            $productsIds = array_column($productsIds, 'id');
+            $products = Products::select($selectField)
+            ->whereIn("id", $productsIds)
+            ->get()->toArray();
+        }
+        // 
         return $products ?? [];
     }
 
     public function SearchRelevantForMysql($id, $keyword, $page, $pageSize, $searchField, $selectField)
     {
 
-        $product_desc = Products::select($selectField)
+        $products = Products::select($selectField)
             ->where([$searchField => $keyword, 'status' => 1])
             ->where("id", "<>", $id)
             ->limit($pageSize, ($page - 1) * $pageSize)
             ->orderBy('published_date', 'desc')
             ->orderBy('id', 'desc')
             ->get()->toArray();
-        return $product_desc;
+        return $products;
     }
 
     /**
@@ -878,7 +891,7 @@ class ProductController extends Controller {
                     $tempThumb = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
                 } else {
                     // 如果报告图片、分类图片为空，使用系统默认图片
-                    $tempThumb['thumb'] = !empty($defaultImg) ? $defaultImg : '';
+                    $tempThumb = !empty($defaultImg) ? $defaultImg : '';
                 }
                 
                 $data[$index]['thumb'] = $tempThumb;
