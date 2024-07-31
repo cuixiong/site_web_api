@@ -214,7 +214,8 @@ class ProductController extends Controller {
         )->first();
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
         if (!empty($product) && $product->published_date->timestamp < time()) {
-            //$this->viewLog($product);
+            //增加详情的浏览记录
+            $this->viewLog($product);
             $fieldList = [
                 'p.name', 'p.english_name', 'cate.thumb', 'cate.home_thumb', 'p.id', 'p.published_date',
                 'cate.name as category',
@@ -735,6 +736,7 @@ class ProductController extends Controller {
     }
 
     public function viewProductLog(Request $request) {
+        ReturnJson(false, '该接口已废弃');
         $product_id = $request->product_id;
         if (empty($product_id)) {
             ReturnJson(false, 'product_id is empty');

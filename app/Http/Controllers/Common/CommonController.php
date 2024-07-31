@@ -64,7 +64,7 @@ class CommonController extends Controller {
      * @return mixed
      */
     private function getProductCagory() {
-        $field = ['id', 'name', 'link'];
+        $field = ['id', 'name', 'link','icon'];
         $data = ProductsCategory::select($field)
                                 ->where('status', 1)
                                 ->get()
@@ -73,6 +73,7 @@ class CommonController extends Controller {
             'id'   => '0',
             'name' => '全部',
             'link' => '',
+            'icon' => '',
         ]);
 
         return $data;
@@ -146,7 +147,7 @@ class CommonController extends Controller {
                        ->get()
                        ->value('id');
         $data = SystemValue::where('parent_id', $setId)
-                           ->where('status', 1)
+                           ->where('hidden', 1)
                            ->select(['key', 'value'])
                            ->get()
                            ->toArray();

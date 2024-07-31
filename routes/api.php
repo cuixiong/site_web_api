@@ -209,6 +209,8 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::post('notify/alipay', [\App\Http\Controllers\Pay\Notify::class, 'Alipay'])->name('支付宝回调');
     // 微信支付回调
     Route::post('notify/wechatpay', [\App\Http\Controllers\Pay\Notify::class, 'Wechatpay'])->name('微信支付回调');
+    // stripe支付回调
+    Route::any('notify/stripe', [\App\Http\Controllers\Pay\Notify::class, 'Stripe'])->name('stripe支付回调');
     // News控制器
     Route::prefix('news')->group(function () {
         Route::post('index', [\App\Http\Controllers\NewsController::class, 'Index'])->name('新闻列表');
@@ -253,6 +255,10 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::get('xunsearch/clean', [\App\Http\Controllers\XunSearchTestController::class, 'clean'])->name(
         '讯搜清空数据'
     );
+    Route::get('stripe-paytest', [\App\Http\Controllers\XunSearchTestController::class, 'stripePayTest'])->name(
+        '支付测试'
+    );
+
     Route::get('xunsearch/test', [\App\Http\Controllers\XunSearchTestController::class, 'test'])->name('测试接口');
     Route::get('/test1', [\App\Http\Controllers\TestController::class, 'test1'])->name('测试接口1');
 
