@@ -14,18 +14,22 @@ class Controller extends BaseController {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
     public function __construct() {
-        if (in_array(request()->ip(), ['127.0.0.1', '14.145.51.181'])) {
-
-        }else {
+        $securityCheckWhiteIplist = [];
+        $securityCheckWhiteIps = Redis::get('white_ip_security_check') ?? '';
+        if (!empty($securityCheckWhiteIps)) {
+            $securityCheckWhiteIplist = explode(',', $securityCheckWhiteIps);
+        }
+        $securityCheckWhiteIplist[] = '127.0.0.1';
+        if (!in_array(request()->ip(), $securityCheckWhiteIplist)) {
             $this->securityCheck();
         }
-
         $route = request()->route();
-        $routeUril = $route->uri;
+        $routeUril = '';
+        if (!empty($route->uri)) {
+            $routeUril = $route->uri;
+        }
         $ip = request()->ip();
-
         //\Log::error('返回结果数据:'.json_encode([$action['controller'] , request()->ip()]));
-
         $whiteIplist = Redis::get('ip_white_rules') ?? [];
         //ip白名单验证
         $checkRes = $this->isIpAllowed($ip, $whiteIplist);
@@ -63,7 +67,6 @@ class Controller extends BaseController {
         (new IpBanLogService())->addIpBanLog($data);
     }
 
-
     // TODO: cuizhixiong 2024/6/28 暂时写死,后期弄成可配置的签名key
     public $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
 
@@ -92,8 +95,8 @@ class Controller extends BaseController {
      */
     public function checkSign() {
         $params = request()->input();
-        $sign = request()->header('sign' , '');
-        $ts = request()->header('ts' , 0);
+        $sign = $this->getSign();
+        $ts = $this->getTs();
         $params['ts'] = $ts;
         $checkRes = $this->verifySign($params, $this->signKey, $sign);
         if (!$checkRes) {
@@ -105,9 +108,7 @@ class Controller extends BaseController {
      * 校验请求事件
      */
     protected function checkTime() {
-        $ts = request()->header('ts' , 0);
-        //$params = request()->input();
-        //$ts = $params['ts'] ?? 0;
+        $ts = $this->getTs();
         if (time() - $ts > 5) {
             ReturnJson(false, '接口参数已过期');
         }
@@ -155,15 +156,13 @@ class Controller extends BaseController {
     }
 
     public function isIpAllowed($ip, $whitelist) {
-        if(empty($whitelist )){
+        if (empty($whitelist)) {
             return false;
         }
-
-        $whitelist = explode("\n" , $whitelist);
-        if(!is_array($whitelist)){
+        $whitelist = explode("\n", $whitelist);
+        if (!is_array($whitelist)) {
             return false;
         }
-
         // 将IP地址分割为四部分
         $ipParts = explode('.', $ip);
         if (count($ipParts) !== 4) {
@@ -188,5 +187,28 @@ class Controller extends BaseController {
         }
 
         return false; // 没有匹配项
+    }
+
+    /**
+     * 获取时间戳
+     *
+     * @return array|mixed|string|null
+     */
+    public function getTs() {
+        $ts = request()->header('ts', 0);
+        if (empty($ts)) {
+            $ts = request()->input('ts', 0);
+        }
+
+        return $ts;
+    }
+
+    public function getSign() {
+        $sign = request()->header('sign', '');
+        if (empty($sign)) {
+            $sign = request()->input('sign', '');
+        }
+
+        return $sign;
     }
 }
