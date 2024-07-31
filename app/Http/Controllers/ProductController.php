@@ -240,30 +240,30 @@ class ProductController extends Controller {
             } else {
                 $product_desc['discount_status'] = 0;
             }
-            //返回相关报告
-            if (!empty($product_desc['keywords'])) {
-                $relatedProList = Products::query()->select(
-                    [
-                        "id", "published_date", "name", "thumb", "url", "keywords", "english_name", "category_id",
-                        "author"
-                    ]
-                )
-                ->where("keywords", $product_desc['keywords'])
-                    ->where("id", "<>", $product_id)
-                    ->where("published_date", "<=", time())
-                    ->where("status", 1)
-                    ->orderBy("published_date", "desc")
-                    ->limit(2)
-                    ->get();
-                foreach ($relatedProList as $item) {
-                    $item->thumb = $item->getThumbImgAttribute();
-                    $item->short_desc = $item->getProShortDescAttribute();
-                    $item->category_text = $item->getCategotyTextAttribute();
-                }
-                $product_desc['relatedProList'] = $relatedProList;
-            } else {
-                $product_desc['relatedProList'] = [];
-            }
+            // //返回相关报告
+            // if (!empty($product_desc['keywords'])) {
+            //     $relatedProList = Products::query()->select(
+            //         [
+            //             "id", "published_date", "name", "thumb", "url", "keywords", "english_name", "category_id",
+            //             "author"
+            //         ]
+            //     )
+            //     ->where("keywords", $product_desc['keywords'])
+            //         ->where("id", "<>", $product_id)
+            //         ->where("published_date", "<=", time())
+            //         ->where("status", 1)
+            //         ->orderBy("published_date", "desc")
+            //         ->limit(2)
+            //         ->get();
+            //     foreach ($relatedProList as $item) {
+            //         $item->thumb = $item->getThumbImgAttribute();
+            //         $item->short_desc = $item->getProShortDescAttribute();
+            //         $item->category_text = $item->getCategotyTextAttribute();
+            //     }
+            //     $product_desc['relatedProList'] = $relatedProList;
+            // } else {
+            //     $product_desc['relatedProList'] = [];
+            // }
             //报告详情数据处理
             $suffix = date('Y', strtotime($product_desc['published_date']));
             $description = (new ProductDescription($suffix))->select([
@@ -669,7 +669,7 @@ class ProductController extends Controller {
             ->orderBy('published_date', 'desc')
             ->orderBy('id', 'desc');
         $query = $query->where('status', '=', 1);
-        $query = $query->where("published_date", "<", time());
+        $query = $query->where("published_date", "<=", time());
         
         // 排除本报告
         $query = $query->where('id', '<>', intval($id));
@@ -688,7 +688,7 @@ class ProductController extends Controller {
         $result = $query->execute();
         $products = $result->fetchAllAssoc();
 
-        return $products??[];
+        return $products ?? [];
     }
 
     public function SearchRelevantForMysql($id, $keyword, $page, $pageSize, $searchField, $selectField)
@@ -837,56 +837,69 @@ class ProductController extends Controller {
      *
      * @return array
      */
-    private function getRelevantByProduct(mixed $keywords, mixed $product_id): array {
-        $products = Products::from('product_routine as product')
-                            ->select([
-                                         'product.name',
-                                         'product.english_name',
-                                         'product.keywords',
-                                         'product.id',
-                                         'product.url',
-                                         'product.price',
-                                         'product.publisher_id',
-                                         'product.published_date',
-                                         'product.thumb',
-                                         'product.category_id',
-                                         'category.name as category_name',
-                                         'category.thumb as category_thumb',
-                                     ])
-                            ->leftJoin('product_category as category', 'category.id', '=', 'product.category_id')
-                            ->where('product.keywords', $keywords)
-                            ->where('product.id', '<>', $product_id)
-                            ->where('product.published_date', "<=", time())
-                            ->orderBy('product.published_date', 'desc')
-            //->where('product.published_date', 'between', [strtotime($start_time), strtotime($end_time)]) // 只取与这份报告同年份的两份报告数据
-                            ->limit(2)
-                            ->get()->toArray();
+    private function getRelevantByProduct(mixed $keywords, mixed $product_id): array
+    {
+        $select = [
+            'id',
+            'name',
+            'english_name',
+            'keywords',
+            'url',
+            'price',
+            'publisher_id',
+            'published_date',
+            'thumb',
+            'category_id',
+        ];
+        $products = $this->GetRelevantProductResult($product_id,$keywords,1,2,'keywords',$select);
+        
         $data = [];
-        foreach ($products as $index => $product) {
-            $tempThumb = '';
-            if (!empty($product['thumb'])) {
-                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['thumb']);
-            } elseif (!empty($product['category_thumb'])) {
-                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
-            }
-            $data[$index]['thumb'] = $tempThumb;
-            $data[$index]['name'] = $product['name'];
-            $data[$index]['keywords'] = $product['keywords'];
-            $data[$index]['english_name'] = $product['english_name'];
-            $suffix = date('Y', strtotime($product['published_date']));
-            $data[$index]['description'] = (new ProductDescription($suffix))->where('product_id', $product['id'])
-                                                                            ->value('description');
-            $data[$index]['description'] = $data[$index]['description'] ? $data[$index]['description'] : '';
-            $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
-            $data[$index]['id'] = $product['id'];
-            $data[$index]['url'] = $product['url'];
-            $data[$index]['category_name'] = $product['category_name'];
-            $data[$index]['published_date'] = $product['published_date'] ? date(
-                'Y-m-d', strtotime($product['published_date'])
-            ) : '';
-            $data[$index]['prices'] = Products::CountPrice($product['price'], $product['publisher_id']);
-        }
+        if($products){
+            // 分类信息
+            $categoryIds = array_column($products,'category_id');
+            $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->whereIn('id', $categoryIds)->get()->toArray();
+            $categoryData = array_column($categoryData, null, 'id');
+            // 默认图片
+            // 若报告图片为空，则使用系统设置的默认报告高清图
+            $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+            
 
+            foreach ($products as $index => $product) {
+                //每个报告加上分类信息
+                $tempCategoryId = $product['category_id'];
+                $product['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
+                $product['category_thumb'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
+
+                // 图片获取
+                $tempThumb = '';
+                if (!empty($product['thumb'])) {
+                    $tempThumb = Common::cutoffSiteUploadPathPrefix($product['thumb']);
+                } elseif (!empty($product['category_thumb'])) {
+                    $tempThumb = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
+                } else {
+                    // 如果报告图片、分类图片为空，使用系统默认图片
+                    $tempThumb['thumb'] = !empty($defaultImg) ? $defaultImg : '';
+                }
+                
+                $data[$index]['thumb'] = $tempThumb;
+                $data[$index]['name'] = $product['name'];
+                $data[$index]['keywords'] = $product['keywords'];
+                $data[$index]['english_name'] = $product['english_name'];
+                $suffix = date('Y', strtotime($product['published_date']));
+                $data[$index]['description'] = (new ProductDescription($suffix))->where('product_id', $product['id'])
+                    ->value('description');
+                $data[$index]['description'] = $data[$index]['description'] ? $data[$index]['description'] : '';
+                $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
+                $data[$index]['id'] = $product['id'];
+                $data[$index]['url'] = $product['url'];
+                $data[$index]['category_name'] = $product['category_name'];
+                $data[$index]['published_date'] = $product['published_date'] ? date(
+                    'Y-m-d',
+                    strtotime($product['published_date'])
+                ) : '';
+                $data[$index]['prices'] = Products::CountPrice($product['price'], $product['publisher_id']);
+            }
+        }
         return $data;
     }
 }
