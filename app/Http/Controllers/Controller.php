@@ -14,40 +14,40 @@ class Controller extends BaseController {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
     public function __construct() {
-        $securityCheckWhiteIplist = [];
-        $securityCheckWhiteIps = Redis::get('white_ip_security_check') ?? '';
-        if (!empty($securityCheckWhiteIps)) {
-            $securityCheckWhiteIplist = explode(',', $securityCheckWhiteIps);
-        }
-        $securityCheckWhiteIplist[] = '127.0.0.1';
-        if (!in_array(request()->ip(), $securityCheckWhiteIplist)) {
-            $this->securityCheck();
-        }
-        $route = request()->route();
-        $routeUril = '';
-        if (!empty($route->uri)) {
-            $routeUril = $route->uri;
-        }
-        $ip = request()->ip();
-        //\Log::error('返回结果数据:'.json_encode([$action['controller'] , request()->ip()]));
-        $whiteIplist = Redis::get('ip_white_rules') ?? [];
-        //ip白名单验证
-        $checkRes = $this->isIpAllowed($ip, $whiteIplist);
-        if (!$checkRes) {
-            //获取封禁配置
-            $windowsTime = Redis::get('window_time') ?? 5;
-            $reqLimit = Redis::get('req_limit') ?? 10;
-            $expireTime = Redis::get('expire_time') ?? 60;
-            $ipCacheKey = $ip.':'.$routeUril;
-            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->slideIsAllowed($ipCacheKey);
-//            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->simpleIsAllowed($ipCacheKey);
-            if (!$res) {
-                //添加封禁日志
-                $this->addBanLog($ip, $routeUril);
-                http_response_code(429);
-                ReturnJson(false, '请求频率过快~');
-            }
-        }
+//         $securityCheckWhiteIplist = [];
+//         $securityCheckWhiteIps = Redis::get('white_ip_security_check') ?? '';
+//         if (!empty($securityCheckWhiteIps)) {
+//             $securityCheckWhiteIplist = explode(',', $securityCheckWhiteIps);
+//         }
+//         $securityCheckWhiteIplist[] = '127.0.0.1';
+//         if (!in_array(request()->ip(), $securityCheckWhiteIplist)) {
+//             $this->securityCheck();
+//         }
+//         $route = request()->route();
+//         $routeUril = '';
+//         if (!empty($route->uri)) {
+//             $routeUril = $route->uri;
+//         }
+//         $ip = request()->ip();
+//         //\Log::error('返回结果数据:'.json_encode([$action['controller'] , request()->ip()]));
+//         $whiteIplist = Redis::get('ip_white_rules') ?? [];
+//         //ip白名单验证
+//         $checkRes = $this->isIpAllowed($ip, $whiteIplist);
+//         if (!$checkRes) {
+//             //获取封禁配置
+//             $windowsTime = Redis::get('window_time') ?? 5;
+//             $reqLimit = Redis::get('req_limit') ?? 10;
+//             $expireTime = Redis::get('expire_time') ?? 60;
+//             $ipCacheKey = $ip.':'.$routeUril;
+//             $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->slideIsAllowed($ipCacheKey);
+// //            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->simpleIsAllowed($ipCacheKey);
+//             if (!$res) {
+//                 //添加封禁日志
+//                 $this->addBanLog($ip, $routeUril);
+//                 http_response_code(429);
+//                 ReturnJson(false, '请求频率过快~');
+//             }
+//         }
     }
 
     /**
