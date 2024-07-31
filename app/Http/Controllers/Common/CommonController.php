@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
 use App\Models\City;
 use App\Models\Common;
+use App\Models\DictionaryValue;
 use App\Models\LanguageWebsite;
 use App\Models\Link;
 use App\Models\Menu;
@@ -47,6 +48,12 @@ class CommonController extends Controller {
         $data['news_list'] = $this->getNewsList();
         //报告分类
         $data['product_cagory'] = $this->getProductCagory();
+
+        // 总控字典部分
+        // 计划购买时间 ,原为联系我们控制器Dictionary函数中代码，现复制至此处
+        $data['buy_time'] = DictionaryValue::GetDicOptions('Buy_Time');
+        // 获知渠道,原为联系我们控制器Dictionary函数中代码，现复制至此处
+        $data['channel'] = DictionaryValue::GetDicOptions('Channel_Type');
 
         ReturnJson(true, '', $data);
     }

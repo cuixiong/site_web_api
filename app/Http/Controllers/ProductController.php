@@ -696,7 +696,7 @@ class ProductController extends Controller {
         $product_desc = Products::select($selectField)
             ->where([$searchField => $keyword, 'status' => 1])
             ->where("id", "<>", $id)
-            ->limit(($page - 1) * $pageSize, $pageSize)
+            ->limit($pageSize, ($page - 1) * $pageSize)
             ->orderBy('published_date', 'desc')
             ->orderBy('id', 'desc')
             ->get()->toArray();
