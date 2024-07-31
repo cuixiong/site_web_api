@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Const\ApiCode;
+use App\Const\PayConst;
 use App\Http\Controllers\Common\SendEmailController;
 use App\Models\Base;
 use App\Services\OrderService;
@@ -215,6 +216,31 @@ class OrderTrans extends Base {
     ) {
         // 插入订单表 order
         $order = new Order();
+
+        //支付配置税率/汇率配置
+        $payCode = Pay::query()->where("id" , $payType)->value("code");
+        if($payCode == PayConst::PAY_TYPE_STRIPEPAY){
+            $stripePaySetList = SystemValue::query()->where("alias" , 'stripe_pay_set')
+                ->pluck("value" , "key")->toArray();
+
+            $tax_rate = $stripePaySetList['stripe_pay_tax_rate'] ?? 0;
+            $order->tax_rate = $tax_rate;
+
+            $exchange_rate = $stripePaySetList['stripe_pay_exchange_rate'] ?? 1;
+            $order->exchange_rate = $exchange_rate;
+
+            //折后金额*汇率
+            $actuallyPaidAll = bcmul($actuallyPaidAll , $exchange_rate , 2);
+
+            //税
+            $tax_amount = bcmul($actuallyPaidAll , $tax_rate , 2);
+
+            //实付金额 + 税
+            $actuallyPaidAll = bcadd($actuallyPaidAll , $tax_amount , 2);
+
+        }
+
+
         $order->created_at = $timestamp;
         $order->updated_at = $timestamp;
         $order->order_number = date('YmdHis', $timestamp).mt_rand(10, 99);
@@ -251,6 +277,13 @@ class OrderTrans extends Base {
 //        }
 
         return $order;
+    }
+
+    /**
+     *  计算折扣率
+     */
+    public function caclueRate() {
+
     }
 
     /**

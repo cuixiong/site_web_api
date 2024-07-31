@@ -105,7 +105,6 @@ class OrderController extends Controller {
      */
     public function CreateAndPay(Request $request) {
         try {
-            $this->securityCheck();
             $coupon_id = $request->coupon_id ?? ''; // 优惠券id：无论是用户输入优惠券码，还是用户选择某一种优惠券，都接收coupon_id
             $inputParams = $request->input();
             //校验请求参数
@@ -166,7 +165,7 @@ class OrderController extends Controller {
             //发送邮件
             (new SendEmailController)->placeOrder($order->id);
             // 把临时订单号加入缓存
-            Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
+            //Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
             //拉起支付
             $pay = PayFactory::create($order->pay_type);
             $isMobile = $request->is_mobile;
@@ -207,7 +206,7 @@ class OrderController extends Controller {
                    .'";</script>';
         }
         // 把临时订单号加入缓存
-        Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
+        //Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
         $pay = PayFactory::create($order->pay_type);
         $isMobile = $order->isMobile == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
         $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);

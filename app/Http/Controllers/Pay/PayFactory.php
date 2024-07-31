@@ -20,6 +20,9 @@ class PayFactory extends Controller
             case Pay::where('code','WECHATPAY')->value('id');
                 $pay = new Wechatpay();
                 break;
+            case Pay::where('code','STRIPE')->value('id');
+                $pay = new Stripepay();
+                break;
         }
 
         return $pay;

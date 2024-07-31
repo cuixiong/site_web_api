@@ -14,6 +14,7 @@ class Controller extends BaseController {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
     public function __construct() {
+        //接口签名验证
         $securityCheckWhiteIplist = [];
         $securityCheckWhiteIps = Redis::get('white_ip_security_check') ?? '';
         if (!empty($securityCheckWhiteIps)) {
@@ -23,13 +24,14 @@ class Controller extends BaseController {
         if (!in_array(request()->ip(), $securityCheckWhiteIplist)) {
             $this->securityCheck();
         }
+
+        //ip封禁验证
         $route = request()->route();
         $routeUril = '';
         if (!empty($route->uri)) {
             $routeUril = $route->uri;
         }
         $ip = request()->ip();
-        //\Log::error('返回结果数据:'.json_encode([$action['controller'] , request()->ip()]));
         $whiteIplist = Redis::get('ip_white_rules') ?? [];
         //ip白名单验证
         $checkRes = $this->isIpAllowed($ip, $whiteIplist);
