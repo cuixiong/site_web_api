@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
 use App\Models\City;
 use App\Models\Common;
+use App\Models\DictionaryValue;
 use App\Models\LanguageWebsite;
 use App\Models\Link;
 use App\Models\Menu;
@@ -47,6 +48,12 @@ class CommonController extends Controller {
         $data['news_list'] = $this->getNewsList();
         //报告分类
         $data['product_cagory'] = $this->getProductCagory();
+
+        // 总控字典部分
+        // 计划购买时间 ,原为联系我们控制器Dictionary函数中代码，现复制至此处
+        $data['buy_time'] = DictionaryValue::GetDicOptions('Buy_Time');
+        // 获知渠道,原为联系我们控制器Dictionary函数中代码，现复制至此处
+        $data['channel'] = DictionaryValue::GetDicOptions('Channel_Type');
 
         ReturnJson(true, '', $data);
     }
@@ -102,6 +109,7 @@ class CommonController extends Controller {
         if ($setId) {
             $data = SystemValue::where('parent_id', $setId)
                                ->where('status', 1)
+                               ->where('hidden', 1)
                                ->select(['name', 'key', 'value'])
                                ->get()
                                ->toArray();
@@ -112,10 +120,20 @@ class CommonController extends Controller {
                 if (in_array($ext, $imgExtList)) {
                     $value['value'] = Common::cutoffSiteUploadPathPrefix($value['value']);
                 }
-                $result[$value['key']] = [
+                $newItem = [
                     'name'  => $value['name'],
                     'value' => $value['value']
                 ];
+                if(isset($result[$value['key']]) && isset($result[$value['key']]['name'])){
+                    $oldItem = $result[$value['key']];
+                    $result[$value['key']]= [];
+                    $result[$value['key']][] = $oldItem;
+                    $result[$value['key']][] = $newItem;
+                }elseif(isset($result[$value['key']]) && !isset($result[$value['key']]['name'])){
+                    $result[$value['key']][] = $newItem;
+                }else{
+                    $result[$value['key']] = $newItem;
+                }
             }
         }
 
@@ -342,17 +360,22 @@ class CommonController extends Controller {
      *
      * @return mixed
      */
-    private function getSeoInfo(Request $request) {
-        $link = $request->link ?? 'index';
+    private function getSeoInfo(Request $request)
+    {
+        $link = isset($request->link) && !empty($request->link) ? $request->link : 'index';
         if (empty($link)) {
             ReturnJson(false, '参数错误');
         }
         $result = Menu::select(
-            ['name', 'banner_pc', 'banner_mobile', 'banner_title', 'banner_short_title', 'seo_title', 'seo_keyword',
-             'seo_description']
+            [
+                'name', 'banner_pc', 'banner_mobile', 'banner_title', 'banner_short_title', 'seo_title', 'seo_keyword',
+                'seo_description'
+            ]
         )->where(['link' => $link])->orderBy('sort', 'ASC')->first();
+        // 没有则取id第一条记录，
         if (empty($result)) {
-            ReturnJson(true, '', []);
+            return [];
+            // ReturnJson(true, '', []);
         }
         // 若有栏目ID则优先使用栏目的TKD
         if (!empty($params['category_id'])) {
@@ -362,7 +385,7 @@ class CommonController extends Controller {
             $result['seo_title'] = $category['seo_title'] ? $category['seo_title'] : $result['seo_title'];
             $result['seo_keyword'] = $category['seo_keyword'] ? $category['seo_keyword'] : $result['seo_keyword'];
             $result['seo_description'] = $category['seo_description'] ? $category['seo_description']
-                : $result['seo_description'];
+            : $result['seo_description'];
         }
         $result['banner_pc'] = Common::cutoffSiteUploadPathPrefix($result['banner_pc']);
         $result['banner_mobile'] = Common::cutoffSiteUploadPathPrefix($result['banner_mobile']);
@@ -478,9 +501,50 @@ class CommonController extends Controller {
                           'seo_keyword', 'seo_description']
                      )
                      ->get()->toArray();
-        $menus = $this->MenusTree($menus);
+        
+        // 这里只处理两层，等需要多层再用递归
+        $result = []; 
+        foreach ($menus as $key => $value) {
+            // 首页返回的link改成空字符串
+            if($value['link'] == 'index'){
+                $value['link'] = '';
+            }
+            if($value['parent_id'] == 0 || $value['parent_id'] == null){
+                $result[$value['id']] = $value;
+            }
+        }
 
-        return $menus;
+        foreach ($menus as $key => $value) {
+            if($value['parent_id'] > 0 && isset($result[$value['parent_id']])){
+                if(!isset($result[$value['parent_id']]['children'])){
+                    $result[$value['parent_id']]['children'] = [];
+                }
+                $result[$value['parent_id']]['children'][] = $value;
+            }
+        }
+
+        return array_values($result);
+
+        // foreach ($menus as $key => $value) {
+        //     if($value['parent_id'] == 0 || $value['parent_id'] == null){
+        //         $result[] = $value;
+        //     }
+        // }
+                     
+        // $menus = $this->MenusTree($menus);
+
+        // //大部分网站的研究报告菜单栏会有下拉报告分类
+        // if($menus){
+        //     foreach ($menus as $key => $item) {
+        //         if($item['link'] == 'report-categories' ){
+        //             $menus[$key]['children'] = ProductsCategory::getProductCategory(false);
+        //             break;
+        //         }
+        //     }
+        // }
+
+
+        // return $menus;
     }
 
     /**
@@ -488,33 +552,34 @@ class CommonController extends Controller {
      *
      * @return array
      */
-    private function getButtonMenus() {
+    private function getButtonMenus()
+    {
         $frontMenus = Menu::select([
-                                       'id',
-                                       'name'
-                                   ])
-                          ->where('parent_id', 0)
-                          ->whereIn('type', [2, 3])
-                          ->where('status', 1)
-                          ->orderBy('type', 'DESC')
-                          ->orderBy('sort', 'ASC')
-                          ->get()
-                          ->toArray();
+            'id',
+            'name'
+        ])
+            ->where('parent_id', 0)
+            ->whereIn('type', [2, 3])
+            ->where('status', 1)
+            ->orderBy('type', 'DESC')
+            ->orderBy('sort', 'ASC')
+            ->get()
+            ->toArray();
         foreach ($frontMenus as $key => $frontMenu) {
             $sonMenus = Menu::select([
-                                         'id',
-                                         'name',
-                                         'link',
-                                         'seo_title',
-                                         'seo_keyword',
-                                         'seo_description'
-                                     ])
-                            ->where('parent_id', $frontMenu['id'])
-                            ->whereIn('type', [2, 3])
-                            ->where('status', 1)
-                            ->orderBy('sort', 'ASC')
-                            ->get()
-                            ->toArray();
+                'id',
+                'name',
+                'link',
+                'seo_title',
+                'seo_keyword',
+                'seo_description'
+            ])
+                ->where('parent_id', $frontMenu['id'])
+                ->whereIn('type', [2, 3])
+                ->where('status', 1)
+                ->orderBy('sort', 'ASC')
+                ->get()
+                ->toArray();
             $frontMenus[$key]['menus'] = $sonMenus;
         }
 
