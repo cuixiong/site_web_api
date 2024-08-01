@@ -109,6 +109,7 @@ class CommonController extends Controller {
         if ($setId) {
             $data = SystemValue::where('parent_id', $setId)
                                ->where('status', 1)
+                               ->where('hidden', 1)
                                ->select(['name', 'key', 'value'])
                                ->get()
                                ->toArray();
