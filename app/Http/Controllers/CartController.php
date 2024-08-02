@@ -444,11 +444,11 @@ class CartController extends Controller {
                     'url',
                     'published_date',
                     'price',
-                    'products.discount_type',
-                    'products.discount',
-                    'products.discount_amount',
-                    'products.discount_time_begin',
-                    'products.discount_time_end',
+                    'discount_type',
+                    'discount',
+                    'discount_amount',
+                    'discount_time_begin',
+                    'discount_time_end',
                 ])
                     ->whereIn('keywords', $keywords)
                     ->whereNotIn('id', $goods_ids)
