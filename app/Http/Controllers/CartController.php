@@ -11,6 +11,7 @@ use App\Models\ProductDescription;
 use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\ShopCart;
+use App\Models\SystemValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -440,6 +441,7 @@ class CartController extends Controller {
                     'id',
                     'name',
                     'thumb',
+                    'keywords',
                     'category_id',
                     'url',
                     'published_date',
@@ -458,8 +460,36 @@ class CartController extends Controller {
                 if (!empty($products) && is_array($products)) {
                     $data = [];
                     $time = time();
+                    // 分类信息
+                    $categoryIds = array_column($products, 'category_id');
+                    $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->whereIn('id', $categoryIds)->get()->toArray();
+                    $categoryData = array_column($categoryData, null, 'id');
+                    // 默认图片
+                    // 若报告图片为空，则使用系统设置的默认报告高清图
+                    $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+                    $languages = Languages::select(['id', 'name'])->get()->toArray();
+
                     foreach ($products as $index => $product) {
-                        $data[$index]['thumb'] = Products::getThumbImgUrl($product);
+
+                        //每个报告加上分类信息
+                        $tempCategoryId = $product['category_id'];
+                        $product['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
+                        $product['category_thumb'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
+
+                        // 图片获取
+                        $tempThumb = '';
+                        if (!empty($product['thumb'])) {
+                            $tempThumb = Common::cutoffSiteUploadPathPrefix($product['thumb']);
+                        } elseif (!empty($product['category_thumb'])) {
+                            $tempThumb = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
+                        } else {
+                            // 如果报告图片、分类图片为空，使用系统默认图片
+                            $tempThumb = !empty($defaultImg) ? $defaultImg : '';
+                        }
+
+                        $data[$index]['thumb'] = $tempThumb;
+
+                        // $data[$index]['thumb'] = Products::getThumbImgUrl($product);
                         $data[$index]['name'] = $product['name'];
                         $suffix = date('Y', strtotime($product['published_date']));
                         $description = (new ProductDescription($suffix))->where('product_id', $product['id'])->value(
@@ -473,6 +503,36 @@ class CartController extends Controller {
                             )
                         ) : '';
                         $data[$index]['price'] = $product['price'];
+
+                        // 这里的代码可以复用 开始
+                        $prices = [];
+                        // 计算报告价格
+                        if ($languages) {
+                            foreach ($languages as $index => $language) {
+                                $priceEditions = PriceEditionValues::select(
+                                    ['id', 'name as edition', 'rules as rule', 'notice']
+                                )->where(['language_id' => $language['id']])->get()->toArray();
+                                $prices[$index]['language'] = $language['name'];
+                                if ($priceEditions) {
+                                    foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
+                                        if ($index == 0 && $keyPriceEdition == 0) {
+                                            // 以第一个价格版本作为显示的价格版本
+                                            $data[$index]['price'] = $product['price'];
+                                            $data[$index]['price_edition'] = $priceEdition['id'];
+                                        }
+                                        $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
+                                        $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+                                        $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
+                                        $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
+                                                $priceEdition['rule'],
+                                                $product['price']
+                                            ) . ";");
+                                    }
+                                }
+                            }
+                        }
+                        $data[$index]['prices'] = $prices;
+
                         $data[$index]['id'] = $product['id'];
                         $data[$index]['url'] = $product['url'];
 
