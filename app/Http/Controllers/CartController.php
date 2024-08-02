@@ -535,6 +535,7 @@ class CartController extends Controller {
 
                         $data[$index]['id'] = $product['id'];
                         $data[$index]['url'] = $product['url'];
+                        $data[$index]['keywords'] = $product['keywords'];
 
                         $data[$index]['discount_type'] = $product['discount_type'];
                         $data[$index]['discount_amount'] = $product['discount_amount'];
