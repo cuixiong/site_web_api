@@ -20,39 +20,40 @@ class CartController extends Controller {
     /**
      * 购物车列表
      */
-    public function List(Request $request) {
+    public function List(Request $request)
+    {
         $time = time();
         $shopCart = ShopCart::from('shop_carts as cart')
-                            ->select([
-                                         'cart.id',
-                                         'cart.goods_id',
-                                         'cart.number',
-                                         'cart.price_edition',
-                                         'edition.name as price_name',
-                                         'edition.rules',
-                                         'edition.language_id',
-                                         // 'language.language',
-                                         'products.url',
-                                         'products.thumb',
-                                         'products.name',
-                                         'products.price',
-                                         'products.discount_type',
-                                         'products.discount',
-                                         'products.discount_amount',
-                                         'products.discount_time_begin',
-                                         'products.discount_time_end',
-                                         'products.published_date',
-                                         'products.publisher_id',
-                                         'products.category_id',
-                                     ])
-                            ->leftJoin('product_routine as products', 'products.id', '=', 'cart.goods_id')
-                            ->leftJoin('price_edition_values as edition', 'cart.price_edition', '=', 'edition.id')
-                            ->where([
-                                        'cart.user_id'    => $request->user->id,
-                                        'products.status' => 1 // product的status值如果是0，相当于删除这份报告
-                                    ])
-                            ->where('products.published_date' , '<=' , $time)
-                            ->get()->toArray();
+        ->select([
+            'cart.id',
+            'cart.goods_id',
+            'cart.number',
+            'cart.price_edition',
+            'edition.name as price_name',
+            'edition.rules',
+            'edition.language_id',
+            // 'language.language',
+            'products.url',
+            'products.thumb',
+            'products.name',
+            'products.price',
+            'products.discount_type',
+            'products.discount',
+            'products.discount_amount',
+            'products.discount_time_begin',
+            'products.discount_time_end',
+            'products.published_date',
+            'products.publisher_id',
+            'products.category_id',
+        ])
+            ->leftJoin('product_routine as products', 'products.id', '=', 'cart.goods_id')
+            ->leftJoin('price_edition_values as edition', 'cart.price_edition', '=', 'edition.id')
+            ->where([
+                'cart.user_id'    => $request->user->id,
+                'products.status' => 1 // product的status值如果是0，相当于删除这份报告
+            ])
+            ->where('products.published_date', '<=', $time)
+            ->get()->toArray();
         if (empty($shopCart)) {
             $data = [
                 'result'     => [],
@@ -67,13 +68,39 @@ class CartController extends Controller {
         $shopCartData = [];
         $languageIdList = Languages::GetListById();
         $time = time();
+        
+        // 分类信息
+        $categoryIds = array_column($shopCart, 'category_id');
+        $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->whereIn('id', $categoryIds)->get()->toArray();
+        $categoryData = array_column($categoryData, null, 'id');
+        // 默认图片
+        // 若报告图片为空，则使用系统设置的默认报告高清图
+        $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+        $languages = Languages::select(['id', 'name'])->get()->toArray();
         foreach ($shopCart as $key => $value) {
-            if (!empty($value['thumb'])) {
-                $thumbImg = $value['thumb'];
+            // if (!empty($value['thumb'])) {
+            //     $thumbImg = $value['thumb'];
+            // } else {
+            //     $thumbImg = ProductsCategory::where('id', $value['category_id'])->value('thumb');
+            // }
+            
+            //每个报告加上分类信息
+            $tempCategoryId = $value['category_id'];
+            $product['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
+            $product['category_thumb'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
+
+            // 图片获取
+            $tempThumb = '';
+            if (!empty($product['thumb'])) {
+                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['thumb']);
+            } elseif (!empty($product['category_thumb'])) {
+                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
             } else {
-                $thumbImg = ProductsCategory::where('id', $value['category_id'])->value('thumb');
+                // 如果报告图片、分类图片为空，使用系统默认图片
+                $tempThumb = !empty($defaultImg) ? $defaultImg : '';
             }
-            $shopCartData[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($thumbImg);
+
+            $shopCartData[$key]['thumb'] = $tempThumb;
             $shopCartData[$key]['name'] = $value['name'];
             $shopCartData[$key]['goods_id'] = $value['goods_id'];
             $shopCartData[$key]['url'] = $value['url'];
@@ -82,28 +109,32 @@ class CartController extends Controller {
             $shopCartData[$key]['language_id'] = $value['language_id'];
             $shopCartData[$key]['language_name'] = $languageIdList[$value['language_id']] ?? 0;
             $shopCartData[$key]['price_edition'] = $value['price_edition'];
-            $shopCartData[$key]['price'] = eval("return ".sprintf($value['rules'], $value['price']).";");
+            $shopCartData[$key]['price'] = eval("return " . sprintf($value['rules'], $value['price']) . ";");
             $shopCartData[$key]['number'] = intval($value['number']); // 把返回的number值由原来的字符类型变成整数类型
             $shopCartData[$key]['id'] = $value['id'];
             $shopCartData[$key]['discount_type'] = $value['discount_type'];
             $shopCartData[$key]['discount_amount'] = $value['discount_amount'];
             $shopCartData[$key]['discount'] = $value['discount'];
             $shopCartData[$key]['discount_time_begin'] = $value['discount_time_begin'] ? date(
-                'Y-m-d', $value['discount_time_begin']
+                'Y-m-d',
+                $value['discount_time_begin']
             ) : '';
             $shopCartData[$key]['discount_time_end'] = $value['discount_time_end'] ? date(
-                'Y-m-d', $value['discount_time_end']
+                'Y-m-d',
+                $value['discount_time_end']
             ) : '';
             //判断当前报告是否在优惠时间内
-            if($value['discount_time_begin'] <= $time && $value['discount_time_end'] >= $time){
+            if ($value['discount_time_begin'] <= $time && $value['discount_time_end'] >= $time) {
                 $shopCartData[$key]['discount_status'] = 1;
-            }else{
+            } else {
                 $shopCartData[$key]['discount_status'] = 0;
             }
             // 计算报告价格
             $languages = Languages::GetList();
             $shopCartData[$key]['prices'] = Products::CountPrice(
-                $value['price'], $value['publisher_id'], $languages
+                $value['price'],
+                $value['publisher_id'],
+                $languages
             ) ?? [];
             $goodsCount += $value['number'];
             $totalPrice += bcmul($shopCartData[$key]['price'], $value['number']);
