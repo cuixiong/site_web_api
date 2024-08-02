@@ -143,7 +143,7 @@ class CartController extends Controller {
                 ReturnJson(false, '', $model->getModelError());
             }
         }
-        ReturnJson(false, 'success');
+        ReturnJson(true, 'success');
     }
 
     /**
