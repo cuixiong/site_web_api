@@ -508,22 +508,22 @@ class CartController extends Controller {
                         $prices = [];
                         // 计算报告价格
                         if ($languages) {
-                            foreach ($languages as $index => $language) {
+                            foreach ($languages as $langIndex => $language) {
                                 $priceEditions = PriceEditionValues::select(
                                     ['id', 'name as edition', 'rules as rule', 'notice']
                                 )->where(['language_id' => $language['id']])->get()->toArray();
-                                $prices[$index]['language'] = $language['name'];
+                                $prices[$langIndex]['language'] = $language['name'];
                                 if ($priceEditions) {
                                     foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
-                                        if ($index == 0 && $keyPriceEdition == 0) {
+                                        if ($langIndex == 0 && $keyPriceEdition == 0) {
                                             // 以第一个价格版本作为显示的价格版本
                                             $data[$index]['price'] = $product['price'];
                                             $data[$index]['price_edition'] = $priceEdition['id'];
                                         }
-                                        $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
-                                        $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
-                                        $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
-                                        $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
+                                        $prices[$langIndex]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
+                                        $prices[$langIndex]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+                                        $prices[$langIndex]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
+                                        $prices[$langIndex]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
                                                 $priceEdition['rule'],
                                                 $product['price']
                                             ) . ";");
