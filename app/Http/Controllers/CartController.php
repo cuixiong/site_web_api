@@ -426,26 +426,30 @@ class CartController extends Controller {
      *
      * @param array goods_ids
      */
-    public function Relevant(Request $request) {
+    public function Relevant(Request $request)
+    {
         $goods_ids = $request->goods_ids;
         $data = [];
+        if (!empty($goods_ids) && !is_array($goods_ids)) {
+            $goods_ids = explode(',',$goods_ids);
+        }
         if (!empty($goods_ids) && is_array($goods_ids)) {
             $keywords = Products::whereIn('id', $goods_ids)->pluck('keywords')->toArray();
             if (!empty($keywords) && is_array($keywords)) {
                 $products = Products::select([
-                                                 'id',
-                                                 'name',
-                                                 'thumb',
-                                                 'category_id',
-                                                 'url',
-                                                 'published_date',
-                                                 'price',
-                                             ])
-                                    ->whereIn('keywords', $keywords)
-                                    ->whereNotIn('id', $goods_ids)
-                                    ->limit(5)
-                                    ->get()
-                                    ->toArray();
+                    'id',
+                    'name',
+                    'thumb',
+                    'category_id',
+                    'url',
+                    'published_date',
+                    'price',
+                ])
+                    ->whereIn('keywords', $keywords)
+                    ->whereNotIn('id', $goods_ids)
+                    ->limit(5)
+                    ->get()
+                    ->toArray();
                 if (!empty($products) && is_array($products)) {
                     $data = [];
                     foreach ($products as $index => $product) {
@@ -457,9 +461,10 @@ class CartController extends Controller {
                         );
                         $data[$index]['description_seo'] = $description;
                         $data[$index]['published_date'] = $product['published_date'] ? date(
-                            'Y-m-d', strtotime(
-                                       $product['published_date']
-                                   )
+                            'Y-m-d',
+                            strtotime(
+                                $product['published_date']
+                            )
                         ) : '';
                         $data[$index]['price'] = $product['price'];
                         $data[$index]['id'] = $product['id'];
