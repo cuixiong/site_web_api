@@ -181,13 +181,17 @@ class CartController extends Controller {
      * 购物车删除
      */
     public function Delete(Request $request) {
-        $CartIds = $request->ids;
-        if (!is_array($CartIds) && empty($CartIds)) {
+        $cartIds = $request->ids;
+        if (!is_array($cartIds) && empty($cartIds)) {
             ReturnJson(false, '请选择需要删除的商品ID');
+        }
+        
+        if (!is_array($cartIds) && !empty($cartIds)) {
+            $cartIds = explode(',',$cartIds);
         }
         DB::beginTransaction();
         try {
-            ShopCart::whereIn('id', $CartIds)->where("user_id", $request->user->id)->delete();
+            ShopCart::whereIn('id', $cartIds)->where("user_id", $request->user->id)->delete();
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
