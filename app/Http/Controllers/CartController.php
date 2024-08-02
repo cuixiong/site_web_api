@@ -431,7 +431,7 @@ class CartController extends Controller {
         $goods_ids = $request->goods_ids;
         $data = [];
         if (!empty($goods_ids) && !is_array($goods_ids)) {
-            $goods_ids = explode(',',$goods_ids);
+            $goods_ids = explode(',', $goods_ids);
         }
         if (!empty($goods_ids) && is_array($goods_ids)) {
             $keywords = Products::whereIn('id', $goods_ids)->pluck('keywords')->toArray();
@@ -444,6 +444,11 @@ class CartController extends Controller {
                     'url',
                     'published_date',
                     'price',
+                    'products.discount_type',
+                    'products.discount',
+                    'products.discount_amount',
+                    'products.discount_time_begin',
+                    'products.discount_time_end',
                 ])
                     ->whereIn('keywords', $keywords)
                     ->whereNotIn('id', $goods_ids)
@@ -452,6 +457,7 @@ class CartController extends Controller {
                     ->toArray();
                 if (!empty($products) && is_array($products)) {
                     $data = [];
+                    $time = time();
                     foreach ($products as $index => $product) {
                         $data[$index]['thumb'] = Products::getThumbImgUrl($product);
                         $data[$index]['name'] = $product['name'];
@@ -469,6 +475,24 @@ class CartController extends Controller {
                         $data[$index]['price'] = $product['price'];
                         $data[$index]['id'] = $product['id'];
                         $data[$index]['url'] = $product['url'];
+
+                        $data[$index]['discount_type'] = $product['discount_type'];
+                        $data[$index]['discount_amount'] = $product['discount_amount'];
+                        $data[$index]['discount'] = $product['discount'];
+                        $data[$index]['discount_time_begin'] = $product['discount_time_begin'] ? date(
+                            'Y-m-d',
+                            $product['discount_time_begin']
+                        ) : '';
+                        $data[$index]['discount_time_end'] = $product['discount_time_end'] ? date(
+                            'Y-m-d',
+                            $product['discount_time_end']
+                        ) : '';
+                        //判断当前报告是否在优惠时间内
+                        if ($product['discount_time_begin'] <= $time && $product['discount_time_end'] >= $time) {
+                            $data[$index]['discount_status'] = 1;
+                        } else {
+                            $data[$index]['discount_status'] = 0;
+                        }
                     }
                 }
             }
