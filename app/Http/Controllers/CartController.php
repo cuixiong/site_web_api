@@ -61,7 +61,8 @@ class CartController extends Controller {
                 'totalPrice' => 0,
             ];
 
-            return ['code' => 0, 'message' => '购物车为空', 'data' => $data];
+            ReturnJson(true, '购物车为空', $data);
+            // return ['code' => 0, 'message' => '购物车为空', 'data' => $data];
         }
         $goodsCount = 0;
         $totalPrice = 0;
