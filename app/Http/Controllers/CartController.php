@@ -511,9 +511,9 @@ class CartController extends Controller {
                             foreach ($languages as $langIndex => $language) {
                                 $priceEditions = PriceEditionValues::select(
                                     ['id', 'name as edition', 'rules as rule', 'notice']
-                                )->where(['language_id' => $language['id']])->get()->toArray();
-                                $prices[$langIndex]['language'] = $language['name'];
+                                )->where(['status' => 1,'language_id' => $language['id']])->get()->toArray();
                                 if ($priceEditions) {
+                                    $prices[$langIndex]['language'] = $language['name'];
                                     foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
                                         if ($langIndex == 0 && $keyPriceEdition == 0) {
                                             // 以第一个价格版本作为显示的价格版本
