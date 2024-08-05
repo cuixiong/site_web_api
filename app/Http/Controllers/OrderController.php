@@ -435,8 +435,9 @@ class OrderController extends Controller {
             $createDate = $record->create_date;
             $orderInfo = $record->toArray();
             $orderInfo = Arr::only($orderInfo, ['id', 'order_number', 'created_at', 'is_pay_text', 'is_pay', 'pay_type',
-                                                'order_amount', 'actually_paid', 'coupon_id']
+                                                'order_amount', 'actually_paid', 'coupon_id' , 'coupon_amount']
             );
+
             $orderInfo['pay_type_text'] = $payTypeText;
             $orderInfo['create_date'] = $createDate;
             $orderInfo['is_invoice'] = $is_invoice;

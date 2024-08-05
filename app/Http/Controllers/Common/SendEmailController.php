@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Common;
 
-use App\Http\Controllers\Controller;
 use App\Jobs\HandlerEmailJob;
 use App\Models\Country;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TrendsEmail;
@@ -497,7 +497,7 @@ class SendEmailController extends Controller {
             if (!$data) {
                 ReturnJson(false, '未找到订单数据');
             }
-            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $data['domain'] = env('DOMAIN_URL', 'https://mmgcn.marketmonitorglobal.com.cn');
             $PayName = Pay::where('id', $data['pay_type'])->value('name');
             $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
             $languageList = Languages::GetListById();
@@ -547,7 +547,7 @@ class SendEmailController extends Controller {
                 'orderStatus'        => '未付款',
                 'paymentMethod'      => $PayName,
                 'orderAmount'        => $data['order_amount'],
-                'preferentialAmount' => $data['order_amount'] - $data['actually_paid'],
+                'preferentialAmount' => $data['coupon_amount'],
                 'orderActuallyPaid'  => $data['actually_paid'],
                 'orderNumber'        => $data['order_number'],
                 'paymentLink'        => $data['domain'].'/api/order/pay?order_id='.$data['id'],
@@ -600,7 +600,7 @@ class SendEmailController extends Controller {
             }
             $user = User::find($data['user_id']);
             $user = $user ? $user->toArray() : [];
-            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $data['domain'] = env('DOMAIN_URL', 'https://mmgcn.marketmonitorglobal.com.cn');
             $PayName = Pay::where('id', $data['pay_type'])->value('name');
             $orderGoodsList = OrderGoods::where('order_id', $Order['id'])->get()->toArray();
             $languageList = Languages::GetListById();
@@ -651,7 +651,7 @@ class SendEmailController extends Controller {
                 'orderStatus'        => '已付款',
                 'paymentMethod'      => $PayName,
                 'orderAmount'        => $data['order_amount'],
-                'preferentialAmount' => $data['order_amount'] - $data['actually_paid'],
+                'preferentialAmount' => $data['coupon_amount'],
                 'orderActuallyPaid'  => $data['actually_paid'],
                 'orderNumber'        => $data['order_number'],
                 'paymentLink'        => $data['domain'].'/api/order/pay?order_id='.$data['id'],
@@ -690,6 +690,7 @@ class SendEmailController extends Controller {
 
             return true;
         } catch (\Exception $e) {
+            \Log::error('ex:'.$e->getMessage());
             ReturnJson(false, $e->getMessage());
         }
     }

@@ -14,6 +14,8 @@ use App\Models\ProductsCategory;
 use App\Models\SystemValue;
 use App\Services\SenWordsService;
 use Illuminate\Http\Request;
+use PhpParser\Node\Expr\Cast\Object_;
+use stdClass;
 
 class IndexController extends Controller
 {
@@ -305,7 +307,7 @@ class IndexController extends Controller
      */
     private function getHotProductList(Request $request)
     {
-        /** 
+        /**
          *  0: 默认只返回报告数据
          *  1: 返回分类数据以及单个分类的报告数据
          *  2: 返回报告分类及每个报告分类的数据
@@ -367,7 +369,7 @@ class IndexController extends Controller
                     $productList = (clone $productQuery)->select($productSelect)->where('category_id', $categoryID)->get()->toArray();
                     if (empty($productList)) {
                         $data[$index]['keywords'] = [];
-                        $data[$index]['firstProduct'] = [];
+                        $data[$index]['firstProduct'] = new stdClass();
                         $data[$index]['otherProducts'] = [];
                         continue;
                     }
@@ -427,7 +429,7 @@ class IndexController extends Controller
      */
     private function getRecommendProductList(Request $request)
     {
-        /** 
+        /**
          *  0: 默认只返回报告数据
          *  1: 返回分类数据以及单个分类的报告数据
          *  2: 返回报告分类及每个报告分类的数据

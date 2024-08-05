@@ -183,7 +183,7 @@ abstract class Pay implements PayInterface {
             $paymentMsg .= 'order_number is invalid'.PHP_EOL;
             file_put_contents($logName, $paymentMsg, FILE_APPEND);
 
-            return;
+            return false;
         }
         file_put_contents($logName, print_r($order->getAttributes(), true), FILE_APPEND);
         if ($order['is_pay'] == Order::PAY_SUCCESS) {
@@ -191,14 +191,14 @@ abstract class Pay implements PayInterface {
             // header("Location: $this->returnUrl");
             file_put_contents($logName, $paymentMsg, FILE_APPEND);
 
-            return;
+            return false;
         }
         // 检查支付的金额是否相符
         if ($order['actually_paid'] != $total_amount) { // 网站付款时的币种的订单总金额
             $paymentMsg .= 'fail amount is wrong'.PHP_EOL;
             file_put_contents($logName, $paymentMsg, FILE_APPEND);
 
-            return;
+            return false;
         }
         // 改变订单状态
         $order->out_order_num = $trade_no;
@@ -214,8 +214,10 @@ abstract class Pay implements PayInterface {
         } else {
             $paymentMsg .= 'fail to update status'.PHP_EOL;
             $paymentMsg .= print_r($order->getErrors(), true).PHP_EOL;
+            return false;
         }
         $paymentMsg .= print_r($order->getAttributes(), true);
         file_put_contents($logName, $paymentMsg, FILE_APPEND);
+        return true;
     }
 }

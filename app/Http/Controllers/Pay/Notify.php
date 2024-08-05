@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Pay;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 /**
  * 处理各种回调请求
@@ -74,9 +74,9 @@ class Notify extends Controller {
             file_put_contents($logName, json_encode([$params]), FILE_APPEND);
             $pay = new Stripepay();
             $res = $pay->notify();
-            if($res) {
+            if ($res) {
                 ReturnJson(true, 'success');
-            }else{
+            } else {
                 ReturnJson(false, 'fail');
             }
         } catch (\Throwable $e) {
@@ -84,6 +84,25 @@ class Notify extends Controller {
             $statusCode = $e->getCode();
             http_response_code(400);
             ReturnJson(false, '验签失败~'.$e->getMessage());
+        }
+    }
+
+    public function FirstData() {
+        $_input = file_get_contents('php://input');
+        $request = request();
+        $params = $request->input();
+        $heards = $request->header();
+        \Log::error('返回结果数据FirstData---input:'.json_encode([$_input]));
+        \Log::error('返回结果数据FirstData---params:'.json_encode([$params]));
+        \Log::error('返回结果数据FirstData---heards:'.json_encode([$heards]));
+
+
+        $firstDataPay = new FirstDatapay();
+        $res = $firstDataPay->notify();
+        if($res){
+            return 'Success';
+        }else{
+            return 'fail';
         }
     }
 }

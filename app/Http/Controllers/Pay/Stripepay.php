@@ -43,10 +43,19 @@ class Stripepay extends Pay {
                 }
                 $logName = date("d-H");
                 $logName = $dir.$logName.'.log';
-                $this->handlerOrderPaySucService($out_trade_no, $logName, $total_amount, $trade_no, $gmt_payment);
+                try {
+                    $res = $this->handlerOrderPaySucService(
+                        $out_trade_no, $logName, $total_amount, $trade_no, $gmt_payment
+                    );
+                } catch (\Exception $e) {
+                    \Log::error('返回结果数据:'.json_encode([$e]));
+                    $res = false;
+                }
+
+                return $res;
             }
 
-            return true;
+            return false;
         } catch (\UnexpectedValueException $e) {
             // Invalid payload
             throw $e;

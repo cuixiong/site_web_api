@@ -15,4 +15,5 @@ class PayConst {
     const PAY_TYPE_WXPAY     = 'ALIPAL';
     const PAY_TYPE_ALIPAY    = 'WECHATPAY';
     const PAY_TYPE_STRIPEPAY = 'STRIPE';
+    const PAY_TYPE_FIRSTDATAPAY = 'FIRSTDATA';
 }
