@@ -355,7 +355,8 @@ class CartController extends Controller {
      * price_edition  价格版本id
      * number            数量
      */
-    public function Share(Request $request) {
+    public function Share(Request $request)
+    {
         $cart = $request->cart;
         $cart_array = json_decode($cart, true);   // 把接收到的参数通过英文分号分割成一个或多个数组
         $results = [];
@@ -366,53 +367,61 @@ class CartController extends Controller {
             $time = time();
             //语言列表
             $languages = Languages::GetList();
+            // 默认图片
+            // 若报告图片为空，则使用系统设置的默认报告高清图
+            $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
             foreach ($cart_array as $key => $value) {
                 $product = Products::from('product_routine as product')
-                                   ->leftJoin('product_category as category', 'product.category_id', '=', 'category.id')
-                                   ->select([
-                                                'category.thumb as category_thumb',
-                                                'product.name',
-                                                'product.id as goods_id',
-                                                'product.thumb as thumb',
-                                                'product.published_date',
-                                                'product.category_id',
-                                                'product.discount_type',
-                                                'product.discount_amount as discount_amount',
-                                                'product.discount as discount',
-                                                'product.discount_time_begin as discount_begin',
-                                                'product.discount_time_end as discount_end',
-                                                'product.price',
-                                                'product.publisher_id',
-                                                'product.url'
-                                            ])
-                                   ->where([
-                                               'product.id'     => $value['goods_id'],
-                                               'product.status' => 1,
-                                           ])
-                                    ->where('product.published_date' , '<=' , $time)
-                                    ->first();
+                ->leftJoin('product_category as category', 'product.category_id', '=', 'category.id')
+                ->select([
+                    'category.thumb as category_thumb',
+                    'product.name',
+                    'product.id as goods_id',
+                    'product.thumb as thumb',
+                    'product.published_date',
+                    'product.category_id',
+                    'product.discount_type',
+                    'product.discount_amount as discount_amount',
+                    'product.discount as discount',
+                    'product.discount_time_begin as discount_begin',
+                    'product.discount_time_end as discount_end',
+                    'product.price',
+                    'product.publisher_id',
+                    'product.url'
+                ])
+                    ->where([
+                        'product.id'     => $value['goods_id'],
+                        'product.status' => 1,
+                    ])
+                    ->where('product.published_date', '<=', $time)
+                    ->first();
 
                 if (!empty($product)) {
                     $product = $product->toArray();
                     $results[$key] = $product;
                     if (!empty($product['thumb'])) {
                         $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($product['thumb']);
-                    } else {
+                    } elseif (!empty($product['thumcategory_thumbb'])){
                         $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
+                    } else {
+                        // 如果报告图片、分类图片为空，使用系统默认图片
+                        $results[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                     }
+
                     $results[$key]['published_date'] = $product['published_date'];
                     $results[$key]['discount_begin'] = $product['discount_begin'] ? date(
-                        'Y-m-d', $product['discount_begin']
+                        'Y-m-d',
+                        $product['discount_begin']
                     ) : '';
                     $results[$key]['discount_end'] = $product['discount_end'] ? date('Y-m-d', $product['discount_end'])
-                        : '';
+                    : '';
                     $results[$key]['discount_type'] = $product['discount_type'];
                     $results[$key]['discount'] = $product['discount'];
                     $results[$key]['discount_amount'] = $product['discount_amount'];
                     //判断当前报告是否在优惠时间内
-                    if($product['discount_begin'] <= $time && $product['discount_end'] >= $time){
+                    if ($product['discount_begin'] <= $time && $product['discount_end'] >= $time) {
                         $results[$key]['discount_status'] = 1;
-                    }else{
+                    } else {
                         $results[$key]['discount_status'] = 0;
                     }
 
@@ -423,7 +432,9 @@ class CartController extends Controller {
 
 
                     $results[$key]['prices'] = Products::CountPrice(
-                        $product['price'], $product['publisher_id'], $languages
+                        $product['price'],
+                        $product['publisher_id'],
+                        $languages
                     ) ?? [];
 
                     if (!empty($priceEditionInfo)) {
@@ -431,7 +442,7 @@ class CartController extends Controller {
                         $results[$key]['languageId'] = $priceEditionInfo->language_id;
                         $results[$key]['price_edition_name'] = $priceEditionInfo->name;
                         $results[$key]['price_edition_cent'] = $priceEditionInfo->edition_id;
-                        $results[$key]['price'] = eval("return ".sprintf($priceEditionInfo->rules, $price).";");
+                        $results[$key]['price'] = eval("return " . sprintf($priceEditionInfo->rules, $price) . ";");
                         $results[$key]['language_name'] = $languagesList[$priceEditionInfo->language_id];
                     } else {
                         $results[$key]['price_edition_name'] = '';
@@ -450,11 +461,11 @@ class CartController extends Controller {
             }
         }
         ReturnJson(true, '', $results);
-//        if ($Nonexistent > 0) {
-//            ReturnJson(false, $goods); // 产品不存在
-//        } else {
-//            ReturnJson(true, '', $results);
-//        }
+        //        if ($Nonexistent > 0) {
+        //            ReturnJson(false, $goods); // 产品不存在
+        //        } else {
+        //            ReturnJson(true, '', $results);
+        //        }
     }
 
     /**
