@@ -242,12 +242,12 @@ class OrderTrans extends Base {
         $order->email = $inputParams['email'];
         $order->phone = $inputParams['phone'];
         $order->company = $inputParams['company'];
-        $order->province_id = $inputParams['province_id'];
-        $order->city_id = $inputParams['city_id'] ?? 0;
-        $order->address = $inputParams['address'] ?? '';
-        $order->remarks = $inputParams['remarks'] ?? '';
+        $order->province_id = !empty($inputParams['province_id'])?$inputParams['province_id']:0;
+        $order->city_id = !empty($inputParams['city_id']) ?$inputParams['city_id']: 0;
+        $order->address = !empty($inputParams['address']) ? $inputParams['address']:'';
+        $order->remarks = !empty($inputParams['remarks']) ? $inputParams['address']:'';
         $order->coupon_id = $coupon_id ? intval($coupon_id) : 0;
-        $order->coupon_amount = $caclueData['coupon_amount']; //优惠金额
+        $order->coupon_amount = !empty($caclueData['coupon_amount'])?$caclueData['coupon_amount']:0; //优惠金额
         $order->exchange_rate = $caclueData['exchange_rate']; //汇率比例
         $order->exchange_amount = $caclueData['exchange_amount']; //汇率金额
         $order->tax_amount = $caclueData['tax_amount']; //税率金额
