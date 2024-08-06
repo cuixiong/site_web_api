@@ -245,7 +245,7 @@ class OrderTrans extends Base {
         $order->province_id = !empty($inputParams['province_id'])?$inputParams['province_id']:0;
         $order->city_id = !empty($inputParams['city_id']) ?$inputParams['city_id']: 0;
         $order->address = !empty($inputParams['address']) ? $inputParams['address']:'';
-        $order->remarks = !empty($inputParams['remarks']) ? $inputParams['address']:'';
+        $order->remarks = !empty($inputParams['remarks']) ? $inputParams['remarks']:'';
         $order->coupon_id = $coupon_id ? intval($coupon_id) : 0;
         $order->coupon_amount = !empty($caclueData['coupon_amount'])?$caclueData['coupon_amount']:0; //优惠金额
         $order->exchange_rate = $caclueData['exchange_rate']; //汇率比例
