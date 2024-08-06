@@ -236,30 +236,32 @@ class UserController extends Controller {
      * @param int $scene  场景：1代表用户进入自己的个人中心，2代表用户下单。
      * @param int $price  前端传过来的订单总价（原价）
      */
-    public function Coupons(Request $request) {
+    public function Coupons(Request $request)
+    {
         $status = $request->status;
         $scene = $request->scene;
+        $price = $request->price;
         if (!isset($status)) { // 由于允许参数status的值为0，所以这里要用【!isset】
             ReturnJson(false, 'status');
         }
-//        if (!isset($scene)) {
-//            ReturnJson(false, 'scene');
-//        }
+        //        if (!isset($scene)) {
+        //            ReturnJson(false, 'scene');
+        //        }
         $userId = $request->user()->id;
         $result = CouponUser::from('coupon_users as user')
-                            ->select([
-                                         'coupon.type',
-                                         'value',
-                                         'coupon.time_end',
-                                         'coupon.code',
-                                         'coupon.id',
-                                         'user.is_used'
-                                     ])
-                            ->leftJoin('coupons as coupon', 'user.coupon_id', '=', 'coupon.id')
-                            ->where([
-                                        'user.user_id'  => $userId,
-                                        'coupon.status' => 1,
-                                    ]);
+        ->select([
+            'coupon.type',
+            'value',
+            'coupon.time_end',
+            'coupon.code',
+            'coupon.id',
+            'user.is_used'
+        ])
+            ->leftJoin('coupons as coupon', 'user.coupon_id', '=', 'coupon.id')
+            ->where([
+                'user.user_id'  => $userId,
+                'coupon.status' => 1,
+            ]);
         switch ($status) {
             case 1: // 未使用的优惠券
                 $result = $result->where('user.is_used', CouponUser::isUsedNO);
@@ -270,9 +272,18 @@ class UserController extends Controller {
             case 3: // 已过期的优惠券
                 $result = $result->where('coupon.time_end', '<', time());
                 break;
-            default:// 全部优惠券
+            default: // 全部优惠券
                 break;
         }
+        // 如果传入总价，则现金券需满足不超过总价的条件，打折券则无限制
+        if (!empty($price)) {
+            $result->where(function ($query) use ($price) {
+                $query->where(function ($subQuery) use ($price) {
+                    $subQuery->where('type', 2)->where('value', '<', $price);
+                })->orWhere('type', 1);
+            });
+        }
+
         $result = $result->get()->toArray();
         $data = [];
         if (!empty($result) && is_array($result)) {
