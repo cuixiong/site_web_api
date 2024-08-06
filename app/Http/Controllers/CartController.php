@@ -401,7 +401,7 @@ class CartController extends Controller {
                     $results[$key] = $product;
                     if (!empty($product['thumb'])) {
                         $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($product['thumb']);
-                    } elseif (!empty($product['thumcategory_thumbb'])){
+                    } elseif (!empty($product['category_thumb'])){
                         $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
                     } else {
                         // 如果报告图片、分类图片为空，使用系统默认图片
