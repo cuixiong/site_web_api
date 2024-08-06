@@ -20,8 +20,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     // Common 控制器
     Route::prefix('common')->group(function () {
-        Route::get('main-data', [\App\Http\Controllers\Common\CommonController::class, 'index'])->name('组件导航主数据接口');
-
+        Route::get('main-data', [\App\Http\Controllers\Common\CommonController::class, 'index'])->name(
+            '组件导航主数据接口'
+        );
         Route::get('top-menus', [\App\Http\Controllers\Common\CommonController::class, 'TopMenus'])->name('顶部导航栏');
         Route::get('info', [\App\Http\Controllers\Common\CommonController::class, 'info'])->name('SEO信息');
         Route::get('bottom-menus', [\App\Http\Controllers\Common\CommonController::class, 'BottomMenus'])->name(
@@ -57,7 +58,6 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     // index控制器(首页)
     Route::prefix('index')->group(function () {
         Route::get('main-data', [\App\Http\Controllers\IndexController::class, 'index'])->name('首页接口主要数据');
-
         Route::get('news-product', [\App\Http\Controllers\IndexController::class, 'NewsProduct'])->name('最新报告');
         Route::get('recommend-product', [\App\Http\Controllers\IndexController::class, 'RecommendProduct'])->name(
             '推荐报告'
@@ -65,7 +65,9 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::get('recommend-news', [\App\Http\Controllers\IndexController::class, 'RecommendNews'])->name('行业新闻');
         Route::get('partners', [\App\Http\Controllers\IndexController::class, 'partners'])->name('合作伙伴');
         Route::get('office', [\App\Http\Controllers\IndexController::class, 'office'])->name('办公室');
-        Route::get('customers-comments', [\App\Http\Controllers\IndexController::class, 'customersComments'])->name('客户评价');
+        Route::get('customers-comments', [\App\Http\Controllers\IndexController::class, 'customersComments'])->name(
+            '客户评价'
+        );
     });
     // Plate控制器(页面板块)
     Route::prefix('plate')->group(function () {
@@ -75,17 +77,19 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::get('plate-value-list', [\App\Http\Controllers\PlateController::class, 'PlateValueList'])->name(
             '页面板块子级的值列表'
         );
-        
-        Route::get('plate-value-list-by-link', [\App\Http\Controllers\PlateController::class, 'PlateValueByLink'])->name(
-            '页面板块子级的值列表-通过页面link'
-        );
+        Route::get('plate-value-list-by-link', [\App\Http\Controllers\PlateController::class, 'PlateValueByLink'])
+             ->name(
+                 '页面板块子级的值列表-通过页面link'
+             );
         Route::get('form', [\App\Http\Controllers\PlateController::class, 'Form'])->name('页面板块（包含父级和子级）');
     });
     // Product控制器(报告)
     Route::prefix('product')->group(function () {
         Route::get('list', [\App\Http\Controllers\ProductController::class, 'List'])->name('报告列表');
         Route::get('description', [\App\Http\Controllers\ProductController::class, 'Description'])->name('报告详情');
-        Route::get('view-log', [\App\Http\Controllers\ProductController::class, 'viewProductLog'])->name('详情浏览记录');
+        Route::get('view-log', [\App\Http\Controllers\ProductController::class, 'viewProductLog'])->name(
+            '详情浏览记录'
+        );
         Route::get('relevant', [\App\Http\Controllers\ProductController::class, 'Relevant'])->name('相关报告');
         Route::get('news', [\App\Http\Controllers\ProductController::class, 'News'])->name('更多资讯');
         Route::get('filters', [\App\Http\Controllers\ProductController::class, 'Filters'])->name('筛选条件');
@@ -174,8 +178,6 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::post('sync', [\App\Http\Controllers\CartController::class, 'Sync'])
              ->name('购物车同步');
     });
-
-
     Route::post('cart/goods-exist', [\App\Http\Controllers\CartController::class, 'goodsExist'])->name('购物车添加');
     Route::get('cart/relevant', [\App\Http\Controllers\CartController::class, 'Relevant'])->name('相关报告');
     Route::post('cart/share', [\App\Http\Controllers\CartController::class, 'Share'])->name('分享购物车数据');
@@ -211,6 +213,8 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::post('notify/wechatpay', [\App\Http\Controllers\Pay\Notify::class, 'Wechatpay'])->name('微信支付回调');
     // stripe支付回调
     Route::any('notify/stripe', [\App\Http\Controllers\Pay\Notify::class, 'Stripe'])->name('stripe支付回调');
+    // firstData支付回调
+    Route::any('notify/firstdata', [\App\Http\Controllers\Pay\Notify::class, 'FirstData'])->name('firstdata支付回调');
     // News控制器
     Route::prefix('news')->group(function () {
         Route::post('index', [\App\Http\Controllers\NewsController::class, 'Index'])->name('新闻列表');
@@ -233,7 +237,6 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::prefix('sitemap')->group(function () {
         Route::get('make-site-map', [\App\Http\Controllers\SitemapController::class, 'MakeSiteMap'])->name('更新地图');
     });
-
     //第三方接口
     Route::prefix('third')->group(function () {
         Route::post('send-email', [\App\Http\Controllers\Third\ThirdRespController::class, 'sendEmail'])->name(
@@ -242,32 +245,23 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::post('test-send-email', [\App\Http\Controllers\Third\ThirdRespController::class, 'testSendEmail'])->name(
             '测试场景发送邮件'
         );
-
         Route::post('sync-redis-val', [\App\Http\Controllers\Third\ThirdRespController::class, 'syncRedisVal'])->name(
             '发送邮件'
         );
-
     });
-
-
     Route::get('get/client-ip', [\App\Http\Controllers\PublicController::class, 'getClientIp'])->name('获取客户端IP');
-
     Route::get('xunsearch/clean', [\App\Http\Controllers\XunSearchTestController::class, 'clean'])->name(
         '讯搜清空数据'
     );
     Route::get('stripe-paytest', [\App\Http\Controllers\XunSearchTestController::class, 'stripePayTest'])->name(
         '支付测试'
     );
-
     Route::get('xunsearch/test', [\App\Http\Controllers\XunSearchTestController::class, 'test'])->name('测试接口');
     Route::get('/test1', [\App\Http\Controllers\TestController::class, 'test1'])->name('测试接口1');
-
-
     //微信授权
     Route::prefix('wx-empower')->group(function () {
         Route::any('index1', [\App\Http\Controllers\WxAuthController::class, 'getWxAuthCode'])->name(
             '获取微信授权码'
         );
     });
-
 });

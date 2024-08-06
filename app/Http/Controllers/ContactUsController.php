@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Common\SendEmailController;
 use App\Models\ContactUs;
+use App\Models\System;
+use App\Models\SystemValue;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\DictionaryValue;
@@ -19,9 +21,9 @@ class ContactUsController extends Controller {
         $model->name = $params['name'] ?? '';
         $model->email = $params['email'] ?? '';
         $model->company = $params['company'] ?? '';
-        if(!empty($params['buy_time'])){
+        if (!empty($params['buy_time'])) {
             $model->buy_time = $params['buy_time'] ?? 0;
-        }else{
+        } else {
             $model->buy_time = $params['plan_buy_time'] ?? 0;
         }
         $model->province_id = $params['province_id'] ?? 0;
@@ -31,10 +33,10 @@ class ContactUsController extends Controller {
         $model->content = $params['content'] ?? '';
         $model->product_id = $params['product_id'] ?? 0;
         if ($model->save()) {
-            if($params['category_id'] == 4){
+            if ($params['category_id'] == 4) {
                 //申请样本
                 (new SendEmailController)->productSample($model->id);
-            }else{
+            } else {
                 //定制报告
                 (new SendEmailController)->customized($model->id);
             }
@@ -71,6 +73,19 @@ class ContactUsController extends Controller {
                                                             ->orderBy('sort', 'ASC')
                                                             ->get()
                                                             ->toArray();
+        //支付配置税率/汇率配置
+        $sysPayKey = 'pay_setting';
+        $paySetId = System::query()->where("status", 1)
+                          ->where("alias", $sysPayKey)->value('id');
+        $paySetting = [];
+        if (!empty($paySetId)) {
+            $paySetting = SystemValue::query()->where("parent_id", $paySetId)
+                                     ->where("status", 1)
+                                     ->where("hidden", 1)
+                                     ->select(["name", "key", "alias", "value"])
+                                     ->get()->toArray();
+        }
+        $result['pay_setting'] = $paySetting;
         ReturnJson(true, '', $result);
     }
 }
