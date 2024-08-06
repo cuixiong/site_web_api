@@ -272,7 +272,7 @@ class CartController extends Controller {
             ReturnJson(false, '参数错误');
         }
         $goodsIdArr = array_column($goodsArr, 'goods_id', null);
-        $goodsIdArr = Products::where('status', 1)->whereIn('id', $goodsIdArr)->pluck('id');
+        $goodsIdArr = Products::where('status', 1)->whereIn('id', $goodsIdArr)->pluck('id')->toArray();
         // 会把无效的 good_id 过滤
         if (empty($goodsIdArr)) {
             ReturnJson(false, '报告编号有误或无效');
