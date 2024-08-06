@@ -291,8 +291,11 @@ class CartController extends Controller {
         DB::beginTransaction();
         $query = ShopCart::where(['user_id' => $user->id, 'status' => 1]);
         $backData = $query->select(['id', 'goods_id', 'number', 'price_edition',])
-                          ->keyBy('id')
+                        //   ->keyBy('id')
                           ->get()->toArray();
+        if($backData && count($backData)>0){
+            $backData = array_column($backData,null,'id');
+        }
         $timestamp = time();
         $backlen = count($backData);
         if ($backlen < 1) { // 该用户当前没有购物车, 直接全部插入
