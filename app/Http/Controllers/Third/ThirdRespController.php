@@ -79,10 +79,16 @@ class ThirdRespController extends BaseThirdController {
         $inputParams = request()->input();
         $key = $inputParams['key'];
         $val = $inputParams['val'];
+        $type = $inputParams['type'];
         if(empty($key) || empty($val)){
             ReturnJson(false, '参数错误');
         }
-        Redis::set($key, $val);
+
+        if($type == 'delete'){
+            Redis::del($key);
+        }else{
+            Redis::set($key, $val);
+        }
         ReturnJson(true, '请求成功');
     }
 
