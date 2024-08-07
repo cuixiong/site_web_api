@@ -348,23 +348,36 @@ class OrderController extends Controller {
             ->leftJoin('languages as language', 'language.id', 'edition.language_id')
             ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
             ->get()->toArray();
-        if (!empty($order['user_id'])) {
-            $user = User::select(['username', 'email', 'phone', 'company', 'province_id', 'city_id', 'address'])->where(
-                'id',
-                $order['user_id']
-            )->first();
+        // if (!empty($order['user_id'])) {
+        //     $user = User::select(['username', 'email', 'phone', 'company', 'province_id', 'city_id', 'address'])->where(
+        //         'id',
+        //         $order['user_id']
+        //     )->first();
+        //     $province = City::where('id', $order['province_id'])->value('name');
+        //     $city = City::where('id', $order['city_id'])->value('name');
+        //     $_user = [
+        //         'name'     => $user['username'] ?? '',
+        //         'email'    => $user['email'] ?? '',
+        //         'phone'    => $user['phone'] ?? '',
+        //         'company'  => $user['company'] ?? '',
+        //         'province' => $province,
+        //         'city_id'  => $city,
+        //         'address'  => $order['address'],
+        //     ];
+        // }
+        
             $province = City::where('id', $order['province_id'])->value('name');
             $city = City::where('id', $order['city_id'])->value('name');
             $_user = [
-                'name'     => $user['username'] ?? '',
-                'email'    => $user['email'] ?? '',
-                'phone'    => $user['phone'] ?? '',
-                'company'  => $user['company'] ?? '',
-                'province' => $province,
-                'city_id'  => $city,
+                'name'     => $order['username'] ?? '',
+                'email'    => $order['email'] ?? '',
+                'phone'    => $order['phone'] ?? '',
+                'company'  => $order['company'] ?? '',
+                'province' => !empty($province)? $province : '',
+                'city_id'  => !empty($city)? $city : '',
                 'address'  => $order['address'],
             ];
-        }
+
         $discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);
         $data = [
             'order'  => [
