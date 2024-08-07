@@ -636,7 +636,8 @@ class CartController extends Controller {
      *
      *
      */
-    private function addCardByData(int $len, mixed $user, array $goodsArr, int $timestamp) {
+    private function addCardByData(int $len, mixed $user, array $goodsArr, int $timestamp)
+    {
         $row = [];
         for ($i = 0; $i < $len; $i++) {
             $add_data = [
@@ -650,8 +651,9 @@ class CartController extends Controller {
             $row[] = $add_data;
         }
         $createShopCart = ShopCart::insert($row);
-        $batchInsert = $createShopCart->count();
-        if ($batchInsert != $len) {
+        // $batchInsert = $createShopCart->count();
+        // if ($batchInsert != $len) {
+        if ($createShopCart) {
             DB::rollback();
             ReturnJson(false, '新增失败');
         }
