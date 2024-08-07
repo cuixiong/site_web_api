@@ -70,7 +70,7 @@ class ProductController extends Controller {
                 //判断当前报告是否在优惠时间内
                 if ($productsData['discount_time_begin'] <= $time && $productsData['discount_time_end'] >= $time) {
                     $value['discount_status'] = 1;
-                } else {    
+                } else {
                     $value['discount_status'] = 0;
                     // 过期需返回正常的折扣
                     $productsData['discount_amount'] = 0;
@@ -152,7 +152,7 @@ class ProductController extends Controller {
             ReturnJson(false, '请求失败,请稍后再试');
         }
     }
-    
+
     /**
      * 返回相关产品数据-重定向/相关报告
      */
@@ -163,7 +163,7 @@ class ProductController extends Controller {
             if ($hidden == 1) {
                 return $this->SearchRelevantForSphinx($id, $keyword, $page, $pageSize,$searchField, $selectField);
             } else {
-                
+
                 return $this->SearchRelevantForMysql($id, $keyword, $page, $pageSize,$searchField, $selectField);
             }
         } catch (\Exception $e) {
@@ -337,10 +337,10 @@ class ProductController extends Controller {
             $product_desc['seo_description'] = is_array($product_desc['description']) && count($product_desc['description'])>0 ?$product_desc['description'][0]:'';
             $product_desc['url'] = $product_desc['url'];
             //$product_desc['thumb'] = Common::cutoffSiteUploadPathPrefix($product->getThumbImgAttribute());
-            
-            $product_desc['thumb'] = $product->thumb;
 
-            if (empty($product->thumb)) {
+            $product_desc['thumb'] = $product->getThumbImgAttribute();
+
+            if (empty($product_desc['thumb'])) {
                 // 若报告图片为空，则使用系统设置的默认报告高清图
                 $defaultImg = SystemValue::where('key', 'default_report_high_img')->value('value');
                 $product_desc['thumb'] = !empty($defaultImg)?$defaultImg:'';
@@ -705,7 +705,7 @@ class ProductController extends Controller {
             ->whereIn("id", $productsIds)
             ->get()->toArray();
         }
-        // 
+        //
         return $products ?? [];
     }
 
@@ -870,7 +870,7 @@ class ProductController extends Controller {
             'category_id',
         ];
         $products = $this->GetRelevantProductResult($product_id,$keywords,1,2,'keywords',$select);
-        
+
         $data = [];
         if($products){
             // 分类信息
@@ -880,7 +880,7 @@ class ProductController extends Controller {
             // 默认图片
             // 若报告图片为空，则使用系统设置的默认报告高清图
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
-            
+
 
             foreach ($products as $index => $product) {
                 //每个报告加上分类信息
@@ -898,7 +898,7 @@ class ProductController extends Controller {
                     // 如果报告图片、分类图片为空，使用系统默认图片
                     $tempThumb = !empty($defaultImg) ? $defaultImg : '';
                 }
-                
+
                 $data[$index]['thumb'] = $tempThumb;
                 $data[$index]['name'] = $product['name'];
                 $data[$index]['keywords'] = $product['keywords'];
