@@ -258,7 +258,8 @@ class CartController extends Controller {
      * @param number        购买数量 int
      * @param price_edition 价格版本 int
      */
-    public function Sync(Request $request) {
+    public function Sync(Request $request)
+    {
         $user = $request->user;
         if (is_null($user)) {
             ReturnJson(false, '用户未登录');
@@ -297,10 +298,10 @@ class CartController extends Controller {
         DB::beginTransaction();
         $query = ShopCart::where(['user_id' => $user->id, 'status' => 1]);
         $backData = $query->select(['id', 'goods_id', 'number', 'price_edition',])
-                        //   ->keyBy('id')
-                          ->get()->toArray();
-        if($backData && count($backData)>0){
-            $backData = array_column($backData,null,'id');
+        //   ->keyBy('id')
+        ->get()->toArray();
+        if ($backData && count($backData) > 0) {
+            $backData = array_column($backData, null, 'id');
         }
         $timestamp = time();
         $backlen = count($backData);
@@ -311,19 +312,19 @@ class CartController extends Controller {
         // 筛选出 id和版本 不存在的记录，这是需要新增的记录
         $oldData = [];
         foreach ($backData as $key => $backItem) {
-            $tempKey = $backItem['goods_id'].','.$backItem['price_edition'];
+            $tempKey = $backItem['goods_id'] . ',' . $backItem['price_edition'];
             $oldData[$tempKey] = $backItem['id'];
         }
         $needInsert = [];
         $needUpdate = [];
         for ($i = 0; $i < count($goodsArr); $i++) {
-            $tempKey = $goodsArr[$i]['goods_id'].','.$goodsArr[$i]['price_edition'];
+            $tempKey = $goodsArr[$i]['goods_id'] . ',' . $goodsArr[$i]['price_edition'];
             if (!key_exists($tempKey, $oldData)) {
                 $needInsert[] = $goodsArr[$i];
             } else {
                 $backData[$oldData[$tempKey]]['number'] = $backData[$oldData[$tempKey]]['number']
-                                                          > $goodsArr[$i]['number']
-                    ? $backData[$oldData[$tempKey]]['number'] : $goodsArr[$i]['number'];
+                > $goodsArr[$i]['number']
+                ? $backData[$oldData[$tempKey]]['number'] : $goodsArr[$i]['number'];
                 $needUpdate[] = $backData[$oldData[$tempKey]];
             }
         }
@@ -335,13 +336,11 @@ class CartController extends Controller {
         $updatelen = count($needUpdate);
         if ($updatelen > 0) {
             for ($i = 0; $i < $updatelen; $i++) {
-                if (!ShopCart::updateAll(
+                if (!ShopCart::where(['id' => $needUpdate[$i]['id']])
+                ->update(
                     [
                         'number'     => $needUpdate[$i]['number'],
                         'updated_at' => $timestamp
-                    ],
-                    [
-                        'id' => $needUpdate[$i]['id']
                     ]
                 )) {
                     DB::rollback();
