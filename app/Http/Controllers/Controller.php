@@ -9,11 +9,28 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Route;
 
 class Controller extends BaseController {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
     public function __construct() {
+
+        // 排除一些不需要验证的路由
+        $excludeRoute = [
+            // 'api/common/top-menus',//测试
+            //支付相关
+            'api/order/wechat-order',
+            'api/wx-empower/index1',
+            'api/order/pay',
+        ];
+        $route = request()->route()->uri();
+        if ($route && in_array($route, $excludeRoute)) {
+
+            return;
+        }
+
+
         //接口签名验证
         $securityCheckWhiteIplist = [];
         $securityCheckWhiteIps = Redis::get('white_ip_security_check') ?? '';
