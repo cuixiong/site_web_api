@@ -129,6 +129,11 @@ class CartController extends Controller {
                 $shopCartData[$key]['discount_status'] = 1;
             } else {
                 $shopCartData[$key]['discount_status'] = 0;
+                // 过期需返回正常的折扣
+                $shopCartData[$key]['discount_amount'] = 0;
+                $shopCartData[$key]['discount'] = 100;
+                $shopCartData[$key]['discount_time_begin'] = null;
+                $shopCartData[$key]['discount_time_end'] = null;
             }
             // 计算报告价格
             $languages = Languages::GetList();
@@ -426,6 +431,12 @@ class CartController extends Controller {
                         $results[$key]['discount_status'] = 1;
                     } else {
                         $results[$key]['discount_status'] = 0;
+                        
+                        // 过期需返回正常的折扣
+                        $results[$key]['discount_amount'] = 0;
+                        $results[$key]['discount'] = 100;
+                        $results[$key]['discount_begin'] = null;
+                        $results[$key]['discount_end'] = null;
                     }
 
 
@@ -603,6 +614,11 @@ class CartController extends Controller {
                             $data[$index]['discount_status'] = 1;
                         } else {
                             $data[$index]['discount_status'] = 0;
+                            // 过期需返回正常的折扣
+                            $data[$index]['discount_amount'] = 0;
+                            $data[$index]['discount'] = 100;
+                            $data[$index]['discount_time_begin'] = null;
+                            $data[$index]['discount_time_end'] = null;
                         }
                     }
                 }
