@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Const\ApiCode;
 use App\Const\CommonConst;
+use App\Const\PayConst;
 use App\Http\Controllers\Common\SendEmailController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Pay\Pay;
@@ -109,13 +110,11 @@ class OrderController extends Controller {
             $coupon_id = $request->coupon_id ?? ''; // 优惠券id：无论是用户输入优惠券码，还是用户选择某一种优惠券，都接收coupon_id
             $inputParams = $request->input();
             //校验请求参数
-
-            try{
+            try {
                 (new OrderRequest())->createandpay($request);
-            }catch (\Exception $e){
+            } catch (\Exception $e) {
                 ReturnJson(false, $e->getMessage());
             }
-
             //校验支付方式
             $payType = $request->pay_type;
             if (!array_key_exists($payType, Order::payType())) {
@@ -257,7 +256,6 @@ class OrderController extends Controller {
         ReturnJson(true, 'success', $data);
     }
 
-
     /**
      * 订单明细
      */
@@ -309,17 +307,19 @@ class OrderController extends Controller {
                 'address'  => $order['address'],
             ];
         }
-        $discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);
+        //$discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);
         $data = [
             'order'  => [
-                'order_amount'   => $order['order_amount'], // 订单总额
-                'discount_value' => $order['coupon_amount'], // 优惠金额
-                'actually_paid'  => $order['actually_paid'], // 实付金额
-                'order_status'   => OrderStatus::where('id', $order['is_pay'])->value('name'),
-                'pay_type'       => ModelsPay::where('id', $order['pay_type'])->value('name'),
-                'order_number'   => $orderNumber,
-                'pay_time'       => $payTime,
-                'remarks'        => $order['remarks'] ? $order['remarks'] : '',
+                'order_amount'    => $order['order_amount'], // 订单总额
+                'discount_value'  => $order['coupon_amount'], // 优惠金额
+                'actually_paid'   => $order['actually_paid'], // 实付金额
+                'pay_coin_type'   => $order['pay_coin_type'], // 支付符号
+                'pay_coin_symbol' => PayConst::$coinTypeSymbol[$order['pay_coin_type']] ?? '', // 支付符号
+                'order_status'    => OrderStatus::where('id', $order['is_pay'])->value('name'),
+                'pay_type'        => ModelsPay::where('id', $order['pay_type'])->value('name'),
+                'order_number'    => $orderNumber,
+                'pay_time'        => $payTime,
+                'remarks'         => $order['remarks'] ? $order['remarks'] : '',
             ],
             'goods'  => $orderGoods,
             'user'   => $_user,           // 用户的初始账户信息
@@ -408,6 +408,7 @@ class OrderController extends Controller {
             return $msg;
         }
     }
+
     public function list(Request $request) {
         try {
             $status = $request->input('status', '0');
@@ -461,11 +462,12 @@ class OrderController extends Controller {
             $createDate = $record->create_date;
             $orderInfo = $record->toArray();
             $orderInfo = Arr::only($orderInfo, ['id', 'order_number', 'created_at', 'is_pay_text', 'is_pay', 'pay_type',
-                                                'order_amount', 'actually_paid', 'coupon_id', 'coupon_amount']
+                                                'order_amount', 'actually_paid', 'coupon_id', 'coupon_amount', 'pay_coin_type']
             );
             $orderInfo['pay_type_text'] = $payTypeText;
             $orderInfo['create_date'] = $createDate;
             $orderInfo['is_invoice'] = $is_invoice;
+            $orderInfo['pay_coin_symbol'] = PayConst::$coinTypeSymbol[$orderInfo['pay_coin_type']] ?? ''; // 支付符号
             $orderGoodsMolde = new OrderGoods();
             $ogArrList = [];
             $ogList = $orderGoodsMolde->where("order_id", $orderInfo['id'])->get();

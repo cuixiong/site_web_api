@@ -653,6 +653,7 @@ class SendEmailController extends Controller {
                 'orderAmount'        => $data['order_amount'],
                 'preferentialAmount' => $data['coupon_amount'],
                 'orderActuallyPaid'  => $data['actually_paid'],
+                'orderActuallyPaid'  => $data['actually_paid'],
                 'orderNumber'        => $data['order_number'],
                 'paymentLink'        => $data['domain'].'/api/order/pay?order_id='.$data['id'],
                 'orderDetails'       => $data['domain'].'/account?orderdetails='.$data['id'],

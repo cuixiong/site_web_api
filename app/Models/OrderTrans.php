@@ -252,6 +252,7 @@ class OrderTrans extends Base {
         $order->exchange_amount = $caclueData['exchange_amount']; //汇率金额
         $order->tax_amount = $caclueData['tax_amount']; //税率金额
         $order->tax_rate = $caclueData['tax_rate']; //税率
+        $order->pay_coin_type = $caclueData['pay_coin_type'] ?? 'RMB'; //货币类型
         $order->is_mobile_pay = $this->isMobileClient() == true ? 1 : 0; // 是否为移动端支付：0代表否，1代表是。
         if (!$order->save()) {
             DB::rollBack();
@@ -402,20 +403,23 @@ class OrderTrans extends Base {
         $payCode = Pay::query()->where("id", $payType)->value("code");
         $tax_rate = 0;
         $exchange_rate = 1;
+        $pay_coin_type = 'RMB';
         if ($payCode == PayConst::PAY_TYPE_STRIPEPAY) {
             $stripePaySetList = SystemValue::query()->where("alias", 'stripe_pay_set')
                                            ->where("status" , 1)
                                            ->where("hidden" , 1)
                                            ->pluck("value", "key")->toArray();
-            $tax_rate = $stripePaySetList['stripe_pay_tax_rate'] ?? 0;
-            $exchange_rate = $stripePaySetList['stripe_pay_exchange_rate'] ?? 1;
+            $tax_rate = $stripePaySetList['stripe_pay_tax_rate'] ?? $tax_rate;
+            $exchange_rate = $stripePaySetList['stripe_pay_exchange_rate'] ?? $exchange_rate;
+            $pay_coin_type = $stripePaySetList['stripe_pay_coin_type'] ?? $pay_coin_type;
         } elseif ($payCode == PayConst::PAY_TYPE_FIRSTDATAPAY) {
             $firstDataPaySetList = SystemValue::query()->where("alias", 'first_data_pay_set')
                                                        ->where("status" , 1)
                                                        ->where("hidden" , 1)
                                                        ->pluck("value", "key")->toArray();
-            $tax_rate = $firstDataPaySetList['first_data_pay_tax_rate'] ?? 0;
-            $exchange_rate = $firstDataPaySetList['first_data_pay_exchange_rate'] ?? 1;
+            $tax_rate = $firstDataPaySetList['first_data_pay_tax_rate'] ?? $tax_rate;
+            $exchange_rate = $firstDataPaySetList['first_data_pay_exchange_rate'] ?? $exchange_rate;
+            $pay_coin_type = $firstDataPaySetList['first_data_pay_coin_type'] ?? $pay_coin_type;
         }
         //折后金额*汇率
         $exchange_amount = bcmul($orderAmount, $exchange_rate, 2);
@@ -429,6 +433,7 @@ class OrderTrans extends Base {
 //        $data['actually_paid_all'] = $actuallyPaidAll;
         $data['exchange_amount'] = $exchange_amount; //汇率金额
         $data['exchange_rate'] = $exchange_rate;
+        $data['pay_coin_type'] = $pay_coin_type;
 
         return $data;
     }
