@@ -204,7 +204,6 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         );
         Route::get('pay', [\App\Http\Controllers\OrderController::class, 'Pay'])->name('订单调用支付');
         Route::get('payment', [\App\Http\Controllers\OrderController::class, 'Payment'])->name('支付方式');
-        Route::get('wechat-order', [\App\Http\Controllers\OrderController::class, 'WechatOrder'])->name('获取CODE信息');
         Route::post('details', [\App\Http\Controllers\OrderController::class, 'Details'])->name('检测已支付订单');
     });
     // 支付宝回调
@@ -215,6 +214,8 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::any('notify/stripe', [\App\Http\Controllers\Pay\Notify::class, 'Stripe'])->name('stripe支付回调');
     // firstData支付回调
     Route::any('notify/firstdata', [\App\Http\Controllers\Pay\Notify::class, 'FirstData'])->name('firstdata支付回调');
+    // wise支付回调
+    Route::any('notify/wisepay', [\App\Http\Controllers\Pay\Notify::class, 'FirstData'])->name('firstdata支付回调');
     // News控制器
     Route::prefix('news')->group(function () {
         Route::post('index', [\App\Http\Controllers\NewsController::class, 'Index'])->name('新闻列表');
@@ -264,4 +265,6 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
             '获取微信授权码'
         );
     });
+    Route::get('order/wechat-order', [\App\Http\Controllers\WxAuthController::class, 'WechatOrder'])->name('获取CODE信息');
+
 });
