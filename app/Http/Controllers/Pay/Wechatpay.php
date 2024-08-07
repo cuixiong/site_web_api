@@ -51,9 +51,13 @@ class Wechatpay extends Pay
 
             $referer = $_SERVER['HTTP_REFERER'] ?? '';
             // $redirecturi = env('APP_URL','').'/api/order/wechat-order?referer='.urlencode($referer);
-            $domain = env('DOMAIN_URL' , 'https://www.marketmonitorglobal.com.cn');
+            $domain = env('APP_URL' , '');
+            $wxTransferDomain = env('WX_TRANSFER_DOMAIN' , 'https://www.marketmonitorglobal.com.cn');
+            if($domain){
+                $domain = trim($domain,'/');
+            }
             $business_url = $domain.'/api/order/wechat-order';
-            $redirecturi = $domain.'/api/wx-empower/index1?business_url='.$business_url."&referer=".$referer;
+            $redirecturi = $wxTransferDomain.'/api/wx-empower/index1?business_url='.$business_url."&referer=".$referer;
             $url = $this->wechatTool->getOAuthUrl($redirecturi, $order->id);
 
             $html = $this->getJump($url);
@@ -370,10 +374,35 @@ class Wechatpay extends Pay
             }
         }
 
-        $total_amount = $resource['amount']['total'];
-        /* 交易金额 */
-        $total_amount = bcdiv($total_amount , 100, 2);
-        $this->handlerOrderPaySucService($out_trade_no, $logName, $total_amount, $transaction_id, $success_time);
+        $order = Order::where(['order_number' => $out_trade_no])->first();
+        if (!$order) { // 订单号不存在
+            // 记下日志，提前返回
+            $msg = 'order number not found';
+            file_put_contents($logName, $msg.PHP_EOL, FILE_APPEND);
+            throw new Exception($msg);
+        }
+
+        if($order->is_pay == Order::PAY_SUCCESS){
+            return ['code' => 'SUCCESS', 'message' => ''];
+        }
+
+        // 改变订单状态
+        $order->out_order_num = $transaction_id;
+        $order->is_pay = Order::PAY_SUCCESS;
+        $order->pay_time = $success_time;
+        $order->updated_at = time();
+        if ($order->save()) {
+            //处理未注册用户的优惠券业务
+            (new OrderService())->handlerPayCouponUser($order->id);
+            (new SendEmailController())->payment($order->id);
+            // Order::sendPaymentEmail($order); // 发送已付款的邮件
+        } else { // 订单状态更新失败
+            $msg = 'order status update failed '.$order->getModelError();
+            file_put_contents($logName, $msg.PHP_EOL, FILE_APPEND);
+            throw new Exception($msg);
+        }
+        file_put_contents($logName, 'success'.PHP_EOL, FILE_APPEND);
+
         return ['code' => 'SUCCESS', 'message' => ''];
     }
 

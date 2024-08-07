@@ -72,6 +72,11 @@ class ProductController extends Controller {
                     $value['discount_status'] = 1;
                 } else {    
                     $value['discount_status'] = 0;
+                    // 过期需返回正常的折扣
+                    $productsData['discount_amount'] = 0;
+                    $productsData['discount'] = 100;
+                    $productsData['discount_time_begin'] = null;
+                    $productsData['discount_time_end'] = null;
                 }
                 $value['discount'] = $productsData['discount'];
                 $value['discount_amount'] = $productsData['discount_amount'];

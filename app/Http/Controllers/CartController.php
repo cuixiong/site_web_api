@@ -11,6 +11,7 @@ use App\Models\ProductDescription;
 use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\ShopCart;
+use App\Models\SystemValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -19,39 +20,40 @@ class CartController extends Controller {
     /**
      * 购物车列表
      */
-    public function List(Request $request) {
+    public function List(Request $request)
+    {
         $time = time();
         $shopCart = ShopCart::from('shop_carts as cart')
-                            ->select([
-                                         'cart.id',
-                                         'cart.goods_id',
-                                         'cart.number',
-                                         'cart.price_edition',
-                                         'edition.name as price_name',
-                                         'edition.rules',
-                                         'edition.language_id',
-                                         // 'language.language',
-                                         'products.url',
-                                         'products.thumb',
-                                         'products.name',
-                                         'products.price',
-                                         'products.discount_type',
-                                         'products.discount',
-                                         'products.discount_amount',
-                                         'products.discount_time_begin',
-                                         'products.discount_time_end',
-                                         'products.published_date',
-                                         'products.publisher_id',
-                                         'products.category_id',
-                                     ])
-                            ->leftJoin('product_routine as products', 'products.id', '=', 'cart.goods_id')
-                            ->leftJoin('price_edition_values as edition', 'cart.price_edition', '=', 'edition.id')
-                            ->where([
-                                        'cart.user_id'    => $request->user->id,
-                                        'products.status' => 1 // product的status值如果是0，相当于删除这份报告
-                                    ])
-                            ->where('products.published_date' , '<=' , $time)
-                            ->get()->toArray();
+        ->select([
+            'cart.id',
+            'cart.goods_id',
+            'cart.number',
+            'cart.price_edition',
+            'edition.name as price_name',
+            'edition.rules',
+            'edition.language_id',
+            // 'language.language',
+            'products.url',
+            'products.thumb',
+            'products.name',
+            'products.price',
+            'products.discount_type',
+            'products.discount',
+            'products.discount_amount',
+            'products.discount_time_begin',
+            'products.discount_time_end',
+            'products.published_date',
+            'products.publisher_id',
+            'products.category_id',
+        ])
+            ->leftJoin('product_routine as products', 'products.id', '=', 'cart.goods_id')
+            ->leftJoin('price_edition_values as edition', 'cart.price_edition', '=', 'edition.id')
+            ->where([
+                'cart.user_id'    => $request->user->id,
+                'products.status' => 1 // product的status值如果是0，相当于删除这份报告
+            ])
+            ->where('products.published_date', '<=', $time)
+            ->get()->toArray();
         if (empty($shopCart)) {
             $data = [
                 'result'     => [],
@@ -59,20 +61,47 @@ class CartController extends Controller {
                 'totalPrice' => 0,
             ];
 
-            return ['code' => 0, 'message' => '购物车为空', 'data' => $data];
+            ReturnJson(true, '购物车为空', $data);
+            // return ['code' => 0, 'message' => '购物车为空', 'data' => $data];
         }
         $goodsCount = 0;
         $totalPrice = 0;
         $shopCartData = [];
         $languageIdList = Languages::GetListById();
         $time = time();
+        
+        // 分类信息
+        $categoryIds = array_column($shopCart, 'category_id');
+        $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->whereIn('id', $categoryIds)->get()->toArray();
+        $categoryData = array_column($categoryData, null, 'id');
+        // 默认图片
+        // 若报告图片为空，则使用系统设置的默认报告高清图
+        $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+        $languages = Languages::select(['id', 'name'])->get()->toArray();
         foreach ($shopCart as $key => $value) {
-            if (!empty($value['thumb'])) {
-                $thumbImg = $value['thumb'];
+            // if (!empty($value['thumb'])) {
+            //     $thumbImg = $value['thumb'];
+            // } else {
+            //     $thumbImg = ProductsCategory::where('id', $value['category_id'])->value('thumb');
+            // }
+            
+            //每个报告加上分类信息
+            $tempCategoryId = $value['category_id'];
+            $product['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
+            $product['category_thumb'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
+
+            // 图片获取
+            $tempThumb = '';
+            if (!empty($product['thumb'])) {
+                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['thumb']);
+            } elseif (!empty($product['category_thumb'])) {
+                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
             } else {
-                $thumbImg = ProductsCategory::where('id', $value['category_id'])->value('thumb');
+                // 如果报告图片、分类图片为空，使用系统默认图片
+                $tempThumb = !empty($defaultImg) ? $defaultImg : '';
             }
-            $shopCartData[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($thumbImg);
+
+            $shopCartData[$key]['thumb'] = $tempThumb;
             $shopCartData[$key]['name'] = $value['name'];
             $shopCartData[$key]['goods_id'] = $value['goods_id'];
             $shopCartData[$key]['url'] = $value['url'];
@@ -81,28 +110,37 @@ class CartController extends Controller {
             $shopCartData[$key]['language_id'] = $value['language_id'];
             $shopCartData[$key]['language_name'] = $languageIdList[$value['language_id']] ?? 0;
             $shopCartData[$key]['price_edition'] = $value['price_edition'];
-            $shopCartData[$key]['price'] = eval("return ".sprintf($value['rules'], $value['price']).";");
+            $shopCartData[$key]['price'] = eval("return " . sprintf($value['rules'], $value['price']) . ";");
             $shopCartData[$key]['number'] = intval($value['number']); // 把返回的number值由原来的字符类型变成整数类型
             $shopCartData[$key]['id'] = $value['id'];
             $shopCartData[$key]['discount_type'] = $value['discount_type'];
             $shopCartData[$key]['discount_amount'] = $value['discount_amount'];
             $shopCartData[$key]['discount'] = $value['discount'];
             $shopCartData[$key]['discount_time_begin'] = $value['discount_time_begin'] ? date(
-                'Y-m-d', $value['discount_time_begin']
+                'Y-m-d',
+                $value['discount_time_begin']
             ) : '';
             $shopCartData[$key]['discount_time_end'] = $value['discount_time_end'] ? date(
-                'Y-m-d', $value['discount_time_end']
+                'Y-m-d',
+                $value['discount_time_end']
             ) : '';
             //判断当前报告是否在优惠时间内
-            if($value['discount_time_begin'] <= $time && $value['discount_time_end'] >= $time){
+            if ($value['discount_time_begin'] <= $time && $value['discount_time_end'] >= $time) {
                 $shopCartData[$key]['discount_status'] = 1;
-            }else{
+            } else {
                 $shopCartData[$key]['discount_status'] = 0;
+                // 过期需返回正常的折扣
+                $shopCartData[$key]['discount_amount'] = 0;
+                $shopCartData[$key]['discount'] = 100;
+                $shopCartData[$key]['discount_time_begin'] = null;
+                $shopCartData[$key]['discount_time_end'] = null;
             }
             // 计算报告价格
             $languages = Languages::GetList();
             $shopCartData[$key]['prices'] = Products::CountPrice(
-                $value['price'], $value['publisher_id'], $languages
+                $value['price'],
+                $value['publisher_id'],
+                $languages
             ) ?? [];
             $goodsCount += $value['number'];
             $totalPrice += bcmul($shopCartData[$key]['price'], $value['number']);
@@ -142,20 +180,24 @@ class CartController extends Controller {
                 ReturnJson(false, '', $model->getModelError());
             }
         }
-        ReturnJson(false, 'success');
+        ReturnJson(true, 'success');
     }
 
     /**
      * 购物车删除
      */
     public function Delete(Request $request) {
-        $CartIds = $request->ids;
-        if (!is_array($CartIds) && empty($CartIds)) {
+        $cartIds = $request->ids;
+        if (!is_array($cartIds) && empty($cartIds)) {
             ReturnJson(false, '请选择需要删除的商品ID');
+        }
+        
+        if (!is_array($cartIds) && !empty($cartIds)) {
+            $cartIds = explode(',',$cartIds);
         }
         DB::beginTransaction();
         try {
-            ShopCart::whereIn('id', $CartIds)->where("user_id", $request->user->id)->delete();
+            ShopCart::whereIn('id', $cartIds)->where("user_id", $request->user->id)->delete();
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -235,7 +277,7 @@ class CartController extends Controller {
             ReturnJson(false, '参数错误');
         }
         $goodsIdArr = array_column($goodsArr, 'goods_id', null);
-        $goodsIdArr = Products::where('status', 1)->whereIn('id', $goodsIdArr)->pluck('id');
+        $goodsIdArr = Products::where('status', 1)->whereIn('id', $goodsIdArr)->pluck('id')->toArray();
         // 会把无效的 good_id 过滤
         if (empty($goodsIdArr)) {
             ReturnJson(false, '报告编号有误或无效');
@@ -254,8 +296,11 @@ class CartController extends Controller {
         DB::beginTransaction();
         $query = ShopCart::where(['user_id' => $user->id, 'status' => 1]);
         $backData = $query->select(['id', 'goods_id', 'number', 'price_edition',])
-                          ->keyBy('id')
+                        //   ->keyBy('id')
                           ->get()->toArray();
+        if($backData && count($backData)>0){
+            $backData = array_column($backData,null,'id');
+        }
         $timestamp = time();
         $backlen = count($backData);
         if ($backlen < 1) { // 该用户当前没有购物车, 直接全部插入
@@ -318,7 +363,8 @@ class CartController extends Controller {
      * price_edition  价格版本id
      * number            数量
      */
-    public function Share(Request $request) {
+    public function Share(Request $request)
+    {
         $cart = $request->cart;
         $cart_array = json_decode($cart, true);   // 把接收到的参数通过英文分号分割成一个或多个数组
         $results = [];
@@ -329,54 +375,68 @@ class CartController extends Controller {
             $time = time();
             //语言列表
             $languages = Languages::GetList();
+            // 默认图片
+            // 若报告图片为空，则使用系统设置的默认报告高清图
+            $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
             foreach ($cart_array as $key => $value) {
                 $product = Products::from('product_routine as product')
-                                   ->leftJoin('product_category as category', 'product.category_id', '=', 'category.id')
-                                   ->select([
-                                                'category.thumb as category_thumb',
-                                                'product.name',
-                                                'product.id as goods_id',
-                                                'product.thumb as thumb',
-                                                'product.published_date',
-                                                'product.category_id',
-                                                'product.discount_type',
-                                                'product.discount_amount as discount_amount',
-                                                'product.discount as discount',
-                                                'product.discount_time_begin as discount_begin',
-                                                'product.discount_time_end as discount_end',
-                                                'product.price',
-                                                'product.publisher_id',
-                                                'product.url'
-                                            ])
-                                   ->where([
-                                               'product.id'     => $value['goods_id'],
-                                               'product.status' => 1,
-                                           ])
-                                    ->where('product.published_date' , '<=' , $time)
-                                    ->first();
+                ->leftJoin('product_category as category', 'product.category_id', '=', 'category.id')
+                ->select([
+                    'category.thumb as category_thumb',
+                    'product.name',
+                    'product.id as goods_id',
+                    'product.thumb as thumb',
+                    'product.published_date',
+                    'product.category_id',
+                    'product.discount_type',
+                    'product.discount_amount as discount_amount',
+                    'product.discount as discount',
+                    'product.discount_time_begin as discount_begin',
+                    'product.discount_time_end as discount_end',
+                    'product.price',
+                    'product.publisher_id',
+                    'product.url'
+                ])
+                    ->where([
+                        'product.id'     => $value['goods_id'],
+                        'product.status' => 1,
+                    ])
+                    ->where('product.published_date', '<=', $time)
+                    ->first();
 
                 if (!empty($product)) {
                     $product = $product->toArray();
                     $results[$key] = $product;
                     if (!empty($product['thumb'])) {
                         $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($product['thumb']);
-                    } else {
+                    } elseif (!empty($product['category_thumb'])){
                         $results[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
+                    } else {
+                        // 如果报告图片、分类图片为空，使用系统默认图片
+                        $results[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                     }
+
                     $results[$key]['published_date'] = $product['published_date'];
                     $results[$key]['discount_begin'] = $product['discount_begin'] ? date(
-                        'Y-m-d', $product['discount_begin']
+                        'Y-m-d',
+                        $product['discount_begin']
                     ) : '';
                     $results[$key]['discount_end'] = $product['discount_end'] ? date('Y-m-d', $product['discount_end'])
-                        : '';
+                    : '';
                     $results[$key]['discount_type'] = $product['discount_type'];
                     $results[$key]['discount'] = $product['discount'];
                     $results[$key]['discount_amount'] = $product['discount_amount'];
                     //判断当前报告是否在优惠时间内
-                    if($product['discount_begin'] <= $time && $product['discount_end'] >= $time){
+                    if ($product['discount_begin'] <= $time && $product['discount_end'] >= $time) {
                         $results[$key]['discount_status'] = 1;
-                    }else{
+                    } else {
                         $results[$key]['discount_status'] = 0;
+                        
+                        // 过期需返回正常的折扣
+                        $results[$key]['discount_amount'] = 0;
+                        $results[$key]['discount'] = 100;
+                        $results[$key]['discount_begin'] = null;
+                        $results[$key]['discount_end'] = null;
                     }
 
 
@@ -386,7 +446,9 @@ class CartController extends Controller {
 
 
                     $results[$key]['prices'] = Products::CountPrice(
-                        $product['price'], $product['publisher_id'], $languages
+                        $product['price'],
+                        $product['publisher_id'],
+                        $languages
                     ) ?? [];
 
                     if (!empty($priceEditionInfo)) {
@@ -394,7 +456,7 @@ class CartController extends Controller {
                         $results[$key]['languageId'] = $priceEditionInfo->language_id;
                         $results[$key]['price_edition_name'] = $priceEditionInfo->name;
                         $results[$key]['price_edition_cent'] = $priceEditionInfo->edition_id;
-                        $results[$key]['price'] = eval("return ".sprintf($priceEditionInfo->rules, $price).";");
+                        $results[$key]['price'] = eval("return " . sprintf($priceEditionInfo->rules, $price) . ";");
                         $results[$key]['language_name'] = $languagesList[$priceEditionInfo->language_id];
                     } else {
                         $results[$key]['price_edition_name'] = '';
@@ -413,11 +475,11 @@ class CartController extends Controller {
             }
         }
         ReturnJson(true, '', $results);
-//        if ($Nonexistent > 0) {
-//            ReturnJson(false, $goods); // 产品不存在
-//        } else {
-//            ReturnJson(true, '', $results);
-//        }
+        //        if ($Nonexistent > 0) {
+        //            ReturnJson(false, $goods); // 产品不存在
+        //        } else {
+        //            ReturnJson(true, '', $results);
+        //        }
     }
 
     /**
@@ -426,30 +488,69 @@ class CartController extends Controller {
      *
      * @param array goods_ids
      */
-    public function Relevant(Request $request) {
+    public function Relevant(Request $request)
+    {
         $goods_ids = $request->goods_ids;
         $data = [];
+        if (!empty($goods_ids) && !is_array($goods_ids)) {
+            $goods_ids = explode(',', $goods_ids);
+        }
         if (!empty($goods_ids) && is_array($goods_ids)) {
             $keywords = Products::whereIn('id', $goods_ids)->pluck('keywords')->toArray();
             if (!empty($keywords) && is_array($keywords)) {
                 $products = Products::select([
-                                                 'id',
-                                                 'name',
-                                                 'thumb',
-                                                 'category_id',
-                                                 'url',
-                                                 'published_date',
-                                                 'price',
-                                             ])
-                                    ->whereIn('keywords', $keywords)
-                                    ->whereNotIn('id', $goods_ids)
-                                    ->limit(5)
-                                    ->get()
-                                    ->toArray();
+                    'id',
+                    'name',
+                    'thumb',
+                    'keywords',
+                    'category_id',
+                    'url',
+                    'published_date',
+                    'price',
+                    'discount_type',
+                    'discount',
+                    'discount_amount',
+                    'discount_time_begin',
+                    'discount_time_end',
+                ])
+                    ->whereIn('keywords', $keywords)
+                    ->whereNotIn('id', $goods_ids)
+                    ->limit(5)
+                    ->get()
+                    ->toArray();
                 if (!empty($products) && is_array($products)) {
                     $data = [];
+                    $time = time();
+                    // 分类信息
+                    $categoryIds = array_column($products, 'category_id');
+                    $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->whereIn('id', $categoryIds)->get()->toArray();
+                    $categoryData = array_column($categoryData, null, 'id');
+                    // 默认图片
+                    // 若报告图片为空，则使用系统设置的默认报告高清图
+                    $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+                    $languages = Languages::select(['id', 'name'])->get()->toArray();
+
                     foreach ($products as $index => $product) {
-                        $data[$index]['thumb'] = Products::getThumbImgUrl($product);
+
+                        //每个报告加上分类信息
+                        $tempCategoryId = $product['category_id'];
+                        $product['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
+                        $product['category_thumb'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
+
+                        // 图片获取
+                        $tempThumb = '';
+                        if (!empty($product['thumb'])) {
+                            $tempThumb = Common::cutoffSiteUploadPathPrefix($product['thumb']);
+                        } elseif (!empty($product['category_thumb'])) {
+                            $tempThumb = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
+                        } else {
+                            // 如果报告图片、分类图片为空，使用系统默认图片
+                            $tempThumb = !empty($defaultImg) ? $defaultImg : '';
+                        }
+
+                        $data[$index]['thumb'] = $tempThumb;
+
+                        // $data[$index]['thumb'] = Products::getThumbImgUrl($product);
                         $data[$index]['name'] = $product['name'];
                         $suffix = date('Y', strtotime($product['published_date']));
                         $description = (new ProductDescription($suffix))->where('product_id', $product['id'])->value(
@@ -457,13 +558,68 @@ class CartController extends Controller {
                         );
                         $data[$index]['description_seo'] = $description;
                         $data[$index]['published_date'] = $product['published_date'] ? date(
-                            'Y-m-d', strtotime(
-                                       $product['published_date']
-                                   )
+                            'Y-m-d',
+                            strtotime(
+                                $product['published_date']
+                            )
                         ) : '';
                         $data[$index]['price'] = $product['price'];
+
+                        // 这里的代码可以复用 开始
+                        $prices = [];
+                        // 计算报告价格
+                        if ($languages) {
+                            foreach ($languages as $langIndex => $language) {
+                                $priceEditions = PriceEditionValues::select(
+                                    ['id', 'name as edition', 'rules as rule', 'notice']
+                                )->where(['status' => 1,'language_id' => $language['id']])->get()->toArray();
+                                if ($priceEditions) {
+                                    $prices[$langIndex]['language'] = $language['name'];
+                                    foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
+                                        if ($langIndex == 0 && $keyPriceEdition == 0) {
+                                            // 以第一个价格版本作为显示的价格版本
+                                            $data[$index]['price'] = $product['price'];
+                                            $data[$index]['price_edition'] = $priceEdition['id'];
+                                        }
+                                        $prices[$langIndex]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
+                                        $prices[$langIndex]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+                                        $prices[$langIndex]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
+                                        $prices[$langIndex]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
+                                                $priceEdition['rule'],
+                                                $product['price']
+                                            ) . ";");
+                                    }
+                                }
+                            }
+                        }
+                        $data[$index]['prices'] = $prices;
+
                         $data[$index]['id'] = $product['id'];
                         $data[$index]['url'] = $product['url'];
+                        $data[$index]['keywords'] = $product['keywords'];
+
+                        $data[$index]['discount_type'] = $product['discount_type'];
+                        $data[$index]['discount_amount'] = $product['discount_amount'];
+                        $data[$index]['discount'] = $product['discount'];
+                        $data[$index]['discount_time_begin'] = $product['discount_time_begin'] ? date(
+                            'Y-m-d',
+                            $product['discount_time_begin']
+                        ) : '';
+                        $data[$index]['discount_time_end'] = $product['discount_time_end'] ? date(
+                            'Y-m-d',
+                            $product['discount_time_end']
+                        ) : '';
+                        //判断当前报告是否在优惠时间内
+                        if ($product['discount_time_begin'] <= $time && $product['discount_time_end'] >= $time) {
+                            $data[$index]['discount_status'] = 1;
+                        } else {
+                            $data[$index]['discount_status'] = 0;
+                            // 过期需返回正常的折扣
+                            $data[$index]['discount_amount'] = 0;
+                            $data[$index]['discount'] = 100;
+                            $data[$index]['discount_time_begin'] = null;
+                            $data[$index]['discount_time_end'] = null;
+                        }
                     }
                 }
             }

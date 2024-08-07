@@ -168,11 +168,10 @@ class OrderController extends Controller {
             //Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
             //拉起支付
             $pay = PayFactory::create($order->pay_type);
-            $isMobile = $request->is_mobile;
-            $isWechat = $request->is_wechat;
-            $isMobile = $isMobile == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
+
+            $isMobile = isMobile() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
             $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
-            $isWechat = $isWechat == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
+            $isWechat = isWeixin() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
             $pay->setOption(Pay::KEY_IS_WECHAT, $isWechat);
 
             return $pay->do($order);
@@ -192,7 +191,8 @@ class OrderController extends Controller {
     /**
      * 再次支付
      */
-    public function Pay(Request $request) {
+    public function Pay(Request $request)
+    {
         $orderId = $request->order_id;
         $order = Order::where(['id' => $orderId])->first();
         if (!$order) {
@@ -200,17 +200,17 @@ class OrderController extends Controller {
         }
         if ($order->is_pay == Order::PAY_SUCCESS) {
             $msg = '该订单已支付';
-            $url = rtrim(env('APP_URL'), '/').'/paymentComplete/'.$order->id;
+            $url = rtrim(env('APP_URL'), '/') . '/paymentComplete/' . $order->id;
 
-            return '<script>window.document.write("<h1>'.$msg.'</h1>");alert("'.$msg.'");window.location="'.$url
-                   .'";</script>';
+            return '<script>window.document.write("<h1>' . $msg . '</h1>");alert("' . $msg . '");window.location="' . $url
+            . '";</script>';
         }
         // 把临时订单号加入缓存
         //Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
         $pay = PayFactory::create($order->pay_type);
-        $isMobile = $order->isMobile == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
+        $isMobile = isMobile() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
         $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
-        $isWechat = $order->isWechat == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
+        $isWechat = isWeixin() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
         $pay->setOption(Pay::KEY_IS_WECHAT, $isWechat);
 
         return $pay->do($order);
