@@ -53,6 +53,9 @@ class Wechatpay extends Pay
             // $redirecturi = env('APP_URL','').'/api/order/wechat-order?referer='.urlencode($referer);
             $domain = env('APP_URL' , '');
             $wxTransferDomain = env('WX_TRANSFER_DOMAIN' , 'https://www.marketmonitorglobal.com.cn');
+            if($domain){
+                $domain = trim($domain,'/');
+            }
             $business_url = $domain.'/api/order/wechat-order';
             $redirecturi = $wxTransferDomain.'/api/wx-empower/index1?business_url='.$business_url."&referer=".$referer;
             $url = $this->wechatTool->getOAuthUrl($redirecturi, $order->id);
