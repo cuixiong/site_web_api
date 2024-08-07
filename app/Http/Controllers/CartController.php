@@ -32,6 +32,7 @@ class CartController extends Controller {
             'edition.name as price_name',
             'edition.rules',
             'edition.language_id',
+            'edition.is_logistics',
             // 'language.language',
             'products.url',
             'products.thumb',
@@ -456,6 +457,7 @@ class CartController extends Controller {
                         $results[$key]['languageId'] = $priceEditionInfo->language_id;
                         $results[$key]['price_edition_name'] = $priceEditionInfo->name;
                         $results[$key]['price_edition_cent'] = $priceEditionInfo->edition_id;
+                        $results[$key]['is_logistics'] = $priceEditionInfo->is_logistics;
                         $results[$key]['price'] = eval("return " . sprintf($priceEditionInfo->rules, $price) . ";");
                         $results[$key]['language_name'] = $languagesList[$priceEditionInfo->language_id];
                     } else {
@@ -464,6 +466,7 @@ class CartController extends Controller {
                         $results[$key]['price_edition_cent'] = '';
                         $results[$key]['price'] = '';
                         $results[$key]['language_name'] = '';
+                        $results[$key]['is_logistics'] = '';
                     }
                 } else {
                     $Nonexistent++;
@@ -571,7 +574,7 @@ class CartController extends Controller {
                         if ($languages) {
                             foreach ($languages as $langIndex => $language) {
                                 $priceEditions = PriceEditionValues::select(
-                                    ['id', 'name as edition', 'rules as rule', 'notice']
+                                    ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
                                 )->where(['status' => 1,'language_id' => $language['id']])->get()->toArray();
                                 if ($priceEditions) {
                                     $prices[$langIndex]['language'] = $language['name'];
@@ -583,6 +586,7 @@ class CartController extends Controller {
                                         }
                                         $prices[$langIndex]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
                                         $prices[$langIndex]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+                                        $prices[$langIndex]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
                                         $prices[$langIndex]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
                                         $prices[$langIndex]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
                                                 $priceEdition['rule'],
