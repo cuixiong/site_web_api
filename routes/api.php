@@ -203,6 +203,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
             '购物车结算产品列表'
         );
         Route::get('pay', [\App\Http\Controllers\OrderController::class, 'Pay'])->name('订单调用支付');
+        Route::get('wechat-order', [\App\Http\Controllers\OrderController::class, 'WechatOrder'])->name('获取CODE信息');
         Route::get('payment', [\App\Http\Controllers\OrderController::class, 'Payment'])->name('支付方式');
         Route::post('details', [\App\Http\Controllers\OrderController::class, 'Details'])->name('检测已支付订单');
     });
@@ -265,6 +266,4 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
             '获取微信授权码'
         );
     });
-    Route::get('order/wechat-order', [\App\Http\Controllers\WxAuthController::class, 'WechatOrder'])->name('获取CODE信息');
-
 });

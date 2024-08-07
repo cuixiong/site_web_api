@@ -397,7 +397,7 @@ class OrderTrans extends Base {
      *
      * @return      array
      */
-    private function calueTaxRate($payType, $orderAmount) {
+    public function calueTaxRate($payType, $orderAmount) {
         //支付配置税率/汇率配置
         $payCode = Pay::query()->where("id", $payType)->value("code");
         $tax_rate = 0;
