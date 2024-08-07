@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Common;
 
+use App\Const\PayConst;
 use App\Jobs\HandlerEmailJob;
 use App\Models\Country;
 use Illuminate\Routing\Controller;
@@ -230,7 +231,6 @@ class SendEmailController extends Controller {
                 $productsName = '';
                 $productLink = '';
             }
-
             $data['country'] = Country::where('id', $data['country_id'])->value('name');
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
@@ -549,6 +549,7 @@ class SendEmailController extends Controller {
                 'orderAmount'        => $data['order_amount'],
                 'preferentialAmount' => $data['coupon_amount'],
                 'orderActuallyPaid'  => $data['actually_paid'],
+                'pay_coin_symbol'    => PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '', // 支付符号,
                 'orderNumber'        => $data['order_number'],
                 'paymentLink'        => $data['domain'].'/api/order/pay?order_id='.$data['id'],
                 'orderDetails'       => $data['domain'].'/account?orderdetails='.$data['id'],
@@ -653,7 +654,7 @@ class SendEmailController extends Controller {
                 'orderAmount'        => $data['order_amount'],
                 'preferentialAmount' => $data['coupon_amount'],
                 'orderActuallyPaid'  => $data['actually_paid'],
-                'orderActuallyPaid'  => $data['actually_paid'],
+                'pay_coin_symbol'    => PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '', // 支付符号,
                 'orderNumber'        => $data['order_number'],
                 'paymentLink'        => $data['domain'].'/api/order/pay?order_id='.$data['id'],
                 'orderDetails'       => $data['domain'].'/account?orderdetails='.$data['id'],
