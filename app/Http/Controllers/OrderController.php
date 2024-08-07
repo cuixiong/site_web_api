@@ -36,7 +36,8 @@ class OrderController extends Controller {
      * 下单时输入优惠券码，若券码正确，总价打折或减去金额（用户在下单时，如果没有输入优惠券码，前台就不会调用本接口）
      * 同时要往用户（未登录根据email获取用户，已登录根据token获取用户）的账户新增一张优惠券
      */
-    public function Coupon(Request $request) {
+    public function Coupon(Request $request)
+    {
         //校验请求参数
         try {
             if (empty(User::IsLogin())) {
@@ -51,12 +52,12 @@ class OrderController extends Controller {
             $code = trim($request->code);
             $now = time();
             $coupon = Coupon::where('code', $code)
-                            ->where('status', 1)
-                            ->where('time_begin', '<=', $now)
-                            ->where('time_end', '>=', $now)
-                            ->first();
+                ->where('status', 1)
+                ->where('time_begin', '<=', $now)
+                ->where('time_end', '>=', $now)
+                ->first();
             if (empty($coupon)) {
-                ReturnJson(true, '券码错误或已过期');
+                ReturnJson(false, '券码错误或已过期');
             } else {
                 if (!empty($request->user)) {
                     $userId = $request->user->id;
