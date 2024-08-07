@@ -653,7 +653,7 @@ class CartController extends Controller {
         $createShopCart = ShopCart::insert($row);
         // $batchInsert = $createShopCart->count();
         // if ($batchInsert != $len) {
-        if ($createShopCart) {
+        if (!$createShopCart) {
             DB::rollback();
             ReturnJson(false, '新增失败');
         }
