@@ -252,7 +252,7 @@ class OrderTrans extends Base {
         $order->exchange_amount = $caclueData['exchange_amount']; //汇率金额
         $order->tax_amount = $caclueData['tax_amount']; //税率金额
         $order->tax_rate = $caclueData['tax_rate']; //税率
-        $order->pay_coin_type = $caclueData['pay_coin_type'] ?? 'RMB'; //货币类型
+        $order->pay_coin_type = $caclueData['pay_coin_type'] ?? PayConst::COIN_TYPE_CNY; //货币类型
         $order->is_mobile_pay = $this->isMobileClient() == true ? 1 : 0; // 是否为移动端支付：0代表否，1代表是。
         if (!$order->save()) {
             DB::rollBack();
@@ -403,7 +403,7 @@ class OrderTrans extends Base {
         $payCode = Pay::query()->where("id", $payType)->value("code");
         $tax_rate = 0;
         $exchange_rate = 1;
-        $pay_coin_type = 'RMB';
+        $pay_coin_type = PayConst::COIN_TYPE_CNY;
         if ($payCode == PayConst::PAY_TYPE_STRIPEPAY) {
             $stripePaySetList = SystemValue::query()->where("alias", 'stripe_pay_set')
                                            ->where("status" , 1)
