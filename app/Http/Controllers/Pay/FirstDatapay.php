@@ -11,6 +11,8 @@
  */
 
 namespace App\Http\Controllers\Pay;
+use App\Models\Order;
+
 class FirstDatapay extends Pay {
     public function createFormdata($order) {
         // TODO: Implement createFormdata() method.
@@ -66,9 +68,9 @@ class FirstDatapay extends Pay {
             'x_currency_code'    => 'USD',
             'x_fp_sequence'      => rand(1000, 100000) + 123456, //随机串
             'x_fp_timestamp'     => time(),
-            'x_relay_url'        => $notifyUrl,
-            'x_relay_response'   => 'TRUE',
-            'x_receipt_link_url' => $domain.'/paymentComplete/'.$order->order_number,
+            //'x_relay_url'        => $notifyUrl,
+            //'x_relay_response'   => 'TRUE',
+            'x_receipt_link_url' => $domain.'/paymentComplete/'.$order->id,
             'x_show_form'        => 'PAYMENT_FORM',
         ];
         $formData['hmac_data'] = $formData['x_login']."^".

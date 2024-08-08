@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Const\CommonConst;
+use App\Const\PayConst;
 use App\Http\Controllers\Common\SendEmailController;
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\Pay\Pay;
 use App\Http\Controllers\Pay\PayFactory;
 use App\Http\Controllers\Pay\Wechatpay;
-use App\Http\Requests\InvoicesRequest;
 use App\Http\Requests\OrderRequest;
 use App\Models\City;
 use App\Models\Common;
@@ -27,9 +25,7 @@ use App\Services\OrderService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller {
     /**
@@ -108,13 +104,11 @@ class OrderController extends Controller {
             $coupon_id = $request->coupon_id ?? ''; // 优惠券id：无论是用户输入优惠券码，还是用户选择某一种优惠券，都接收coupon_id
             $inputParams = $request->input();
             //校验请求参数
-
-            try{
+            try {
                 (new OrderRequest())->createandpay($request);
-            }catch (\Exception $e){
+            } catch (\Exception $e) {
                 ReturnJson(false, $e->getMessage());
             }
-
             //校验支付方式
             $payType = $request->pay_type;
             if (!array_key_exists($payType, Order::payType())) {
@@ -191,8 +185,7 @@ class OrderController extends Controller {
     /**
      * 再次支付
      */
-    public function Pay(Request $request)
-    {
+    public function Pay(Request $request) {
         $orderId = $request->order_id;
         $order = Order::where(['id' => $orderId])->first();
         if (!$order) {
@@ -200,13 +193,15 @@ class OrderController extends Controller {
         }
         if ($order->is_pay == Order::PAY_SUCCESS) {
             $msg = '该订单已支付';
-            $url = rtrim(env('APP_URL'), '/') . '/paymentComplete/' . $order->id;
+            $url = rtrim(env('APP_URL'), '/').'/paymentComplete/'.$order->id;
 
-            return '<script>window.document.write("<h1>' . $msg . '</h1>");alert("' . $msg . '");window.location="' . $url
-            . '";</script>';
+            return '<script>window.document.write("<h1>'.$msg.'</h1>");alert("'.$msg.'");window.location="'.$url
+                   .'";</script>';
         }
-        // 把临时订单号加入缓存
-        //Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
+        //$order = $this->calueOrderData($order);
+//        if (!$order->save()) {
+//            ReturnJson(false, '未知错误');
+//        } else {
         $pay = PayFactory::create($order->pay_type);
         $isMobile = isMobile() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
         $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
@@ -231,17 +226,89 @@ class OrderController extends Controller {
         ReturnJson(true, 'success', $data);
     }
 
+    /**
+     * 订单明细
+     */
+    public function Details(Request $request) {
+        $orderId = $request->order_id;
+        $order = Order::query()
+                      ->where(['id' => $orderId])
+                      ->first();
+        if (!$order) {
+            ReturnJson(false, '订单不存在');
+        }
+        $orderStatus = $order['is_pay'] ?? '';
+        $orderNumber = $order['order_number'] ?? '';
+        $payTime = !empty($order['pay_time']) ? date('Y-m-d H:i:s', $order['pay_time']) : '';
+        if ($orderStatus == Order::PAY_UNPAID) {
+            // 主动查询订单状态
+            // 未付款
+            ReturnJson(true, '', ['is_pay' => $orderStatus, 'order_number' => $orderNumber]);
+        }
+        $orderGoods = OrderGoods::from('order_goods')->select([
+                                                                  'product.name',
+                                                                  'language.name as language',
+                                                                  'edition.name as edition',
+                                                                  'order_goods.goods_number',
+                                                                  'order_goods.goods_original_price',
+                                                                  'order_goods.goods_present_price',
+                                                                  'order_goods.goods_id as product_id',
+                                                                  'product.url',
+                                                                  // 'order_goods.price_edition',
+                                                              ])
+                                ->leftJoin('product_routine as product', 'product.id', 'order_goods.goods_id')
+                                ->leftJoin('price_edition_values as edition', 'edition.id', 'order_goods.price_edition')
+                                ->leftJoin('languages as language', 'language.id', 'edition.language_id')
+                                ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
+                                ->get()->toArray();
+        if (!empty($order['user_id'])) {
+            $user = User::select(['username', 'email', 'phone', 'company', 'province_id', 'city_id', 'address'])->where(
+                'id', $order['user_id']
+            )->first();
+            $province = City::where('id', $order['province_id'])->value('name');
+            $city = City::where('id', $order['city_id'])->value('name');
+            $_user = [
+                'name'     => $user['username'] ?? '',
+                'email'    => $user['email'] ?? '',
+                'phone'    => $user['phone'] ?? '',
+                'company'  => $user['company'] ?? '',
+                'province' => $province,
+                'city_id'  => $city,
+                'address'  => $order['address'],
+            ];
+        }
+        //$discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);
+        $data = [
+            'order'  => [
+                'order_amount'    => $order['order_amount'], // 订单总额
+                'discount_value'  => $order['coupon_amount'], // 优惠金额
+                'actually_paid'   => $order['actually_paid'], // 实付金额
+                'pay_coin_type'   => $order['pay_coin_type'], // 支付符号
+                'pay_coin_symbol' => PayConst::$coinTypeSymbol[$order['pay_coin_type']] ?? '', // 支付符号
+                'order_status'    => OrderStatus::where('id', $order['is_pay'])->value('name'),
+                'pay_type'        => ModelsPay::where('id', $order['pay_type'])->value('name'),
+                'order_number'    => $orderNumber,
+                'pay_time'        => $payTime,
+                'remarks'         => $order['remarks'] ? $order['remarks'] : '',
+            ],
+            'goods'  => $orderGoods,
+            'user'   => $_user,           // 用户的初始账户信息
+            'is_pay' => $orderStatus,
+        ];
+        ReturnJson(true, '', $data);
+    }
+
     public function WechatOrder() {
         $code = $_GET['code'] ?? '';
         $state = $_GET['state'] ?? '';
         $referer = $_GET['referer'] ?? env('APP_URL');
         if (empty($code) || empty($state)) {
-            throw new Exception('invalid param');
+            throw new \Exception('invalid param');
         }
         $orderId = $state;
         $order = Order::find($orderId);
         if (empty($order)) {
-            throw new Exception('order_id not found');
+            throw new \Exception('order_id not found');
         }
         $returnUrl = rtrim(env('APP_URL'), '/').'/paymentComplete/'.$order->id;
         try {
@@ -312,91 +379,6 @@ class OrderController extends Controller {
         }
     }
 
-    /**
-     * 订单明细
-     */
-    public function Details(Request $request)
-    {
-        $orderId = $request->order_id;
-        $order = Order::query()
-            ->where(['id' => $orderId])
-            ->first();
-        if (!$order) {
-            ReturnJson(false, '订单不存在');
-        }
-        $orderStatus = $order['is_pay'] ?? '';
-        $orderNumber = $order['order_number'] ?? '';
-        $payTime = !empty($order['pay_time']) ? date('Y-m-d H:i:s', $order['pay_time']) : '';
-        if ($orderStatus == Order::PAY_UNPAID) {
-            // 主动查询订单状态
-            // 未付款
-            ReturnJson(true, '', ['is_pay' => $orderStatus, 'order_number' => $orderNumber]);
-        }
-        $orderGoods = OrderGoods::from('order_goods')->select([
-            'product.name',
-            'language.name as language',
-            'edition.name as edition',
-            'order_goods.goods_number',
-            'order_goods.goods_original_price',
-            'order_goods.goods_present_price',
-            'order_goods.goods_id as product_id',
-            'product.url',
-            // 'order_goods.price_edition',
-        ])
-            ->leftJoin('product_routine as product', 'product.id', 'order_goods.goods_id')
-            ->leftJoin('price_edition_values as edition', 'edition.id', 'order_goods.price_edition')
-            ->leftJoin('languages as language', 'language.id', 'edition.language_id')
-            ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
-            ->get()->toArray();
-        // if (!empty($order['user_id'])) {
-        //     $user = User::select(['username', 'email', 'phone', 'company', 'province_id', 'city_id', 'address'])->where(
-        //         'id',
-        //         $order['user_id']
-        //     )->first();
-        //     $province = City::where('id', $order['province_id'])->value('name');
-        //     $city = City::where('id', $order['city_id'])->value('name');
-        //     $_user = [
-        //         'name'     => $user['username'] ?? '',
-        //         'email'    => $user['email'] ?? '',
-        //         'phone'    => $user['phone'] ?? '',
-        //         'company'  => $user['company'] ?? '',
-        //         'province' => $province,
-        //         'city_id'  => $city,
-        //         'address'  => $order['address'],
-        //     ];
-        // }
-
-            $province = City::where('id', $order['province_id'])->value('name');
-            $city = City::where('id', $order['city_id'])->value('name');
-            $_user = [
-                'name'     => $order['username'] ?? '',
-                'email'    => $order['email'] ?? '',
-                'phone'    => $order['phone'] ?? '',
-                'company'  => $order['company'] ?? '',
-                'province' => !empty($province)? $province : '',
-                'city_id'  => !empty($city)? $city : '',
-                'address'  => $order['address'],
-            ];
-
-        $discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);
-        $data = [
-            'order'  => [
-                'order_amount'   => $order['order_amount'], // 订单总额
-                'discount_value' => $discount_value, // 优惠金额
-                'actually_paid'  => $order['actually_paid'], // 实付金额
-                'order_status'   => OrderStatus::where('id', $order['is_pay'])->value('name'),
-                'pay_type'       => ModelsPay::where('id', $order['pay_type'])->value('name'),
-                'order_number'   => $orderNumber,
-                'pay_time'       => $payTime,
-                'remarks'        => $order['remarks'] ? $order['remarks'] : '',
-            ],
-            'goods'  => $orderGoods,
-            'user'   => $_user ?? [],           // 用户的初始账户信息
-            'is_pay' => $orderStatus,
-        ];
-        ReturnJson(true, '', $data);
-    }
-
     public function list(Request $request) {
         try {
             $status = $request->input('status', '0');
@@ -450,12 +432,13 @@ class OrderController extends Controller {
             $createDate = $record->create_date;
             $orderInfo = $record->toArray();
             $orderInfo = Arr::only($orderInfo, ['id', 'order_number', 'created_at', 'is_pay_text', 'is_pay', 'pay_type',
-                                                'order_amount', 'actually_paid', 'coupon_id' , 'coupon_amount']
+                                                'order_amount', 'actually_paid', 'coupon_id', 'coupon_amount',
+                                                'pay_coin_type']
             );
-
             $orderInfo['pay_type_text'] = $payTypeText;
             $orderInfo['create_date'] = $createDate;
             $orderInfo['is_invoice'] = $is_invoice;
+            $orderInfo['pay_coin_symbol'] = PayConst::$coinTypeSymbol[$orderInfo['pay_coin_type']] ?? ''; // 支付符号
             $orderGoodsMolde = new OrderGoods();
             $ogArrList = [];
             $ogList = $orderGoodsMolde->where("order_id", $orderInfo['id'])->get();
@@ -520,6 +503,9 @@ class OrderController extends Controller {
                                ]
             );
             $orderId = $request->input('order_id');
+            /**
+             * @var $record Order
+             */
             $record = $model->findOrFail($orderId);
             $userId = $request->user->id;
             if ($record->user_id != $userId) {
@@ -536,7 +522,8 @@ class OrderController extends Controller {
             if (empty($isExist) || $isExist <= 0) {
                 ReturnJson(false, '支付方式不存在');
             }
-            $record->pay_type = $payTypeId; //取消状态
+            $record->pay_type = $payTypeId;
+            $this->calueOrderData($record);
             if ($record->save()) {
                 ReturnJson(true, '修改成功');
             } else {
@@ -694,5 +681,50 @@ class OrderController extends Controller {
                 }
             }
         }
+    }
+
+    /**
+     * 重新计算订单数据(汇率,优惠,税等)
+     *
+     * @param       $order
+     * @param mixed $orderId
+     *
+     */
+    private function calueOrderData($order) {
+        $orderId = $order->id;
+        $payType = $order->pay_type;
+        $orderAmount = $order->order_amount;
+        $orderTrans = new OrderTrans();
+        $caclueData = ($orderTrans)->calueTaxRate($payType, $orderAmount);
+        $orderGoodsList = (new OrderGoods())->where("order_id", $orderId)->select(
+            ["goods_present_price", 'goods_number', 'goods_id', 'price_edition']
+        )->get()->toArray();
+        $actuallyPaidAll = 0;
+        foreach ($orderGoodsList as $forOrderGoods) {
+            $goodsAmount = bcmul($forOrderGoods['goods_present_price'], $forOrderGoods['goods_number'], 2);
+            $actuallyPaidAll += $goodsAmount;
+        }
+        if (empty($order->coupon_id)) {
+            //直接换算成 汇率后的折扣价,  就是优惠价
+            $actually_paid_all = bcmul($actuallyPaidAll, $caclueData['exchange_rate'], 2);
+        } else {
+            // 本身打折与优惠券不能同时使用, 因此使用商品原价
+            $actually_paid_all = $orderTrans->couponPrice($caclueData['exchange_amount'], $order->coupon_id);
+        }
+        $caclueData['coupon_amount'] = $caclueData['exchange_amount'] - $actually_paid_all;
+        if ($actually_paid_all <= 0) {
+            ReturnJson(false, '订单金额异常');
+        }
+        $caclueData['actually_paid_all'] = $actually_paid_all;
+        //计算税率
+        $caclueData['tax_amount'] = bcmul($caclueData['actually_paid_all'], $caclueData['tax_rate'], 2);
+        $caclueData['actually_paid_all'] = bcadd($caclueData['actually_paid_all'], $caclueData['tax_amount'], 2);
+        $order->coupon_amount = $caclueData['coupon_amount']; //优惠金额
+        $order->actually_paid = $caclueData['actually_paid_all']; //实付金额
+        $order->tax_amount = $caclueData['tax_amount']; // 税率金额
+        $order->exchange_amount = $caclueData['exchange_amount'];
+        $order->pay_coin_type = $caclueData['pay_coin_type'];
+
+        return $order;
     }
 }
