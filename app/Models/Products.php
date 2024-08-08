@@ -136,6 +136,7 @@ class Products extends Base {
                     foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
                         $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
                         $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['name'];
+                        $prices[$index]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
                         $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
                         $prices[$index]['data'][$keyPriceEdition]['sort'] = $priceEdition['sort'];
                         $prices[$index]['data'][$keyPriceEdition]['price'] = eval(

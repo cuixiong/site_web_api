@@ -245,6 +245,11 @@ class ProductController extends Controller {
                 $product_desc['discount_status'] = 1;
             } else {
                 $product_desc['discount_status'] = 0;
+                // 过期需返回正常的折扣
+                $product_desc['discount_amount'] = 0;
+                $product_desc['discount'] = 100;
+                $product_desc['discount_time_begin'] = null;
+                $product_desc['discount_time_end'] = null;
             }
             // //返回相关报告
             // if (!empty($product_desc['keywords'])) {
