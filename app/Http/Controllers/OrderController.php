@@ -523,7 +523,7 @@ class OrderController extends Controller {
                 ReturnJson(false, '支付方式不存在');
             }
             $record->pay_type = $payTypeId;
-            $this->calueOrderData($record);
+            $this->calueOrderData($record, $payTypeId);
             if ($record->save()) {
                 ReturnJson(true, '修改成功');
             } else {
@@ -690,18 +690,30 @@ class OrderController extends Controller {
      * @param mixed $orderId
      *
      */
-    private function calueOrderData($order) {
+    private function calueOrderData($order,$payTypeId = 0) {
         $orderId = $order->id;
-        $payType = $order->pay_type;
+        if(!empty($payTypeId )){
+            $payType =  $payTypeId;
+        }else{
+            $payType = $order->pay_type;
+        }
         $orderAmount = $order->order_amount;
+        //计算汇率
         $orderTrans = new OrderTrans();
         $caclueData = ($orderTrans)->calueTaxRate($payType, $orderAmount);
+
+        //计算商品原价
         $orderGoodsList = (new OrderGoods())->where("order_id", $orderId)->select(
-            ["goods_present_price", 'goods_number', 'goods_id', 'price_edition']
+            ['goods_number', 'goods_id', 'price_edition']
         )->get()->toArray();
         $actuallyPaidAll = 0;
         foreach ($orderGoodsList as $forOrderGoods) {
-            $goodsAmount = bcmul($forOrderGoods['goods_present_price'], $forOrderGoods['goods_number'], 2);
+            $shopItem = Products::find($forOrderGoods['goods_id']);
+            $orderAmount = Products::getPrice($forOrderGoods['price_edition'], $shopItem);
+            $actuallyPaid = Products::getPriceBy(
+                $orderAmount, $shopItem, time()
+            );
+            $goodsAmount = bcmul($actuallyPaid, $forOrderGoods['goods_number'], 2);
             $actuallyPaidAll += $goodsAmount;
         }
         if (empty($order->coupon_id)) {
