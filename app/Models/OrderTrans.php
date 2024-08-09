@@ -82,7 +82,8 @@ class OrderTrans extends Base {
         $caclueData = $this->calueTaxRate($payType, $orderAmount);
         if (empty($coupon_id)) {
             //产品本身的折扣活动
-            $actually_paid_all = Products::getPriceBy($caclueData['exchange_amount'], $goods, $timestamp);
+            $discountPrice = Products::getPriceBy($orderAmount, $goods, $timestamp);
+            $actually_paid_all = bcmul($discountPrice , $caclueData['exchange_rate'], 2);
         } else {
             // 本身打折与优惠券不能同时使用, 因此使用商品原价
             $actually_paid_all = $this->couponPrice($caclueData['exchange_amount'], $coupon_id);
