@@ -123,13 +123,13 @@ class OrderController extends Controller {
                     ReturnJson(false, $checkMsg);
                 }
             }
+            $orderTrans = new OrderTrans();
             if (!empty($request->goods_id)) { // 直接下单
                 $priceEdition = $request->price_edition ?? 0;
                 $isExist = PriceEditionValues::query()->where("id", $priceEdition)->count();
                 if ($isExist <= 0) {
                     ReturnJson(false, '价格版本错误');
                 }
-                $orderTrans = new OrderTrans();
                 $order = $orderTrans->setUser($user)->createBySingle(
                     $request->goods_id, $priceEdition, $payType, $coupon_id, $inputParams
                 );
@@ -139,22 +139,20 @@ class OrderController extends Controller {
                 if (!is_array($shopIdArr) || count($shopIdArr) < 1) {
                     ReturnJson(false, '参数错误1');
                 }
-                $orderTrans = new OrderTrans();
                 $order = $orderTrans->setUser($user)->createByCart(
                     $shopIdArr, $payType, $coupon_id, $inputParams
                 );
             } elseif (!empty($request->shopcar_json)) { // 未登录，通过购物车下单
                 $shopcarJson = $request->shopcar_json;
                 $shopcarArr = json_decode($shopcarJson, true);
-                $orderTrans = new OrderTrans();
                 $order = $orderTrans->setUser($user)->createByCartWithoutLogin(
                     $shopcarArr, $payType, $coupon_id, $inputParams
                 );
             } else {
                 ReturnJson(false, '参数错误3');
             }
-            if ($order === null) {
-                return $this->echoMsg($orderTrans->getErrno());
+            if (empty($order)) {
+                ReturnJson(false, '未知错误,错误码:'.$orderTrans->errno);
             }
             //发送邮件
             (new SendEmailController)->placeOrder($order->id);
