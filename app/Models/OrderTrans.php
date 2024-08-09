@@ -46,7 +46,8 @@ class OrderTrans extends Base {
             $coupon = Coupon::select(['type', 'value'])->where('id', $coupon_id)->first();
             if (!empty($coupon)) {
                 if ($coupon['type'] == 1) { // 如果优惠类型是打折
-                    $price = Common::getDiscountPrice($price, $coupon['value']);
+                    $discountPrice = Common::getDiscountPrice($price, $coupon['value']);
+                    $price = bcsub($price, $discountPrice, 2);
                 } else if ($coupon['type'] == 2) { // 如果优惠类型是直减（type==2）
                     $price = bcsub($price, $coupon['value'], 2);
                 }
