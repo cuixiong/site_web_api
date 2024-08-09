@@ -712,16 +712,18 @@ class OrderController extends Controller {
                 $orderAmount, $shopItem, time()
             );
             $goodsAmount = bcmul($actuallyPaid, $forOrderGoods['goods_number'], 2);
-            $actuallyPaidAll += $goodsAmount;
+            $actuallyPaidAll = bcadd($actuallyPaidAll, $goodsAmount, 2);
         }
         if (empty($order->coupon_id)) {
             //直接换算成 汇率后的折扣价,  就是优惠价
             $actually_paid_all = bcmul($actuallyPaidAll, $caclueData['exchange_rate'], 2);
+            $caclueData['coupon_amount'] = $caclueData['exchange_amount'] - $actually_paid_all;
         } else {
             // 本身打折与优惠券不能同时使用, 因此使用商品原价
-            $actually_paid_all = $orderTrans->couponPrice($caclueData['exchange_amount'], $order->coupon_id);
+            $caclueData['coupon_amount'] = $orderTrans->couponPrice($caclueData['exchange_amount'], $order->coupon_id);
+            $actually_paid_all = bcsub($caclueData['exchange_amount'], $caclueData['coupon_amount'] , 2);
         }
-        $caclueData['coupon_amount'] = $caclueData['exchange_amount'] - $actually_paid_all;
+
         if ($actually_paid_all <= 0) {
             ReturnJson(false, '订单金额异常');
         }

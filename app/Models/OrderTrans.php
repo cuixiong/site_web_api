@@ -46,8 +46,7 @@ class OrderTrans extends Base {
             $coupon = Coupon::select(['type', 'value'])->where('id', $coupon_id)->first();
             if (!empty($coupon)) {
                 if ($coupon['type'] == 1) { // 如果优惠类型是打折
-                    $discountPrice = Common::getDiscountPrice($price, $coupon['value']);
-                    $price = bcsub($price, $discountPrice, 2);
+                    $price = Common::getDiscountPrice($price, $coupon['value']);
                 } else if ($coupon['type'] == 2) { // 如果优惠类型是直减（type==2）
                     $price = bcsub($price, $coupon['value'], 2);
                 }
@@ -82,14 +81,16 @@ class OrderTrans extends Base {
         $orderAmount = Products::getPrice($priceEdition, $goods); // 订单金额
         $caclueData = $this->calueTaxRate($payType, $orderAmount);
         if (empty($coupon_id)) {
-            //产品本身的折扣活动
+            //原价打完折, 乘汇率 = 优惠价 .   然后原价*汇率  -  优惠价 = 实付金额
             $discountPrice = Products::getPriceBy($orderAmount, $goods, $timestamp);
             $actually_paid_all = bcmul($discountPrice , $caclueData['exchange_rate'], 2);
+            $caclueData['coupon_amount'] = bcsub($caclueData['exchange_amount'] , $actually_paid_all , 2);
         } else {
             // 本身打折与优惠券不能同时使用, 因此使用商品原价
-            $actually_paid_all = $this->couponPrice($caclueData['exchange_amount'], $coupon_id);
+            $caclueData['coupon_amount'] = $this->couponPrice($caclueData['exchange_amount'], $coupon_id);
+            $actually_paid_all = bcsub($caclueData['exchange_amount'], $caclueData['coupon_amount'] , 2);
         }
-        $caclueData['coupon_amount'] = $caclueData['exchange_amount'] - $actually_paid_all;
+
         if($actually_paid_all <= 0){
             $this->errno = ApiCode::ORDER_AMOUNT_ERROR;
 
@@ -340,10 +341,12 @@ class OrderTrans extends Base {
         // TODO: cuizhixiong 2024/8/2  产品明确需求:先换成汇率再计算金额
         if (!empty($coupon_id)) {
             //使用优惠券后的优惠金额
-            $actually_paid_all = $this->couponPrice($caclueData['exchange_amount'], $coupon_id);
+            $caclueData['coupon_amount'] = $this->couponPrice($caclueData['exchange_amount'], $coupon_id);
+            $actually_paid_all = bcsub($caclueData['exchange_amount'], $caclueData['coupon_amount'] , 2);
         } else {
             //直接换算成 汇率后的折扣价,  就是优惠价
             $actually_paid_all = bcmul($actuallyPaidAll, $caclueData['exchange_rate'], 2);
+            $caclueData['coupon_amount'] = bcsub($caclueData['exchange_amount'] , $actually_paid_all , 2);
         }
         if($orderAmountAll <=0 || $actually_paid_all <= 0){
             $this->errno = ApiCode::ORDER_AMOUNT_ERROR;
@@ -351,7 +354,7 @@ class OrderTrans extends Base {
             return null;
         }
         $caclueData['actually_paid_all'] = $actually_paid_all;
-        $caclueData['coupon_amount'] = $caclueData['exchange_amount'] - $actually_paid_all;
+
         //计算税率
         $caclueData['tax_amount'] = bcmul($caclueData['actually_paid_all'], $caclueData['tax_rate'], 2);
         $caclueData['actually_paid_all'] = bcadd($caclueData['actually_paid_all'], $caclueData['tax_amount'], 2);

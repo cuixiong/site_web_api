@@ -28,7 +28,7 @@ class Controller extends BaseController {
             return;
         }
         //值为1开启,默认开启  接口安全检查
-        $is_open_check_security = Redis::get('white_ip_security_check') ?? 1;
+        $is_open_check_security = Redis::get('is_open_check_security') ?? 1;
         if (!$is_open_check_security) {
             $securityCheckWhiteIplist = [];
             $securityCheckWhiteIps = Redis::get('white_ip_security_check') ?? '';
