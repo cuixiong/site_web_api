@@ -129,6 +129,9 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::post('do-reset-register', [\App\Http\Controllers\UserController::class, 'DoResetPassword'])->name(
         '忘记密码:修改密码'
     );
+    Route::post('send-email-again', [\App\Http\Controllers\UserController::class, 'SendEmailAgain'])->name(
+        '再次发送邮件'
+    );
     Route::get('check-email', [\App\Http\Controllers\UserController::class, 'CheckEmail'])->name('验证邮箱');
     Route::post('exists-email', [\App\Http\Controllers\UserController::class, 'ExistsEmail'])->name('邮箱是否存在');
     Route::middleware(JwtMiddleware::class)->get('loginout', [\App\Http\Controllers\UserController::class, 'loginout'])

@@ -78,6 +78,26 @@ class UserController extends Controller {
         }
     }
 
+    // 再次发送邮件
+    public function SendEmailAgain(Request $request) {
+        $email = $request->email;
+        if (empty($email)) {
+            ReturnJson(false, '邮箱为空');
+        }
+        $user = User::where(['email' => $email])->first();
+        if ($user) {
+            if ($user->check_email == 0) {
+                (new SendEmailController)->Register($user->id);
+                ReturnJson(true, '已发送');
+            }
+            if ($user->check_email == 1) {
+                ReturnJson(false, '此邮箱已经注册并完成了验证');
+            }
+        } else {
+            ReturnJson(false, '此邮箱未注册');
+        }
+    }
+
     // 账号登陆
     public function Login(Request $request) {
         $email = $request->email;
