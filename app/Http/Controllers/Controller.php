@@ -159,12 +159,12 @@ class Controller extends BaseController {
     }
 
     private function makeSource($params) {
-        ksort($params);
+        ksort($params, 2);
         reset($params);
         $query_string = array();
         foreach ($params as $key => $val) {
             if (is_array($val)) {
-                ksort($val);
+                ksort($val,2);
                 reset($val);
                 foreach ($val as $_k2 => $_v2) {
                     array_push($query_string, $key.'-'.$_k2.'='.$_v2);
