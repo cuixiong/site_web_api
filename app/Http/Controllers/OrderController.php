@@ -123,13 +123,13 @@ class OrderController extends Controller {
                     ReturnJson(false, $checkMsg);
                 }
             }
+            $orderTrans = new OrderTrans();
             if (!empty($request->goods_id)) { // 直接下单
                 $priceEdition = $request->price_edition ?? 0;
                 $isExist = PriceEditionValues::query()->where("id", $priceEdition)->count();
                 if ($isExist <= 0) {
                     ReturnJson(false, '价格版本错误');
                 }
-                $orderTrans = new OrderTrans();
                 $order = $orderTrans->setUser($user)->createBySingle(
                     $request->goods_id, $priceEdition, $payType, $coupon_id, $inputParams
                 );
@@ -139,22 +139,20 @@ class OrderController extends Controller {
                 if (!is_array($shopIdArr) || count($shopIdArr) < 1) {
                     ReturnJson(false, '参数错误1');
                 }
-                $orderTrans = new OrderTrans();
                 $order = $orderTrans->setUser($user)->createByCart(
                     $shopIdArr, $payType, $coupon_id, $inputParams
                 );
             } elseif (!empty($request->shopcar_json)) { // 未登录，通过购物车下单
                 $shopcarJson = $request->shopcar_json;
                 $shopcarArr = json_decode($shopcarJson, true);
-                $orderTrans = new OrderTrans();
                 $order = $orderTrans->setUser($user)->createByCartWithoutLogin(
                     $shopcarArr, $payType, $coupon_id, $inputParams
                 );
             } else {
                 ReturnJson(false, '参数错误3');
             }
-            if ($order === null) {
-                return $this->echoMsg($orderTrans->getErrno());
+            if (empty($order)) {
+                ReturnJson(false, '未知错误,错误码:'.$orderTrans->errno);
             }
             //发送邮件
             (new SendEmailController)->placeOrder($order->id);
@@ -714,16 +712,18 @@ class OrderController extends Controller {
                 $orderAmount, $shopItem, time()
             );
             $goodsAmount = bcmul($actuallyPaid, $forOrderGoods['goods_number'], 2);
-            $actuallyPaidAll += $goodsAmount;
+            $actuallyPaidAll = bcadd($actuallyPaidAll, $goodsAmount, 2);
         }
         if (empty($order->coupon_id)) {
             //直接换算成 汇率后的折扣价,  就是优惠价
             $actually_paid_all = bcmul($actuallyPaidAll, $caclueData['exchange_rate'], 2);
+            $caclueData['coupon_amount'] = $caclueData['exchange_amount'] - $actually_paid_all;
         } else {
             // 本身打折与优惠券不能同时使用, 因此使用商品原价
-            $actually_paid_all = $orderTrans->couponPrice($caclueData['exchange_amount'], $order->coupon_id);
+            $caclueData['coupon_amount'] = $orderTrans->couponPrice($caclueData['exchange_amount'], $order->coupon_id);
+            $actually_paid_all = bcsub($caclueData['exchange_amount'], $caclueData['coupon_amount'] , 2);
         }
-        $caclueData['coupon_amount'] = $caclueData['exchange_amount'] - $actually_paid_all;
+
         if ($actually_paid_all <= 0) {
             ReturnJson(false, '订单金额异常');
         }
