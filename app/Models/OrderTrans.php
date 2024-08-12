@@ -39,18 +39,23 @@ class OrderTrans extends Base {
     }
 
     /**
-     * 下单时使用优惠券后计算价格
+     * 返回优惠后的金额
      */
     public function couponPrice($price, $coupon_id) {
         if (!empty($coupon_id)) {
             $coupon = Coupon::select(['type', 'value'])->where('id', $coupon_id)->first();
             if (!empty($coupon)) {
                 if ($coupon['type'] == 1) { // 如果优惠类型是打折
-                    $price = Common::getDiscountPrice($price, $coupon['value']);
+                    $discountPrice = Common::getDiscountPrice($price, $coupon['value']); //打折价
+                    $price = bcsub($price, $discountPrice, 2); //优惠金额
                 } else if ($coupon['type'] == 2) { // 如果优惠类型是直减（type==2）
-                    $price = bcsub($price, $coupon['value'], 2);
+                    $price = $coupon['value'];
                 }
             }
+        }
+
+        if($price <= 0){
+            $price = 0;
         }
 
         return $price;
