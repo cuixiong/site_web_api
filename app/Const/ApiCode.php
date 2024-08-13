@@ -2,7 +2,6 @@
 
 namespace App\Const;
 
-use huolib\constant\CommonConst;
 
 class ApiCode {
     const INVALID_PARAM       = 10001; //参数错误

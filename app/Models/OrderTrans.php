@@ -344,14 +344,14 @@ class OrderTrans extends Base {
         //总价换算汇率价格
         $caclueData = $this->calueTaxRate($payType, $orderAmountAll);
         // TODO: cuizhixiong 2024/8/2  产品明确需求:先换成汇率再计算金额
-        if (!empty($coupon_id)) {
-            //使用优惠券后的优惠金额
-            $caclueData['coupon_amount'] = $this->couponPrice($caclueData['exchange_amount'], $coupon_id);
-            $actually_paid_all = bcsub($caclueData['exchange_amount'], $caclueData['coupon_amount'] , 2);
-        } else {
+        if (empty($coupon_id)) {
             //直接换算成 汇率后的折扣价,  就是优惠价
             $actually_paid_all = bcmul($actuallyPaidAll, $caclueData['exchange_rate'], 2);
             $caclueData['coupon_amount'] = bcsub($caclueData['exchange_amount'] , $actually_paid_all , 2);
+        } else {
+            //使用优惠券后的优惠金额
+            $caclueData['coupon_amount'] = $this->couponPrice($caclueData['exchange_amount'], $coupon_id);
+            $actually_paid_all = bcsub($caclueData['exchange_amount'], $caclueData['coupon_amount'] , 2);
         }
         if($orderAmountAll <=0 || $actually_paid_all <= 0){
             $this->errno = ApiCode::ORDER_AMOUNT_ERROR;
