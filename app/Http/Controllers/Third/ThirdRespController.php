@@ -80,7 +80,7 @@ class ThirdRespController extends BaseThirdController {
         $key = $inputParams['key'];
         $val = $inputParams['val'];
         $type = $inputParams['type'];
-        if(empty($key) || empty($val)){
+        if(empty($key)){
             ReturnJson(false, '参数错误');
         }
 

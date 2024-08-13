@@ -526,7 +526,8 @@ class SendEmailController extends Controller {
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
                 $goods_data['language'] = $language;
                 $goods_data['price_edition'] = $priceEdition['name'] ?: '';
-                $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
+                $goods_data['goods_present_price'] = $OrderGoods['goods_original_price'];
+                //$goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;
@@ -630,7 +631,8 @@ class SendEmailController extends Controller {
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
                 $goods_data['language'] = $language;
                 $goods_data['price_edition'] = $priceEdition['name'] ?: '';
-                $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
+                //$goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
+                $goods_data['goods_present_price'] = $OrderGoods['goods_original_price'];
                 $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;

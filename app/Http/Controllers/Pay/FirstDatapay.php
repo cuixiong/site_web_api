@@ -11,6 +11,8 @@
  */
 
 namespace App\Http\Controllers\Pay;
+use App\Models\Order;
+
 class FirstDatapay extends Pay {
     public function createFormdata($order) {
         // TODO: Implement createFormdata() method.

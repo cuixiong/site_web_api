@@ -71,7 +71,7 @@ class PriceEditionValues extends Base {
                                                    ->where("is_deleted" , 1)
                                                    ->where("language_id", $languageId)
                                                    ->whereIn("edition_id", $edition_id_list)
-                                                   ->select("id", "name", "notice", "sort", "rules")
+                                                   ->select("id", "name", "notice", "sort", "is_logistics", "rules")
                                                    ->orderBy("sort", "asc")
                                                    ->get()->toArray();
         }

@@ -2,15 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Const\ApiCode;
-use App\Const\CommonConst;
 use App\Const\PayConst;
 use App\Http\Controllers\Common\SendEmailController;
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\Pay\Pay;
 use App\Http\Controllers\Pay\PayFactory;
 use App\Http\Controllers\Pay\Wechatpay;
-use App\Http\Requests\InvoicesRequest;
 use App\Http\Requests\OrderRequest;
 use App\Models\City;
 use App\Models\Common;
@@ -23,15 +19,14 @@ use App\Models\OrderTrans;
 use App\Models\Pay as ModelsPay;
 use App\Models\PriceEditionValues;
 use App\Models\Products;
+use App\Models\SystemValue;
 use App\Models\User;
 use App\Models\WechatTool;
 use App\Services\OrderService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller {
     /**
@@ -129,13 +124,13 @@ class OrderController extends Controller {
                     ReturnJson(false, $checkMsg);
                 }
             }
+            $orderTrans = new OrderTrans();
             if (!empty($request->goods_id)) { // 直接下单
                 $priceEdition = $request->price_edition ?? 0;
                 $isExist = PriceEditionValues::query()->where("id", $priceEdition)->count();
                 if ($isExist <= 0) {
                     ReturnJson(false, '价格版本错误');
                 }
-                $orderTrans = new OrderTrans();
                 $order = $orderTrans->setUser($user)->createBySingle(
                     $request->goods_id, $priceEdition, $payType, $coupon_id, $inputParams
                 );
@@ -145,22 +140,20 @@ class OrderController extends Controller {
                 if (!is_array($shopIdArr) || count($shopIdArr) < 1) {
                     ReturnJson(false, '参数错误1');
                 }
-                $orderTrans = new OrderTrans();
                 $order = $orderTrans->setUser($user)->createByCart(
                     $shopIdArr, $payType, $coupon_id, $inputParams
                 );
             } elseif (!empty($request->shopcar_json)) { // 未登录，通过购物车下单
                 $shopcarJson = $request->shopcar_json;
                 $shopcarArr = json_decode($shopcarJson, true);
-                $orderTrans = new OrderTrans();
                 $order = $orderTrans->setUser($user)->createByCartWithoutLogin(
                     $shopcarArr, $payType, $coupon_id, $inputParams
                 );
             } else {
                 ReturnJson(false, '参数错误3');
             }
-            if ($order === null) {
-                return $this->echoMsg($orderTrans->getErrno());
+            if (empty($order)) {
+                ReturnJson(false, '未知错误,错误码:'.$orderTrans->errno);
             }
             //发送邮件
             (new SendEmailController)->placeOrder($order->id);
@@ -168,11 +161,9 @@ class OrderController extends Controller {
             //Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
             //拉起支付
             $pay = PayFactory::create($order->pay_type);
-            $isMobile = $request->is_mobile;
-            $isWechat = $request->is_wechat;
-            $isMobile = $isMobile == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
+            $isMobile = isMobile() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
             $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
-            $isWechat = $isWechat == 1 ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
+            $isWechat = isWeixin() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
             $pay->setOption(Pay::KEY_IS_WECHAT, $isWechat);
 
             return $pay->do($order);
@@ -205,52 +196,54 @@ class OrderController extends Controller {
             return '<script>window.document.write("<h1>'.$msg.'</h1>");alert("'.$msg.'");window.location="'.$url
                    .'";</script>';
         }
-        $payType = $order->pay_type;
-        $orderAmount = $order->order_amount;
-        $orderTrans = new OrderTrans();
-        $caclueData = ($orderTrans)->calueTaxRate($payType, $orderAmount);
-        if (empty($order->coupon_id)) {
-            //产品本身的折扣活动
-            $actually_paid_all = Products::getPriceBy($caclueData['exchange_amount'], $goods);
-        } else {
-            // 本身打折与优惠券不能同时使用, 因此使用商品原价
-            $actually_paid_all = $orderTrans->couponPrice($caclueData['exchange_amount'], $order->coupon_id);
-        }
-        $caclueData['coupon_amount'] = $caclueData['exchange_amount'] - $actually_paid_all;
-        if ($actually_paid_all <= 0) {
-            ReturnJson(false, '订单金额异常');
-        }
-        $caclueData['actually_paid_all'] = $actually_paid_all;
-        //计算税率
-        $caclueData['tax_amount'] = bcmul($caclueData['actually_paid_all'], $caclueData['tax_rate'], 2);
-        $caclueData['actually_paid_all'] = bcadd($caclueData['actually_paid_all'], $caclueData['tax_amount'], 2);
-        $order->coupon_amount = $caclueData['coupon_amount']; //优惠金额
-        $order->actually_paid_all = $caclueData['actually_paid_all']; //实付金额
-        $order->tax_amount = $caclueData['tax_amount']; // 税率金额
-        $order->exchange_amount = $caclueData['exchange_amount'];
-        if ($order->save()) {
-            ReturnJson(false, '未知错误');
-        } else {
-            $pay = PayFactory::create($order->pay_type);
-            $isMobile = isMobile() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
-            $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
-            $isWechat = isWeixin() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
-            $pay->setOption(Pay::KEY_IS_WECHAT, $isWechat);
+        //$order = $this->calueOrderData($order);
+//        if (!$order->save()) {
+//            ReturnJson(false, '未知错误');
+//        } else {
+        $pay = PayFactory::create($order->pay_type);
+        $isMobile = isMobile() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
+        $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
+        $isWechat = isWeixin() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
+        $pay->setOption(Pay::KEY_IS_WECHAT, $isWechat);
 
-            return $pay->do($order);
-        }
+        return $pay->do($order);
     }
 
     /**
      * 支付方式
      */
     public function Payment() {
-        $data = ModelsPay::select(['id', 'name', 'image as img', 'content as notice'])
+        $data = ModelsPay::select(['id', 'name', 'image as img', 'content as notice', 'code'])
                          ->where('status', 1)
                          ->orderBy('sort', 'asc')
                          ->get()
                          ->toArray();
         foreach ($data as &$item) {
+            $payCode = $item['code'];
+            $pay_set = [
+                'pay_exchange_rate' => 1,
+                'pay_tax_rate'      => 0,
+                'pay_coin_type'     => 'CNY'
+            ];
+            if ($payCode == PayConst::PAY_TYPE_STRIPEPAY) {
+                $stripreData = SystemValue::query()->where("alias", 'stripe_pay_set')
+                                          ->where("status", 1)
+                                          ->where("hidden", 1)
+                                          ->pluck("value", "key")->toArray();
+                $pay_set['pay_exchange_rate'] = $stripreData['stripe_pay_exchange_rate'] ?? 1;
+                $pay_set['pay_tax_rate'] = $stripreData['stripe_pay_tax_rate'] ?? 0;
+                $pay_set['pay_coin_type'] = $stripreData['stripe_pay_coin_type'] ?? 'CNY';
+            } elseif ($payCode == PayConst::PAY_TYPE_FIRSTDATAPAY) {
+                $firstdataPayData = SystemValue::query()->where("alias", 'first_data_pay_set')
+                                               ->where("status", 1)
+                                               ->where("hidden", 1)
+                                               ->pluck("value", "key")->toArray();
+                $pay_set['pay_exchange_rate'] = $firstdataPayData['first_data_pay_exchange_rate'] ?? 1;
+                $pay_set['pay_tax_rate'] = $firstdataPayData['first_data_pay_tax_rate'] ?? 0;
+                $pay_set['pay_coin_type'] = $firstdataPayData['first_data_pay_coin_type'] ?? 'CNY';
+            }
+            $pay_set['pay_coin_type_symbol'] = PayConst::$coinTypeSymbol[$pay_set['pay_coin_type']] ?? '¥';
+            $item['pay_set'] = $pay_set;
             $item['img'] = Common::cutoffSiteUploadPathPrefix($item['img']);
         }
         ReturnJson(true, 'success', $data);
@@ -462,7 +455,8 @@ class OrderController extends Controller {
             $createDate = $record->create_date;
             $orderInfo = $record->toArray();
             $orderInfo = Arr::only($orderInfo, ['id', 'order_number', 'created_at', 'is_pay_text', 'is_pay', 'pay_type',
-                                                'order_amount', 'actually_paid', 'coupon_id', 'coupon_amount', 'pay_coin_type']
+                                                'order_amount', 'actually_paid', 'coupon_id', 'coupon_amount',
+                                                'pay_coin_type']
             );
             $orderInfo['pay_type_text'] = $payTypeText;
             $orderInfo['create_date'] = $createDate;
@@ -532,6 +526,9 @@ class OrderController extends Controller {
                                ]
             );
             $orderId = $request->input('order_id');
+            /**
+             * @var $record Order
+             */
             $record = $model->findOrFail($orderId);
             $userId = $request->user->id;
             if ($record->user_id != $userId) {
@@ -548,7 +545,8 @@ class OrderController extends Controller {
             if (empty($isExist) || $isExist <= 0) {
                 ReturnJson(false, '支付方式不存在');
             }
-            $record->pay_type = $payTypeId; //取消状态
+            $record->pay_type = $payTypeId;
+            $this->calueOrderData($record, $payTypeId);
             if ($record->save()) {
                 ReturnJson(true, '修改成功');
             } else {
@@ -706,5 +704,62 @@ class OrderController extends Controller {
                 }
             }
         }
+    }
+
+    /**
+     * 重新计算订单数据(汇率,优惠,税等)
+     *
+     * @param       $order
+     * @param mixed $orderId
+     *
+     */
+    private function calueOrderData($order, $payTypeId = 0) {
+        $orderId = $order->id;
+        if (!empty($payTypeId)) {
+            $payType = $payTypeId;
+        } else {
+            $payType = $order->pay_type;
+        }
+        $orderAmount = $order->order_amount;
+        //计算汇率
+        $orderTrans = new OrderTrans();
+        $caclueData = ($orderTrans)->calueTaxRate($payType, $orderAmount);
+        //计算商品原价
+        $orderGoodsList = (new OrderGoods())->where("order_id", $orderId)->select(
+            ['goods_number', 'goods_id', 'price_edition']
+        )->get()->toArray();
+        $actuallyPaidAll = 0;
+        foreach ($orderGoodsList as $forOrderGoods) {
+            $shopItem = Products::find($forOrderGoods['goods_id']);
+            $orderAmount = Products::getPrice($forOrderGoods['price_edition'], $shopItem);
+            $actuallyPaid = Products::getPriceBy(
+                $orderAmount, $shopItem, time()
+            );
+            $goodsAmount = bcmul($actuallyPaid, $forOrderGoods['goods_number'], 2);
+            $actuallyPaidAll = bcadd($actuallyPaidAll, $goodsAmount, 2);
+        }
+        if (empty($order->coupon_id)) {
+            //直接换算成 汇率后的折扣价,  就是优惠价
+            $actually_paid_all = bcmul($actuallyPaidAll, $caclueData['exchange_rate'], 2);
+            $caclueData['coupon_amount'] = $caclueData['exchange_amount'] - $actually_paid_all;
+        } else {
+            // 本身打折与优惠券不能同时使用, 因此使用商品原价
+            $caclueData['coupon_amount'] = $orderTrans->couponPrice($caclueData['exchange_amount'], $order->coupon_id);
+            $actually_paid_all = bcsub($caclueData['exchange_amount'], $caclueData['coupon_amount'], 2);
+        }
+        if ($actually_paid_all <= 0) {
+            ReturnJson(false, '订单金额异常');
+        }
+        $caclueData['actually_paid_all'] = $actually_paid_all;
+        //计算税率
+        $caclueData['tax_amount'] = bcmul($caclueData['actually_paid_all'], $caclueData['tax_rate'], 2);
+        $caclueData['actually_paid_all'] = bcadd($caclueData['actually_paid_all'], $caclueData['tax_amount'], 2);
+        $order->coupon_amount = $caclueData['coupon_amount']; //优惠金额
+        $order->actually_paid = $caclueData['actually_paid_all']; //实付金额
+        $order->tax_amount = $caclueData['tax_amount']; // 税率金额
+        $order->exchange_amount = $caclueData['exchange_amount'];
+        $order->pay_coin_type = $caclueData['pay_coin_type'];
+
+        return $order;
     }
 }

@@ -81,7 +81,7 @@ class Stripepay extends Pay {
         $domain = rtrim(env('APP_URL', ''), '/');
         $returnUrl = $domain.'/paymentcomplete/'.$order->id; // 同步回调地址
         //报告名称
-        $orderGoodsName = '测试报告';
+        $orderGoodsName = $order->getProductNameAttribute();
         $payData = [
             'line_items'          => [
                 [

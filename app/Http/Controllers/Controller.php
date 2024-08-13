@@ -27,9 +27,9 @@ class Controller extends BaseController {
         if ($route && in_array($route, $excludeRoute)) {
             return;
         }
-        //值为1开启,默认开启  接口安全检查
-        $is_open_check_security = Redis::get('white_ip_security_check') ?? 1;
-        if (!$is_open_check_security) {
+        //值为1开启,默认关闭  接口安全检查
+        $is_open_check_security = Redis::get('is_open_check_security') ?? 0;
+        if ($is_open_check_security > 0) {
             $securityCheckWhiteIplist = [];
             $securityCheckWhiteIps = Redis::get('white_ip_security_check') ?? '';
             if (!empty($securityCheckWhiteIps)) {
@@ -159,12 +159,12 @@ class Controller extends BaseController {
     }
 
     private function makeSource($params) {
-        ksort($params);
+        ksort($params, 2);
         reset($params);
         $query_string = array();
         foreach ($params as $key => $val) {
             if (is_array($val)) {
-                ksort($val);
+                ksort($val,2);
                 reset($val);
                 foreach ($val as $_k2 => $_v2) {
                     array_push($query_string, $key.'-'.$_k2.'='.$_v2);
