@@ -9,10 +9,15 @@ use App\Models\Comment;
 use App\Models\Common;
 use App\Models\ContactUs;
 use App\Models\DictionaryValue;
+use App\Models\Languages;
 use App\Models\Menu;
 use App\Models\Page;
 use App\Models\Partner;
+use App\Models\PriceEditionValues;
 use App\Models\Problem;
+use App\Models\ProductDescription;
+use App\Models\Products;
+use App\Models\ProductsCategory;
 use App\Models\Qualification;
 use App\Models\QuoteCategory;
 use App\Models\TeamMember;
@@ -101,6 +106,98 @@ class PageController extends Controller
         }
         $data = Authority::select(['name as title', 'body as content'])->where('id', $id)->first();
         ReturnJson(true, '', $data);
+    }
+
+    public function QuoteRelevantProduct(Request $request): array
+    {
+        
+        $id = $request->id ? $request->id : null;
+        $limit = !empty($request->pageSize) ? $request->pageSize : 5;
+        $keyword = Products::where('id', $id)->value('keyword');
+        if (!empty($keyword)) {
+            $keyword = explode(',', $keyword);
+        }
+
+        $data = [];
+        if ($keyword) {
+            //$begin = strtotime("-2 year", strtotime(date('Y-01-01', time()))); // 前两年
+            $result = Products::select([
+                'id',
+                'name',
+                'thumb',
+                'english_name',
+                'keywords',
+                'published_date',
+                'category_id',
+                'price',
+                'url',
+                'discount_type',
+                'discount_amount as discount_value',
+                // 'description_seo'
+            ])
+                ->whereIn('keywords', $keyword)
+                ->where("status", 1)
+                //->where('published_date', '>', $begin)
+                ->where("published_date", "<=", time())
+                ->orderBy('published_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->limit($limit)
+                ->get()
+                ->toArray();
+            if ($result) {
+                foreach ($result as $key => $value) {
+                    $data[$key]['thumb'] = Products::getThumbImgUrl($value);
+                    $data[$key]['name'] = $value['name'];
+                    $data[$key]['keyword'] = $value['keywords'];
+                    $data[$key]['english_name'] = $value['english_name'];
+                    // $data[$key]['description'] = $value['description_seo'];
+                    $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
+                    $productsCategory = ProductsCategory::query()->select(['id', 'name', 'link'])->where(
+                        'id',
+                        $value['category_id']
+                    )->first();
+                    $data[$key]['categoryName'] = $productsCategory->name ?? '';
+                    $data[$key]['categoryId'] = $productsCategory->id ?? 0;
+                    $data[$key]['categoryLink'] = $productsCategory->link ?? '';
+                    $data[$key]['discount_type'] = $value['discount_type'];
+                    $data[$key]['discount_value'] = $value['discount_value'];
+                    $data[$key]['description'] = (new ProductDescription(
+                        date('Y', strtotime($value['published_date']))
+                    ))->where('product_id', $value['id'])->value('description');
+                    $data[$key]['description'] = mb_substr($data[$key]['description'], 0, 100, 'UTF-8');
+                    // 这里的代码可以复用 开始
+                    $prices = [];
+                    // 计算报告价格
+                    $languages = Languages::select(['id', 'name'])->get()->toArray();
+                    if ($languages) {
+                        foreach ($languages as $index => $language) {
+                            $priceEditions = PriceEditionValues::select(
+                                ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
+                            )->where(['language_id' => $language['id']])->get()->toArray();
+                            $prices[$index]['language'] = $language['name'];
+                            if ($priceEditions) {
+                                foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
+                                    $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
+                                    $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+                                    $prices[$index]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
+                                    $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
+                                    $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
+                                            $priceEdition['rule'],
+                                            $value['price']
+                                        ) . ";");
+                                }
+                            }
+                        }
+                    }
+                    $data[$key]['prices'] = $prices;
+                    // 这里的代码可以复用 结束
+                    $data[$key]['id'] = $value['id'];
+                    $data[$key]['url'] = $value['url'];
+                }
+            }
+        }
+
+        return $data;
     }
 
     /**
