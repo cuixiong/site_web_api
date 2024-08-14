@@ -117,6 +117,9 @@ class PageController extends Controller
         $keyword = Authority::where('id', $id)->value('keyword');
         if (!empty($keyword)) {
             $keyword = explode(',', $keyword);
+            $keyword = $keyword[0];
+        }else{
+            ReturnJson(true, 'success', []);
         }
 
 
@@ -140,7 +143,7 @@ class PageController extends Controller
                 'discount_time_end'
             ];
 
-            $products = Products::GetRelevantProductResult(0, $keyword, 1, 5, 'keywords', $select);
+            $products = Products::GetRelevantProductResult(0, $keyword, 1, $limit, 'keywords', $select);
 
             if ($products) {
                 // 分类信息
@@ -218,6 +221,11 @@ class PageController extends Controller
                                         $priceEdition['rule'],
                                         $value['price']
                                     ) . ";");
+                                    if ($index == 0 && $keyPriceEdition == 0) {
+                                        // 以第一个价格版本作为显示的价格版本
+                                        $data[$key]['price'] = $prices[$index]['data'][$keyPriceEdition]['price'];
+                                        $data[$key]['price_edition'] = $priceEdition['id'];
+                                    }
                                 }
                             }
                         }
