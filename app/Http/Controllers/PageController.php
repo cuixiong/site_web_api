@@ -143,18 +143,18 @@ class PageController extends Controller
                 'discount_time_end'
             ];
 
-            $products = Products::GetRelevantProductResult(0, $keyword, 1, $limit, 'keywords', $select);
+            $data = Products::GetRelevantProductResult(-1, $keyword, 1, $limit, 'keywords', $select);
 
-            if ($products) {
+            if ($data) {
                 // 分类信息
-                $categoryIds = array_column($products, 'category_id');
+                $categoryIds = array_column($data, 'category_id');
                 $categoryData = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->whereIn('id', $categoryIds)->get()->toArray();
                 $categoryData = array_column($categoryData, null, 'id');
                 // 默认图片
                 // 若报告图片为空，则使用系统设置的默认报告高清图
                 $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
 
-                foreach ($products as $key => $value) {
+                foreach ($data as $key => $value) {
 
                     //每个报告加上分类信息
                     $tempCategoryId = $value['category_id'];
