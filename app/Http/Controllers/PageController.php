@@ -65,7 +65,7 @@ class PageController extends Controller
          $category = QuoteCategory::select(['id', 'name'])
                                   ->where("status" , 1)
                                   ->orderBy('sort', 'asc')->get()->toArray() ?? [];
-        array_unshift($category, ['value' => '0', 'label' => '全部']);
+        array_unshift($category, ['id' => '0', 'name' => '全部']);
 
         // 数据
         $model = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id'])->orderBy('sort', 'asc');
