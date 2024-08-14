@@ -197,7 +197,7 @@ class PageController extends Controller
             }
         }
 
-        return $data;
+        ReturnJson(true, 'success', $data);
     }
 
     /**
