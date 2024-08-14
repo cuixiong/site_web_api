@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use App\Models\Base;
+use App\Services\SphinxService;
+use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Support\Facades\Redis;
 
-class Products extends Base {
+class Products extends Base
+{
     protected $table = 'product_routine';
 
     /**
@@ -13,7 +16,8 @@ class Products extends Base {
      *
      * @return mixed
      */
-    public function getThumbImgAttribute() {
+    public function getThumbImgAttribute()
+    {
         if (!empty($this->attributes['thumb'])) {
             return Common::cutoffSiteUploadPathPrefix($this->attributes['thumb']);
         } elseif ($this->attributes['category_id']) {
@@ -34,7 +38,8 @@ class Products extends Base {
      *
      * @return array|mixed|string|string[]
      */
-    public static function getThumbImgUrl($product) {
+    public static function getThumbImgUrl($product)
+    {
         if (!empty($product['thumb'])) {
             return Common::cutoffSiteUploadPathPrefix($product['thumb']);
         } elseif ($product['category_id']) {
@@ -49,7 +54,8 @@ class Products extends Base {
         }
     }
 
-    public function getCategotyTextAttribute() {
+    public function getCategotyTextAttribute()
+    {
         $name = '';
         if (!empty($this->attributes['category_id'])) {
             $name = ProductsCategory::where('id', $this->attributes['category_id'])->value('name');
@@ -58,7 +64,8 @@ class Products extends Base {
         return $name;
     }
 
-    public function getProShortDescAttribute() {
+    public function getProShortDescAttribute()
+    {
         $description = (new ProductDescription(
             date('Y', $this->attributes['published_date'])
         ))->where('product_id', $this->attributes['id'])->value('description');
@@ -69,7 +76,8 @@ class Products extends Base {
         return '';
     }
 
-    public function getPublishedDataAttributes($value) {
+    public function getPublishedDataAttributes($value)
+    {
         return date('Y-m-d', $value);
     }
 
@@ -79,32 +87,36 @@ class Products extends Base {
      *
      * @return int
      */
-    public static function getPrice($priceEdition, $goods) {
+    public static function getPrice($priceEdition, $goods)
+    {
         $priceEdition = PriceEditionValues::find($priceEdition);
         $price = 0;
         if (!empty($priceEdition)) {
             $priceRule = $priceEdition['rules'];
-            $price = eval("return ".sprintf($priceRule, $goods['price']).";");
+            $price = eval("return " . sprintf($priceRule, $goods['price']) . ";");
         }
-//        $priceRule = Redis::hget(PriceEditionValues::RedisKey, $priceEdition);
-//        $priceRule = json_decode($priceRule, true);
-//        $priceRule = $priceRule['rules'];
-//        $price = eval("return ".sprintf($priceRule, $goods['price']).";");
+        //        $priceRule = Redis::hget(PriceEditionValues::RedisKey, $priceEdition);
+        //        $priceRule = json_decode($priceRule, true);
+        //        $priceRule = $priceRule['rules'];
+        //        $price = eval("return ".sprintf($priceRule, $goods['price']).";");
         return $price;
     }
 
     /**
      * 获取订单里的每个商品的原价格（不带折扣或带折扣）
      */
-    public static function getPriceBy($price, $goods, $timestamp = null) {
+    public static function getPriceBy($price, $goods, $timestamp = null)
+    {
         if ($timestamp !== null) {
             $timestamp = time();
         }
         $actuallyPaid = $price;
         $discount_time_begin = $goods['discount_time_begin'];
         $discount_time_end = $goods['discount_time_end'];
-        if ($timestamp >= $discount_time_begin
-            && ($timestamp <= $discount_time_end)) {
+        if (
+            $timestamp >= $discount_time_begin
+            && ($timestamp <= $discount_time_end)
+        ) {
             // 如果队列不能把discount_time_begin和discount_time_end的值恢复成null，就不能要这句代码了
             if ($goods['discount_type'] == 1) {
                 $actuallyPaid = common::getDiscountPrice($price, $goods['discount']);
@@ -120,7 +132,11 @@ class Products extends Base {
      * 通过价格和价格版本进行计算价格
      */
     public static function CountPrice(
-        $price, $publisherId, $languages = null, $priceEditionsValue = null, $priceEditionsPid = null
+        $price,
+        $publisherId,
+        $languages = null,
+        $priceEditionsValue = null,
+        $priceEditionsPid = null
     ) {
         // 这里的代码可以复用 开始
         $prices = [];
@@ -129,7 +145,10 @@ class Products extends Base {
         if ($languages) {
             foreach ($languages as $index => $language) {
                 $priceEditions = PriceEditionValues::GetList(
-                    $language['id'], $publisherId, $priceEditionsValue, $priceEditionsPid
+                    $language['id'],
+                    $publisherId,
+                    $priceEditionsValue,
+                    $priceEditionsPid
                 );
                 if ($priceEditions) {
                     $prices[$index]['language'] = $language['name'];
@@ -139,11 +158,10 @@ class Products extends Base {
                         $prices[$index]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
                         $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
                         $prices[$index]['data'][$keyPriceEdition]['sort'] = $priceEdition['sort'];
-                        $prices[$index]['data'][$keyPriceEdition]['price'] = eval(
-                            "return ".sprintf(
-                                $priceEdition['rules'], $price
-                            ).";"
-                        );
+                        $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
+                                $priceEdition['rules'],
+                                $price
+                            ) . ";");
                     }
                 }
             }
@@ -152,5 +170,88 @@ class Products extends Base {
 
         return $prices;
         // 这里的代码可以复用 结束
+    }
+
+
+    /**
+     * 返回相关产品数据-重定向/相关报告
+     */
+    public static function GetRelevantProductResult($id, $keyword, $page = 1, $pageSize = 1,  $searchField = 'url', $selectField = '*')
+    {
+        try {
+            $hidden = SystemValue::where('key', 'sphinx')->value('hidden');
+            if ($hidden == 1) {
+                return self::SearchRelevantForSphinx($id, $keyword, $page, $pageSize, $searchField, $selectField);
+            } else {
+
+                return self::SearchRelevantForMysql($id, $keyword, $page, $pageSize, $searchField, $selectField);
+            }
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+            \Log::error('应用端查询失败,异常信息为:' . json_encode([$e->getMessage()]));
+            ReturnJson(false, '请求失败,请稍后再试');
+            // return [];
+        }
+    }
+
+
+    public static function SearchRelevantForSphinx($id, $keyword, $page, $pageSize, $searchField, $selectField)
+    {
+        if (empty($id) || empty($keyword)) {
+            return [];
+        }
+        $sphinxSrevice = new SphinxService();
+        $conn = $sphinxSrevice->getConnection();
+        //报告昵称,英文昵称匹配查询
+        $query = (new SphinxQL($conn))->select('id')
+            ->from('products_rt')
+            ->orderBy('sort', 'asc')
+            ->orderBy('published_date', 'desc')
+            ->orderBy('id', 'desc');
+        $query = $query->where('status', '=', 1);
+        $query = $query->where("published_date", "<=", time());
+
+        // 排除本报告
+        $query = $query->where('id', '<>', intval($id));
+        // 精确查询
+        if (!empty($keyword)) {
+            $val = addslashes($keyword);
+            $query->where($searchField, '=', $val);
+        }
+
+        //查询结果分页
+        $offset = ($page - 1) * $pageSize;
+        $query->limit($offset, $pageSize);
+        // $query->option('max_matches', $offset + $pageSize);
+
+        // $query->setSelect($selectField);
+        // $result = $query->execute();
+        // $products = $result->fetchAllAssoc();
+
+        // 因为有些字段sphinx没有，所以sphinx查出id后再去mysql查询
+        $query->setSelect('id');
+        $result = $query->execute();
+        $productsIds = $result->fetchAllAssoc();
+        if (!empty($productsIds) && count($productsIds) > 0) {
+            $productsIds = array_column($productsIds, 'id');
+            $products = Products::select($selectField)
+                ->whereIn("id", $productsIds)
+                ->get()->toArray();
+        }
+        //
+        return $products ?? [];
+    }
+
+    public static function SearchRelevantForMysql($id, $keyword, $page, $pageSize, $searchField, $selectField)
+    {
+
+        $products = Products::select($selectField)
+            ->where([$searchField => $keyword, 'status' => 1])
+            ->where("id", "<>", $id)
+            ->limit($pageSize, ($page - 1) * $pageSize)
+            ->orderBy('published_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->get()->toArray();
+        return $products;
     }
 }

@@ -20,6 +20,7 @@ use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\Qualification;
 use App\Models\QuoteCategory;
+use App\Models\SystemValue;
 use App\Models\TeamMember;
 use Illuminate\Http\Request;
 
@@ -110,7 +111,7 @@ class PageController extends Controller
 
     public function QuoteRelevantProduct(Request $request): array
     {
-        
+
         $id = $request->id ? $request->id : null;
         $limit = !empty($request->pageSize) ? $request->pageSize : 5;
         $keyword = Authority::where('id', $id)->value('keyword');
@@ -118,10 +119,11 @@ class PageController extends Controller
             $keyword = explode(',', $keyword);
         }
 
+
         $data = [];
         if ($keyword) {
-            //$begin = strtotime("-2 year", strtotime(date('Y-01-01', time()))); // 前两年
-            $result = Products::select([
+
+            $select = [
                 'id',
                 'name',
                 'thumb',
@@ -131,36 +133,67 @@ class PageController extends Controller
                 'category_id',
                 'price',
                 'url',
+                'discount',
+                'discount_amount',
                 'discount_type',
-                'discount_amount as discount_value',
-                // 'description_seo'
-            ])
-                ->whereIn('keywords', $keyword)
-                ->where("status", 1)
-                //->where('published_date', '>', $begin)
-                ->where("published_date", "<=", time())
-                ->orderBy('published_date', 'desc')
-                ->orderBy('id', 'desc')
-                ->limit($limit)
-                ->get()
-                ->toArray();
-            if ($result) {
-                foreach ($result as $key => $value) {
-                    $data[$key]['thumb'] = Products::getThumbImgUrl($value);
+                'discount_time_begin',
+                'discount_time_end'
+            ];
+
+            $products = Products::GetRelevantProductResult(0, $keyword, 1, 5, 'keywords', $select);
+
+            if ($products) {
+                // 分类信息
+                $categoryIds = array_column($products, 'category_id');
+                $categoryData = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->whereIn('id', $categoryIds)->get()->toArray();
+                $categoryData = array_column($categoryData, null, 'id');
+                // 默认图片
+                // 若报告图片为空，则使用系统设置的默认报告高清图
+                $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+
+                foreach ($products as $key => $value) {
+
+                    //每个报告加上分类信息
+                    $tempCategoryId = $value['category_id'];
+                    $value['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
+                    $value['category_thumb'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
+                    $value['category_link'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['link']) ? $categoryData[$tempCategoryId]['link'] : '';
+
+                    // 图片获取
+                    $tempThumb = '';
+                    if (!empty($value['thumb'])) {
+                        $tempThumb = Common::cutoffSiteUploadPathPrefix($value['thumb']);
+                    } elseif (!empty($value['category_thumb'])) {
+                        $tempThumb = Common::cutoffSiteUploadPathPrefix($value['category_thumb']);
+                    } else {
+                        // 如果报告图片、分类图片为空，使用系统默认图片
+                        $tempThumb = !empty($defaultImg) ? $defaultImg : '';
+                    }
+
+                    $data[$key]['thumb'] = $tempThumb;
+                    $data[$key]['category_name'] = $value['category_name'];
+                    $data[$key]['category_link'] = $value['category_link'];
+
+                    // $data[$key]['thumb'] = Products::getThumbImgUrl($value);
                     $data[$key]['name'] = $value['name'];
                     $data[$key]['keyword'] = $value['keywords'];
                     $data[$key]['english_name'] = $value['english_name'];
                     // $data[$key]['description'] = $value['description_seo'];
                     $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
-                    $productsCategory = ProductsCategory::query()->select(['id', 'name', 'link'])->where(
-                        'id',
-                        $value['category_id']
-                    )->first();
-                    $data[$key]['categoryName'] = $productsCategory->name ?? '';
-                    $data[$key]['categoryId'] = $productsCategory->id ?? 0;
-                    $data[$key]['categoryLink'] = $productsCategory->link ?? '';
-                    $data[$key]['discount_type'] = $value['discount_type'];
-                    $data[$key]['discount_value'] = $value['discount_value'];
+
+                    //判断当前报告是否在优惠时间内
+                    $time = time();
+                    if ($data[$key]['discount_time_begin'] <= $time && $data[$key]['discount_time_end'] >= $time) {
+                        $data[$key]['discount_status'] = 1;
+                    } else {
+                        $data[$key]['discount_status'] = 0;
+                        // 过期需返回正常的折扣
+                        $data[$key]['discount_amount'] = 0;
+                        $data[$key]['discount'] = 100;
+                        $data[$key]['discount_time_begin'] = null;
+                        $data[$key]['discount_time_end'] = null;
+                    }
+
                     $data[$key]['description'] = (new ProductDescription(
                         date('Y', strtotime($value['published_date']))
                     ))->where('product_id', $value['id'])->value('description');
@@ -182,9 +215,9 @@ class PageController extends Controller
                                     $prices[$index]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
                                     $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
                                     $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
-                                            $priceEdition['rule'],
-                                            $value['price']
-                                        ) . ";");
+                                        $priceEdition['rule'],
+                                        $value['price']
+                                    ) . ";");
                                 }
                             }
                         }
