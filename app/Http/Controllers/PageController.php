@@ -113,7 +113,7 @@ class PageController extends Controller
         
         $id = $request->id ? $request->id : null;
         $limit = !empty($request->pageSize) ? $request->pageSize : 5;
-        $keyword = Products::where('id', $id)->value('keyword');
+        $keyword = Authority::where('id', $id)->value('keyword');
         if (!empty($keyword)) {
             $keyword = explode(',', $keyword);
         }
