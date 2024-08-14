@@ -40,9 +40,9 @@ class Controller extends BaseController {
                 $this->securityCheck();
             }
         }
-        //值为1开启,默认开启,  接口限流策略
-        $is_open_limit_req = Redis::get('is_open_limit_req') ?? 1;
-        if (!$is_open_limit_req) {
+        //值为1开启,默认关闭,  接口限流策略
+        $is_open_limit_req = Redis::get('is_open_limit_req') ?? 0;
+        if ($is_open_limit_req > 0) {
             //ip封禁验证
             $route = request()->route();
             $routeUril = '';

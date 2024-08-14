@@ -73,19 +73,7 @@ class ContactUsController extends Controller {
                                                             ->orderBy('sort', 'ASC')
                                                             ->get()
                                                             ->toArray();
-        //支付配置税率/汇率配置
-        $sysPayKey = 'pay_setting';
-        $paySetId = System::query()->where("status", 1)
-                          ->where("alias", $sysPayKey)->value('id');
-        $paySetting = [];
-        if (!empty($paySetId)) {
-            $paySetting = SystemValue::query()->where("parent_id", $paySetId)
-                                     ->where("status", 1)
-                                     ->where("hidden", 1)
-                                     ->select(["name", "key", "alias", "value"])
-                                     ->get()->toArray();
-        }
-        $result['pay_setting'] = $paySetting;
+
         ReturnJson(true, '', $result);
     }
 }
