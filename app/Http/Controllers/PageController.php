@@ -174,8 +174,8 @@ class PageController extends Controller
                             $priceEditions = PriceEditionValues::select(
                                 ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
                             )->where(['language_id' => $language['id']])->get()->toArray();
-                            $prices[$index]['language'] = $language['name'];
                             if ($priceEditions) {
+                                $prices[$index]['language'] = $language['name'];
                                 foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
                                     $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
                                     $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
