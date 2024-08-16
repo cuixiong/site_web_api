@@ -156,7 +156,7 @@ class ProductController extends Controller {
     /**
      * 返回相关产品数据-重定向/相关报告
      */
-    private function GetRelevantProductResult($id, $keyword, $page = 1, $pageSize = 1,  $searchField = 'url', $selectField = '*')
+    public function GetRelevantProductResult($id, $keyword, $page = 1, $pageSize = 1,  $searchField = 'url', $selectField = '*')
     {
         try {
             $hidden = SystemValue::where('key', 'sphinx')->value('hidden');
