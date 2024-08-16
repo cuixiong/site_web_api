@@ -484,6 +484,9 @@ class PageController extends Controller
             ->where('status', 1)
             ->where('id', $id)
             ->first();
+        if($data){
+            $data['comment_at_format'] = date('Y-m-d', $data['comment_at']);
+        }
         ReturnJson(true, '', $data);
     }
 }
