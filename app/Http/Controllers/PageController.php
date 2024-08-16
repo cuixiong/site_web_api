@@ -447,24 +447,22 @@ class PageController extends Controller
         $page = $params['page'] ?? 1;
         $pageSize = $params['pageSize'] ?? 16;
 
-        $query = Comment::select([
-            'id',
-            'title',
-            'image as thumb',
-        ])
-            ->orderBy('sort', 'asc')
+
+        $query = Comment::where('status', 1)
+            ->select(['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at'])
             ->where('status', 1);
 
         $count = $query->count();
 
-        $result = $query->offset(($page - 1) * $pageSize)->limit($pageSize)->get()->toArray();
+        $list = $query->offset(($page - 1) * $pageSize)->limit($pageSize)->orderBy('id', 'desc')->get()->toArray();
 
-        foreach ($result as &$item){
-            $item['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
+        foreach ($list as $key => $item){
+            $list[$key]['comment_at_format'] = date('Y-m-d', $item['comment_at']);
+            $list[$key]['image'] = Common::cutoffSiteUploadPathPrefix($item['image']);
         }
 
         $data = [
-            'result' => $result,
+            'result' => $list,
             "page" => $page,
             "pageSize" => $pageSize,
             'pageCount' => ceil($count / $pageSize),
@@ -482,11 +480,7 @@ class PageController extends Controller
         if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = Comment::select([
-            'title',
-            'created_at',
-            'image as img',
-        ])
+        $data = Comment::select(['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at'])
             ->where('status', 1)
             ->where('id', $id)
             ->first();
