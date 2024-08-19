@@ -100,7 +100,11 @@ class Notify extends Controller {
         $firstDataPay = new FirstDatapay();
         $res = $firstDataPay->notify();
         if($res){
-            return 'Success';
+            if (strpos($res, 'http') !== false) {
+                return '<script>window.location.href="'.$res.'";</script>';
+            }else {
+                return 'Success';
+            }
         }else{
             return 'fail';
         }
