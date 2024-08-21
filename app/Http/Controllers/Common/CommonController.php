@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Common;
 
 use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
+use App\Models\Authority;
 use App\Models\City;
 use App\Models\Common;
 use App\Models\DictionaryValue;
@@ -13,6 +14,7 @@ use App\Models\Menu;
 use App\Models\News;
 use App\Models\PlateValue;
 use App\Models\ProductsCategory;
+use App\Models\QuoteCategory;
 use App\Models\SearchRank;
 use App\Models\System;
 use App\Models\SystemValue;
@@ -48,6 +50,8 @@ class CommonController extends Controller {
         $data['news_list'] = $this->getNewsList();
         //报告分类
         $data['product_cagory'] = $this->getProductCagory();
+        //权威引用
+        $data['quote_list'] = $this->getQuoteList(0, 1 , 4);
 
         // 总控字典部分
         // 计划购买时间 ,原为联系我们控制器Dictionary函数中代码，现复制至此处
@@ -56,6 +60,24 @@ class CommonController extends Controller {
         $data['channel'] = DictionaryValue::GetDicOptions('Channel_Type');
 
         ReturnJson(true, '', $data);
+    }
+
+    public function getQuoteList($category_id = 0, $page = 1, $pageSize = 4) {
+        $category = QuoteCategory::select(['id', 'name'])
+                                 ->where("status" , 1)
+                                 ->orderBy('sort', 'asc')->get()->toArray() ?? [];
+        array_unshift($category, ['id' => '0', 'name' => '全部']);
+
+        // 数据
+        $model = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id'])
+                          ->where("status" , 1)
+                          ->orderBy('sort', 'asc');
+        if ($category_id) {
+            $model = $model->where('category_id', $category_id);
+        }
+
+        $result = $model->offset(($page - 1) * $pageSize)->limit($pageSize)->get()->toArray();
+        return $result;
     }
 
     /**
@@ -501,9 +523,9 @@ class CommonController extends Controller {
                           'seo_keyword', 'seo_description']
                      )
                      ->get()->toArray();
-        
+
         // 这里只处理两层，等需要多层再用递归
-        $result = []; 
+        $result = [];
         foreach ($menus as $key => $value) {
             // 首页返回的link改成空字符串
             if($value['link'] == 'index'){
@@ -530,7 +552,7 @@ class CommonController extends Controller {
         //         $result[] = $value;
         //     }
         // }
-                     
+
         // $menus = $this->MenusTree($menus);
 
         // //大部分网站的研究报告菜单栏会有下拉报告分类

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Common;
+use App\Models\Information;
 use App\Models\News;
 use App\Models\Office;
 use App\Models\Partner;
@@ -17,83 +18,89 @@ use Illuminate\Http\Request;
 use PhpParser\Node\Expr\Cast\Object_;
 use stdClass;
 
-class IndexController extends Controller
-{
+class IndexController extends Controller {
     /**
      * 首页报告
+     *
      * @param Request $request
      *
      */
-    public function index(Request $request)
-    {
+    public function index(Request $request) {
         //最新报告(热门报告)
-        $data['hot_product_list'] = $this->getHotProductList($request);
-
+        if (checkSiteAccessData(['168report'])) {
+            $data['hot_product_list'] = $this->getHotProductList($request);
+            foreach ($data['hot_product_list']['products'] as &$forProduct) {
+                $time = time();
+                //判断当前报告是否在优惠时间内
+                if ($forProduct['discount_time_begin'] <= $time && $forProduct['discount_time_end'] >= $time) {
+                    $forProduct['discount_status'] = 1;
+                } else {
+                    $forProduct['discount_status'] = 2;
+                }
+                //此处站点 , 需额外返回价格版本
+                $forProduct['prices'] = Products::CountPrice($forProduct['price'], $forProduct['publisher_id']);
+            }
+        }else{
+            $data['hot_product_list'] = $this->getHotProductList($request);
+        }
         //获取推荐报告
         $data['recommend_product_list'] = $this->getRecommendProductList($request);
-
         //合作伙伴接口
         $data['partner_list'] = $this->getPartnerList($request);
-
         //行业新闻
         $data['industry_news_list'] = $this->getIndustryNews($request);
-
+        //热点资讯
+        if (checkSiteAccessData(['168report'])) {
+            $data['hot_news_info_list'] = $this->getHotInfoNews($request);
+        }
         // 客户评价
         $data['comment'] = $this->getCustomersComment($request);
-
         ReturnJson(true, '', $data);
     }
 
-
-
     // 最新报告(热门报告)
-    public function NewsProduct(Request $request)
-    {
+    public function NewsProduct(Request $request) {
         $list = $this->getHotProductList($request);
         ReturnJson(true, '', $list);
     }
 
     // 推荐报告
-    public function RecommendProduct(Request $request)
-    {
+    public function RecommendProduct(Request $request) {
         $data = $this->getRecommendProductList($request);
         ReturnJson(true, 'success', $data);
     }
 
     // 行业新闻
-    public function RecommendNews(Request $request)
-    {
+    public function RecommendNews(Request $request) {
         $list = $this->getIndustryNews($request);
         ReturnJson(true, '', $list);
     }
 
     // 合作伙伴
-    public function partners(Request $request)
-    {
+    public function partners(Request $request) {
         $list = $this->getPartnerList($request);
         ReturnJson(true, '', $list);
     }
 
     // 客户评价
-    public function customersComments(Request $request)
-    {
+    public function customersComments(Request $request) {
         $list = $this->getCustomersComment($request);
         ReturnJson(true, '', $list);
     }
 
     // 办公室
-    public function office(Request $request)
-    {
+    public function office(Request $request) {
         $list = Office::where('status', 1)
-            ->select(
-                [
-                    'id', 'city', 'name', 'language_alias', 'region', 'area', 'image', 'national_flag', 'phone',
-                    'address', 'working_language', 'working_time', 'time_zone'
-                ]
-            )
-            ->orderBy('sort', 'desc')
-            ->orderBy('id', 'desc')
-            ->get();
+                      ->select(
+                          [
+                              'id', 'city', 'name', 'language_alias', 'region', 'area', 'image', 'national_flag',
+                              'phone',
+                              'address', 'working_language', 'working_time', 'time_zone'
+                          ]
+                      )
+                      ->orderBy('sort', 'desc')
+                      ->orderBy('id', 'desc')
+                      ->get();
         foreach ($list as &$value) {
             $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
             $value['national_flag'] = Common::cutoffSiteUploadPathPrefix($value['national_flag']);
@@ -104,8 +111,7 @@ class IndexController extends Controller
     /**
      * 首页底部提示语
      */
-    public function WebpageOrientation(Request $request)
-    {
+    public function WebpageOrientation(Request $request) {
         $id = $request->id;
         if (empty($id)) {
             ReturnJson(false, 'ID不能为空！');
@@ -117,8 +123,7 @@ class IndexController extends Controller
      * @param Products $value
      *
      */
-    private function handlerNewProductList(Products $value): void
-    {
+    private function handlerNewProductList(Products $value): void {
         /**
          * @var $value Products
          */
@@ -192,17 +197,16 @@ class IndexController extends Controller
      *
      * @return mixed
      */
-    private function getRemProductFirst($productFields, $id, &$firstProduct, &$forCnt)
-    {
+    private function getRemProductFirst($productFields, $id, &$firstProduct, &$forCnt) {
         if ($forCnt >= 6) {
             return $firstProduct;
         }
         $tempFirstProduct = Products::select($productFields)
-            ->where('category_id', $id)
-            ->where('show_recommend', 1)
-            ->orderBy('published_date', 'desc')
-            ->offset($forCnt)
-            ->first();
+                                    ->where('category_id', $id)
+                                    ->where('show_recommend', 1)
+                                    ->orderBy('published_date', 'desc')
+                                    ->offset($forCnt)
+                                    ->first();
         $forCnt += 1;
         if (!empty($tempFirstProduct)) {
             $checkRes = SenWordsService::checkFitter($tempFirstProduct->name);
@@ -225,18 +229,17 @@ class IndexController extends Controller
      *
      * @return mixed
      */
-    private function getRemProductOtherList($cate_id, $productId)
-    {
+    private function getRemProductOtherList($cate_id, $productId) {
         $query = Products::select(['name', 'keywords', 'id', 'url'])
-            ->where('category_id', $cate_id)
-            ->where('show_recommend', 1)
-            ->where("status", 1)
-            ->where('id', '<>', $productId)
-            ->orderBy('published_date', 'desc');
+                         ->where('category_id', $cate_id)
+                         ->where('show_recommend', 1)
+                         ->where("status", 1)
+                         ->where('id', '<>', $productId)
+                         ->orderBy('published_date', 'desc');
         $pageSize = 4;
         $otherProducts = $query->limit($pageSize)
-            ->get()
-            ->toArray();
+                               ->get()
+                               ->toArray();
 
         return $otherProducts;
         //        $filterCnt = 0;
@@ -303,10 +306,10 @@ class IndexController extends Controller
     /**
      *
      * @param Request $request
+     *
      * @return array
      */
-    private function getHotProductList(Request $request)
-    {
+    private function getHotProductList(Request $request) {
         /**
          *  0: 默认只返回报告数据
          *  1: 返回分类数据以及单个分类的报告数据
@@ -318,34 +321,30 @@ class IndexController extends Controller
         // 返回报告数量/每个分类的报告数量
         $productLimit = $request->hot_product_size ?? 6;
         // dataType 为 1 时，页面根据点击分类选项卡切换报告数据
-        $categoryID =  $request->hot_category_id ?? 0;
-
+        $categoryID = $request->hot_category_id ?? 0;
         $data = [];
-
         // 报告基本查询
-        $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',];
+        $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url', 'publisher_id' , 'discount_type', 'discount', 'discount_amount', 'discount_time_begin', 'discount_time_end'];
         $productQuery = Products::where('status', 1)
-            ->where("show_hot", 1)
-            ->where("published_date", "<=", time())
-            ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
-            ->orderBy('published_date', 'desc')
-            ->orderBy('id', 'desc')
-            ->limit($productLimit);
-
+                                ->where("show_hot", 1)
+                                ->where("published_date", "<=", time())
+                                ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
+                                ->orderBy('published_date', 'desc')
+                                ->orderBy('id', 'desc')
+                                ->limit($productLimit);
         // 分类基本查询
         $categoryQuery = ProductsCategory::select(['id', 'name', 'link', 'thumb', 'icon', 'icon_hover'])
-            ->where('is_hot', 1)
-            ->where('status', 1)
-            ->where('pid', 0)
-            ->orderBy('sort', 'asc')
-            ->orderBy('id', 'desc')
-            ->limit($categoryLimit);
-
+                                         ->where('is_hot', 1)
+                                         ->where('status', 1)
+                                         ->where('pid', 0)
+                                         ->orderBy('sort', 'asc')
+                                         ->orderBy('id', 'desc')
+                                         ->limit($categoryLimit);
         if ($dataType == 0) {
             // $newProductList = $productQuery->get();
         } elseif ($dataType == 1) {
             //获取热门分类
-            $categories  = $categoryQuery->get()->toArray();
+            $categories = $categoryQuery->get()->toArray();
             $data['category'] = $categories;
             // 没有传分类ID默认显示第一个分类报告数据
             if (empty($categoryID) && count($categories) > 0) {
@@ -355,7 +354,7 @@ class IndexController extends Controller
             }
         } elseif ($dataType == 2) {
             //获取热门分类
-            $categories  = $categoryQuery->get()->toArray();
+            $categories = $categoryQuery->get()->toArray();
             //遍历分类获取,分类报告
             if (!empty($categories) && is_array($categories)) {
                 foreach ($categories as $index => $category) {
@@ -366,7 +365,8 @@ class IndexController extends Controller
                     ];
                     $categoryID = $category['id'];
                     // 查询报告数据
-                    $productList = (clone $productQuery)->select($productSelect)->where('category_id', $categoryID)->get()->toArray();
+                    $productList = (clone $productQuery)->select($productSelect)->where('category_id', $categoryID)
+                                                        ->get()->toArray();
                     if (empty($productList)) {
                         $data[$index]['keywords'] = [];
                         $data[$index]['firstProduct'] = new stdClass();
@@ -376,7 +376,6 @@ class IndexController extends Controller
                     // 提取报告关键词列表
                     $keywords = array_column($productList, 'keywords');
                     $data[$index]['keywords'] = $keywords;
-
                     //处理数据
                     $firstProduct = array_shift($productList);
                     if (!empty($firstProduct)) {
@@ -399,19 +398,17 @@ class IndexController extends Controller
                 }
             }
         }
-
         if ($dataType == 0 || $dataType == 1) {
-
             //返回分类名
             $categoryNames = ProductsCategory::query()->select(['id', 'name'])->get()->toArray();
             $categoryNames = array_column($categoryNames, 'name', 'id');
             // gir用的两张默认图...
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
-
             $newProductList = $productQuery->select($productSelect)->get();
             foreach ($newProductList as $key => $value) {
                 $this->handlerNewProductList($value);
-                $newProductList[$key]['category_name'] = isset($categoryNames[$value->category_id]) ? $categoryNames[$value->category_id] : '';
+                $newProductList[$key]['category_name'] = isset($categoryNames[$value->category_id])
+                    ? $categoryNames[$value->category_id] : '';
                 if (empty($value->thumb)) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
@@ -419,16 +416,17 @@ class IndexController extends Controller
             }
             $data['products'] = $newProductList;
         }
+
         return $data;
     }
 
     /**
      *
      * @param Request $request
+     *
      * @return array
      */
-    private function getRecommendProductList(Request $request)
-    {
+    private function getRecommendProductList(Request $request) {
         /**
          *  0: 默认只返回报告数据
          *  1: 返回分类数据以及单个分类的报告数据
@@ -440,35 +438,30 @@ class IndexController extends Controller
         // 返回报告数量/每个分类的报告数量
         $productLimit = $request->recommend_product_size ?? 6;
         // dataType 为 1 时，页面根据点击分类选项卡切换报告数据
-        $categoryID =  $request->recommend_category_id ?? 0;
-
+        $categoryID = $request->recommend_category_id ?? 0;
         $data = [];
-
         // 报告基本查询
         $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',];
-
         $productQuery = Products::where("status", 1)
-            ->where('show_recommend', 1)
-            ->where("published_date", "<=", time())
-            ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
-            ->orderBy('published_date', 'desc')
-            ->orderBy('id', 'desc')
-            ->limit($productLimit);
-
+                                ->where('show_recommend', 1)
+                                ->where("published_date", "<=", time())
+                                ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
+                                ->orderBy('published_date', 'desc')
+                                ->orderBy('id', 'desc')
+                                ->limit($productLimit);
         // 分类基本查询
         $categoryQuery = ProductsCategory::select(['id', 'name', 'link', 'thumb', 'icon', 'icon_hover'])
-            ->where('status', 1)
-            ->where('is_recommend', 1)
-            ->where('pid', 0)
-            ->orderBy('sort', 'asc')
-            ->orderBy('updated_at', 'desc')
-            ->limit($categoryLimit);
-
+                                         ->where('status', 1)
+                                         ->where('is_recommend', 1)
+                                         ->where('pid', 0)
+                                         ->orderBy('sort', 'asc')
+                                         ->orderBy('updated_at', 'desc')
+                                         ->limit($categoryLimit);
         if ($dataType == 0) {
             // $newProductList = $productQuery->get();
         } elseif ($dataType == 1) {
             //获取推荐分类
-            $categories  = $categoryQuery->get()->toArray();
+            $categories = $categoryQuery->get()->toArray();
             $data['category'] = $categories;
             // 没有传分类ID默认显示第一个分类报告数据
             if (empty($categoryID) && count($categories) > 0) {
@@ -478,7 +471,7 @@ class IndexController extends Controller
             }
         } elseif ($dataType == 2) {
             //获取推荐分类
-            $categories  = $categoryQuery->get()->toArray();
+            $categories = $categoryQuery->get()->toArray();
             //遍历分类获取,分类报告
             if (!empty($categories) && is_array($categories)) {
                 foreach ($categories as $index => $category) {
@@ -489,7 +482,8 @@ class IndexController extends Controller
                     ];
                     $categoryID = $category['id'];
                     // 查询报告数据
-                    $productList = (clone $productQuery)->select($productSelect)->where('category_id', $categoryID)->get()->toArray();;
+                    $productList = (clone $productQuery)->select($productSelect)->where('category_id', $categoryID)
+                                                        ->get()->toArray();;
                     if (empty($productList)) {
                         $data[$index]['keywords'] = [];
                         $data[$index]['firstProduct'] = [];
@@ -521,17 +515,12 @@ class IndexController extends Controller
                 }
             }
         }
-
         if ($dataType == 0 || $dataType == 1) {
-
             // gir用的两张默认图...
             $defaultImg = SystemValue::where('key', 'default_report_img2')->value('value');
-
             $newProductList = $productQuery->select($productSelect)->get();
-
             foreach ($newProductList as $key => $value) {
                 $this->handlerNewProductList($value);
-
                 if (empty($value->thumb)) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
@@ -548,20 +537,18 @@ class IndexController extends Controller
      *
      * @return array
      */
-    private function getPartnerList(Request $request): array
-    {
+    private function getPartnerList(Request $request): array {
         $limit = $request->partner_size ?? 20;
         $list = Partner::where('status', 1)
-            ->select(['id', 'name', 'logo',])
-            ->orderBy('sort', 'desc')
-            ->orderBy('id', 'desc')
-            ->limit($limit)
-            ->get()
-            ->toArray();
+                       ->select(['id', 'name', 'logo',])
+                       ->orderBy('sort', 'desc')
+                       ->orderBy('id', 'desc')
+                       ->limit($limit)
+                       ->get()
+                       ->toArray();
         //        foreach ($list as &$item) {
         //            $item['logo'] = Common::cutoffSiteUploadPathPrefix($item['logo']);
         //        }
-
         return $list;
     }
 
@@ -570,27 +557,23 @@ class IndexController extends Controller
      *
      * @return array
      */
-    private function getIndustryNews(Request $request): array
-    {
-
+    private function getIndustryNews(Request $request): array {
         $limit = $request->news_size ?? 4;
-
         // 这里keywords可能改成tags，都是逗号分割取第一个
         $list = News::where('status', 1)
-            ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url', 'keywords'])
-            ->where('show_home', 1) // 是否在首页显示
-            ->where('upload_at', '<=', time())
+                    ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url', 'keywords'])
+                    ->where('show_home', 1) // 是否在首页显示
+                    ->where('upload_at', '<=', time())
             //->orderBy('sort', 'desc')
-            ->orderBy('upload_at', 'desc')
-            ->orderBy('id', 'desc')
-            ->limit($limit)
-            ->get()
-            ->toArray();
+                    ->orderBy('upload_at', 'desc')
+                    ->orderBy('id', 'desc')
+                    ->limit($limit)
+                    ->get()
+                    ->toArray();
         if ($list) {
             foreach ($list as $key => $item) {
                 $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
                 $list[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
-
                 $keywords = explode(',', $list[$key]['keywords'] ?? '');
                 $list[$key]['keywords'] = count($keywords) > 0 ? $keywords[0] : '';
             }
@@ -599,25 +582,51 @@ class IndexController extends Controller
         return $list;
     }
 
+    /**
+     * 获取热门资讯
+     *
+     * @return array
+     */
+    private function getHotInfoNews(Request $request) {
+        $limit = $request->news_size ?? 4;
+        // 这里keywords可能改成tags，都是逗号分割取第一个
+        $list = Information::where('status', 1)
+                           ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url', 'keywords'])
+                           ->where('show_home', 1) // 是否在首页显示
+                           ->where('upload_at', '<=', time())
+            //->orderBy('sort', 'desc')
+                           ->orderBy('upload_at', 'desc')
+                           ->orderBy('id', 'desc')
+                           ->limit($limit)
+                           ->get()
+                           ->toArray();
+        if ($list) {
+            foreach ($list as $key => $item) {
+                $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
+                $list[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
+                $keywords = explode(',', $list[$key]['keywords'] ?? '');
+                $list[$key]['keywords'] = count($keywords) > 0 ? $keywords[0] : '';
+            }
+        }
+
+        return $list;
+    }
 
     /**
      *
      *
      * @return array
      */
-    private function getCustomersComment(Request $request): array
-    {
-
+    private function getCustomersComment(Request $request): array {
         $limit = $request->comment_size ?? 4;
-
         $list = Comment::where('status', 1)
-            ->select(['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at'])
-            ->where('status', 1)
+                       ->select(['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at'])
+                       ->where('status', 1)
             //->orderBy('sort', 'desc')
-            ->orderBy('id', 'desc')
-            ->limit($limit)
-            ->get()
-            ->toArray();
+                       ->orderBy('id', 'desc')
+                       ->limit($limit)
+                       ->get()
+                       ->toArray();
         if ($list) {
             foreach ($list as $key => $item) {
                 $list[$key]['comment_at_format'] = date('Y-m-d', $item['comment_at']);
