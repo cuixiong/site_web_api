@@ -430,6 +430,14 @@ class OrderTrans extends Base {
             $tax_rate = $firstDataPaySetList['first_data_pay_tax_rate'] ?? $tax_rate;
             $exchange_rate = $firstDataPaySetList['first_data_pay_exchange_rate'] ?? $exchange_rate;
             $pay_coin_type = $firstDataPaySetList['first_data_pay_coin_type'] ?? $pay_coin_type;
+        }elseif($payCode == PayConst::PAY_TYPE_PAYPAL){
+            $palpalPaySetList = SystemValue::query()->where("alias", 'paypal_pay_set')
+                                              ->where("status" , 1)
+                                              ->where("hidden" , 1)
+                                              ->pluck("value", "key")->toArray();
+            $tax_rate = $palpalPaySetList['paypal_pay_tax_rate'] ?? $tax_rate;
+            $exchange_rate = $palpalPaySetList['paypal_pay_exchange_rate'] ?? $exchange_rate;
+            $pay_coin_type = $palpalPaySetList['paypal_pay_coin_type'] ?? $pay_coin_type;
         }
         //折后金额*汇率
         $exchange_amount = bcmul($orderAmount, $exchange_rate, 2);

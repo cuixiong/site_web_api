@@ -6,6 +6,7 @@ use App\Const\PayConst;
 use App\Http\Controllers\Common\SendEmailController;
 use App\Http\Controllers\Pay\Pay;
 use App\Http\Controllers\Pay\PayFactory;
+use App\Http\Controllers\Pay\PaypalPay;
 use App\Http\Controllers\Pay\Wechatpay;
 use App\Http\Requests\OrderRequest;
 use App\Models\City;
@@ -241,7 +242,16 @@ class OrderController extends Controller {
                 $pay_set['pay_exchange_rate'] = $firstdataPayData['first_data_pay_exchange_rate'] ?? 1;
                 $pay_set['pay_tax_rate'] = $firstdataPayData['first_data_pay_tax_rate'] ?? 0;
                 $pay_set['pay_coin_type'] = $firstdataPayData['first_data_pay_coin_type'] ?? 'CNY';
+            }elseif($payCode == PayConst::PAY_TYPE_PAYPAL){
+                $palpalPaySetList = SystemValue::query()->where("alias", 'paypal_pay_set')
+                                               ->where("status" , 1)
+                                               ->where("hidden" , 1)
+                                               ->pluck("value", "key")->toArray();
+                $pay_set['pay_exchange_rate'] = $palpalPaySetList['paypal_pay_exchange_rate'] ?? 1;
+                $pay_set['pay_tax_rate'] = $palpalPaySetList['paypal_pay_tax_rate'] ?? 0;
+                $pay_set['pay_coin_type'] = $palpalPaySetList['paypal_pay_coin_type'] ?? 'CNY';
             }
+
             $pay_set['pay_coin_type_symbol'] = PayConst::$coinTypeSymbol[$pay_set['pay_coin_type']] ?? '¥';
             $item['pay_set'] = $pay_set;
             $item['img'] = Common::cutoffSiteUploadPathPrefix($item['img']);
@@ -264,6 +274,8 @@ class OrderController extends Controller {
         $orderNumber = $order['order_number'] ?? '';
         $payTime = !empty($order['pay_time']) ? date('Y-m-d H:i:s', $order['pay_time']) : '';
         if ($orderStatus == Order::PAY_UNPAID) {
+            //未支付,且是paypal支付,需要捕获订单
+            $this->capturePaypalOrder($order);
             // 主动查询订单状态
             // 未付款
             ReturnJson(true, '', ['is_pay' => $orderStatus, 'order_number' => $orderNumber]);
@@ -762,4 +774,17 @@ class OrderController extends Controller {
 
         return $order;
     }
+
+    public function capturePaypalOrder($order) {
+        if(empty($order )){
+            return false;
+        }
+        // TODO: cuizhixiong 2024/8/21 数据库直接存id太傻比了 !!!  存个code啊!!!
+        $payCode = ModelsPay::query()->where('id', $order->pay_type)->value('code');
+        if($payCode == PayConst::PAY_TYPE_PAYPAL){
+            (new PaypalPay())->capturePaypalOrder($order);
+        }
+        return true;
+    }
+
 }

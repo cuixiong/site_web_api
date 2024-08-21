@@ -39,11 +39,7 @@ class FirstDatapay extends Pay {
             $gmt_payment = $params['x_fp_timestamp'];
             $this->handlerOrderPaySucService($out_trade_no, $logName, $total_amount, $trade_no, $gmt_payment);
 
-            $orderId = Order::where('order_number', $out_trade_no)->value("id");
-            $domain = rtrim(env('APP_URL', ''), '/');
-            $domainSucUrl = $domain.'/paymentComplete/'.$orderId;
-            \Log::error('返回结果数据:domainSucUrl'.$domainSucUrl);
-            return $domainSucUrl;
+            return true;
         } catch (\Exception $e) {
             throw $e;
 
@@ -72,8 +68,8 @@ class FirstDatapay extends Pay {
             'x_currency_code'    => 'USD',
             'x_fp_sequence'      => rand(1000, 100000) + 123456, //随机串
             'x_fp_timestamp'     => time(),
-            'x_relay_url'        => $notifyUrl,
-            'x_relay_response'   => 'TRUE',
+            //'x_relay_url'        => $notifyUrl,
+            //'x_relay_response'   => 'TRUE',
             'x_receipt_link_url' => $domain.'/paymentComplete/'.$order->id,
             'x_show_form'        => 'PAYMENT_FORM',
         ];
