@@ -16,8 +16,9 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
 
 class PaypalPay extends Pay {
-    public $apiUrl = 'https://api.sandbox.paypal.com'; //沙箱
+    //public $apiUrl = 'https://api.sandbox.paypal.com'; //沙箱
     //public $apiUrl = 'https://api-m.paypal.com'; //正式
+    public $apiUrl = '';
     public $client_id  = '';
     public $secret_id  = '';
     public $webhook_id = '';
@@ -26,6 +27,7 @@ class PaypalPay extends Pay {
         $this->client_id = env('paypal_client_id', '');
         $this->secret_id = env('paypal_secret_id', '');
         $this->webhook_id = env('paypal_webhook_id', '');
+        $this->apiUrl = env('paypal_api_url', 'https://api.sandbox.paypal.com');
     }
 
     public function createFormdata($order) {
