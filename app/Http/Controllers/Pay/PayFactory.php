@@ -26,6 +26,9 @@ class PayFactory extends Controller
             case Pay::where('code','FIRSTDATA')->value('id');
                 $pay = new FirstDatapay();
                 break;
+            case Pay::where('code','PAYPAL')->value('id');
+                $pay = new PaypalPay();
+                break;
         }
 
         return $pay;

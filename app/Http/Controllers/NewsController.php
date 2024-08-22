@@ -28,7 +28,7 @@ class NewsController extends Controller {
             'status' => 1,
         ];
         $field = ['thumb', 'title', 'upload_at as release_at', 'tags', 'description', 'category_id', 'id',
-                  'url'];
+                  'url' , 'hits'];
         $query = News::select($field)
                      ->where($where)
                      ->where('upload_at', '<=', time());
@@ -76,6 +76,7 @@ class NewsController extends Controller {
                 $news[$key]['description'] = $value['description'];
                 $news[$key]['id'] = $value['id'];
                 $news[$key]['url'] = $value['url'];
+                $news[$key]['hits'] = $value['hits'];
             }
         }
         $data = [
@@ -138,11 +139,15 @@ class NewsController extends Controller {
             }
             $data['prev_next'] = $prev_next;
 
-            //获取相关新闻
-            $data['relevant_news'] = $this->getRelevantNews($id);
+            //获取最新新闻
+            $data['last_news'] = $this->getLastNews($id);
             //获取相关报告
             $data['relevant_product'] = $this->getRelevantProduct($data['tags']);
-
+            //获取相关新闻
+            if (checkSiteAccessData(['168report'])) {
+                //相关新闻
+                $data['relevant_news'] = $this->getRelevantNews($data['tags'], $id);
+            }
 
             ReturnJson(true, 'success', $data);
         } else {
@@ -169,7 +174,7 @@ class NewsController extends Controller {
             ReturnJson(false, 'id is empty');
         }
         // $category_id = 1;
-        $data = $this->getRelevantNews($id);
+        $data = $this->getLastNews($id);
         ReturnJson(true, 'success', $data);
     }
 
@@ -254,7 +259,7 @@ class NewsController extends Controller {
      *
      * @return mixed
      */
-    private function getRelevantNews(mixed $id) {
+    private function getLastNews(mixed $id) {
         $data = News::select([
                                  'title',
                                  'keywords',
@@ -265,6 +270,25 @@ class NewsController extends Controller {
                     ->where('id', '<>', $id)
                     ->where('upload_at', '<=', time())
             // ->where($category_id)
+                    ->orderBy('upload_at', 'desc')
+                    ->limit(5)
+                    ->get()
+                    ->toArray();
+
+        return $data;
+    }
+
+    private function getRelevantNews($keyword, $id) {
+        $data = News::select([
+                                 'title',
+                                 'keywords',
+                                 'id',
+                                 'url',
+                             ])
+                    ->where('status', 1)
+                    ->where('id', '<>', $id)
+                    ->where('upload_at', '<=', time())
+                    ->whereIn('keywords', $keyword)
                     ->orderBy('upload_at', 'desc')
                     ->limit(5)
                     ->get()

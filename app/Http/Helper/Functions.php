@@ -107,4 +107,13 @@ function isWeixin() {
     return false;
 }
 
+function checkSiteAccessData($siteNameLit) {
+    $siteName = request()->header('Site');
+    if(in_array($siteName, $siteNameLit)){
+        return true;
+    }
+    return false;
+}
+
+
 

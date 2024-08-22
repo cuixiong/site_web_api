@@ -220,7 +220,9 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     // firstData支付回调
     Route::any('notify/firstdata', [\App\Http\Controllers\Pay\Notify::class, 'FirstData'])->name('firstdata支付回调');
     // wise支付回调
-    Route::any('notify/wisepay', [\App\Http\Controllers\Pay\Notify::class, 'FirstData'])->name('firstdata支付回调');
+    Route::any('notify/wisepay', [\App\Http\Controllers\Pay\Notify::class, 'wiseNotify'])->name('wise支付回调');
+    // paypal支付回调
+    Route::any('notify/paypal', [\App\Http\Controllers\Pay\Notify::class, 'paypalNotify'])->name('paypal支付回调');
     // News控制器
     Route::prefix('news')->group(function () {
         Route::post('index', [\App\Http\Controllers\NewsController::class, 'Index'])->name('新闻列表');

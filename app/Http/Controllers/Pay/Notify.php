@@ -100,6 +100,7 @@ class Notify extends Controller {
         $firstDataPay = new FirstDatapay();
         $res = $firstDataPay->notify();
         if($res){
+            return 'Success';
             if (strpos($res, 'http') !== false) {
                 return '<script>window.location.href="'.$res.'";</script>';
             }else {
@@ -109,4 +110,26 @@ class Notify extends Controller {
             return 'fail';
         }
     }
+
+    public function wiseNotify() {
+        return '1';
+    }
+
+
+    public function paypalNotify() {
+        $_input = file_get_contents('php://input');
+        $request = request();
+        $heards = $request->header();
+        \Log::error('返回结果数据paypalNotify---input:'.$_input);
+        \Log::error('返回结果数据paypalNotify---heards:'.json_encode($heards));
+
+        $res = (new PaypalPay())->notify();
+        if($res){
+            return 'ok';
+        }else{
+            header('HTTP/1.1 403');die('check error');
+        }
+
+    }
+
 }
