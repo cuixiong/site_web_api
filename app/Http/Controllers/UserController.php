@@ -273,6 +273,7 @@ class UserController extends Controller {
             'coupon.type',
             'value',
             'coupon.time_end',
+            'coupon.time_begin',
             'coupon.code',
             'coupon.id',
             'user.is_used'
@@ -326,6 +327,7 @@ class UserController extends Controller {
                 $data[$key]['id'] = $value['id'];
                 $data[$key]['type'] = $value['type'];
                 $data[$key]['value'] = $value['type'] == 1 ? round($value['value'], 0) : (float)$value['value'];
+                $data[$key]['day_begin'] = $value['time_begin'] ? date('Y.m.d', $value['time_begin']) : '';
                 $data[$key]['day_end'] = $value['time_end'] ? date('Y.m.d', $value['time_end']) : '';
                 $data[$key]['code'] = $value['code'];
                 $data[$key]['status'] = $couponStatus;
