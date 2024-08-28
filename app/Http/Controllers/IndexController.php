@@ -516,11 +516,16 @@ class IndexController extends Controller {
             }
         }
         if ($dataType == 0 || $dataType == 1) {
+            //返回分类名
+            $categoryNames = ProductsCategory::query()->select(['id', 'name'])->get()->toArray();
+            $categoryNames = array_column($categoryNames, 'name', 'id');
             // gir用的两张默认图...
             $defaultImg = SystemValue::where('key', 'default_report_img2')->value('value');
             $newProductList = $productQuery->select($productSelect)->get();
             foreach ($newProductList as $key => $value) {
                 $this->handlerNewProductList($value);
+                $newProductList[$key]['category_name'] = isset($categoryNames[$value->category_id])
+                    ? $categoryNames[$value->category_id] : '';
                 if (empty($value->thumb)) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
