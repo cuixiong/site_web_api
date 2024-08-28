@@ -502,26 +502,21 @@ class OrderController extends Controller {
                 $value['product_info'] = $value->product_info;
 
                 // 给每个报告添加分类名以及默认图片
-                if (is_array($value['product_info']) && count($value['product_info']) > 0) {
+                if (!empty($value['product_info'])) {
                     // 分类信息
-                    $categoryIds = array_column($value['product_info'], 'category_id');
-                    $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->whereIn('id', $categoryIds)->get()->toArray();
-                    $categoryData = array_column($categoryData, null, 'id');
-
-                    foreach ($value['product_info'] as $productKey => $productItem) {
-                        //每个报告加上分类信息
-                        $tempCategoryId = $productItem['category_id'];
-                        $product['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
-                        if (empty($value['product_info'][$productKey]['thumb'])) {
-                            $value['product_info'][$productKey]['thumb'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
-                        }
-
-                        // 若没有分类图片添加系统默认图片
-                        if (empty($value['product_info'][$productKey]['thumb'])) {
-                            // 若报告图片为空，则使用系统设置的默认报告高清图
-                            $value['product_info'][$productKey]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
-                        }
+                    $tempCategoryId = $value['product_info']['category_id'];
+                    $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $tempCategoryId)->first()->toArray();
+                    $product['category_name'] = isset($categoryData['name']) ? $categoryData['name'] : '';
+                    if (empty($value['product_info']['thumb'])) {
+                        $value['product_info']['thumb'] = isset($categoryData['thumb']) ? $categoryData['thumb'] : '';
                     }
+
+                    // 若没有分类图片添加系统默认图片
+                    if (empty($value['product_info']['thumb'])) {
+                        // 若报告图片为空，则使用系统设置的默认报告高清图
+                        $value['product_info']['thumb'] = !empty($defaultImg) ? $defaultImg : '';
+                    }
+                    
                 }
 
                 $value['price_edition_info'] = $value->price_edition_info;
