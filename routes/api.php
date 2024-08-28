@@ -166,7 +166,6 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::prefix('user-invoices')->middleware(JwtMiddleware::class)->group(function () {
         Route::get('list', [\App\Http\Controllers\InvoicesController::class, 'list'])->name('发票列表');
         Route::get('form/{id}', [\App\Http\Controllers\InvoicesController::class, 'form'])->name('发票详情');
-        Route::get('form-by-oid/{id}', [\App\Http\Controllers\InvoicesController::class, 'formByOid'])->name('发票详情(订单id)');
         Route::post('apply', [\App\Http\Controllers\InvoicesController::class, 'apply'])->name('申请发票');
     });
     // Cart控制器(购物车模块)

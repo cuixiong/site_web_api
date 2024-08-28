@@ -65,17 +65,7 @@ class InvoicesController extends Controller {
             ReturnJson(false, $e->getMessage());
         }
     }
-    
-    public function formByOid(Request $request) {
-        try {
-            $model = new Invoices();
-            $record = $model::where('order_id', $request->id)->first();
-            $rs = $record->toArray();
-            ReturnJson(true, '获取成功', $rs);
-        } catch (\Exception $e) {
-            ReturnJson(false, $e->getMessage());
-        }
-    }
+
 
     public function apply(Request $request) {
         try {
