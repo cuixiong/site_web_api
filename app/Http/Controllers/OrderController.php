@@ -501,26 +501,27 @@ class OrderController extends Controller {
                  */
                 $value['product_info'] = $value->product_info;
 
+                $value['price_edition_info'] = $value->price_edition_info;
+                $orderGoodsArr = $value->toArray();
+                
+
                 // 给每个报告添加分类名以及默认图片
-                if (!empty($value['product_info'])) {
+                if (!empty($orderGoodsArr['product_info'])) {
                     // 分类信息
-                    $tempCategoryId = $value['product_info']['category_id'];
+                    $tempCategoryId = $orderGoodsArr['product_info']['category_id'];
                     $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $tempCategoryId)->first()->toArray();
                     $product['category_name'] = isset($categoryData['name']) ? $categoryData['name'] : '';
-                    if (empty($value['product_info']['thumb'])) {
-                        $value['product_info']['thumb'] = isset($categoryData['thumb']) ? $categoryData['thumb'] : '';
+                    if (empty($orderGoodsArr['product_info']['thumb'])) {
+                        $orderGoodsArr['product_info']['thumb'] = isset($categoryData['thumb']) ? $categoryData['thumb'] : '';
                     }
 
                     // 若没有分类图片添加系统默认图片
-                    if (empty($value['product_info']['thumb'])) {
+                    if (empty($orderGoodsArr['product_info']['thumb'])) {
                         // 若报告图片为空，则使用系统设置的默认报告高清图
-                        $value['product_info']['thumb'] = !empty($defaultImg) ? $defaultImg : '';
+                        $orderGoodsArr['product_info']['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                     }
                     
                 }
-
-                $value['price_edition_info'] = $value->price_edition_info;
-                $orderGoodsArr = $value->toArray();
                 $ogArrList[] = $orderGoodsArr;
             }
             $orderInfo['order_goods'] = $ogArrList;
