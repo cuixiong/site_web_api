@@ -43,6 +43,8 @@ class InvoicesController extends Controller {
             $rdata = [];
             $rdata['data'] = $rs;
             $rdata['count'] = $count;
+            $rdata['pageNum'] = $request->pageNum;
+            $rdata['pageSize'] = $request->pageSize;
             if ($rs) {
                 ReturnJson(true, '获取成功', $rdata);
             } else {
@@ -57,6 +59,17 @@ class InvoicesController extends Controller {
         try {
             $model = new Invoices();
             $record = $model->findOrFail($request->id);
+            $rs = $record->toArray();
+            ReturnJson(true, '获取成功', $rs);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+    
+    public function formByOid(Request $request) {
+        try {
+            $model = new Invoices();
+            $record = $model::where('order_id', $request->id)->first();
             $rs = $record->toArray();
             ReturnJson(true, '获取成功', $rs);
         } catch (\Exception $e) {
