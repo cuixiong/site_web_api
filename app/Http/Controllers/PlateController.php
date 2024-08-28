@@ -41,6 +41,7 @@ class PlateController extends Controller
             $forData['items'] = PlateValue::where('status', 1)
                 ->where('parent_id', $category['id'])
                 ->select([
+                    'id',
                     'title',
                     'short_title',
                     'link',
@@ -118,7 +119,7 @@ class PlateController extends Controller
             'title',
             'content as description'
         ])->where('page_id', $menu_id)->get()->toArray();
-        
+
         $data = [];
         foreach ($categoryList as &$category) {
             $forData = [];

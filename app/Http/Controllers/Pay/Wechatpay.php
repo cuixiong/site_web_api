@@ -52,7 +52,7 @@ class Wechatpay extends Pay
             $referer = $_SERVER['HTTP_REFERER'] ?? '';
             // $redirecturi = env('APP_URL','').'/api/order/wechat-order?referer='.urlencode($referer);
             $domain = env('APP_URL' , '');
-            $wxTransferDomain = env('WX_TRANSFER_DOMAIN' , 'https://www.marketmonitorglobal.com.cn');
+            $wxTransferDomain = env('WX_TRANSFER_DOMAIN' , 'https://www.qyresearch.com.cn');
             if($domain){
                 $domain = trim($domain,'/');
             }
