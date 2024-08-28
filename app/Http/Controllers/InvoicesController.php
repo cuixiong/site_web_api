@@ -94,7 +94,7 @@ class InvoicesController extends Controller {
                 'user_id'         => $userId,
                 'order_id'        => $input['order_id'],
                 'title'           => $orderObj->product_name,
-                'apply_status'    => 0,
+                'apply_status'    => 1,
                 'phone'           => $input['phone'],
                 'bank_name'       => $input['bank_name'],
                 'bank_account'    => $input['bank_account'],
