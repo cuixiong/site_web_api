@@ -28,7 +28,8 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class ProductController extends Controller {
     // 获取报告列表信息
-    public function List(Request $request) {
+    public function List(Request $request)
+    {
         $page = $request->page ? intval($request->page) : 1; // 页码
         $pageSize = $request->pageSize ? intval($request->pageSize) : 10; // 每页显示数量
         $category_id = $request->category_id ?? 0; // 分类ID
@@ -45,10 +46,15 @@ class ProductController extends Controller {
         ];
         if (!empty($category_id)) {
             $categorySeoData = ProductsCategory::query()
-                                               ->select(['name as category_name','seo_title', 'seo_keyword', 'seo_description'])
-                                               ->where('id', $category_id)->first();
+                ->select(['name as category_name', 'seo_title', 'seo_keyword', 'seo_description'])
+                ->where('id', $category_id)->first();
             if (!empty($categorySeoData)) {
                 $categorySeoInfo = $categorySeoData->toArray();
+                // 统一格式，null改成空串
+                $categorySeoInfo['category_name'] = !empty($categorySeoInfo['category_name']) ? $categorySeoInfo['category_name'] : '';
+                $categorySeoInfo['seo_title'] = !empty($categorySeoInfo['seo_title']) ? $categorySeoInfo['seo_title'] : '';
+                $categorySeoInfo['seo_keyword'] = !empty($categorySeoInfo['seo_keyword']) ? $categorySeoInfo['seo_keyword'] : '';
+                $categorySeoInfo['seo_description'] = !empty($categorySeoInfo['seo_description']) ? $categorySeoInfo['seo_description'] : '';
             }
         }
         $res = $this->GetProductResult($page, $pageSize, $keyword, $category_id);
@@ -97,12 +103,14 @@ class ProductController extends Controller {
                 if (is_numeric($value['published_date'])) {
                     $suffix = date('Y', $value['published_date']);
                     $value['published_date'] = $value['published_date'] ? date(
-                        'Y-m-d', $value['published_date']
+                        'Y-m-d',
+                        $value['published_date']
                     ) : '';
                 } else {
                     $suffix = date('Y', strtotime($value['published_date']));
                     $value['published_date'] = $value['published_date'] ? date(
-                        'Y-m-d', strtotime($value['published_date'])
+                        'Y-m-d',
+                        strtotime($value['published_date'])
                     ) : '';
                 }
                 $description = (new ProductDescription($suffix))->where('product_id', $value['id'])->value(
@@ -117,7 +125,9 @@ class ProductController extends Controller {
                 ] : [];
                 $publisher_id = $productsData['publisher_id'];
                 $value['prices'] = Products::CountPrice(
-                    $value['price'], $publisher_id, $languages
+                    $value['price'],
+                    $publisher_id,
+                    $languages
                 ) ?? [];
                 $products[] = $value;
             }
