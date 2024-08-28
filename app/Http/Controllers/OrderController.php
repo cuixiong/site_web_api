@@ -20,6 +20,7 @@ use App\Models\OrderTrans;
 use App\Models\Pay as ModelsPay;
 use App\Models\PriceEditionValues;
 use App\Models\Products;
+use App\Models\ProductsCategory;
 use App\Models\SystemValue;
 use App\Models\User;
 use App\Models\WechatTool;
@@ -437,12 +438,14 @@ class OrderController extends Controller {
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $fields = ['id', 'created_at', 'order_number', 'order_amount', 'is_pay'];
+            $fields = ['id', 'created_at', 'order_number', 'order_amount', 'actually_paid', 'is_pay'];
             $model->select($fields);
             $rs = $model->get();
             $rdata = [];
             $rdata['count'] = $count;
             $rdata['data'] = $rs;
+            $rdata['pageNum'] = $request->pageNum;
+            $rdata['pageSize'] = $request->pageSize;
             if ($rs) {
                 ReturnJson(true, '获取成功', $rdata);
             } else {
@@ -453,7 +456,8 @@ class OrderController extends Controller {
         }
     }
 
-    public function form(Request $request) {
+    public function form(Request $request)
+    {
         try {
             $model = new Order();
             $record = $model->findOrFail($request->id);
@@ -466,9 +470,21 @@ class OrderController extends Controller {
             $is_invoice = $record->is_invoice;
             $createDate = $record->create_date;
             $orderInfo = $record->toArray();
-            $orderInfo = Arr::only($orderInfo, ['id', 'order_number', 'created_at', 'is_pay_text', 'is_pay', 'pay_type',
-                                                'order_amount', 'actually_paid', 'coupon_id', 'coupon_amount',
-                                                'pay_coin_type']
+            $orderInfo = Arr::only(
+                $orderInfo,
+                [
+                    'id',
+                    'order_number',
+                    'created_at',
+                    'is_pay_text',
+                    'is_pay',
+                    'pay_type',
+                    'order_amount',
+                    'actually_paid',
+                    'coupon_id',
+                    'coupon_amount',
+                    'pay_coin_type'
+                ]
             );
             $orderInfo['pay_type_text'] = $payTypeText;
             $orderInfo['create_date'] = $createDate;
@@ -477,11 +493,37 @@ class OrderController extends Controller {
             $orderGoodsMolde = new OrderGoods();
             $ogArrList = [];
             $ogList = $orderGoodsMolde->where("order_id", $orderInfo['id'])->get();
+
+            $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
             foreach ($ogList as $key => $value) {
                 /**
                  * @var $value OrderGoods
                  */
                 $value['product_info'] = $value->product_info;
+
+                // 给每个报告添加分类名以及默认图片
+                if (is_array($value['product_info']) && count($value['product_info']) > 0) {
+                    // 分类信息
+                    $categoryIds = array_column($value['product_info'], 'category_id');
+                    $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->whereIn('id', $categoryIds)->get()->toArray();
+                    $categoryData = array_column($categoryData, null, 'id');
+
+                    foreach ($value['product_info'] as $productKey => $productItem) {
+                        //每个报告加上分类信息
+                        $tempCategoryId = $productItem['category_id'];
+                        $product['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
+                        if (empty($value['product_info'][$productKey]['thumb'])) {
+                            $value['product_info'][$productKey]['thumb'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
+                        }
+
+                        // 若没有分类图片添加系统默认图片
+                        if (empty($value['product_info'][$productKey]['thumb'])) {
+                            // 若报告图片为空，则使用系统设置的默认报告高清图
+                            $value['product_info'][$productKey]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
+                        }
+                    }
+                }
+
                 $value['price_edition_info'] = $value->price_edition_info;
                 $orderGoodsArr = $value->toArray();
                 $ogArrList[] = $orderGoodsArr;
