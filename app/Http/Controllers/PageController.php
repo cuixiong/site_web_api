@@ -105,8 +105,8 @@ class PageController extends Controller
         if (empty($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = Authority::select(['name as title', 'body as content'])->where('id', $id)->first();
-
+        $data = Authority::select(['name as title', 'body as content' , 'description' ,'id' , 'keyword' , 'name' , 'created_at as time' , 'big_image as img'])->where('id', $id)->first();
+        $data['time'] = date("Y-m-d" , $data['time']);
         // 新闻/权威引用等如果内容带有链接，则该链接在移动端无法正常换行，因此后端在此协助处理
         $data['content'] = str_replace('href="', 'style="word-wrap:break-word;word-break:break-all;" href="', $data['content']);
         ReturnJson(true, '', $data);
