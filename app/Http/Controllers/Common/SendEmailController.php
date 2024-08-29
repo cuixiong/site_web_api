@@ -626,6 +626,7 @@ class SendEmailController extends Controller
             $languageList = Languages::GetListById();
             $goods_data_list = [];
             $productsName = "";
+            $sum_goods_cnt = 0;
             foreach ($orderGoodsList as $key => $OrderGoods) {
                 $goods_data = [];
                 $priceEditionId = $OrderGoods['price_edition'];
@@ -647,9 +648,13 @@ class SendEmailController extends Controller
                 }
                 $goods_data = $products->toArray();
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
+                $sum_goods_cnt += $goods_data['goods_number'];
                 $goods_data['language'] = $language;
                 $goods_data['price_edition'] = $priceEdition['name'] ?: '';
                 $goods_data['goods_present_price'] = $OrderGoods['goods_original_price'];
+                $goods_data['goods_sum_price'] = bcmul(
+                    $OrderGoods['goods_original_price'], $OrderGoods['goods_number'], 2
+                );
                 //$goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/') . $products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
@@ -678,10 +683,13 @@ class SendEmailController extends Controller
                 'paymentLink'        => $data['domain'] . '/api/order/pay?order_id=' . $data['id'],
                 'orderDetails'       => $data['domain'] . '/account?orderdetails=' . $data['id'],
                 'goods'              => $goods_data_list,
-                'userId'             => $data['user_id']
+                'userId'             => $data['user_id'],
+                'dateTime'           => date('Y-m-d H:i:s'),
+                'sumGoodsCnt'        => $sum_goods_cnt,
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
-                ->toArray();
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
+                                   ->pluck('value', 'key')
+                                   ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
@@ -691,8 +699,6 @@ class SendEmailController extends Controller
             $scene = EmailScene::where('action', 'placeOrder')->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
             )->first();
-            // 收件人的数组
-            $emails = explode(',', $scene->email_recipient);
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
@@ -705,6 +711,8 @@ class SendEmailController extends Controller
             //$scene->title = $scene->title.":  {$productsName}";
             $scene->title = $scene->title . ", 订单号是 {$data['order_number']}";
             $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
+            // 收件人的数组
+            $emails = explode(',', $scene->email_recipient);
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
@@ -732,6 +740,7 @@ class SendEmailController extends Controller
             $languageList = Languages::GetListById();
             $goods_data_list = [];
             $productsName = "";
+            $sum_goods_cnt = 0;
             foreach ($orderGoodsList as $key => $OrderGoods) {
                 $goods_data = [];
                 $priceEditionId = $OrderGoods['price_edition'];
@@ -753,11 +762,15 @@ class SendEmailController extends Controller
                 }
                 $goods_data = $products->toArray();
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
+                $sum_goods_cnt += $goods_data['goods_number'];
                 $goods_data['language'] = $language;
                 $goods_data['price_edition'] = $priceEdition['name'] ?: '';
                 //$goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 $goods_data['goods_present_price'] = $OrderGoods['goods_original_price'];
-                $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/') . $products->getThumbImgAttribute();
+                $goods_data['goods_sum_price'] = bcmul(
+                    $OrderGoods['goods_original_price'], $OrderGoods['goods_number'], 2
+                );
+                $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;
             }
@@ -785,10 +798,12 @@ class SendEmailController extends Controller
                 'paymentLink'        => $data['domain'] . '/api/order/pay?order_id=' . $data['id'],
                 'orderDetails'       => $data['domain'] . '/account?orderdetails=' . $data['id'],
                 'goods'              => $goods_data_list,
-                'userId'             => $data['user_id']
+                'userId'             => $data['user_id'],
+                'dateTime'           => date('Y-m-d H:i:s'),
+                'sumGoodsCnt'        => $sum_goods_cnt,
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
-                ->toArray();
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])->pluck('value', 'key')
+                                   ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
@@ -834,8 +849,11 @@ class SendEmailController extends Controller
      *
      * @return mixed
      */
-    public function handlerSendEmail($scene, $email, $data, $senderEmail, $isQueue = false, $testEmail = '')
-    {
+    public function handlerSendEmail($scene, $email, $data, $senderEmail, $isQueue = false, $testEmail = '') {
+        //校验邮箱规则
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
         //如果是测试邮件,用于cli
         if (!empty($testEmail)) {
             $email = $testEmail;

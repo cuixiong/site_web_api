@@ -139,7 +139,7 @@ class InformationController extends Controller {
             $data['prev_next'] = $prev_next;
 
             //获取相关资讯
-            $data['relevant_news'] = $this->getLastNews($id);
+            $data['last_news'] = $this->getLastNews($id);
             //获取相关报告
             $data['relevant_product'] = $this->getRelevantProduct($data['tags']);
             //获取相关新闻
