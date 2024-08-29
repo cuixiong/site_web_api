@@ -263,11 +263,12 @@ class OrderController extends Controller {
     /**
      * 订单明细
      */
-    public function Details(Request $request) {
+    public function Details(Request $request)
+    {
         $orderId = $request->order_id;
         $order = Order::query()
-                      ->where(['id' => $orderId])
-                      ->first();
+            ->where(['id' => $orderId])
+            ->first();
         if (!$order) {
             ReturnJson(false, '订单不存在');
         }
@@ -282,37 +283,38 @@ class OrderController extends Controller {
             ReturnJson(true, '', ['is_pay' => $orderStatus, 'order_number' => $orderNumber]);
         }
         $orderGoods = OrderGoods::from('order_goods')->select([
-                                                                  'product.name',
-                                                                  'language.name as language',
-                                                                  'edition.name as edition',
-                                                                  'order_goods.goods_number',
-                                                                  'order_goods.goods_original_price',
-                                                                  'order_goods.goods_present_price',
-                                                                  'order_goods.goods_id as product_id',
-                                                                  'product.url',
-                                                                  // 'order_goods.price_edition',
-                                                              ])
-                                ->leftJoin('product_routine as product', 'product.id', 'order_goods.goods_id')
-                                ->leftJoin('price_edition_values as edition', 'edition.id', 'order_goods.price_edition')
-                                ->leftJoin('languages as language', 'language.id', 'edition.language_id')
-                                ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
-                                ->get()->toArray();
-        if (!empty($order['user_id'])) {
-            $user = User::select(['username', 'email', 'phone', 'company', 'province_id', 'city_id', 'address'])->where(
-                'id', $order['user_id']
-            )->first();
+            'product.name',
+            'language.name as language',
+            'edition.name as edition',
+            'order_goods.goods_number',
+            'order_goods.goods_original_price',
+            'order_goods.goods_present_price',
+            'order_goods.goods_id as product_id',
+            'product.url',
+            // 'order_goods.price_edition',
+        ])
+            ->leftJoin('product_routine as product', 'product.id', 'order_goods.goods_id')
+            ->leftJoin('price_edition_values as edition', 'edition.id', 'order_goods.price_edition')
+            ->leftJoin('languages as language', 'language.id', 'edition.language_id')
+            ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
+            ->get()->toArray();
+        // if (!empty($order['user_id'])) {
+        //     $user = User::select(['username', 'email', 'phone', 'company', 'province_id', 'city_id', 'address'])->where(
+        //         'id',
+        //         $order['user_id']
+        //     )->first();
             $province = City::where('id', $order['province_id'])->value('name');
             $city = City::where('id', $order['city_id'])->value('name');
             $_user = [
-                'name'     => $user['username'] ?? '',
-                'email'    => $user['email'] ?? '',
-                'phone'    => $user['phone'] ?? '',
-                'company'  => $user['company'] ?? '',
+                'name'     => $order['username'] ?? '',
+                'email'    => $order['email'] ?? '',
+                'phone'    => $order['phone'] ?? '',
+                'company'  => $order['company'] ?? '',
                 'province' => $province,
                 'city_id'  => $city,
                 'address'  => $order['address'],
             ];
-        }
+        // }
         //$discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);
         $data = [
             'order'  => [
