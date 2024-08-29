@@ -43,6 +43,8 @@ class InvoicesController extends Controller {
             $rdata = [];
             $rdata['data'] = $rs;
             $rdata['count'] = $count;
+            $rdata['pageNum'] = $request->pageNum;
+            $rdata['pageSize'] = $request->pageSize;
             if ($rs) {
                 ReturnJson(true, '获取成功', $rdata);
             } else {
@@ -63,6 +65,7 @@ class InvoicesController extends Controller {
             ReturnJson(false, $e->getMessage());
         }
     }
+
 
     public function apply(Request $request) {
         try {
@@ -91,7 +94,7 @@ class InvoicesController extends Controller {
                 'user_id'         => $userId,
                 'order_id'        => $input['order_id'],
                 'title'           => $orderObj->product_name,
-                'apply_status'    => 0,
+                'apply_status'    => 1,
                 'phone'           => $input['phone'],
                 'bank_name'       => $input['bank_name'],
                 'bank_account'    => $input['bank_account'],

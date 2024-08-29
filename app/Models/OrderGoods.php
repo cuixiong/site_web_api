@@ -29,6 +29,7 @@ class OrderGoods extends Base {
                 'name'           => $data['name'],
                 'thumb'          => $thumb_img,
                 'published_date' => $data['published_date'],
+                'category_id'  => $data['category_id'],
             ];
 
             return $rdata;
