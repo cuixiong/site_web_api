@@ -10,6 +10,7 @@ use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\Common;
 use App\Models\ProductDescription;
+use App\Models\SystemValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -280,21 +281,23 @@ class NewsController extends Controller {
         return $data;
     }
 
-    private function getRelevantNews($keyword, $id) {
+    private function getRelevantNews($keyword, $id)
+    {
         $data = News::select([
-                                 'title',
-                                 'keywords',
-                                 'id',
-                                 'url',
-                             ])
-                    ->where('status', 1)
-                    ->where('id', '<>', $id)
-                    ->where('upload_at', '<=', time())
-                    ->whereIn('keywords', $keyword)
-                    ->orderBy('upload_at', 'desc')
-                    ->limit(5)
-                    ->get()
-                    ->toArray();
+            'title',
+            'keywords',
+            'id',
+            'url',
+            'description',
+        ])
+            ->where('status', 1)
+            ->where('id', '<>', $id)
+            ->where('upload_at', '<=', time())
+            ->whereIn('keywords', $keyword)
+            ->orderBy('upload_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->toArray();
 
         return $data;
     }
@@ -338,27 +341,43 @@ class NewsController extends Controller {
                 ->toArray();
             if ($result) {
                 $time = time();
+                // 默认图片
+                // 若报告图片为空，则使用系统设置的默认报告高清图
+                $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+                // 分类信息
+                $categoryIds = array_column($result, 'category_id');
+                $categoryData = ProductsCategory::select(['id', 'name', 'thumb', 'link', 'product_tag'])->whereIn('id', $categoryIds)->get()->toArray();
+                $categoryData = array_column($categoryData, null, 'id');
+
                 foreach ($result as $key => $value) {
+
+
+                    //每个报告加上分类信息
+                    $tempCategoryId = $value['category_id'];
+                    $product['categoryLink'] = isset($tempCategoryId) ? $tempCategoryId : '';
+                    $product['categoryName'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
+                    $product['categoryLink'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['link']) ? $categoryData[$tempCategoryId]['link'] : '';
+                    $data[$key]['tag_list'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['product_tag']) ? explode(",", $categoryData[$tempCategoryId]['product_tag']) : [];
+
                     $data[$key]['thumb'] = Products::getThumbImgUrl($value);
+                    
+                    if (empty($data[$key]['thumb'])) {
+                        // 如果报告图片、分类图片为空，使用系统默认图片
+                        $data[$key]['thumb']= !empty($defaultImg) ? $defaultImg : '';
+                    }
+
                     $data[$key]['name'] = $value['name'];
                     $data[$key]['keyword'] = $value['keywords'];
                     $data[$key]['english_name'] = $value['english_name'];
                     // $data[$key]['description'] = $value['description_seo'];
                     $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
-                    $productsCategory = ProductsCategory::query()->select(['id', 'name', 'link', 'product_tag'])->where(
-                        'id',
-                        $value['category_id']
-                    )->first();
-                    $data[$key]['categoryName'] = $productsCategory->name ?? '';
-                    $data[$key]['categoryId'] = $productsCategory->id ?? 0;
-                    $data[$key]['categoryLink'] = $productsCategory->link ?? '';
-                    $data[$key]['tag_list'] = explode(",", $productsCategory->product_tag);
                     $data[$key]['discount_type'] = $value['discount_type'];
                     $data[$key]['discount_value'] = $value['discount_value'];
+                    $data[$key]['discount_amount'] = $value['discount_value']; // 兼容
                     $data[$key]['discount'] = $value['discount'];
                     $data[$key]['discount_time_begin'] = $value['discount_time_begin'];
                     $data[$key]['discount_time_end'] = $value['discount_time_end'];
-                    
+
                     //判断当前报告是否在优惠时间内
                     if ($data[$key]['discount_time_begin'] <= $time && $data[$key]['discount_time_end'] >= $time) {
                         $data[$key]['discount_status'] = 1;
@@ -366,11 +385,12 @@ class NewsController extends Controller {
                         $data[$key]['discount_status'] = 0;
                         // 过期需返回正常的折扣
                         $data[$key]['discount_value'] = 0;
-                        // $data[$key]['discount_amount'] = 0;
+                        $data[$key]['discount_amount'] = 0; // 兼容
                         $data[$key]['discount'] = 100;
                         $data[$key]['discount_time_begin'] = null;
                         $data[$key]['discount_time_end'] = null;
                     }
+
                     $data[$key]['description'] = (new ProductDescription(
                         date('Y', strtotime($value['published_date']))
                     ))->where('product_id', $value['id'])->value('description');
@@ -392,16 +412,15 @@ class NewsController extends Controller {
                                     $prices[$index]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
                                     $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
                                     $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
-                                            $priceEdition['rule'],
-                                            $value['price']
-                                        ) . ";");
+                                        $priceEdition['rule'],
+                                        $value['price']
+                                    ) . ";");
                                     if ($index == 0 && $keyPriceEdition == 0) {
                                         // 以第一个价格版本作为显示的价格版本
                                         $data[$key]['price'] = $prices[$index]['data'][$keyPriceEdition]['price'];
                                         $data[$key]['price_edition'] = $priceEdition['id'];
                                     }
                                 }
-                                
                             }
                         }
                     }
