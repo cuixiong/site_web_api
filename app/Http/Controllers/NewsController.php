@@ -78,6 +78,7 @@ class NewsController extends Controller {
                 $news[$key]['id'] = $value['id'];
                 $news[$key]['url'] = $value['url'];
                 $news[$key]['hits'] = $value['hits'];
+                $news[$key]['keywords'] = $value['keywords'];
             }
         }
         $data = [
