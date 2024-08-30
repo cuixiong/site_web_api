@@ -262,21 +262,23 @@ class NewsController extends Controller {
      *
      * @return mixed
      */
-    private function getLastNews(mixed $id) {
+    private function getLastNews(mixed $id)
+    {
         $data = News::select([
-                                 'title',
-                                 'keywords',
-                                 'id',
-                                 'url',
-                             ])
-                    ->where('status', 1)
-                    ->where('id', '<>', $id)
-                    ->where('upload_at', '<=', time())
+            'title',
+            'keywords',
+            'id',
+            'url',
+            'description',
+        ])
+            ->where('status', 1)
+            ->where('id', '<>', $id)
+            ->where('upload_at', '<=', time())
             // ->where($category_id)
-                    ->orderBy('upload_at', 'desc')
-                    ->limit(5)
-                    ->get()
-                    ->toArray();
+            ->orderBy('upload_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->toArray();
 
         return $data;
     }
@@ -354,7 +356,7 @@ class NewsController extends Controller {
 
                     //每个报告加上分类信息
                     $tempCategoryId = $value['category_id'];
-                    $data[$key]['categoryLink'] = isset($tempCategoryId) ? $tempCategoryId : '';
+                    $data[$key]['categoryId'] = isset($tempCategoryId) ? $tempCategoryId : '';
                     $data[$key]['categoryName'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
                     $data[$key]['categoryLink'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['link']) ? $categoryData[$tempCategoryId]['link'] : '';
                     $data[$key]['tag_list'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['product_tag']) ? explode(",", $categoryData[$tempCategoryId]['product_tag']) : [];
