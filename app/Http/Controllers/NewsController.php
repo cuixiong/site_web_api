@@ -354,9 +354,9 @@ class NewsController extends Controller {
 
                     //每个报告加上分类信息
                     $tempCategoryId = $value['category_id'];
-                    $product['categoryLink'] = isset($tempCategoryId) ? $tempCategoryId : '';
-                    $product['categoryName'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
-                    $product['categoryLink'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['link']) ? $categoryData[$tempCategoryId]['link'] : '';
+                    $data[$key]['categoryLink'] = isset($tempCategoryId) ? $tempCategoryId : '';
+                    $data[$key]['categoryName'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
+                    $data[$key]['categoryLink'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['link']) ? $categoryData[$tempCategoryId]['link'] : '';
                     $data[$key]['tag_list'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['product_tag']) ? explode(",", $categoryData[$tempCategoryId]['product_tag']) : [];
 
                     $data[$key]['thumb'] = Products::getThumbImgUrl($value);
