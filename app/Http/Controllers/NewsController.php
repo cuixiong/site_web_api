@@ -305,34 +305,39 @@ class NewsController extends Controller {
      *
      * @return array
      */
-    private function getRelevantProduct($keyword): array {
+    private function getRelevantProduct($keyword): array
+    {
         $data = [];
         if ($keyword) {
             //$begin = strtotime("-2 year", strtotime(date('Y-01-01', time()))); // 前两年
             $result = Products::select([
-                                           'id',
-                                           'name',
-                                           'thumb',
-                                           'english_name',
-                                           'keywords',
-                                           'published_date',
-                                           'category_id',
-                                           'price',
-                                           'url',
-                                           'discount_type',
-                                           'discount_amount as discount_value',
-                                           // 'description_seo'
-                                       ])
-                              ->whereIn('keywords', $keyword)
-                              ->where("status", 1)
+                'id',
+                'name',
+                'thumb',
+                'english_name',
+                'keywords',
+                'published_date',
+                'category_id',
+                'price',
+                'url',
+                'discount_type',
+                'discount',
+                'discount_amount as discount_value',
+                'discount_time_begin',
+                'discount_time_end'
+                // 'description_seo'
+            ])
+                ->whereIn('keywords', $keyword)
+                ->where("status", 1)
                 //->where('published_date', '>', $begin)
-                              ->where("published_date", "<=", time())
-                              ->orderBy('published_date', 'desc')
-                              ->orderBy('id', 'desc')
-                              ->limit(2)
-                              ->get()
-                              ->toArray();
+                ->where("published_date", "<=", time())
+                ->orderBy('published_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->limit(2)
+                ->get()
+                ->toArray();
             if ($result) {
+                $time = time();
                 foreach ($result as $key => $value) {
                     $data[$key]['thumb'] = Products::getThumbImgUrl($value);
                     $data[$key]['name'] = $value['name'];
@@ -341,14 +346,30 @@ class NewsController extends Controller {
                     // $data[$key]['description'] = $value['description_seo'];
                     $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
                     $productsCategory = ProductsCategory::query()->select(['id', 'name', 'link', 'product_tag'])->where(
-                        'id', $value['category_id']
+                        'id',
+                        $value['category_id']
                     )->first();
                     $data[$key]['categoryName'] = $productsCategory->name ?? '';
                     $data[$key]['categoryId'] = $productsCategory->id ?? 0;
                     $data[$key]['categoryLink'] = $productsCategory->link ?? '';
-                    $data[$key]['tag_list'] = explode("," , $productsCategory->product_tag);
+                    $data[$key]['tag_list'] = explode(",", $productsCategory->product_tag);
                     $data[$key]['discount_type'] = $value['discount_type'];
                     $data[$key]['discount_value'] = $value['discount_value'];
+                    $data[$key]['discount'] = $value['discount'];
+                    $data[$key]['discount_time_begin'] = $value['discount_time_begin'];
+                    $data[$key]['discount_time_end'] = $value['discount_time_end'];
+                    
+                    //判断当前报告是否在优惠时间内
+                    if ($data[$key]['discount_time_begin'] <= $time && $data[$key]['discount_time_end'] >= $time) {
+                        $data[$key]['discount_status'] = 1;
+                    } else {
+                        $data[$key]['discount_status'] = 0;
+                        // 过期需返回正常的折扣
+                        $data[$key]['discount_amount'] = 0;
+                        $data[$key]['discount'] = 100;
+                        $data[$key]['discount_time_begin'] = null;
+                        $data[$key]['discount_time_end'] = null;
+                    }
                     $data[$key]['description'] = (new ProductDescription(
                         date('Y', strtotime($value['published_date']))
                     ))->where('product_id', $value['id'])->value('description');
@@ -362,18 +383,23 @@ class NewsController extends Controller {
                             $priceEditions = PriceEditionValues::select(
                                 ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
                             )->where(['language_id' => $language['id']])->get()->toArray();
-                            $prices[$index]['language'] = $language['name'];
                             if ($priceEditions) {
+                                $prices[$index]['language'] = $language['name'];
                                 foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
                                     $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
                                     $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
                                     $prices[$index]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
                                     $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
-                                    $prices[$index]['data'][$keyPriceEdition]['price'] = eval(
-                                        "return ".sprintf(
-                                            $priceEdition['rule'], $value['price']
-                                        ).";"
-                                    );
+                                    $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
+                                            $priceEdition['rule'],
+                                            $value['price']
+                                        ) . ";");
+                                }
+                                
+                                if ($index == 0 && $keyPriceEdition == 0) {
+                                    // 以第一个价格版本作为显示的价格版本
+                                    $data[$key]['price'] = $prices[$index]['data'][$keyPriceEdition]['price'];
+                                    $data[$key]['price_edition'] = $priceEdition['id'];
                                 }
                             }
                         }
