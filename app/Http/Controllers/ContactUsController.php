@@ -12,12 +12,17 @@ use App\Models\DictionaryValue;
 use App\Models\MessageLanguageVersion;
 use App\Models\Country;
 use App\Models\City;
+use App\Models\MessageCategory;
 
 class ContactUsController extends Controller {
     // 免费样本/定制报告
     public function Add(Request $request)
     {
         $params = $request->all();
+        
+        $sceneCode = $params['code'];
+        $category_id = MessageCategory::where('action', $sceneCode)->value('category_id');
+
         $model = new ContactUs();
         $model->name = $params['name'] ?? '';
         $model->email = $params['email'] ?? '';
@@ -29,7 +34,7 @@ class ContactUsController extends Controller {
         }
         $model->province_id = $params['province_id'] ?? 0;
         $model->city_id = $params['city_id'] ?? 0;
-        $model->category_id = $params['category_id'] ?? 0;
+        $model->category_id = $category_id ?? 0;
         $model->phone = $params['phone'] ?? '';
         $model->content = $params['content'] ?? '';
         $model->product_id = $params['product_id'] ?? 0;
