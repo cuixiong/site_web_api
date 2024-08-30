@@ -21,7 +21,7 @@ class ContactUsController extends Controller {
         $params = $request->all();
         
         $sceneCode = $params['code'];
-        $category_id = MessageCategory::where('action', $sceneCode)->value('id');
+        $category_id = MessageCategory::where('code', $sceneCode)->value('id');
 
         $model = new ContactUs();
         $model->name = $params['name'] ?? '';
