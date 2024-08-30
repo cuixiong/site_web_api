@@ -28,7 +28,7 @@ class NewsController extends Controller {
             'status' => 1,
         ];
         $field = ['thumb', 'title', 'upload_at as release_at', 'tags', 'description', 'category_id', 'id',
-                  'url' , 'hits'];
+                  'url' , 'hits', 'keywords'];
         $query = News::select($field)
                      ->where($where)
                      ->where('upload_at', '<=', time());
