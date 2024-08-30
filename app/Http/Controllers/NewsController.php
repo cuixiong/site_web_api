@@ -365,7 +365,8 @@ class NewsController extends Controller {
                     } else {
                         $data[$key]['discount_status'] = 0;
                         // 过期需返回正常的折扣
-                        $data[$key]['discount_amount'] = 0;
+                        $data[$key]['discount_value'] = 0;
+                        // $data[$key]['discount_amount'] = 0;
                         $data[$key]['discount'] = 100;
                         $data[$key]['discount_time_begin'] = null;
                         $data[$key]['discount_time_end'] = null;
