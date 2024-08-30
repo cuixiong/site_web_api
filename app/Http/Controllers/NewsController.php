@@ -394,13 +394,13 @@ class NewsController extends Controller {
                                             $priceEdition['rule'],
                                             $value['price']
                                         ) . ";");
+                                    if ($index == 0 && $keyPriceEdition == 0) {
+                                        // 以第一个价格版本作为显示的价格版本
+                                        $data[$key]['price'] = $prices[$index]['data'][$keyPriceEdition]['price'];
+                                        $data[$key]['price_edition'] = $priceEdition['id'];
+                                    }
                                 }
                                 
-                                if ($index == 0 && $keyPriceEdition == 0) {
-                                    // 以第一个价格版本作为显示的价格版本
-                                    $data[$key]['price'] = $prices[$index]['data'][$keyPriceEdition]['price'];
-                                    $data[$key]['price_edition'] = $priceEdition['id'];
-                                }
                             }
                         }
                     }
