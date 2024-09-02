@@ -28,7 +28,7 @@ class BaseThirdController extends Controller {
             foreach ($inputParams as $key => $value) {
                 $sourceSignStr .= $key . '=' . $value . '&';
             }
-            $sourceSignStr .= 'key=mmgcn';
+            $sourceSignStr .= 'key='.env('APP_NAME');
             $signStr = md5($sourceSignStr);
             if ($signStr != $sign) {
                 //ReturnJson(false, '签名错误', [$signStr , $sign, $sourceSignStr]);
