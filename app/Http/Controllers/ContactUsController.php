@@ -15,7 +15,8 @@ use App\Models\City;
 
 class ContactUsController extends Controller {
     // 免费样本/定制报告
-    public function Add(Request $request) {
+    public function Add(Request $request)
+    {
         $params = $request->all();
         $model = new ContactUs();
         $model->name = $params['name'] ?? '';
@@ -33,13 +34,10 @@ class ContactUsController extends Controller {
         $model->content = $params['content'] ?? '';
         $model->product_id = $params['product_id'] ?? 0;
         if ($model->save()) {
-            if ($params['category_id'] == 4) {
-                //申请样本
-                (new SendEmailController)->productSample($model->id);
-            } else {
-                //定制报告
-                (new SendEmailController)->customized($model->id);
-            }
+            // 根据code发送对应场景
+            $sceneCode = $params['code'];
+            (new SendEmailController)->sendMessageEmail($model->id, $sceneCode);
+
             ReturnJson(true, '', $model);
         } else {
             ReturnJson(false, $model->getModelError());

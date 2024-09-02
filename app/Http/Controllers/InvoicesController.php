@@ -7,13 +7,19 @@ use App\Models\Invoices;
 use App\Models\Order;
 use Illuminate\Http\Request;
 
-class InvoicesController extends Controller {
-    public function list(Request $request) {
+class InvoicesController extends Controller
+{
+    public function list(Request $request)
+    {
         try {
             $status = $request->input('status', '0');
-            if (empty($status) || !isset($status)
-                || !in_array($status, [Invoices::alreadyInvoiceStatus,
-                                       Invoices::applyInvoiceStatus])) {
+            if (
+                empty($status) || !isset($status)
+                || !in_array($status, [
+                    Invoices::alreadyInvoiceStatus,
+                    Invoices::applyInvoiceStatus
+                ])
+            ) {
                 $status = 0;
             }
             $userId = $request->user->id;
@@ -36,8 +42,23 @@ class InvoicesController extends Controller {
             } else {
                 $model->limit(15);
             }
-            $fields = ['id', 'created_at', 'invoice_type', 'company_name', 'tax_code', 'title',
-                       'status', 'apply_status', 'price'];
+            $fields = [
+                'id',
+                'title',    // 发票抬头
+                'created_at',
+                'status',
+                'apply_status',
+                'price',
+                // 国内字段
+                'invoice_type', // 发票类型
+                'company_name', // 公司名称
+                'company_address', // 公司地址（注册地址）
+                'tax_code', // 纳税人识别码
+                'phone',    // 注册电话
+                'bank_name',    // 开户行
+                'bank_account', // 银行账号
+
+            ];
             $model->select($fields);
             $rs = $model->get();
             $rdata = [];
@@ -55,7 +76,8 @@ class InvoicesController extends Controller {
         }
     }
 
-    public function form(Request $request) {
+    public function form(Request $request)
+    {
         try {
             $model = new Invoices();
             $record = $model->findOrFail($request->id);
@@ -67,7 +89,8 @@ class InvoicesController extends Controller {
     }
 
 
-    public function apply(Request $request) {
+    public function apply(Request $request)
+    {
         try {
             (new InvoicesRequest())->apply($request);
             $input = $request->all();
