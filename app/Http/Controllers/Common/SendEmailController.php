@@ -650,10 +650,12 @@ class SendEmailController extends Controller
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
                 $sum_goods_cnt += $goods_data['goods_number'];
                 $goods_data['language'] = $language;
-                $goods_data['price_edition'] = $priceEdition['name'] ?: '';
+                $goods_data['price_edition'] = isset($priceEdition['name']) && !empty($priceEdition['name']) ? $priceEdition['name'] : '';
                 $goods_data['goods_present_price'] = $OrderGoods['goods_original_price'];
                 $goods_data['goods_sum_price'] = bcmul(
-                    $OrderGoods['goods_original_price'], $OrderGoods['goods_number'], 2
+                    $OrderGoods['goods_original_price'],
+                    $OrderGoods['goods_number'],
+                    2
                 );
                 //$goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/') . $products->getThumbImgAttribute();
@@ -688,8 +690,8 @@ class SendEmailController extends Controller
                 'sumGoodsCnt'        => $sum_goods_cnt,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
-                                   ->pluck('value', 'key')
-                                   ->toArray();
+                ->pluck('value', 'key')
+                ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
@@ -697,7 +699,15 @@ class SendEmailController extends Controller
             }
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', 'placeOrder')->select(
-                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
+                ['id',
+                    'name',
+                    'title',
+                    'body',
+                    'email_sender_id',
+                    'email_recipient',
+                    'status',
+                    'alternate_email_id'
+                ]
             )->first();
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
@@ -764,13 +774,15 @@ class SendEmailController extends Controller
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
                 $sum_goods_cnt += $goods_data['goods_number'];
                 $goods_data['language'] = $language;
-                $goods_data['price_edition'] = $priceEdition['name'] ?: '';
+                $goods_data['price_edition'] = isset($priceEdition['name']) && !empty($priceEdition['name']) ? $priceEdition['name'] : '';
                 //$goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 $goods_data['goods_present_price'] = $OrderGoods['goods_original_price'];
                 $goods_data['goods_sum_price'] = bcmul(
-                    $OrderGoods['goods_original_price'], $OrderGoods['goods_number'], 2
+                    $OrderGoods['goods_original_price'],
+                    $OrderGoods['goods_number'],
+                    2
                 );
-                $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$products->getThumbImgAttribute();
+                $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/') . $products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;
             }
@@ -803,7 +815,7 @@ class SendEmailController extends Controller
                 'sumGoodsCnt'        => $sum_goods_cnt,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])->pluck('value', 'key')
-                                   ->toArray();
+                ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
@@ -811,7 +823,15 @@ class SendEmailController extends Controller
             }
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', 'payment')->select(
-                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
+                ['id',
+                    'name',
+                    'title',
+                    'body',
+                    'email_sender_id',
+                    'email_recipient',
+                    'status',
+                    'alternate_email_id'
+                ]
             )->first();
             //邮件标题
             $scene->title = $scene->title . ", 订单号是 " . $data['order_number'];
