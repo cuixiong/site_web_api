@@ -34,6 +34,7 @@ class BaseThirdController extends Controller {
                 //ReturnJson(false, '签名错误', [$signStr , $sign, $sourceSignStr]);
                 ReturnJson(false, '签名错误');
             }
+            ReturnJson(true, 'success');
         }else{
             ReturnJson(false, '签名错误', []);
         }
