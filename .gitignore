@@ -30,5 +30,6 @@ Homestead.json
 /public/nginx.htaccess
 /public/robots.txt
 /public/favicon.ico
+/public/sitemap.xml
 /public/sitemap/
 /.idea
