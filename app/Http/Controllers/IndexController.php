@@ -593,7 +593,7 @@ class IndexController extends Controller {
      * @return array
      */
     private function getHotInfoNews(Request $request) {
-        $limit = $request->news_size ?? 4;
+        $limit = $request->info_size ?? 4;
         // 这里keywords可能改成tags，都是逗号分割取第一个
         $list = Information::where('status', 1)
                            ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url', 'keywords'])
