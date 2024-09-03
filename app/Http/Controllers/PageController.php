@@ -64,14 +64,19 @@ class PageController extends Controller
     {
         $page = !empty($request->page) ? $request->page : 1;
         $pageSize = !empty($request->pageSize) ? $request->pageSize : 16;
+        $isALL = !isset($request->is_all) || !empty($request->is_all) ? true : false;
         $category_id = !empty($request->category_id) ? $request->category_id : 0;
 
         //权威引用分类
         //$category = DictionaryValue::GetDicOptions('quote_cage');
-         $category = QuoteCategory::select(['id', 'name'])
+        $category = QuoteCategory::select(['id', 'name'])
                                   ->where("status" , 1)
                                   ->orderBy('sort', 'asc')->get()->toArray() ?? [];
-        array_unshift($category, ['id' => '0', 'name' => '全部']);
+        if($isALL){
+            array_unshift($category, ['id' => '0', 'name' => '全部']);
+        }elseif($category && is_array($category) && count($category)>0){
+            $category_id = $category[0];
+        }
 
         // 数据
         $model = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id'])->orderBy('sort', 'asc');
