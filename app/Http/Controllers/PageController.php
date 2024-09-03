@@ -74,7 +74,7 @@ class PageController extends Controller
                                   ->orderBy('sort', 'asc')->get()->toArray() ?? [];
         if($isALL){
             array_unshift($category, ['id' => '0', 'name' => '全部']);
-        }elseif($category && is_array($category) && count($category)>0){
+        }elseif(!$isALL && empty($category_id) && $category && is_array($category) && count($category)>0){
             $category_id = $category[0];
         }
 
