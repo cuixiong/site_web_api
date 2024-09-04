@@ -212,6 +212,7 @@ class SendEmailController extends Controller
             );
             $domain = 'http://' . $_SERVER['SERVER_NAME'];
             $data = $user;
+            $data['userName'] = $data['name'];
             $data['homePage'] = $domain;
             $data['myAccountUrl'] = rtrim($domain, '/') . '/account/account-infor';
             $data['contactUsUrl'] = rtrim($domain, '/') . '/contact-us';
