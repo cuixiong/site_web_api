@@ -159,6 +159,7 @@ class SendEmailController extends Controller
                     $data[$key] = $value;
                 }
             }
+            $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail'])?'mailto:'.$data['siteEmail']:'';
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', 'registerSuccess')->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
@@ -223,6 +224,7 @@ class SendEmailController extends Controller
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
                 ->toArray();
             $data = array_merge($data, $siteInfo);
+            $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail'])?'mailto:'.$data['siteEmail']:'';
             $this->handlerSendEmail($scene, $user['email'], $data, $senderEmail);
             ReturnJson(true, trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
@@ -290,6 +292,7 @@ class SendEmailController extends Controller
                     $data[$key] = $value;
                 }
             }
+            $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail'])?'mailto:'.$data['siteEmail']:'';
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', $code)->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
@@ -372,6 +375,7 @@ class SendEmailController extends Controller
                     $data[$key] = $value;
                 }
             }
+            $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail'])?'mailto:'.$data['siteEmail']:'';
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', 'productSample')->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
@@ -451,6 +455,7 @@ class SendEmailController extends Controller
                     $data[$key] = $value;
                 }
             }
+            $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail'])?'mailto:'.$data['siteEmail']:'';
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', 'productSample')->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
@@ -511,6 +516,7 @@ class SendEmailController extends Controller
                     $data[$key] = $value;
                 }
             }
+            $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail'])?'mailto:'.$data['siteEmail']:'';
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', 'contactUs')->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
@@ -588,6 +594,7 @@ class SendEmailController extends Controller
                     $data[$key] = $value;
                 }
             }
+            $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail'])?'mailto:'.$data['siteEmail']:'';
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', 'customized')->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
@@ -702,6 +709,7 @@ class SendEmailController extends Controller
                     $data[$key] = $value;
                 }
             }
+            $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail'])?'mailto:'.$data['siteEmail']:'';
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', 'placeOrder')->select(
                 ['id',
@@ -826,6 +834,7 @@ class SendEmailController extends Controller
                     $data[$key] = $value;
                 }
             }
+            $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail'])?'mailto:'.$data['siteEmail']:'';
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', 'payment')->select(
                 ['id',
