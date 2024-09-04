@@ -101,6 +101,7 @@ class SendEmailController extends Controller
                 'verifyUrl'    => $verifyUrl,
                 'userName'     => $data['name'],
                 'area'         => City::where('id', $data['city_id'])->value('name'),
+                'dateTime'     => date('Y-m-d',time()),
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
                 ->toArray();
@@ -147,6 +148,7 @@ class SendEmailController extends Controller
                 'backendUrl'   => env('IMAGE_URL'),
                 'userName'     => $data['name'],
                 'area'         => City::where('id', $data['area_id'])->value('name'),
+                'dateTime'     => date('Y-m-d',time()),
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
                 ->toArray();
@@ -215,6 +217,7 @@ class SendEmailController extends Controller
             $verifyUrl = $data['domain'] . '/signIn/resetPassword?verifyemail=do-reset-register=&email=' . $user['email']
                 . '&token=' . $user['token'];
             $data['verifyUrl'] = $verifyUrl;
+            $data['dateTime'] = date('Y-m-d',time());
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
                 ->toArray();
             $data = array_merge($data, $siteInfo);
