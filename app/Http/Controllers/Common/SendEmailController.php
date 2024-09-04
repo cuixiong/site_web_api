@@ -285,6 +285,7 @@ class SendEmailController extends Controller
                 'backendUrl'   => env('IMAGE_URL'),
                 'link'         => $productLink,
                 'productsName' => $productsName,
+                'dateTime'     => date('Y-m-d H:i:s',time()),
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
                 ->toArray();
@@ -699,7 +700,7 @@ class SendEmailController extends Controller
                 'orderDetails'       => $data['domain'] . '/account?orderdetails=' . $data['id'],
                 'goods'              => $goods_data_list,
                 'userId'             => $data['user_id'],
-                'dateTime'           => date('Y-m-d H:i:s'),
+                'dateTime'           => date('Y-m-d H:i:s',time()),
                 'sumGoodsCnt'        => $sum_goods_cnt,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
@@ -825,7 +826,7 @@ class SendEmailController extends Controller
                 'orderDetails'       => $data['domain'] . '/account?orderdetails=' . $data['id'],
                 'goods'              => $goods_data_list,
                 'userId'             => $data['user_id'],
-                'dateTime'           => date('Y-m-d H:i:s'),
+                'dateTime'           => date('Y-m-d H:i:s',time()),
                 'sumGoodsCnt'        => $sum_goods_cnt,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])->pluck('value', 'key')
@@ -906,6 +907,21 @@ class SendEmailController extends Controller
             HandlerEmailJob::dispatch($scene, $email, $data, $senderEmail, $this->testEmail);
 
             return true;
+            //测试
+            // try {
+            //     (new SendEmailController())->handlerSendEmail(
+            //         $scene, $email, $data, $senderEmail, true, $testEmail
+            //     );
+            // } catch (\Exception $e) {
+            //     $errData = [
+            //         'scene'       => $scene,
+            //         'email'       => $email,
+            //         'data'        => $data,
+            //         'senderEmail' => $senderEmail,
+            //         'error'       => $e->getMessage(),
+            //     ];
+            //     \Log::error('发送邮件失败：错误信息与数据:'.json_encode($errData));
+            // }
         }
         // 邮箱账号配置信息
         $config = [
