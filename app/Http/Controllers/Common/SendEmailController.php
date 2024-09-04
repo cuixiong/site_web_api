@@ -110,6 +110,8 @@ class SendEmailController extends Controller
                     $data[$key] = $value;
                 }
             }
+            $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail'])?'mailto:'.$data['siteEmail']:'';
+
             $data = array_merge($data2, $data);
             $scene = EmailScene::where('action', 'register')->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
