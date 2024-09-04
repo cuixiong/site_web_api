@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TrendsEmail;
 use App\Models\City;
+use App\Models\Common;
 use App\Models\ContactUs;
 use App\Models\DictionaryValue;
 use App\Models\Email;
@@ -641,6 +642,11 @@ class SendEmailController extends Controller
             $goods_data_list = [];
             $productsName = "";
             $sum_goods_cnt = 0;
+            
+            // 默认图片
+            // 若报告图片为空，则使用系统设置的默认报告高清图
+            $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+
             foreach ($orderGoodsList as $key => $OrderGoods) {
                 $goods_data = [];
                 $priceEditionId = $OrderGoods['price_edition'];
@@ -672,7 +678,23 @@ class SendEmailController extends Controller
                     2
                 );
                 //$goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
-                $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/') . $products->getThumbImgAttribute();
+                // 分类信息
+                $category = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $products['category_id'])->first();
+                $goods_data['category_name'] = isset($category) ? $goods_data['name'] : '';
+                $goods_data['category_thumb'] = isset($category) ? $goods_data['name'] : '';
+                
+                $tempThumb = '';
+                if (!empty($products['thumb'])) {
+                    $tempThumb = Common::cutoffSiteUploadPathPrefix($products['thumb']);
+                } elseif (!empty($product['category_thumb'])) {
+                    $tempThumb = Common::cutoffSiteUploadPathPrefix($goods_data['category_thumb']);
+                } else {
+                    // 如果报告图片、分类图片为空，使用系统默认图片
+                    $tempThumb = !empty($defaultImg) ? $defaultImg : '';
+                }
+
+                $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/') . $tempThumb;
+                // $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/') . $products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;
             }
@@ -766,6 +788,9 @@ class SendEmailController extends Controller
             $goods_data_list = [];
             $productsName = "";
             $sum_goods_cnt = 0;
+            // 默认图片
+            // 若报告图片为空，则使用系统设置的默认报告高清图
+            $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
             foreach ($orderGoodsList as $key => $OrderGoods) {
                 $goods_data = [];
                 $priceEditionId = $OrderGoods['price_edition'];
@@ -797,7 +822,25 @@ class SendEmailController extends Controller
                     $OrderGoods['goods_number'],
                     2
                 );
-                $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/') . $products->getThumbImgAttribute();
+                
+                // 分类信息
+                $category = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $products['category_id'])->first();
+                $goods_data['category_name'] = isset($category) ? $goods_data['name'] : '';
+                $goods_data['category_thumb'] = isset($category) ? $goods_data['name'] : '';
+                
+                $tempThumb = '';
+                if (!empty($products['thumb'])) {
+                    $tempThumb = Common::cutoffSiteUploadPathPrefix($products['thumb']);
+                } elseif (!empty($product['category_thumb'])) {
+                    $tempThumb = Common::cutoffSiteUploadPathPrefix($goods_data['category_thumb']);
+                } else {
+                    // 如果报告图片、分类图片为空，使用系统默认图片
+                    $tempThumb = !empty($defaultImg) ? $defaultImg : '';
+                }
+
+                $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/') . $tempThumb;
+
+                // $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/') . $products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;
             }
