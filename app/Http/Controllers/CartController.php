@@ -574,7 +574,7 @@ class CartController extends Controller {
                             foreach ($languages as $langIndex => $language) {
                                 $priceEditions = PriceEditionValues::select(
                                     ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
-                                )->where(['status' => 1,'language_id' => $language['id']])->get()->toArray();
+                                )->where(['status' => 1, 'is_deleted' => 1, 'language_id' => $language['id']])->get()->toArray();
                                 if ($priceEditions) {
                                     $prices[$langIndex]['language'] = $language['name'];
                                     foreach ($priceEditions as $keyPriceEdition => $priceEdition) {

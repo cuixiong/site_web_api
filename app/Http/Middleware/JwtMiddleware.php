@@ -20,7 +20,7 @@ class JwtMiddleware
         try {
             if (! $user = JWTAuth::parseToken()->authenticate()) {  //获取到用户数据，并赋值给$user
                 return response()->json([
-                    'code' => 'B001',
+                    'code' => 80001,
                     'message' => '账号不存在'
                 ], 404);
             }
