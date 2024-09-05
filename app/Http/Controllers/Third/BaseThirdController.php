@@ -14,6 +14,9 @@ namespace App\Http\Controllers\Third;
 use App\Http\Controllers\Controller;
 
 class BaseThirdController extends Controller {
+
+    public $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
+
     public function __construct() {
         $this->checkSign();
     }
@@ -28,7 +31,7 @@ class BaseThirdController extends Controller {
             foreach ($inputParams as $key => $value) {
                 $sourceSignStr .= $key . '=' . $value . '&';
             }
-            $sourceSignStr .= 'key='.env('APP_NAME');
+            $sourceSignStr .= 'key='.$this->signKey;
             $signStr = md5($sourceSignStr);
             if ($signStr != $sign) {
                 //ReturnJson(false, '签名错误', [$signStr , $sign, $sourceSignStr]);
