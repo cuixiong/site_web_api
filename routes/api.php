@@ -163,10 +163,10 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         );
     });
     //user-invoices 用户发票
-    Route::prefix('user-invoices')->middleware(JwtMiddleware::class)->group(function () {
-        Route::get('list', [\App\Http\Controllers\InvoicesController::class, 'list'])->name('发票列表');
-        Route::get('form/{id}', [\App\Http\Controllers\InvoicesController::class, 'form'])->name('发票详情');
-        Route::post('apply', [\App\Http\Controllers\InvoicesController::class, 'apply'])->name('申请发票');
+    Route::prefix('user-invoices')->group(function () {
+        Route::middleware(JwtMiddleware::class)->get('list', [\App\Http\Controllers\InvoicesController::class, 'list'])->name('发票列表');
+        Route::middleware(JwtMiddleware::class)->get('form/{id}', [\App\Http\Controllers\InvoicesController::class, 'form'])->name('发票详情');
+        Route::middleware(JwtMiddleware::class)->post('apply', [\App\Http\Controllers\InvoicesController::class, 'apply'])->name('申请发票');
         Route::post('apply-single-page', [\App\Http\Controllers\InvoicesController::class, 'applySinglePage'])->name('申请发票(单页)');
     });
     // Cart控制器(购物车模块)
