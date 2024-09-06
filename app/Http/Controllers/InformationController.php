@@ -357,7 +357,7 @@ class InformationController extends Controller {
                         foreach ($languages as $index => $language) {
                             $priceEditions = PriceEditionValues::select(
                                 ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
-                            )->where(['status' => 1, 'is_deleted'=> 1, 'language_id' => $language['id']])->get()->toArray();
+                            )->where(['status' => 1, 'is_deleted'=> 1, 'language_id' => $language['id']])->orderBy("sort", "asc")->get()->toArray();
                             $prices[$index]['language'] = $language['name'];
                             if ($priceEditions) {
                                 foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
