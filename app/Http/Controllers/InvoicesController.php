@@ -148,6 +148,7 @@ class InvoicesController extends Controller
             $model = new Invoices();
             $addData = [
                 'order_id'        => 0,
+                'user_id'         => 0,
                 'title'           => $input['title'],
                 'company_name'    => $input['company_name'],
                 'company_address' => $input['company_address'],
