@@ -51,7 +51,7 @@ class ThirdRespController extends BaseThirdController {
             //重置密码
             $res = ($sendEmailController)->ResetPassword($testEmail);
         } elseif($code == 'contactUs'){
-            //定制报告
+            //联系我们
             $id = ContactUs::query()->orderBy('id', 'asc')->value("id");
             $res = ($sendEmailController)->contactUs($id);
         } elseif($code == 'productSample'){

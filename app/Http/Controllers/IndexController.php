@@ -91,13 +91,6 @@ class IndexController extends Controller {
     // 办公室
     public function office(Request $request) {
         $list = Office::where('status', 1)
-                      ->select(
-                          [
-                              'id', 'city', 'name', 'language_alias', 'region', 'area', 'image', 'national_flag',
-                              'phone',
-                              'address', 'working_language', 'working_time', 'time_zone'
-                          ]
-                      )
                       ->orderBy('sort', 'desc')
                       ->orderBy('id', 'desc')
                       ->get();
