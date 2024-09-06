@@ -131,4 +131,40 @@ class InvoicesController extends Controller
             ReturnJson(false, $e->getMessage());
         }
     }
+
+    /**
+     * 有个单页有个不需要登录和订单的开票操作，但需要额外传递报告名称
+     * 
+     */
+    public function applySinglePage(Request $request)
+    {
+        try {
+            (new InvoicesRequest())->apply($request);
+            $input = $request->all();
+            if(!isset($input['price']) && !is_numeric($input['price'])){
+                ReturnJson(false, 'price is not a number');
+            }
+            
+            $model = new Invoices();
+            $addData = [
+                'title'           => $input['product_name'],
+                'company_name'    => $input['company_name'],
+                'company_address' => $input['company_address'],
+                'tax_code'        => $input['tax_code'],
+                'invoice_type'    => $input['invoice_type'],
+                'price'           => $input['price'],
+                'apply_status'    => 1,
+                'phone'           => $input['phone'],
+                'bank_name'       => $input['bank_name'],
+                'bank_account'    => $input['bank_account'],
+            ];
+            $rs = $model->create($addData);
+            if (!$rs) {
+                ReturnJson(false, '申请失败');
+            }
+            ReturnJson(true, '申请成功');
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
 }
