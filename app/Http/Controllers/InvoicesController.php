@@ -141,7 +141,7 @@ class InvoicesController extends Controller
         try {
             (new InvoicesRequest())->applySinglePage($request);
             $input = $request->all();
-            if(!isset($input['price']) && !is_numeric($input['price'])){
+            if(!isset($input['price']) || !is_numeric($input['price'])){
                 ReturnJson(false, 'price is not a number');
             }
             
