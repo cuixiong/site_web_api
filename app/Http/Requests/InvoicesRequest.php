@@ -44,7 +44,7 @@ class InvoicesRequest extends FormRequest {
             'tax_code'        => 'required',
         ];
         $message = [
-            'title.required'           => '抬头不能为空',
+            'title.required'           => '报告名称不能为空',
             'price.required'           => '金额不能为空',
             'invoice_type.required'    => '发票类型不能为空',
             'company_name.required'    => '公司名称不能为空',
