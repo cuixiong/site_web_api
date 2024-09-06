@@ -35,6 +35,24 @@ class InvoicesRequest extends FormRequest {
 
         return $this->validateRequest($request, $rules, $message);
     }
+    public function applySinglePage($request) {
+        $rules = [
+            'title'           => 'required',
+            'price'           => 'required',
+            'invoice_type'    => 'required',
+            'company_name'    => 'required',
+            'tax_code'        => 'required',
+        ];
+        $message = [
+            'title.required'           => '抬头不能为空',
+            'price.required'           => '金额不能为空',
+            'invoice_type.required'    => '发票类型不能为空',
+            'company_name.required'    => '公司名称不能为空',
+            'tax_code.required'        => '纳税人不能为空',
+        ];
+
+        return $this->validateRequest($request, $rules, $message);
+    }
 
     /**
      * 验证表单数据中间方法

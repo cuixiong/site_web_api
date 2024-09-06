@@ -139,7 +139,7 @@ class InvoicesController extends Controller
     public function applySinglePage(Request $request)
     {
         try {
-            (new InvoicesRequest())->apply($request);
+            (new InvoicesRequest())->applySinglePage($request);
             $input = $request->all();
             if(!isset($input['price']) && !is_numeric($input['price'])){
                 ReturnJson(false, 'price is not a number');
