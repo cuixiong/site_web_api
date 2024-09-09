@@ -259,6 +259,7 @@ class SendEmailController extends Controller {
             $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -271,11 +272,14 @@ class SendEmailController extends Controller {
                 'phone'        => $data['phone'] ? $data['phone'] : '',
                 'plantTimeBuy' => $data['buy_time'],
                 'content'      => $data['content'],
+                'dateTime'     => date('Y-m-d'),
+                'language'     => $languageList[$ContactUs['language_version']] ?? '',
                 'backendUrl'   => env('IMAGE_URL'),
                 'link'         => $productLink,
                 'productsName' => $productsName,
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
+                                   ->pluck('value', 'key')
                                    ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
@@ -301,7 +305,7 @@ class SendEmailController extends Controller {
             );
             //$this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
-                $this->handlerSendEmail($scene, $email, $data, $senderEmail);
+                $this->handlerSendEmail($scene, $email, $data, $senderEmail, true);
             }
 
             return true;
@@ -423,7 +427,7 @@ class SendEmailController extends Controller {
             $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-            $languageList = DB::table('message_language_versions')->pluck('name' , 'id')->toArray();
+            $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -444,7 +448,8 @@ class SendEmailController extends Controller {
                 'country'      => '',
                 'language'     => $languageList[$ContactUs['language_version']] ?? '',
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail','postCode','address'])->pluck('value', 'key')
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
+                                   ->pluck('value', 'key')
                                    ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
