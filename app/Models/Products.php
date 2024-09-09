@@ -138,6 +138,8 @@ class Products extends Base
         $priceEditionsValue = null,
         $priceEditionsPid = null
     ) {
+        // 精度问题所以使用了其它类库
+        $evaluator = new \Matex\Evaluator();
         // 这里的代码可以复用 开始
         $prices = [];
         // 计算报告价格（当前语言是放在站点端的，但是后台的语言是放在总控端的，接手的小伙伴自己改）
@@ -158,10 +160,12 @@ class Products extends Base
                         $prices[$index]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
                         $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
                         $prices[$index]['data'][$keyPriceEdition]['sort'] = $priceEdition['sort'];
-                        $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
-                                $priceEdition['rules'],
-                                $price
-                            ) . ";");
+                        // $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
+                        //         $priceEdition['rules'],
+                        //         $price
+                        //     ) . ";");
+                            
+                        $prices[$index]['data'][$keyPriceEdition]['price'] = $evaluator->execute(sprintf($priceEdition['rules'], $price));
                     }
                 }
             }

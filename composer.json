@@ -14,6 +14,7 @@
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
         "lessclick-system/barcode": "^3.0",
+        "madorin/matex": "^1.0",
         "php-amqplib/php-amqplib": "2.6.*",
         "php-cpm/ip-address": "^1.0",
         "predis/predis": "^2.2",
