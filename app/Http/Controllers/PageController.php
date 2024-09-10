@@ -285,6 +285,8 @@ class PageController extends Controller
         //$model->remarks = $content;
         $model->content = $content;
         $model->status = 0;
+        $languageId = $params['language'] ?? 0;
+        $model->language_version = $languageId;
         if ($model->save()) {
             (new SendEmailController)->contactUs($model->id); // 发送邮件
             ReturnJson(true, '', $model);

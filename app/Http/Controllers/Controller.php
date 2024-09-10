@@ -28,10 +28,13 @@ class Controller extends BaseController {
             return;
         }
         //值为1开启,默认关闭  接口安全检查
-        $is_open_check_security = Redis::get('is_open_check_security') ?? 0;
+        $setKeyPrefix = env('APP_NAME').':';
+        $is_open_check_key = $setKeyPrefix.'is_open_check_security';
+        $is_open_check_security = Redis::get($is_open_check_key) ?? 0;
         if ($is_open_check_security > 0) {
             $securityCheckWhiteIplist = [];
-            $securityCheckWhiteIps = Redis::get('white_ip_security_check') ?? '';
+            $white_ip_securty_check_key = $setKeyPrefix.'white_ip_security_check';
+            $securityCheckWhiteIps = Redis::get($white_ip_securty_check_key) ?? '';
             if (!empty($securityCheckWhiteIps)) {
                 $securityCheckWhiteIplist = explode(',', $securityCheckWhiteIps);
             }
@@ -41,7 +44,8 @@ class Controller extends BaseController {
             }
         }
         //值为1开启,默认关闭,  接口限流策略
-        $is_open_limit_req = Redis::get('is_open_limit_req') ?? 0;
+        $is_open_limit_key = $setKeyPrefix.'is_open_limit_req';
+        $is_open_limit_req = Redis::get($is_open_limit_key) ?? 0;
         if ($is_open_limit_req > 0) {
             //ip封禁验证
             $route = request()->route();
@@ -50,14 +54,18 @@ class Controller extends BaseController {
                 $routeUril = $route->uri;
             }
             $ip = request()->ip();
-            $whiteIplist = Redis::get('ip_white_rules') ?? [];
+            $ip_white_rules_key = $setKeyPrefix.'ip_white_rules';
+            $whiteIplist = Redis::get($ip_white_rules_key) ?? [];
             //ip白名单验证
             $checkRes = $this->isIpAllowed($ip, $whiteIplist);
             if (!$checkRes) {
                 //获取封禁配置
-                $windowsTime = Redis::get('window_time') ?? 5;
-                $reqLimit = Redis::get('req_limit') ?? 10;
-                $expireTime = Redis::get('expire_time') ?? 60;
+                $windows_time_key = $setKeyPrefix.'window_time';
+                $windowsTime = Redis::get($windows_time_key) ?? 5;
+                $req_limit_key = $setKeyPrefix.'req_limit';
+                $reqLimit = Redis::get($req_limit_key) ?? 10;
+                $expire_time_key = $setKeyPrefix.'expire_time';
+                $expireTime = Redis::get($expire_time_key) ?? 60;
                 $ipCacheKey = $ip.':'.$routeUril;
                 $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->slideIsAllowed(
                     $ipCacheKey

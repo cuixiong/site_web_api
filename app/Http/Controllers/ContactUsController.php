@@ -38,6 +38,7 @@ class ContactUsController extends Controller {
         $model->phone = $params['phone'] ?? '';
         $model->content = $params['content'] ?? '';
         $model->product_id = $params['product_id'] ?? 0;
+        $model->language_version = $params['language'] ?? 0;
         if ($model->save()) {
             // 根据code发送对应场景
             $sceneCode = $params['code'];

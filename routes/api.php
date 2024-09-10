@@ -244,7 +244,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     });
     // Sitemap(网站地图)控制器
     Route::prefix('sitemap')->group(function () {
-        Route::get('make-site-map', [\App\Http\Controllers\SitemapController::class, 'MakeSiteMap'])->name('更新地图');
+        //Route::get('make-site-map', [\App\Http\Controllers\SitemapController::class, 'MakeSiteMap'])->name('更新地图');
     });
     //第三方接口
     Route::prefix('third')->group(function () {

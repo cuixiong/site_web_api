@@ -81,9 +81,16 @@ class OrderTrans extends Base {
         if (!$goods) {
             ReturnJson(false, '商品不存在');
         }
+
+        $quantity = $inputParams['number'] ?? 0;
+        if($quantity <= 0){
+            ReturnJson(false, '商品数量为0');
+        }
+
         DB::beginTransaction();
         $timestamp = time();
         $orderAmount = Products::getPrice($priceEdition, $goods); // 订单金额
+        $orderAmount = bcmul($quantity, $orderAmount, 2);
         $caclueData = $this->calueTaxRate($payType, $orderAmount);
         if (empty($coupon_id)) {
             //原价打完折, 乘汇率 = 优惠价 .   然后原价*汇率  -  优惠价 = 实付金额
@@ -120,7 +127,7 @@ class OrderTrans extends Base {
         $orderGoods->order_id = $order->id;
         $orderGoods->goods_id = $goodsId;
         // $orderGoods->goods_number = $number;
-        $orderGoods->goods_number = 1; // 直接下单的话，只能是一件商品
+        $orderGoods->goods_number = $quantity; // 直接下单的话，只能是一件商品
         $orderGoods->goods_original_price = $orderAmount;
         $orderGoods->goods_present_price = $actually_paid_all;
         $orderGoods->price_edition = $priceEdition;
