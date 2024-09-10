@@ -50,6 +50,18 @@ class SitemapController extends Controller
         ReturnJson(true);
     }
 
+    public function CliMakeSiteMap() {
+        $this->clearMap()
+            ->sitemapMenus()
+            ->sitemapNews()
+            ->sitemapHotInfo()
+            ->sitemapProducts()
+            ->sitemapMain()
+            ->sitemapCategory();
+        // ->autoUpdateSitemap() // 谷歌推送
+        // ->BaiduPushSitemap(); // 百度推送
+    }
+
     // backend\controllers\FrontMenusController.php FrontMenus
     public function sitemapMenus()
     {

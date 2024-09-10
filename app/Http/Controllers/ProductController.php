@@ -622,7 +622,8 @@ class ProductController extends Controller {
         // 获取当前复合条件的总数量
         $count = $query->count();
         // 排序 显示发布时间 》 排序 》 id
-        $query = $query->orderBy('published_date', 'desc')->orderBy('sort', 'asc');
+        //$query = $query->orderBy('published_date', 'desc')->orderBy('sort', 'asc');
+        $query = $query->orderBy('id', 'desc');
         // 分页
         $offset = ($page - 1) * $pageSize;
         $list = $query->offset($offset)->limit($pageSize)->get()->toArray();
