@@ -392,7 +392,8 @@ class ProductController extends Controller {
             unset($product_desc['product_tag']);
             $product_desc['isSphinx'] = false;
             //相关报告
-            $product_desc['relevant_products'] = $this->getRelevantByProduct($product['keywords'], $product_id);
+            $relevant_products_size = $request->input('relevant_products_size', 2);
+            $product_desc['relevant_products'] = $this->getRelevantByProduct($product['keywords'], $product_id, $relevant_products_size);
 
             //产品标签 结束
             ReturnJson(true, '', $product_desc);
@@ -868,10 +869,10 @@ class ProductController extends Controller {
      *
      * @param mixed $keywords
      * @param mixed $product_id
-     *
+     * @param integer $relevant_products_size
      * @return array
      */
-    private function getRelevantByProduct(mixed $keywords, mixed $product_id): array
+    private function getRelevantByProduct(mixed $keywords, mixed $product_id, $relevant_products_size = 2): array
     {
         $select = [
             'id',
@@ -885,7 +886,7 @@ class ProductController extends Controller {
             'thumb',
             'category_id',
         ];
-        $products = $this->GetRelevantProductResult($product_id,$keywords,1,2,'keywords',$select);
+        $products = $this->GetRelevantProductResult($product_id,$keywords,1,$relevant_products_size,'keywords',$select);
 
         $data = [];
         if($products){

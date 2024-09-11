@@ -102,7 +102,8 @@ class SendEmailController extends Controller {
                 'area'         => City::where('id', $data['city_id'])->value('name'),
                 'dateTime'     => date('Y-m-d',time()),
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
+                                   ->pluck('value', 'key')
                                    ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
@@ -124,7 +125,7 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $this->handlerSendEmail($scene, $user['email'], $data, $senderEmail);
+            $this->handlerSendEmail($scene, $user['email'], $data, $senderEmail, true);
 
             return true;
         } catch (\Exception $e) {
@@ -285,7 +286,6 @@ class SendEmailController extends Controller {
                 'backendUrl'   => env('IMAGE_URL'),
                 'link'         => $productLink,
                 'productsName' => $productsName,
-                'dateTime'     => date('Y-m-d H:i:s',time()),
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
                                    ->pluck('value', 'key')
@@ -315,7 +315,7 @@ class SendEmailController extends Controller {
             );
             //$this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
-                $this->handlerSendEmail($scene, $email, $data, $senderEmail, true);
+                $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
 
             return true;
@@ -487,7 +487,7 @@ class SendEmailController extends Controller {
             );
             //$this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
-                $this->handlerSendEmail($scene, $email, $data, $senderEmail);
+                $this->handlerSendEmail($scene, $email, $data, $senderEmail,true);
             }
 
             return true;
@@ -656,7 +656,7 @@ class SendEmailController extends Controller {
             $goods_data_list = [];
             $productsName = "";
             $sum_goods_cnt = 0;
-            
+
             // 默认图片
             // 若报告图片为空，则使用系统设置的默认报告高清图
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
@@ -696,7 +696,7 @@ class SendEmailController extends Controller {
                 $category = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $products['category_id'])->first();
                 $goods_data['category_name'] = isset($category) ? $goods_data['name'] : '';
                 $goods_data['category_thumb'] = isset($category) ? $goods_data['name'] : '';
-                
+
                 $tempThumb = '';
                 if (!empty($products['thumb'])) {
                     $tempThumb = Common::cutoffSiteUploadPathPrefix($products['thumb']);
@@ -835,12 +835,12 @@ class SendEmailController extends Controller {
                     $OrderGoods['goods_number'],
                     2
                 );
-                
+
                 // 分类信息
                 $category = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $products['category_id'])->first();
                 $goods_data['category_name'] = isset($category) ? $goods_data['name'] : '';
                 $goods_data['category_thumb'] = isset($category) ? $goods_data['name'] : '';
-                
+
                 $tempThumb = '';
                 if (!empty($products['thumb'])) {
                     $tempThumb = Common::cutoffSiteUploadPathPrefix($products['thumb']);
