@@ -112,7 +112,8 @@ class CommonController extends Controller {
                              ])
                     ->where(['status' => 1])
                     ->where('upload_at', '<=', time())
-                    ->orderBy('created_at', 'desc')
+                    ->orderBy('upload_at', 'desc')
+                    ->orderBy('id', 'desc')
                     ->limit(8)
                     ->get()
                     ->toArray();
