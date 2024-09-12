@@ -19,7 +19,7 @@ class ContactUsController extends Controller {
     public function Add(Request $request)
     {
         $params = $request->all();
-        
+
         $sceneCode = $params['code'];
         $category_id = MessageCategory::where('code', $sceneCode)->value('id');
 
@@ -41,8 +41,16 @@ class ContactUsController extends Controller {
         $model->language_version = $params['language'] ?? 0;
         if ($model->save()) {
             // 根据code发送对应场景
-            $sceneCode = $params['code'];
-            (new SendEmailController)->sendMessageEmail($model->id, $sceneCode);
+            $sceneCode = $params['code'] ?? '';
+            if($sceneCode == 'productSample'){
+                (new SendEmailController)->productSample($model->id);
+            }elseif($sceneCode == 'customized'){
+                (new SendEmailController)->customized($model->id);
+            }elseif($sceneCode == 'contactUs'){
+                (new SendEmailController)->contactUs($model->id);
+            }else{
+                (new SendEmailController)->sendMessageEmail($model->id, $sceneCode);
+            }
 
             ReturnJson(true, '', $model);
         } else {

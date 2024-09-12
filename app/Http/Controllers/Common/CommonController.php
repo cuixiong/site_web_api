@@ -579,7 +579,8 @@ class CommonController extends Controller {
     {
         $frontMenus = Menu::select([
             'id',
-            'name'
+            'name',
+            'link',
         ])
             ->where('parent_id', 0)
             ->whereIn('type', [2, 3])
