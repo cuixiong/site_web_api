@@ -164,7 +164,7 @@ class Products extends Base
                                 $priceEdition['rules'],
                                 $price
                             ) . ";");
-                            
+
                         // $prices[$index]['data'][$keyPriceEdition]['price'] = $evaluator->execute(sprintf($priceEdition['rules'], $price));
                     }
                 }

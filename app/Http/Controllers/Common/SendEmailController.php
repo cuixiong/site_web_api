@@ -685,9 +685,9 @@ class SendEmailController extends Controller {
                 $sum_goods_cnt += $goods_data['goods_number'];
                 $goods_data['language'] = $language;
                 $goods_data['price_edition'] = isset($priceEdition['name']) && !empty($priceEdition['name']) ? $priceEdition['name'] : '';
-                $goods_data['goods_present_price'] = $OrderGoods['goods_original_price'];
+                $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 $goods_data['goods_sum_price'] = bcmul(
-                    $OrderGoods['goods_original_price'],
+                    $OrderGoods['goods_present_price'],
                     $OrderGoods['goods_number'],
                     2
                 );
@@ -828,10 +828,10 @@ class SendEmailController extends Controller {
                 $sum_goods_cnt += $goods_data['goods_number'];
                 $goods_data['language'] = $language;
                 $goods_data['price_edition'] = isset($priceEdition['name']) && !empty($priceEdition['name']) ? $priceEdition['name'] : '';
+                $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 //$goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
-                $goods_data['goods_present_price'] = $OrderGoods['goods_original_price'];
                 $goods_data['goods_sum_price'] = bcmul(
-                    $OrderGoods['goods_original_price'],
+                    $OrderGoods['goods_present_price'],
                     $OrderGoods['goods_number'],
                     2
                 );

@@ -53,8 +53,7 @@ class OrderTrans extends Base {
                 }
             }
         }
-
-        if($price <= 0){
+        if ($price <= 0) {
             $price = 0;
         }
 
@@ -81,39 +80,35 @@ class OrderTrans extends Base {
         if (!$goods) {
             ReturnJson(false, '商品不存在');
         }
-
         $quantity = $inputParams['number'] ?? 0;
-        if($quantity <= 0){
+        if ($quantity <= 0) {
             ReturnJson(false, '商品数量为0');
         }
-
         DB::beginTransaction();
         $timestamp = time();
-        $orderAmount = Products::getPrice($priceEdition, $goods); // 订单金额
-        $orderAmount = bcmul($quantity, $orderAmount, 2);
+        $orderAmountSingle = Products::getPrice($priceEdition, $goods); // 订单金额
+        $orderAmount = bcmul($quantity, $orderAmountSingle, 2);
         $caclueData = $this->calueTaxRate($payType, $orderAmount);
         if (empty($coupon_id)) {
             //原价打完折, 乘汇率 = 优惠价 .   然后原价*汇率  -  优惠价 = 实付金额
             $discountPrice = Products::getPriceBy($orderAmount, $goods, $timestamp);
-            $actually_paid_all = bcmul($discountPrice , $caclueData['exchange_rate'], 2);
-            $caclueData['coupon_amount'] = bcsub($caclueData['exchange_amount'] , $actually_paid_all , 2);
+            $actually_paid_all = bcmul($discountPrice, $caclueData['exchange_rate'], 2);
+            $caclueData['coupon_amount'] = bcsub($caclueData['exchange_amount'], $actually_paid_all, 2);
         } else {
             // 本身打折与优惠券不能同时使用, 因此使用商品原价
             $caclueData['coupon_amount'] = $this->couponPrice($caclueData['exchange_amount'], $coupon_id);
-            $actually_paid_all = bcsub($caclueData['exchange_amount'], $caclueData['coupon_amount'] , 2);
+            $actually_paid_all = bcsub($caclueData['exchange_amount'], $caclueData['coupon_amount'], 2);
         }
-
-        if($actually_paid_all <= 0){
+        $actuallyPaidSingle = bcdiv($actually_paid_all , $quantity, 2);
+        if ($actually_paid_all <= 0) {
             $this->errno = ApiCode::ORDER_AMOUNT_ERROR;
 
             return null;
         }
-
         $caclueData['actually_paid_all'] = $actually_paid_all;
         //计算税率
         $caclueData['tax_amount'] = bcmul($caclueData['actually_paid_all'], $caclueData['tax_rate'], 2);
         $caclueData['actually_paid_all'] = bcadd($caclueData['actually_paid_all'], $caclueData['tax_amount'], 2);
-
         $order = $this->addOrderData(
             $timestamp, $userId, $payType, $orderAmount, $caclueData, $user, $coupon_id, $inputParams
         );
@@ -128,8 +123,8 @@ class OrderTrans extends Base {
         $orderGoods->goods_id = $goodsId;
         // $orderGoods->goods_number = $number;
         $orderGoods->goods_number = $quantity; // 直接下单的话，只能是一件商品
-        $orderGoods->goods_original_price = $orderAmount;
-        $orderGoods->goods_present_price = $actually_paid_all;
+        $orderGoods->goods_original_price = $orderAmountSingle;
+        $orderGoods->goods_present_price = $actuallyPaidSingle;
         $orderGoods->price_edition = $priceEdition;
         $orderGoods->created_at = $timestamp;
         $orderGoods->updated_at = $timestamp;
@@ -257,12 +252,12 @@ class OrderTrans extends Base {
         $order->email = $inputParams['email'];
         $order->phone = $inputParams['phone'];
         $order->company = $inputParams['company'];
-        $order->province_id = !empty($inputParams['province_id'])?$inputParams['province_id']:0;
-        $order->city_id = !empty($inputParams['city_id']) ? $inputParams['city_id']: 0;
-        $order->address = !empty($inputParams['address']) ? $inputParams['address']:'';
-        $order->remarks = !empty($inputParams['remarks']) ? $inputParams['remarks']:'';
+        $order->province_id = !empty($inputParams['province_id']) ? $inputParams['province_id'] : 0;
+        $order->city_id = !empty($inputParams['city_id']) ? $inputParams['city_id'] : 0;
+        $order->address = !empty($inputParams['address']) ? $inputParams['address'] : '';
+        $order->remarks = !empty($inputParams['remarks']) ? $inputParams['remarks'] : '';
         $order->coupon_id = $coupon_id ? intval($coupon_id) : 0;
-        $order->coupon_amount = !empty($caclueData['coupon_amount'])?$caclueData['coupon_amount']:0; //优惠金额
+        $order->coupon_amount = !empty($caclueData['coupon_amount']) ? $caclueData['coupon_amount'] : 0; //优惠金额
         $order->exchange_rate = $caclueData['exchange_rate']; //汇率比例
         $order->exchange_amount = $caclueData['exchange_amount']; //汇率金额
         $order->tax_amount = $caclueData['tax_amount']; //税率金额
@@ -354,23 +349,21 @@ class OrderTrans extends Base {
         if (empty($coupon_id)) {
             //直接换算成 汇率后的折扣价,  就是优惠价
             $actually_paid_all = bcmul($actuallyPaidAll, $caclueData['exchange_rate'], 2);
-            $caclueData['coupon_amount'] = bcsub($caclueData['exchange_amount'] , $actually_paid_all , 2);
+            $caclueData['coupon_amount'] = bcsub($caclueData['exchange_amount'], $actually_paid_all, 2);
         } else {
             //使用优惠券后的优惠金额
             $caclueData['coupon_amount'] = $this->couponPrice($caclueData['exchange_amount'], $coupon_id);
-            $actually_paid_all = bcsub($caclueData['exchange_amount'], $caclueData['coupon_amount'] , 2);
+            $actually_paid_all = bcsub($caclueData['exchange_amount'], $caclueData['coupon_amount'], 2);
         }
-        if($orderAmountAll <=0 || $actually_paid_all <= 0){
+        if ($orderAmountAll <= 0 || $actually_paid_all <= 0) {
             $this->errno = ApiCode::ORDER_AMOUNT_ERROR;
 
             return null;
         }
         $caclueData['actually_paid_all'] = $actually_paid_all;
-
         //计算税率
         $caclueData['tax_amount'] = bcmul($caclueData['actually_paid_all'], $caclueData['tax_rate'], 2);
         $caclueData['actually_paid_all'] = bcadd($caclueData['actually_paid_all'], $caclueData['tax_amount'], 2);
-
         $order = $this->addOrderData(
             $timestamp, $userId, $payType, $orderAmountAll, $caclueData, $user, $coupon_id, $inputParams
         );
@@ -423,25 +416,25 @@ class OrderTrans extends Base {
         $pay_coin_type = PayConst::COIN_TYPE_CNY;
         if ($payCode == PayConst::PAY_TYPE_STRIPEPAY) {
             $stripePaySetList = SystemValue::query()->where("alias", 'stripe_pay_set')
-                                           ->where("status" , 1)
-                                           ->where("hidden" , 1)
+                                           ->where("status", 1)
+                                           ->where("hidden", 1)
                                            ->pluck("value", "key")->toArray();
             $tax_rate = $stripePaySetList['stripe_pay_tax_rate'] ?? $tax_rate;
             $exchange_rate = $stripePaySetList['stripe_pay_exchange_rate'] ?? $exchange_rate;
             $pay_coin_type = $stripePaySetList['stripe_pay_coin_type'] ?? $pay_coin_type;
         } elseif ($payCode == PayConst::PAY_TYPE_FIRSTDATAPAY) {
             $firstDataPaySetList = SystemValue::query()->where("alias", 'first_data_pay_set')
-                                                       ->where("status" , 1)
-                                                       ->where("hidden" , 1)
-                                                       ->pluck("value", "key")->toArray();
+                                              ->where("status", 1)
+                                              ->where("hidden", 1)
+                                              ->pluck("value", "key")->toArray();
             $tax_rate = $firstDataPaySetList['first_data_pay_tax_rate'] ?? $tax_rate;
             $exchange_rate = $firstDataPaySetList['first_data_pay_exchange_rate'] ?? $exchange_rate;
             $pay_coin_type = $firstDataPaySetList['first_data_pay_coin_type'] ?? $pay_coin_type;
-        }elseif($payCode == PayConst::PAY_TYPE_PAYPAL){
+        } elseif ($payCode == PayConst::PAY_TYPE_PAYPAL) {
             $palpalPaySetList = SystemValue::query()->where("alias", 'paypal_pay_set')
-                                              ->where("status" , 1)
-                                              ->where("hidden" , 1)
-                                              ->pluck("value", "key")->toArray();
+                                           ->where("status", 1)
+                                           ->where("hidden", 1)
+                                           ->pluck("value", "key")->toArray();
             $tax_rate = $palpalPaySetList['paypal_pay_tax_rate'] ?? $tax_rate;
             $exchange_rate = $palpalPaySetList['paypal_pay_exchange_rate'] ?? $exchange_rate;
             $pay_coin_type = $palpalPaySetList['paypal_pay_coin_type'] ?? $pay_coin_type;

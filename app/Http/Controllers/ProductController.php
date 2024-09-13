@@ -28,8 +28,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class ProductController extends Controller {
     // 获取报告列表信息
-    public function List(Request $request)
-    {
+    public function List(Request $request) {
         $page = $request->page ? intval($request->page) : 1; // 页码
         $pageSize = $request->pageSize ? intval($request->pageSize) : 10; // 每页显示数量
         $category_id = $request->category_id ?? 0; // 分类ID
@@ -46,15 +45,22 @@ class ProductController extends Controller {
         ];
         if (!empty($category_id)) {
             $categorySeoData = ProductsCategory::query()
-                ->select(['name as category_name', 'seo_title', 'seo_keyword', 'seo_description'])
-                ->where('id', $category_id)->first();
+                                               ->select(
+                                                   ['name as category_name', 'seo_title', 'seo_keyword',
+                                                    'seo_description']
+                                               )
+                                               ->where('id', $category_id)->first();
             if (!empty($categorySeoData)) {
                 $categorySeoInfo = $categorySeoData->toArray();
                 // 统一格式，null改成空串
-                $categorySeoInfo['category_name'] = !empty($categorySeoInfo['category_name']) ? $categorySeoInfo['category_name'] : '';
-                $categorySeoInfo['seo_title'] = !empty($categorySeoInfo['seo_title']) ? $categorySeoInfo['seo_title'] : '';
-                $categorySeoInfo['seo_keyword'] = !empty($categorySeoInfo['seo_keyword']) ? $categorySeoInfo['seo_keyword'] : '';
-                $categorySeoInfo['seo_description'] = !empty($categorySeoInfo['seo_description']) ? $categorySeoInfo['seo_description'] : '';
+                $categorySeoInfo['category_name'] = !empty($categorySeoInfo['category_name'])
+                    ? $categorySeoInfo['category_name'] : '';
+                $categorySeoInfo['seo_title'] = !empty($categorySeoInfo['seo_title']) ? $categorySeoInfo['seo_title']
+                    : '';
+                $categorySeoInfo['seo_keyword'] = !empty($categorySeoInfo['seo_keyword'])
+                    ? $categorySeoInfo['seo_keyword'] : '';
+                $categorySeoInfo['seo_description'] = !empty($categorySeoInfo['seo_description'])
+                    ? $categorySeoInfo['seo_description'] : '';
             }
         }
         $res = $this->GetProductResult($page, $pageSize, $keyword, $category_id);
@@ -94,7 +100,6 @@ class ProductController extends Controller {
                 if (empty($value['thumb']) && !empty($category)) {
                     $value['thumb'] = $category['thumb'];
                 }
-
                 if (empty($value['thumb'])) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $value['thumb'] = !empty($defaultImg) ? $defaultImg : '';
@@ -166,19 +171,21 @@ class ProductController extends Controller {
     /**
      * 返回相关产品数据-重定向/相关报告
      */
-    public function GetRelevantProductResult($id, $keyword, $page = 1, $pageSize = 1,  $searchField = 'url', $selectField = '*')
-    {
+    public function GetRelevantProductResult(
+        $id, $keyword, $page = 1, $pageSize = 1, $searchField = 'url', $selectField = '*', $order = []
+    ) {
         try {
             $hidden = SystemValue::where('key', 'sphinx')->value('hidden');
             if ($hidden == 1) {
-                return $this->SearchRelevantForSphinx($id, $keyword, $page, $pageSize,$searchField, $selectField);
+                return $this->SearchRelevantForSphinx(
+                    $id, $keyword, $page, $pageSize, $searchField, $selectField, $order
+                );
             } else {
-
-                return $this->SearchRelevantForMysql($id, $keyword, $page, $pageSize,$searchField, $selectField);
+                return $this->SearchRelevantForMysql($id, $keyword, $page, $pageSize, $searchField, $selectField);
             }
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
-            \Log::error('应用端查询失败,异常信息为:' . json_encode([$e->getMessage()]));
+            \Log::error('应用端查询失败,异常信息为:'.json_encode([$e->getMessage()]));
             ReturnJson(false, '请求失败,请稍后再试');
         }
     }
@@ -218,8 +225,7 @@ class ProductController extends Controller {
     }
 
     // 报告详情
-    public function Description(Request $request)
-    {
+    public function Description(Request $request) {
         $product_id = $request->product_id;
         $url = $request->url;
         if (empty($product_id)) {
@@ -245,9 +251,9 @@ class ProductController extends Controller {
                 '=',
                 'p.category_id'
             )
-            ->where(['p.id' => $product_id])
-            ->where('p.status', 1)
-                ->first()->toArray();
+                                          ->where(['p.id' => $product_id])
+                                          ->where('p.status', 1)
+                                          ->first()->toArray();
             //返回打折信息
             $time = time();
             //判断当前报告是否在优惠时间内
@@ -288,14 +294,14 @@ class ProductController extends Controller {
             //报告详情数据处理
             $suffix = date('Y', strtotime($product_desc['published_date']));
             $description = (new ProductDescription($suffix))->select([
-                'description',
-                'description_en',
-                'table_of_content',
-                'table_of_content_en',
-                'tables_and_figures',
-                'tables_and_figures_en',
-                'companies_mentioned',
-            ])->where('product_id', $product_id)->first();
+                                                                         'description',
+                                                                         'description_en',
+                                                                         'table_of_content',
+                                                                         'table_of_content_en',
+                                                                         'tables_and_figures',
+                                                                         'tables_and_figures_en',
+                                                                         'companies_mentioned',
+                                                                     ])->where('product_id', $product_id)->first();
             if ($description === null) {
                 $description = [];
                 $description['description'] = '';
@@ -340,7 +346,6 @@ class ProductController extends Controller {
                     ['key' => 'Service', 'status' => 1]
                 )->first();
                 $product_desc['serviceMethod'] = $serviceMethod ?? '';
-
                 // 支付方式文本
                 $payMethod = SystemValue::select(['name as key', 'value'])->where(
                     ['key' => 'PayMethod', 'status' => 1]
@@ -349,18 +354,18 @@ class ProductController extends Controller {
             }
             $product_desc['prices'] = Products::CountPrice($product_desc['price'], $product_desc['publisher_id']);
             $product_desc['description'] = $product_desc['description'];
-            $product_desc['seo_description'] = is_array($product_desc['description']) && count($product_desc['description'])>0 ?$product_desc['description'][0]:'';
+            $product_desc['seo_description'] = is_array($product_desc['description'])
+                                               && count(
+                                                      $product_desc['description']
+                                                  ) > 0 ? $product_desc['description'][0] : '';
             $product_desc['url'] = $product_desc['url'];
             //$product_desc['thumb'] = Common::cutoffSiteUploadPathPrefix($product->getThumbImgAttribute());
-
             $product_desc['thumb'] = $product->getThumbImgAttribute();
-
             if (empty($product_desc['thumb'])) {
                 // 若报告图片为空，则使用系统设置的默认报告高清图
                 $defaultImg = SystemValue::where('key', 'default_report_high_img')->value('value');
-                $product_desc['thumb'] = !empty($defaultImg)?$defaultImg:'';
+                $product_desc['thumb'] = !empty($defaultImg) ? $defaultImg : '';
             }
-
             $product_desc['published_date'] = $product_desc['published_date'] ? date(
                 'Y-m-d',
                 strtotime(
@@ -375,7 +380,7 @@ class ProductController extends Controller {
                     $separator = ''; // 分隔符
                     // echo '<pre>';print_r($keyword_suffixs);exit;
                     foreach ($keyword_suffixs as $keyword_suffix) {
-                        $seo_keyword .= $separator . $product_desc['keywords'] . $keyword_suffix;
+                        $seo_keyword .= $separator.$product_desc['keywords'].$keyword_suffix;
                         $separator = '，';
                     }
                 }
@@ -393,19 +398,20 @@ class ProductController extends Controller {
             $product_desc['isSphinx'] = false;
             //相关报告
             $relevant_products_size = $request->input('relevant_products_size', 2);
-            $product_desc['relevant_products'] = $this->getRelevantByProduct($product['keywords'], $product_id, $relevant_products_size);
-
+            $product_desc['relevant_products'] = $this->getRelevantByProduct(
+                $product['keywords'], $product_id, $relevant_products_size
+            );
             //产品标签 结束
             ReturnJson(true, '', $product_desc);
         } else {
-
             // 重定向能走sphinx优先执行，减轻数据库压力
-            $product_desc = $this->GetRelevantProductResult($product_id, $url, 1, 1, 'url', ['id', 'url', 'published_date']);
-
+            $product_desc = $this->GetRelevantProductResult(
+                $product_id, $url, 1, 1, 'url', ['id', 'url', 'published_date'],
+                ['published_date' => 'desc', 'id' => 'desc']
+            );
             if (!empty($product_desc) && is_array($product_desc) && count($product_desc) > 0) {
                 $data = $product_desc[0];
                 unset($data['published_date']);
-
                 ReturnJson(1, '', $data);
             } else {
                 ReturnJson(2, '请求失败');
@@ -678,9 +684,7 @@ class ProductController extends Controller {
         return $data;
     }
 
-
-    public function SearchRelevantForSphinx($id, $keyword, $page, $pageSize, $searchField, $selectField)
-    {
+    public function SearchRelevantForSphinx($id, $keyword, $page, $pageSize, $searchField, $selectField, $order = []) {
         if (empty($id) || empty($keyword)) {
             return [];
         }
@@ -688,13 +692,18 @@ class ProductController extends Controller {
         $conn = $sphinxSrevice->getConnection();
         //报告昵称,英文昵称匹配查询
         $query = (new SphinxQL($conn))->select('id')
-        ->from('products_rt')
-        ->orderBy('sort', 'asc')
-        ->orderBy('published_date', 'desc')
-        ->orderBy('id', 'desc');
+                                      ->from('products_rt');
+        if (empty($order)) {
+            $query = $query->orderBy('sort', 'asc')
+                           ->orderBy('published_date', 'desc')
+                           ->orderBy('id', 'desc');
+        } else {
+            foreach ($order as $key => $value) {
+                $query = $query->orderBy($key, $value);
+            }
+        }
         $query = $query->where('status', '=', 1);
         $query = $query->where("published_date", "<=", time());
-
         // 排除本报告
         $query = $query->where('id', '<>', intval($id));
         // 精确查询
@@ -702,16 +711,13 @@ class ProductController extends Controller {
             $val = addslashes($keyword);
             $query->where($searchField, '=', $val);
         }
-
         //查询结果分页
         $offset = ($page - 1) * $pageSize;
         $query->limit($offset, $pageSize);
         // $query->option('max_matches', $offset + $pageSize);
-
         // $query->setSelect($selectField);
         // $result = $query->execute();
         // $products = $result->fetchAllAssoc();
-
         // 因为有些字段sphinx没有，所以sphinx查出id后再去mysql查询
         $query->setSelect('id');
         $result = $query->execute();
@@ -719,23 +725,23 @@ class ProductController extends Controller {
         if (!empty($productsIds) && count($productsIds) > 0) {
             $productsIds = array_column($productsIds, 'id');
             $products = Products::select($selectField)
-            ->whereIn("id", $productsIds)
-            ->get()->toArray();
+                                ->whereIn("id", $productsIds)
+                                ->get()->toArray();
         }
+
         //
         return $products ?? [];
     }
 
-    public function SearchRelevantForMysql($id, $keyword, $page, $pageSize, $searchField, $selectField)
-    {
-
+    public function SearchRelevantForMysql($id, $keyword, $page, $pageSize, $searchField, $selectField) {
         $products = Products::select($selectField)
-            ->where([$searchField => $keyword, 'status' => 1])
-            ->where("id", "<>", $id)
-            ->limit($pageSize, ($page - 1) * $pageSize)
-            ->orderBy('published_date', 'desc')
-            ->orderBy('id', 'desc')
-            ->get()->toArray();
+                            ->where([$searchField => $keyword, 'status' => 1])
+                            ->where("id", "<>", $id)
+                            ->limit($pageSize, ($page - 1) * $pageSize)
+                            ->orderBy('published_date', 'desc')
+                            ->orderBy('id', 'desc')
+                            ->get()->toArray();
+
         return $products;
     }
 
@@ -828,7 +834,7 @@ class ProductController extends Controller {
             ViewProductsLog::where(['id' => $logId])->increment('view_cnt');
         } else {
             //调用ip地址库的接口
-            $ipAddr =   (new IPAddrService($ip))->getAddrStrByIp();
+            $ipAddr = (new IPAddrService($ip))->getAddrStrByIp();
             //增加日志
             $addData = [
                 'user_id'       => $userId,
@@ -843,7 +849,6 @@ class ProductController extends Controller {
             ViewProductsLog::create($addData);
         }
     }
-
 
     /**
      *
@@ -867,13 +872,13 @@ class ProductController extends Controller {
 
     /**
      *
-     * @param mixed $keywords
-     * @param mixed $product_id
+     * @param mixed   $keywords
+     * @param mixed   $product_id
      * @param integer $relevant_products_size
+     *
      * @return array
      */
-    private function getRelevantByProduct(mixed $keywords, mixed $product_id, $relevant_products_size = 2): array
-    {
+    private function getRelevantByProduct(mixed $keywords, mixed $product_id, $relevant_products_size = 2): array {
         $select = [
             'id',
             'name',
@@ -886,25 +891,28 @@ class ProductController extends Controller {
             'thumb',
             'category_id',
         ];
-        $products = $this->GetRelevantProductResult($product_id,$keywords,1,$relevant_products_size,'keywords',$select);
-
+        $products = $this->GetRelevantProductResult(
+            $product_id, $keywords, 1, $relevant_products_size, 'keywords', $select
+        );
         $data = [];
-        if($products){
+        if ($products) {
             // 分类信息
-            $categoryIds = array_column($products,'category_id');
-            $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->whereIn('id', $categoryIds)->get()->toArray();
+            $categoryIds = array_column($products, 'category_id');
+            $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->whereIn('id', $categoryIds)->get()
+                                            ->toArray();
             $categoryData = array_column($categoryData, null, 'id');
             // 默认图片
             // 若报告图片为空，则使用系统设置的默认报告高清图
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
-
-
             foreach ($products as $index => $product) {
                 //每个报告加上分类信息
                 $tempCategoryId = $product['category_id'];
-                $product['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
-                $product['category_thumb'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
-
+                $product['category_name'] = isset($categoryData[$tempCategoryId])
+                                            && isset($categoryData[$tempCategoryId]['name'])
+                    ? $categoryData[$tempCategoryId]['name'] : '';
+                $product['category_thumb'] = isset($categoryData[$tempCategoryId])
+                                             && isset($categoryData[$tempCategoryId]['thumb'])
+                    ? $categoryData[$tempCategoryId]['thumb'] : '';
                 // 图片获取
                 $tempThumb = '';
                 if (!empty($product['thumb'])) {
@@ -915,14 +923,13 @@ class ProductController extends Controller {
                     // 如果报告图片、分类图片为空，使用系统默认图片
                     $tempThumb = !empty($defaultImg) ? $defaultImg : '';
                 }
-
                 $data[$index]['thumb'] = $tempThumb;
                 $data[$index]['name'] = $product['name'];
                 $data[$index]['keywords'] = $product['keywords'];
                 $data[$index]['english_name'] = $product['english_name'];
                 $suffix = date('Y', strtotime($product['published_date']));
                 $data[$index]['description'] = (new ProductDescription($suffix))->where('product_id', $product['id'])
-                    ->value('description');
+                                                                                ->value('description');
                 $data[$index]['description'] = $data[$index]['description'] ? $data[$index]['description'] : '';
                 $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
                 $data[$index]['id'] = $product['id'];
@@ -935,6 +942,7 @@ class ProductController extends Controller {
                 $data[$index]['prices'] = Products::CountPrice($product['price'], $product['publisher_id']);
             }
         }
+
         return $data;
     }
 }
