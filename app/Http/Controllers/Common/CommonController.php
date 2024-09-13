@@ -105,14 +105,15 @@ class CommonController extends Controller {
     // 更多资讯
     public function getNewsList() {
         $data = News::select([
-                                 'id',
-                                 'title',
-                                 'url',
-                                 'category_id as type'
-                             ])
+                                'id',
+                                'title',
+                                'url',
+                                'category_id as type'
+                            ])
                     ->where(['status' => 1])
                     ->where('upload_at', '<=', time())
-                    ->orderBy('created_at', 'desc')
+                    ->orderBy('upload_at', 'desc')
+                    ->orderBy('id', 'desc')
                     ->limit(8)
                     ->get()
                     ->toArray();
