@@ -161,9 +161,9 @@ class Products extends Base
                         $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
                         $prices[$index]['data'][$keyPriceEdition]['sort'] = $priceEdition['sort'];
                         $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
-                                $priceEdition['rules'],
-                                $price
-                            ) . ";");
+                            $priceEdition['rules'],
+                            $price
+                        ) . ";");
 
                         // $prices[$index]['data'][$keyPriceEdition]['price'] = $evaluator->execute(sprintf($priceEdition['rules'], $price));
                     }
@@ -174,6 +174,100 @@ class Products extends Base
 
         return $prices;
         // 这里的代码可以复用 结束
+    }
+
+
+    /**
+     * 获取价格版本
+     * @param array|int $publisherIds 
+     */
+    public static function getPriceEdition(
+        $publisherIds,
+        $languages = null,
+        $priceEditionsValue = null,
+        $priceEditionsPid = null
+    ) {
+        // 这里的代码可以复用 开始
+        $priceEditionList = [];
+        $languages = $languages ? $languages : Languages::GetList();
+        if ($languages) {
+
+            $priceEditionAll = PriceEditions::query()->where("is_deleted", 1)->where("status", 1)->get()->toArray();
+            if (!empty($publisherIds) && !is_array($publisherIds)) {
+                $publisherIds = [$publisherIds];
+            }
+
+            $editionIdList = [];
+            foreach ($publisherIds as $publisherId) {
+                foreach ($priceEditionAll as $key => $priceEditionItem) {
+                    //Db数据库查询
+                    $priceEditionItem['publisher_id'] = explode(',', $priceEditionItem['publisher_id']);
+                    if (in_array($publisherId, $priceEditionItem['publisher_id'])) {
+                        if (!isset($editionIdList[$publisherId])) {
+                            $editionIdList[$publisherId] = [];
+                        }
+                        $editionIdList[$publisherId][] = $priceEditionItem['id'];
+                    }
+                }
+            }
+            $languagesIds = array_column($languages, 'id');
+            $languagesNames = array_column($languages, 'name', 'id');
+            // return $editionIdList;
+            $priceEditionList = [];
+            foreach ($editionIdList as $publisherIdKey => $editionIds) {
+                $rData = [];
+                $editionsValues = PriceEditionValues::query()->select("id", "name", "notice", "sort", "is_logistics", "rules", "language_id")
+                ->where("status", 1)
+                ->where("is_deleted", 1)
+                ->whereIn("language_id", $languagesIds)
+                    ->whereIn("edition_id", $editionIds)
+                    ->orderBy("sort", "asc")
+                    ->get()
+                    ->toArray();
+                foreach ($editionsValues as $key => $priceEditionsItem) {
+                    $languageId = $priceEditionsItem['language_id'];
+                    $languageName = $languagesNames[$languageId];
+
+                    if (!isset($rData[$languageId])) {
+                        $rData[$languageId] = [];
+                        $rData[$languageId]['language'] = '';
+                        $rData[$languageId]['data'] = [];
+                    }
+                    $rData[$languageId]['language'] = $languageName;
+                    $rData[$languageId]['data'][] = [
+                        'edition' => $priceEditionsItem['name'],
+                        'is_logistics' => $priceEditionsItem['is_logistics'],
+                        'notice' => $priceEditionsItem['notice'],
+                        'sort' => $priceEditionsItem['sort'],
+                        'rules' => $priceEditionsItem['rules'],
+                    ];
+                    $rData = array_values($rData);
+
+                    $priceEditionList[$publisherIdKey] = $rData;
+                }
+            }
+        }
+
+        return $priceEditionList;
+        // 这里的代码可以复用 结束
+    }
+
+    /**
+     * 通过价格和getPriceEdition的价格版本进行计算价格
+     */
+    public static function countPriceEditionPrice($priceEditions, $price)
+    {
+        foreach ($priceEditions as $index1 => $priceEditionItem) {
+            $priceEditionValues = $priceEditionItem['data'];
+            foreach ($priceEditionValues as $index2 => $priceEditionValueItem) {
+                $priceEditions[$index1]['data'][$index2]['price'] = eval("return " . sprintf(
+                    $priceEditionValueItem['rules'],
+                    $price
+                ) . ";");
+                unset($priceEditions[$index1]['data'][$index2]['rules']);
+            }
+        }
+        return $priceEditions;
     }
 
 
