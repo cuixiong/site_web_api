@@ -241,10 +241,8 @@ class Products extends Base
                         'sort' => $priceEditionsItem['sort'],
                         'rules' => $priceEditionsItem['rules'],
                     ];
-                    $rData = array_values($rData);
-
-                    $priceEditionList[$publisherIdKey] = $rData;
                 }
+                $priceEditionList[$publisherIdKey] = array_values($rData);
             }
         }
 
