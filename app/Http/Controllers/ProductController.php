@@ -71,6 +71,8 @@ class ProductController extends Controller {
         if ($result) {
             $languages = Languages::GetList();
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+            // 价格版本缓存
+            $priceCache = [];
             foreach ($result as $key => $value) {
                 //报告数据
                 $time = time();
@@ -129,11 +131,18 @@ class ProductController extends Controller {
                     'link' => $category['link'],
                 ] : [];
                 $publisher_id = $productsData['publisher_id'];
-                $value['prices'] = Products::CountPrice(
-                    $value['price'],
-                    $publisher_id,
-                    $languages
-                ) ?? [];
+                $priceCacheName = $value['price'].','.$publisher_id;
+                if(isset($priceCache[$priceCacheName])){
+
+                    $value['prices'] = $priceCache[$priceCacheName];
+                }else{
+                    $value['prices'] = Products::CountPrice(
+                        $value['price'],
+                        $publisher_id,
+                        $languages
+                    ) ?? [];
+                }
+                
                 $products[] = $value;
             }
         }
