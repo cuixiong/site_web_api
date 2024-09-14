@@ -141,6 +141,7 @@ class ProductController extends Controller {
                         $publisher_id,
                         $languages
                     ) ?? [];
+                    $priceCache[$priceCacheName] = $value['prices'];
                 }
                 
                 $products[] = $value;
