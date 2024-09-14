@@ -71,14 +71,25 @@ class ProductController extends Controller {
         if ($result) {
             $languages = Languages::GetList();
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+            $productIdList = array_column($result, 'id');
+            $productFeildList = ['id', 'discount_time_begin', 'discount_time_end', 'discount_amount', 'discount',
+                                 'discount_type', 'publisher_id'];
+            $productList = Products::query()->select($productFeildList)->whereIn('id', $productIdList)->get()->keyBy(
+                'id'
+            )->toArray();
+            $category_id_list = array_column($result, 'category_id');
+            $categoryList = ProductsCategory::query()->select(['id', 'name', 'link', 'thumb'])->whereIn(
+                'id', $category_id_list
+            )->get()->keyBy('id')->toArray();
             foreach ($result as $key => $value) {
                 //报告数据
                 $time = time();
-                $productsData = Products::query()->where('id', $value['id'])->first();
-                if (empty($productsData)) {
+                //$productsData = Products::query()->where('id', $value['id'])->first();
+                if (empty($productList[$value['id']])) {
                     unset($result[$key]);
                     continue;
                 }
+                $productsData = $productList[$value['id']];
                 //判断当前报告是否在优惠时间内
                 if ($productsData['discount_time_begin'] <= $time && $productsData['discount_time_end'] >= $time) {
                     $value['discount_status'] = 1;
@@ -96,7 +107,8 @@ class ProductController extends Controller {
                 $value['discount_time_begin'] = $productsData['discount_time_begin'];
                 $value['discount_time_end'] = $productsData['discount_time_end'];
                 //分类
-                $category = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->find($value['category_id']);
+                //$category = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->find($value['category_id']);
+                $category = $categoryList[$value['category_id']];
                 if (empty($value['thumb']) && !empty($category)) {
                     $value['thumb'] = $category['thumb'];
                 }
