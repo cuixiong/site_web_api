@@ -235,6 +235,7 @@ class Products extends Base
                     }
                     $rData[$languageId]['language'] = $languageName;
                     $rData[$languageId]['data'][] = [
+                        'id' => $priceEditionsItem['id'],
                         'edition' => $priceEditionsItem['name'],
                         'is_logistics' => $priceEditionsItem['is_logistics'],
                         'notice' => $priceEditionsItem['notice'],
