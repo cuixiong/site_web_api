@@ -15,9 +15,15 @@ namespace App\Http\Controllers\Third;
 use App\Http\Controllers\Common\SendEmailController;
 use App\Models\ContactUs;
 use App\Models\Order;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 
 class ThirdRespController extends BaseThirdController {
+
+    public function __construct() {
+        parent::__construct();
+    }
+
     public function sendEmail() {
         $inputParams = request()->input();
         $code = $inputParams['code'];
