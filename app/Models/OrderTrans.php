@@ -87,6 +87,7 @@ class OrderTrans extends Base {
         DB::beginTransaction();
         $timestamp = time();
         $orderAmountSingle = Products::getPrice($priceEdition, $goods); // 订单金额
+        $actuallyPaidSingle = Products::getPriceBy($orderAmountSingle, $goods, $timestamp);
         $orderAmount = bcmul($quantity, $orderAmountSingle, 2);
         $caclueData = $this->calueTaxRate($payType, $orderAmount);
         if (empty($coupon_id)) {
@@ -99,7 +100,7 @@ class OrderTrans extends Base {
             $caclueData['coupon_amount'] = $this->couponPrice($caclueData['exchange_amount'], $coupon_id);
             $actually_paid_all = bcsub($caclueData['exchange_amount'], $caclueData['coupon_amount'], 2);
         }
-        $actuallyPaidSingle = bcdiv($actually_paid_all , $quantity, 2);
+
         if ($actually_paid_all <= 0) {
             $this->errno = ApiCode::ORDER_AMOUNT_ERROR;
 

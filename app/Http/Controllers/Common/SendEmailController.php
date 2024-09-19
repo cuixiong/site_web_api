@@ -128,7 +128,7 @@ class SendEmailController extends Controller
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $this->handlerSendEmail($scene, $user['email'], $data, $senderEmail, true);
+            $this->handlerSendEmail($scene, $user['email'], $data, $senderEmail);
 
             return true;
         } catch (\Exception $e) {
@@ -273,7 +273,8 @@ class SendEmailController extends Controller
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
             $token = $data['email'] . '&' . $data['id'];
             $data['token'] = base64_encode($token);
-            $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
+            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $addressDetail = $data['address'] ?? '';
             $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             $data2 = [
                 'homePage'     => $data['domain'],
@@ -283,7 +284,7 @@ class SendEmailController extends Controller
                 'userName'     => $data['name'] ? $data['name'] : '',
                 'email'        => $data['email'],
                 'company'      => $data['company'],
-                'area'         => $data['province'] . $data['city'],
+                'area'         => $data['province'].$data['city']." ".$addressDetail,
                 'phone'        => $data['phone'] ? $data['phone'] : '',
                 'plantTimeBuy' => $data['buy_time'],
                 'content'      => $data['content'],
@@ -423,6 +424,7 @@ class SendEmailController extends Controller
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
+            $addressDetail = $data['address'] ?? '';
             // $data['country'] = Country::where('id',$data['country_id'])->value('name');
             $productsName = '';
             $productLink = '';
@@ -456,7 +458,7 @@ class SendEmailController extends Controller
                 'userName'     => $data['name'] ? $data['name'] : '',
                 'email'        => $data['email'],
                 'company'      => $data['company'],
-                'area'         => $data['province'] . $data['city'],
+                'area'         => $data['province'].$data['city']." ".$addressDetail,
                 'phone'        => $data['phone'] ? $data['phone'] : '',
                 'plantTimeBuy' => $data['buy_time'],
                 'content'      => $data['content'],
@@ -515,6 +517,7 @@ class SendEmailController extends Controller
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
             $area = $this->getAreaName($data);
+            $addressDetail = $data['address'] ?? '';
             $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             $data2 = [
                 'homePage'     => $data['domain'],
@@ -524,7 +527,7 @@ class SendEmailController extends Controller
                 'userName'     => $data['name'] ? $data['name'] : '',
                 'email'        => $data['email'],
                 'company'      => $data['company'],
-                'area'         => $area,
+                'area'         => $area." ".$addressDetail,
                 'phone'        => $data['phone'] ?: '',
                 'plantTimeBuy' => $data['buy_time'],
                 //'content' => $data['remarks'],
@@ -576,8 +579,8 @@ class SendEmailController extends Controller
             $data = $ContactUs ? $ContactUs->toArray() : [];
             $token = $data['email'] . '&' . $data['id'];
             $data['token'] = base64_encode($token);
-            $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
-
+            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $addressDetail = $data['address'] ?? '';
             $productsName = '';
             $productLink = '';
             if (isset($data['product_id']) && !empty($data['product_id'])) {
@@ -605,7 +608,7 @@ class SendEmailController extends Controller
                 'userName'     => $data['name'] ?: '',
                 'email'        => $data['email'],
                 'company'      => $data['company'],
-                'area'         => $area,
+                'area'         => $area." ".$addressDetail,
                 'phone'        => $data['phone'] ?: '',
                 'plantTimeBuy' => $data['buy_time'],
                 'content'      => $data['content'],

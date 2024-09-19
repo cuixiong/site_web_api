@@ -105,7 +105,8 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::get('get', [\App\Http\Controllers\PageController::class, 'Get'])->name('单页面内容');
         Route::get('quotes', [\App\Http\Controllers\PageController::class, 'Quotes'])->name('权威引用列表');
         Route::get('quote', [\App\Http\Controllers\PageController::class, 'Quote'])->name('权威引用');
-        Route::get('quote-relevant-product', [\App\Http\Controllers\PageController::class, 'QuoteRelevantProduct'])->name('权威引用相关报告');
+        Route::get('quote-relevant-product', [\App\Http\Controllers\PageController::class, 'QuoteRelevantProduct'])
+             ->name('权威引用相关报告');
         Route::get('team-member', [\App\Http\Controllers\PageController::class, 'TeamMember'])->name('团队成员');
         Route::get('qualification', [\App\Http\Controllers\PageController::class, 'Qualification'])->name('资质认证');
         Route::get('faqs', [\App\Http\Controllers\PageController::class, 'Faqs'])->name('常见问题');
@@ -164,10 +165,17 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     });
     //user-invoices 用户发票
     Route::prefix('user-invoices')->group(function () {
-        Route::middleware(JwtMiddleware::class)->get('list', [\App\Http\Controllers\InvoicesController::class, 'list'])->name('发票列表');
-        Route::middleware(JwtMiddleware::class)->get('form/{id}', [\App\Http\Controllers\InvoicesController::class, 'form'])->name('发票详情');
-        Route::middleware(JwtMiddleware::class)->post('apply', [\App\Http\Controllers\InvoicesController::class, 'apply'])->name('申请发票');
-        Route::post('apply-single-page', [\App\Http\Controllers\InvoicesController::class, 'applySinglePage'])->name('申请发票(单页)');
+        Route::middleware(JwtMiddleware::class)->get('list', [\App\Http\Controllers\InvoicesController::class, 'list'])
+             ->name('发票列表');
+        Route::middleware(JwtMiddleware::class)->get(
+            'form/{id}', [\App\Http\Controllers\InvoicesController::class, 'form']
+        )->name('发票详情');
+        Route::middleware(JwtMiddleware::class)->post(
+            'apply', [\App\Http\Controllers\InvoicesController::class, 'apply']
+        )->name('申请发票');
+        Route::post('apply-single-page', [\App\Http\Controllers\InvoicesController::class, 'applySinglePage'])->name(
+            '申请发票(单页)'
+        );
     });
     // Cart控制器(购物车模块)
     Route::prefix('cart')->middleware(JwtMiddleware::class)->group(function () {
