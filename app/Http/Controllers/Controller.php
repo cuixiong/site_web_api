@@ -205,8 +205,7 @@ class Controller extends BaseController {
                 // 移除通配符，并分割剩余部分为三部分
                 $patternParts = explode('.', substr($pattern, 0, -1));
                 // 检查前三部分是否匹配
-                if (count($patternParts) === 3
-                    && $patternParts[0] === $ipParts[0]
+                if ($patternParts[0] === $ipParts[0]
                     && $patternParts[1] === $ipParts[1]
                     && $patternParts[2] === $ipParts[2]) {
                     return true; // 前三部分匹配，最后一位是通配符，所以允许
