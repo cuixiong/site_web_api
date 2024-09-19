@@ -487,7 +487,7 @@ class SendEmailController extends Controller {
             );
             //$this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
-                $this->handlerSendEmail($scene, $email, $data, $senderEmail,true);
+                $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
 
             return true;
