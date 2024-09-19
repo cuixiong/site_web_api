@@ -139,6 +139,9 @@ class CommonController extends Controller {
             //图片后缀, 全部需要转换一遍
             $imgExtList = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg'];
             foreach ($data as $key => $value) {
+                // 动态年份替换
+                $value['value'] = str_replace('%year',date('Y',time()),$value['value']);
+
                 $ext = pathinfo($value['value'], PATHINFO_EXTENSION);
                 if (in_array($ext, $imgExtList)) {
                     $value['value'] = Common::cutoffSiteUploadPathPrefix($value['value']);
