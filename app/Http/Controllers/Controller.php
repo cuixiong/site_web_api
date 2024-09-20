@@ -172,7 +172,7 @@ class Controller extends BaseController {
         $query_string = array();
         foreach ($params as $key => $val) {
             if (is_array($val)) {
-                ksort($val,2);
+                ksort($val, 2);
                 reset($val);
                 foreach ($val as $_k2 => $_v2) {
                     array_push($query_string, $key.'-'.$_k2.'='.$_v2);
@@ -196,22 +196,27 @@ class Controller extends BaseController {
         }
         // 将IP地址分割为四部分
         $ipParts = explode('.', $ip);
-        if (count($ipParts) !== 4) {
+        if (count($ipParts) != 4) {
             return false; // 确保是IPv4地址
         }
         foreach ($whitelist as $pattern) {
-            // 检查模式是否包含通配符
-            if (substr($pattern, -1) === '*') {
-                // 移除通配符，并分割剩余部分为三部分
-                $patternParts = explode('.', substr($pattern, 0, -1));
-                // 检查前三部分是否匹配
-                if (count($patternParts) === 3
-                    && $patternParts[0] === $ipParts[0]
-                    && $patternParts[1] === $ipParts[1]
-                    && $patternParts[2] === $ipParts[2]) {
+            $patternList = explode('.', $pattern);
+            if (count($patternList) != 4) {
+                continue;   // 确保模式是IP地址
+            }
+            //俩个通配符
+            if ($patternList[2] == '*' && $patternList[3] == '*') {
+                if ($patternList[0] == $ipParts[0] && $patternList[1] == $ipParts[1]) {
+                    return true;
+                }
+            } elseif ($patternList[3] == '*') {
+                //一个通配符
+                if ($patternList[0] == $ipParts[0]
+                    && $patternList[1] == $ipParts[1]
+                    && $patternList[2] == $ipParts[2]) {
                     return true; // 前三部分匹配，最后一位是通配符，所以允许
                 }
-            } elseif ($pattern === $ip) {
+            } elseif ($pattern == $ip) {
                 // 没有通配符，直接比较整个IP
                 return true;
             }

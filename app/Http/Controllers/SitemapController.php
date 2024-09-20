@@ -204,8 +204,8 @@ class SitemapController extends Controller
             if (php_sapi_name() == 'cli') {
                 chmod($item, 0777);
             }
-            //            return '/sitemap/' . basename($item);
-            return '/' . basename($item);
+            return '/sitemap/' . basename($item);
+            // return '/' . basename($item);
         }, glob($dir . '/sitemap/*.xml'));
         $str = $this->createMap($locs);
 
