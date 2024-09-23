@@ -240,6 +240,9 @@ class CommonController extends Controller {
                            ->select(['key', 'value'])
                            ->get()
                            ->toArray();
+        if($data){
+            $data = array_column($data,'key','value');
+        }
         ReturnJson(true, '', $data);
     }
 
