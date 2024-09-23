@@ -928,7 +928,7 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail, true);
+            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
@@ -970,24 +970,10 @@ class SendEmailController extends Controller {
         }
         if (!$isQueue) {
             //让队列执行, 需要放入队列
-            HandlerEmailJob::dispatch($scene, $email, $data, $senderEmail, $this->testEmail);
+            $app_name = env('APP_NAME');
+            HandlerEmailJob::dispatch($scene, $email, $data, $senderEmail, $this->testEmail)->onQueue($app_name);
 
             return true;
-            //测试
-            // try {
-            //     (new SendEmailController())->handlerSendEmail(
-            //         $scene, $email, $data, $senderEmail, true, $testEmail
-            //     );
-            // } catch (\Exception $e) {
-            //     $errData = [
-            //         'scene'       => $scene,
-            //         'email'       => $email,
-            //         'data'        => $data,
-            //         'senderEmail' => $senderEmail,
-            //         'error'       => $e->getMessage(),
-            //     ];
-            //     \Log::error('发送邮件失败：错误信息与数据:'.json_encode($errData));
-            // }
         }
         // 邮箱账号配置信息
         $config = [
