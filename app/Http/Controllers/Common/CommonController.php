@@ -181,7 +181,7 @@ class CommonController extends Controller {
             ->toArray();
 
         if ($data) {
-            $data = array_column($data, 'key', 'value');
+            $data = array_column($data, 'value', 'key');
         }
         return $data;
     }
