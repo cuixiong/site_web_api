@@ -166,19 +166,23 @@ class CommonController extends Controller {
         return $result;
     }
 
-    public function getControlPageSet() {
+    public function getControlPageSet()
+    {
         $siteInfoKey = 'reports';
         $setId = System::select(['id'])
-                       ->where('status', 1)
-                       ->where('alias', $siteInfoKey)
-                       ->get()
-                       ->value('id');
+            ->where('status', 1)
+            ->where('alias', $siteInfoKey)
+            ->get()
+            ->value('id');
         $data = SystemValue::where('parent_id', $setId)
-                           ->where('hidden', 1)
-                           ->select(['key', 'value'])
-                           ->get()
-                           ->toArray();
+            ->where('hidden', 1)
+            ->select(['key', 'value'])
+            ->get()
+            ->toArray();
 
+        if ($data) {
+            $data = array_column($data, 'key', 'value');
+        }
         return $data;
     }
 
@@ -240,9 +244,6 @@ class CommonController extends Controller {
                            ->select(['key', 'value'])
                            ->get()
                            ->toArray();
-        if($data){
-            $data = array_column($data,'key','value');
-        }
         ReturnJson(true, '', $data);
     }
 
