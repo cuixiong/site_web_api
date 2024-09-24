@@ -243,16 +243,15 @@ class OrderController extends Controller {
                 $pay_set['pay_exchange_rate'] = $firstdataPayData['first_data_pay_exchange_rate'] ?? 1;
                 $pay_set['pay_tax_rate'] = $firstdataPayData['first_data_pay_tax_rate'] ?? 0;
                 $pay_set['pay_coin_type'] = $firstdataPayData['first_data_pay_coin_type'] ?? 'CNY';
-            }elseif($payCode == PayConst::PAY_TYPE_PAYPAL){
+            } elseif ($payCode == PayConst::PAY_TYPE_PAYPAL) {
                 $palpalPaySetList = SystemValue::query()->where("alias", 'paypal_pay_set')
-                                               ->where("status" , 1)
-                                               ->where("hidden" , 1)
+                                               ->where("status", 1)
+                                               ->where("hidden", 1)
                                                ->pluck("value", "key")->toArray();
                 $pay_set['pay_exchange_rate'] = $palpalPaySetList['paypal_pay_exchange_rate'] ?? 1;
                 $pay_set['pay_tax_rate'] = $palpalPaySetList['paypal_pay_tax_rate'] ?? 0;
                 $pay_set['pay_coin_type'] = $palpalPaySetList['paypal_pay_coin_type'] ?? 'CNY';
             }
-
             $pay_set['pay_coin_type_symbol'] = PayConst::$coinTypeSymbol[$pay_set['pay_coin_type']] ?? '¥';
             $item['pay_set'] = $pay_set;
             $item['img'] = Common::cutoffSiteUploadPathPrefix($item['img']);
@@ -263,12 +262,11 @@ class OrderController extends Controller {
     /**
      * 订单明细
      */
-    public function Details(Request $request)
-    {
+    public function Details(Request $request) {
         $orderId = $request->order_id;
         $order = Order::query()
-            ->where(['id' => $orderId])
-            ->first();
+                      ->where(['id' => $orderId])
+                      ->first();
         if (!$order) {
             ReturnJson(false, '订单不存在');
         }
@@ -283,45 +281,50 @@ class OrderController extends Controller {
             ReturnJson(true, '', ['is_pay' => $orderStatus, 'order_number' => $orderNumber]);
         }
         $orderGoods = OrderGoods::from('order_goods')->select([
-            'product.name',
-            'language.name as language',
-            'edition.name as edition',
-            'order_goods.goods_number',
-            'order_goods.goods_original_price',
-            'order_goods.goods_present_price',
-            'order_goods.goods_id as product_id',
-            'product.url',
-            // 'order_goods.price_edition',
-        ])
-            ->leftJoin('product_routine as product', 'product.id', 'order_goods.goods_id')
-            ->leftJoin('price_edition_values as edition', 'edition.id', 'order_goods.price_edition')
-            ->leftJoin('languages as language', 'language.id', 'edition.language_id')
-            ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
-            ->get()->toArray();
+                                                                  'product.name',
+                                                                  'language.name as language',
+                                                                  'edition.name as edition',
+                                                                  'order_goods.goods_number',
+                                                                  'order_goods.goods_original_price',
+                                                                  'order_goods.goods_present_price',
+                                                                  'order_goods.goods_id as product_id',
+                                                                  'product.url',
+                                                                  // 'order_goods.price_edition',
+                                                              ])
+                                ->leftJoin('product_routine as product', 'product.id', 'order_goods.goods_id')
+                                ->leftJoin('price_edition_values as edition', 'edition.id', 'order_goods.price_edition')
+                                ->leftJoin('languages as language', 'language.id', 'edition.language_id')
+                                ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
+                                ->get()->toArray();
         // if (!empty($order['user_id'])) {
         //     $user = User::select(['username', 'email', 'phone', 'company', 'province_id', 'city_id', 'address'])->where(
         //         'id',
         //         $order['user_id']
         //     )->first();
-            $province = City::where('id', $order['province_id'])->value('name');
-            $city = City::where('id', $order['city_id'])->value('name');
-            $_user = [
-                'name'     => $order['username'] ?? '',
-                'email'    => $order['email'] ?? '',
-                'phone'    => $order['phone'] ?? '',
-                'company'  => $order['company'] ?? '',
-                'province' => $province,
-                'city_id'  => $city,
-                'address'  => $order['address'],
-            ];
+        $province = City::where('id', $order['province_id'])->value('name');
+        $city = City::where('id', $order['city_id'])->value('name');
+        $_user = [
+            'name'     => $order['username'] ?? '',
+            'email'    => $order['email'] ?? '',
+            'phone'    => $order['phone'] ?? '',
+            'company'  => $order['company'] ?? '',
+            'province' => $province,
+            'city_id'  => $city,
+            'address'  => $order['address'],
+        ];
         // }
         //$discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);
+        $sum_quantity = 0;
+        foreach ($orderGoods as $forOrderGoods) {
+            $sum_quantity += $forOrderGoods['goods_number'];
+        }
         $data = [
             'order'  => [
                 'order_amount'    => $order['order_amount'], // 订单总额
                 'discount_value'  => $order['coupon_amount'], // 优惠金额
                 'actually_paid'   => $order['actually_paid'], // 实付金额
                 'pay_coin_type'   => $order['pay_coin_type'], // 支付符号
+                'sum_quantity'    => $sum_quantity,
                 'pay_coin_symbol' => PayConst::$coinTypeSymbol[$order['pay_coin_type']] ?? '', // 支付符号
                 'order_status'    => OrderStatus::where('id', $order['is_pay'])->value('name'),
                 'pay_type'        => ModelsPay::where('id', $order['pay_type'])->value('name'),
@@ -458,8 +461,7 @@ class OrderController extends Controller {
         }
     }
 
-    public function form(Request $request)
-    {
+    public function form(Request $request) {
         try {
             $model = new Order();
             $record = $model->findOrFail($request->id);
@@ -495,34 +497,30 @@ class OrderController extends Controller {
             $orderGoodsMolde = new OrderGoods();
             $ogArrList = [];
             $ogList = $orderGoodsMolde->where("order_id", $orderInfo['id'])->get();
-
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
             foreach ($ogList as $key => $value) {
                 /**
                  * @var $value OrderGoods
                  */
                 $value['product_info'] = $value->product_info;
-
                 $value['price_edition_info'] = $value->price_edition_info;
                 $orderGoodsArr = $value->toArray();
-                
-
                 // 给每个报告添加分类名以及默认图片
                 if (!empty($orderGoodsArr['product_info'])) {
                     // 分类信息
                     $tempCategoryId = $orderGoodsArr['product_info']['category_id'];
-                    $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $tempCategoryId)->first()->toArray();
+                    $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $tempCategoryId)
+                                                    ->first()->toArray();
                     $product['category_name'] = isset($categoryData['name']) ? $categoryData['name'] : '';
                     if (empty($orderGoodsArr['product_info']['thumb'])) {
-                        $orderGoodsArr['product_info']['thumb'] = isset($categoryData['thumb']) ? $categoryData['thumb'] : '';
+                        $orderGoodsArr['product_info']['thumb'] = isset($categoryData['thumb']) ? $categoryData['thumb']
+                            : '';
                     }
-
                     // 若没有分类图片添加系统默认图片
                     if (empty($orderGoodsArr['product_info']['thumb'])) {
                         // 若报告图片为空，则使用系统设置的默认报告高清图
                         $orderGoodsArr['product_info']['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                     }
-                    
                 }
                 $ogArrList[] = $orderGoodsArr;
             }
@@ -816,15 +814,15 @@ class OrderController extends Controller {
     }
 
     public function capturePaypalOrder($order) {
-        if(empty($order )){
+        if (empty($order)) {
             return false;
         }
         // TODO: cuizhixiong 2024/8/21 数据库直接存id太傻比了 !!!  存个code啊!!!
         $payCode = ModelsPay::query()->where('id', $order->pay_type)->value('code');
-        if($payCode == PayConst::PAY_TYPE_PAYPAL){
+        if ($payCode == PayConst::PAY_TYPE_PAYPAL) {
             (new PaypalPay())->capturePaypalOrder($order);
         }
+
         return true;
     }
-
 }
