@@ -64,13 +64,13 @@ class OrderTrans extends Base {
      *
      * @param $goodsId
      * @param $priceEdition
-     * @param $payType
+     * @param $payCode
      * @param $coupon_id
      * @param $inputParams array 前端传递过来的参数
      *
      * @return Order|mixed|null
      */
-    public function createBySingle($goodsId, $priceEdition, $payType, $coupon_id, $inputParams) {
+    public function createBySingle($goodsId, $priceEdition, $payCode, $coupon_id, $inputParams) {
         $user = $this->user;
         $userId = $user->id;
         // 判断商品是否存在
@@ -89,7 +89,7 @@ class OrderTrans extends Base {
         $orderAmountSingle = Products::getPrice($priceEdition, $goods); // 订单金额
         $actuallyPaidSingle = Products::getPriceBy($orderAmountSingle, $goods, $timestamp);
         $orderAmount = bcmul($quantity, $orderAmountSingle, 2);
-        $caclueData = $this->calueTaxRate($payType, $orderAmount);
+        $caclueData = $this->calueTaxRate($payCode, $orderAmount);
         if (empty($coupon_id)) {
             //原价打完折, 乘汇率 = 优惠价 .   然后原价*汇率  -  优惠价 = 实付金额
             $discountPrice = Products::getPriceBy($orderAmount, $goods, $timestamp);
@@ -169,10 +169,10 @@ class OrderTrans extends Base {
      *
      * @return Order|null
      */
-    public function createByCartWithoutLogin($shopcarArr, $payType, $coupon_id, $inputParams) {
+    public function createByCartWithoutLogin($shopcarArr, $payCode, $coupon_id, $inputParams) {
         $user = $this->user;
 
-        return $this->shopCartSubmitOrder($shopcarArr, $coupon_id, $payType, $user, $inputParams);
+        return $this->shopCartSubmitOrder($shopcarArr, $coupon_id, $payCode, $user, $inputParams);
     }
 
     /**
@@ -237,7 +237,7 @@ class OrderTrans extends Base {
      * @return Order|false
      */
     private function addOrderData(
-        int $timestamp, $userId, $payType, $orderAmountAll, $caclueData, $user, $coupon_id, $inputParams
+        int $timestamp, $userId, $payCode, $orderAmountAll, $caclueData, $user, $coupon_id, $inputParams
     ) {
         // 插入订单表 order
         $order = new Order();
@@ -246,7 +246,8 @@ class OrderTrans extends Base {
         $order->order_number = date('YmdHis', $timestamp).mt_rand(10, 99);
         $order->user_id = $userId;
         $order->is_pay = Order::PAY_UNPAID;
-        $order->pay_type = $payType;
+        // $order->pay_type = $payType;
+        $order->pay_code = $payCode;
         $order->order_amount = $orderAmountAll; // 原价
         $order->actually_paid = $caclueData['actually_paid_all']; // 实付金额
         $order->username = $inputParams['username'];
@@ -294,14 +295,14 @@ class OrderTrans extends Base {
      *
      * @param $shopCartList
      * @param $coupon_id
-     * @param $payType
+     * @param $payCode
      * @param $user
      * @param $inputParams array 前端传递过来的参数
      *
      * @return Order|mixed|null
      */
     private function shopCartSubmitOrder(
-        $shopCartList, $coupon_id, $payType, $user, $inputParams
+        $shopCartList, $coupon_id, $payCode, $user, $inputParams
     ) {
         $userId = $user->id;
         DB::beginTransaction();
@@ -345,7 +346,7 @@ class OrderTrans extends Base {
             $actuallyPaidAll = bcadd($actuallyPaidAll, bcmul($actuallyPaid, $shopItem['number'], 2), 2);
         }
         //总价换算汇率价格
-        $caclueData = $this->calueTaxRate($payType, $orderAmountAll);
+        $caclueData = $this->calueTaxRate($payCode, $orderAmountAll);
         // TODO: cuizhixiong 2024/8/2  产品明确需求:先换成汇率再计算金额
         if (empty($coupon_id)) {
             //直接换算成 汇率后的折扣价,  就是优惠价
@@ -366,7 +367,7 @@ class OrderTrans extends Base {
         $caclueData['tax_amount'] = bcmul($caclueData['actually_paid_all'], $caclueData['tax_rate'], 2);
         $caclueData['actually_paid_all'] = bcadd($caclueData['actually_paid_all'], $caclueData['tax_amount'], 2);
         $order = $this->addOrderData(
-            $timestamp, $userId, $payType, $orderAmountAll, $caclueData, $user, $coupon_id, $inputParams
+            $timestamp, $userId, $payCode, $orderAmountAll, $caclueData, $user, $coupon_id, $inputParams
         );
         if (empty($order)) {
             $this->errno = ApiCode::INSERT_FAIL;
@@ -404,14 +405,14 @@ class OrderTrans extends Base {
     /**
      * 计算税率
      *
-     * @param       $payType
+     * @param       $payCode
      * @param       $orderAmount
      *
      * @return      array
      */
-    public function calueTaxRate($payType, $orderAmount) {
+    public function calueTaxRate($payCode, $orderAmount) {
         //支付配置税率/汇率配置
-        $payCode = Pay::query()->where("id", $payType)->value("code");
+        // $payCode = Pay::query()->where("id", $payType)->value("code");
         $tax_rate = 0;
         $exchange_rate = 1;
         $pay_coin_type = PayConst::COIN_TYPE_CNY;

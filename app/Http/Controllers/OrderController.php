@@ -113,8 +113,12 @@ class OrderController extends Controller {
                 ReturnJson(false, $e->getMessage());
             }
             //校验支付方式
-            $payType = $request->pay_type;
-            if (!array_key_exists($payType, Order::payType())) {
+            // $payType = $request->pay_type;
+            // if (!array_key_exists($payType, Order::payType())) {
+            //     ReturnJson(false, '支付方式错误');
+            // }
+            $payCode = $request->pay_code;
+            if (!in_array($payCode, Order::payType())) {
                 ReturnJson(false, '支付方式错误');
             }
             //获取用户, 没有登录，则自动注册
@@ -134,7 +138,7 @@ class OrderController extends Controller {
                     ReturnJson(false, '价格版本错误');
                 }
                 $order = $orderTrans->setUser($user)->createBySingle(
-                    $request->goods_id, $priceEdition, $payType, $coupon_id, $inputParams
+                    $request->goods_id, $priceEdition, $payCode, $coupon_id, $inputParams
                 );
             } elseif (!empty($request->shop_id)) { // 已登录，通过购物车下单
                 $shopIdArr = $request->shop_id;
@@ -143,13 +147,13 @@ class OrderController extends Controller {
                     ReturnJson(false, '参数错误1');
                 }
                 $order = $orderTrans->setUser($user)->createByCart(
-                    $shopIdArr, $payType, $coupon_id, $inputParams
+                    $shopIdArr, $payCode, $coupon_id, $inputParams
                 );
             } elseif (!empty($request->shopcar_json)) { // 未登录，通过购物车下单
                 $shopcarJson = $request->shopcar_json;
                 $shopcarArr = json_decode($shopcarJson, true);
                 $order = $orderTrans->setUser($user)->createByCartWithoutLogin(
-                    $shopcarArr, $payType, $coupon_id, $inputParams
+                    $shopcarArr, $payCode, $coupon_id, $inputParams
                 );
             } else {
                 ReturnJson(false, '参数错误3');
@@ -162,7 +166,8 @@ class OrderController extends Controller {
             // 把临时订单号加入缓存
             //Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
             //拉起支付
-            $pay = PayFactory::create($order->pay_type);
+            // $pay = PayFactory::create($order->pay_type);
+            $pay = PayFactory::create($order->pay_code);
             $isMobile = isMobile() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
             $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
             $isWechat = isWeixin() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
@@ -202,7 +207,8 @@ class OrderController extends Controller {
 //        if (!$order->save()) {
 //            ReturnJson(false, '未知错误');
 //        } else {
-        $pay = PayFactory::create($order->pay_type);
+        // $pay = PayFactory::create($order->pay_type);
+        $pay = PayFactory::create($order->pay_code);
         $isMobile = isMobile() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
         $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
         $isWechat = isWeixin() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
@@ -327,7 +333,8 @@ class OrderController extends Controller {
                 'sum_quantity'    => $sum_quantity,
                 'pay_coin_symbol' => PayConst::$coinTypeSymbol[$order['pay_coin_type']] ?? '', // 支付符号
                 'order_status'    => OrderStatus::where('id', $order['is_pay'])->value('name'),
-                'pay_type'        => ModelsPay::where('id', $order['pay_type'])->value('name'),
+                // 'pay_type'        => ModelsPay::where('id', $order['pay_type'])->value('name'),
+                'pay_code'        => ModelsPay::where('code', $order['pay_code'])->value('name'),
                 'order_number'    => $orderNumber,
                 'pay_time'        => $payTime,
                 'remarks'         => $order['remarks'] ? $order['remarks'] : '',
@@ -561,19 +568,23 @@ class OrderController extends Controller {
         }
     }
 
-    public function changePayType(Request $request) {
+    public function changePayType(Request $request)
+    {
         try {
             $model = new Order();
-            $request->validate([
-                                   'order_id'    => 'required|integer',
-                                   'pay_type_id' => 'required|integer',
-                               ],
-                               [
-                                   'order_id.required'    => '订单ID不能为空',
-                                   'order_id.integer'     => '订单ID必须为数字',
-                                   'pay_type_id.required' => '支付方式不能为空',
-                                   'pay_type_id.integer'  => '支付方式必须为数字',
-                               ]
+            $request->validate(
+                [
+                    'order_id'    => 'required|integer',
+                    //    'pay_type_id' => 'required|integer',
+                    'pay_code' => 'required',
+                ],
+                [
+                    'order_id.required'    => '订单ID不能为空',
+                    'order_id.integer'     => '订单ID必须为数字',
+                    'pay_code.required'    => '支付方式code不能为空',
+                    //    'pay_type_id.required' => '支付方式不能为空',
+                    //    'pay_type_id.integer'  => '支付方式必须为数字',
+                ]
             );
             $orderId = $request->input('order_id');
             /**
@@ -587,16 +598,23 @@ class OrderController extends Controller {
             if (in_array($record->is_pay, [Order::PAY_SUCCESS, Order::PAY_FINISH])) {
                 ReturnJson(false, '订单已支付，不能修改');
             }
-            $payTypeId = $request->input('pay_type_id');
+            // $payTypeId = $request->input('pay_type_id');
+            // $isExist = ModelsPay::query()
+            //                     ->where("id", $payTypeId)
+            //                     ->where("status", 1)
+            //                     ->count();
+            $payCode = $request->input('pay_code');
             $isExist = ModelsPay::query()
-                                ->where("id", $payTypeId)
-                                ->where("status", 1)
-                                ->count();
+                ->where("code", $payCode)
+                ->where("status", 1)
+                ->count();
             if (empty($isExist) || $isExist <= 0) {
                 ReturnJson(false, '支付方式不存在');
             }
-            $record->pay_type = $payTypeId;
-            $this->calueOrderData($record, $payTypeId);
+            // $record->pay_type = $payTypeId;
+            // $this->calueOrderData($record, $payTypeId);
+            $record->pay_code = $payCode;
+            $this->calueOrderData($record, $payCode);
             if ($record->save()) {
                 ReturnJson(true, '修改成功');
             } else {
@@ -763,17 +781,22 @@ class OrderController extends Controller {
      * @param mixed $orderId
      *
      */
-    private function calueOrderData($order, $payTypeId = 0) {
+    private function calueOrderData($order, $payCode) {
         $orderId = $order->id;
-        if (!empty($payTypeId)) {
-            $payType = $payTypeId;
+        // if (!empty($payTypeId)) {
+        //     $payType = $payTypeId;
+        // } else {
+        //     $payType = $order->pay_type;
+        // }
+        if (!empty($payCode)) {
+            $payCode = $payCode;
         } else {
-            $payType = $order->pay_type;
+            $payCode = $order->pay_code;
         }
         $orderAmount = $order->order_amount;
         //计算汇率
         $orderTrans = new OrderTrans();
-        $caclueData = ($orderTrans)->calueTaxRate($payType, $orderAmount);
+        $caclueData = ($orderTrans)->calueTaxRate($payCode, $orderAmount);
         //计算商品原价
         $orderGoodsList = (new OrderGoods())->where("order_id", $orderId)->select(
             ['goods_number', 'goods_id', 'price_edition']
@@ -818,7 +841,8 @@ class OrderController extends Controller {
             return false;
         }
         // TODO: cuizhixiong 2024/8/21 数据库直接存id太傻比了 !!!  存个code啊!!!
-        $payCode = ModelsPay::query()->where('id', $order->pay_type)->value('code');
+        // $payCode = ModelsPay::query()->where('id', $order->pay_type)->value('code');
+        $payCode = $order->pay_code;
         if ($payCode == PayConst::PAY_TYPE_PAYPAL) {
             (new PaypalPay())->capturePaypalOrder($order);
         }
