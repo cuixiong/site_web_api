@@ -111,7 +111,7 @@ class OrderTrans extends Base {
         $caclueData['tax_amount'] = bcmul($caclueData['actually_paid_all'], $caclueData['tax_rate'], 2);
         $caclueData['actually_paid_all'] = bcadd($caclueData['actually_paid_all'], $caclueData['tax_amount'], 2);
         $order = $this->addOrderData(
-            $timestamp, $userId, $payType, $orderAmount, $caclueData, $user, $coupon_id, $inputParams
+            $timestamp, $userId, $payCode, $orderAmount, $caclueData, $user, $coupon_id, $inputParams
         );
         if (empty($order)) {
             $this->errno = ApiCode::INSERT_FAIL;
