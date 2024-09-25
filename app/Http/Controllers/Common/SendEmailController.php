@@ -703,12 +703,12 @@ class SendEmailController extends Controller {
                 // 分类信息
                 $category = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $products['category_id'])
                                             ->first();
-                $goods_data['category_name'] = isset($category) ? $goods_data['name'] : '';
-                $goods_data['category_thumb'] = isset($category) ? $goods_data['name'] : '';
+                $goods_data['category_name'] = $category['name'] ?? '';
+                $goods_data['category_thumb'] = $category['thumb'] ?? '';
                 $tempThumb = '';
                 if (!empty($products['thumb'])) {
                     $tempThumb = Common::cutoffSiteUploadPathPrefix($products['thumb']);
-                } elseif (!empty($product['category_thumb'])) {
+                } elseif (!empty($goods_data['category_thumb'])) {
                     $tempThumb = Common::cutoffSiteUploadPathPrefix($goods_data['category_thumb']);
                 } else {
                     // 如果报告图片、分类图片为空，使用系统默认图片
@@ -848,12 +848,12 @@ class SendEmailController extends Controller {
                 // 分类信息
                 $category = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $products['category_id'])
                                             ->first();
-                $goods_data['category_name'] = isset($category) ? $goods_data['name'] : '';
-                $goods_data['category_thumb'] = isset($category) ? $goods_data['name'] : '';
+                $goods_data['category_name'] = $category['name'] ?? '';
+                $goods_data['category_thumb'] = $category['thumb'] ?? '';
                 $tempThumb = '';
                 if (!empty($products['thumb'])) {
                     $tempThumb = Common::cutoffSiteUploadPathPrefix($products['thumb']);
-                } elseif (!empty($product['category_thumb'])) {
+                } elseif (!empty($goods_data['category_thumb'])) {
                     $tempThumb = Common::cutoffSiteUploadPathPrefix($goods_data['category_thumb']);
                 } else {
                     // 如果报告图片、分类图片为空，使用系统默认图片
