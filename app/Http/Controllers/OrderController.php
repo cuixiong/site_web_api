@@ -183,7 +183,7 @@ class OrderController extends Controller {
                 'data'  => $request->all(),
             ];
             \Log::error('下单支付失败,错误信息:'.json_encode($errData));
-            ReturnJson(false, '未知错误');
+            ReturnJson(false, json_encode($errData));
         }
     }
 
@@ -490,6 +490,7 @@ class OrderController extends Controller {
                     'is_pay_text',
                     'is_pay',
                     'pay_type',
+                    'pay_code',
                     'order_amount',
                     'actually_paid',
                     'coupon_id',
