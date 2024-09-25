@@ -143,13 +143,13 @@ class OrderTrans extends Base {
     /**
      *
      * @param $shopIdArr
-     * @param $payType
+     * @param $payCode
      * @param $coupon_id
      * @param $inputParams array 前端传递过来的参数
      *
      * @return Order|null
      */
-    public function createByCart($shopIdArr, $payType, $coupon_id, $inputParams) {
+    public function createByCart($shopIdArr, $payCode, $coupon_id, $inputParams) {
         $user = $this->user;
         $userId = $user->id;
         $shopCartList = ShopCart::query()->where(['user_id' => $userId])
@@ -157,7 +157,7 @@ class OrderTrans extends Base {
                                 ->where("status", 1)
                                 ->get()->toArray();
 
-        return $this->shopCartSubmitOrder($shopCartList, $coupon_id, $payType, $user, $inputParams);
+        return $this->shopCartSubmitOrder($shopCartList, $coupon_id, $payCode, $user, $inputParams);
     }
 
     /**
@@ -461,13 +461,13 @@ class OrderTrans extends Base {
     /**
      * 获取支付税率
      *
-     * @param $payType
+     * @param $payCode
      *
      * @return array
      */
-    public function getTaxRate($payType) {
+    public function getTaxRate($payCode) {
         //支付配置税率/汇率配置
-        $payCode = Pay::query()->where("id", $payType)->value("code");
+        // $payCode = Pay::query()->where("id", $payType)->value("code");
         $tax_rate = 0;
         $exchange_rate = 1;
         if ($payCode == PayConst::PAY_TYPE_STRIPEPAY) {

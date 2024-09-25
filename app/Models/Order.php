@@ -39,9 +39,9 @@ class Order extends Base {
     }
 
     public function getPayTypeTextAttribute() {
-        $payType = Pay::get()->pluck('name', 'id')->toArray();
+        $payType = Pay::get()->pluck('name', 'code')->toArray();
 
-        return $payType[$this->attributes['pay_type']] ?? '';
+        return $payType[$this->attributes['pay_code']] ?? '';
     }
 
     public function getIsPayTextAttribute() {
