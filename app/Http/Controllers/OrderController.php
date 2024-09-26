@@ -214,7 +214,13 @@ class OrderController extends Controller {
         $isWechat = isWeixin() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
         $pay->setOption(Pay::KEY_IS_WECHAT, $isWechat);
 
-        return $pay->do($order);
+
+        try{
+            return $pay->do($order);
+        }catch (\Exception $e){
+            ReturnJson(false, '拉起支付失败,订单已过期!');
+        }
+
     }
 
     /**
