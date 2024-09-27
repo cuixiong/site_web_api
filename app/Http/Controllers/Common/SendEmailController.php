@@ -660,7 +660,7 @@ class SendEmailController extends Controller {
             }
             $data['domain'] = env('DOMAIN_URL', 'https://mmgcn.marketmonitorglobal.com.cn');
             // $PayName = Pay::where('id', $data['pay_type'])->value('name');
-            $PayName = Pay::where('id', $data['pay_code'])->value('name');
+            $PayName = Pay::where('code', $data['pay_code'])->value('name');
             $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
             $languageList = Languages::GetListById();
             $goods_data_list = [];
@@ -805,7 +805,7 @@ class SendEmailController extends Controller {
             $user = User::find($data['user_id']);
             $user = $user ? $user->toArray() : [];
             $data['domain'] = env('DOMAIN_URL', 'https://mmgcn.marketmonitorglobal.com.cn');
-            $PayName = Pay::where('id', $data['pay_code'])->value('name');
+            $PayName = Pay::where('code', $data['pay_code'])->value('name');
             // $PayName = Pay::where('id', $data['pay_type'])->value('name');
             $orderGoodsList = OrderGoods::where('order_id', $Order['id'])->get()->toArray();
             $languageList = Languages::GetListById();
