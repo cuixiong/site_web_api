@@ -31,7 +31,7 @@ class Controller extends BaseController {
         $setKeyPrefix = env('APP_NAME').':';
         $is_open_check_key = $setKeyPrefix.'is_open_check_security';
         $is_open_check_security = Redis::get($is_open_check_key) ?? 0;
-        if ($is_open_check_security > 0) {
+        if (empty($is_open_check_security)) {
             $securityCheckWhiteIplist = [];
             $white_ip_securty_check_key = $setKeyPrefix.'white_ip_security_check';
             $securityCheckWhiteIps = Redis::get($white_ip_securty_check_key) ?? '';
