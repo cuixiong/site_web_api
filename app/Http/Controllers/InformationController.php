@@ -370,14 +370,6 @@ class InformationController extends Controller {
                     $data[$key]['english_name'] = $value['english_name'];
                     // $data[$key]['description'] = $value['description_seo'];
                     $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
-                    // $productsCategory = ProductsCategory::query()->select(['id', 'name', 'link', 'product_tag'])->where(
-                    //     'id',
-                    //     $value['category_id']
-                    // )->first();
-                    $data[$key]['categoryName'] = $productsCategory->name ?? '';
-                    $data[$key]['categoryId'] = $productsCategory->id ?? 0;
-                    $data[$key]['categoryLink'] = $productsCategory->link ?? '';
-                    // $data[$key]['tag_list'] = explode(",", $productsCategory->product_tag);
                     $data[$key]['discount_type'] = $value['discount_type'];
                     $data[$key]['discount_amount'] = $value['discount_value']; // 兼容
                     $data[$key]['discount_value'] = $value['discount_value'];
