@@ -302,33 +302,35 @@ class InformationController extends Controller {
      *
      * @return array
      */
-    private function getRelevantProduct(array $keyword) {
+    private function getRelevantProduct(array $keyword)
+    {
         $data = [];
         if ($keyword) {
             //$begin = strtotime("-2 year", strtotime(date('Y-01-01', time()))); // 前两年
             $result = Products::select([
-                                           'id',
-                                           'name',
-                                           'thumb',
-                                           'english_name',
-                                           'keywords',
-                                           'published_date',
-                                           'category_id',
-                                           'price',
-                                           'url',
-                                           'discount_type',
-                                           'discount_amount as discount_value',
-                                           // 'description_seo'
-                                       ])
-                              ->whereIn('keywords', $keyword)
-                              ->where("status", 1)
+                'id',
+                'name',
+                'thumb',
+                'english_name',
+                'keywords',
+                'published_date',
+                'category_id',
+                'price',
+                'url',
+                'publisher_id',
+                'discount_type',
+                'discount_amount as discount_value',
+                // 'description_seo'
+            ])
+                ->whereIn('keywords', $keyword)
+                ->where("status", 1)
                 //->where('published_date', '>', $begin)
-                              ->where("published_date", "<=", time())
-                              ->orderBy('published_date', 'desc')
-                              ->orderBy('id', 'desc')
-                              ->limit(2)
-                              ->get()
-                              ->toArray();
+                ->where("published_date", "<=", time())
+                ->orderBy('published_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->limit(2)
+                ->get()
+                ->toArray();
             if ($result) {
                 foreach ($result as $key => $value) {
                     $data[$key]['thumb'] = Products::getThumbImgUrl($value);
@@ -337,13 +339,14 @@ class InformationController extends Controller {
                     $data[$key]['english_name'] = $value['english_name'];
                     // $data[$key]['description'] = $value['description_seo'];
                     $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
-                    $productsCategory = ProductsCategory::query()->select(['id', 'name', 'link' , 'product_tag'])->where(
-                        'id', $value['category_id']
+                    $productsCategory = ProductsCategory::query()->select(['id', 'name', 'link', 'product_tag'])->where(
+                        'id',
+                        $value['category_id']
                     )->first();
                     $data[$key]['categoryName'] = $productsCategory->name ?? '';
                     $data[$key]['categoryId'] = $productsCategory->id ?? 0;
                     $data[$key]['categoryLink'] = $productsCategory->link ?? '';
-                    $data[$key]['tag_list'] = explode("," , $productsCategory->product_tag);
+                    $data[$key]['tag_list'] = explode(",", $productsCategory->product_tag);
                     $data[$key]['discount_type'] = $value['discount_type'];
                     $data[$key]['discount_value'] = $value['discount_value'];
                     $data[$key]['description'] = (new ProductDescription(
@@ -356,21 +359,19 @@ class InformationController extends Controller {
                     $languages = Languages::select(['id', 'name'])->get()->toArray();
                     if ($languages) {
                         foreach ($languages as $index => $language) {
-                            $priceEditions = PriceEditionValues::select(
-                                ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
-                            )->where(['status' => 1, 'is_deleted'=> 1, 'language_id' => $language['id']])->orderBy("sort", "asc")->get()->toArray();
-                            $prices[$index]['language'] = $language['name'];
+
+                            $priceEditions = PriceEditionValues::GetList($language['id'], $value['publisher_id']);
                             if ($priceEditions) {
+                                $prices[$index]['language'] = $language['name'];
                                 foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
                                     $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
-                                    $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+                                    $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['name'];
                                     $prices[$index]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
                                     $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
-                                    $prices[$index]['data'][$keyPriceEdition]['price'] = eval(
-                                        "return ".sprintf(
-                                            $priceEdition['rule'], $value['price']
-                                        ).";"
-                                    );
+                                    $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
+                                        $priceEdition['rules'],
+                                        $value['price']
+                                    ) . ";");
                                 }
                             }
                         }

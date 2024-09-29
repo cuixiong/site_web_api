@@ -329,8 +329,9 @@ class NewsController extends Controller {
                 'discount',
                 'discount_amount as discount_value',
                 'discount_time_begin',
-                'discount_time_end'
-                // 'description_seo'
+                'discount_time_end',
+                // 'description_seo',
+                'publisher_id',
             ])
                 ->whereIn('keywords', $keyword)
                 ->where("status", 1)
@@ -403,18 +404,20 @@ class NewsController extends Controller {
                     $languages = Languages::select(['id', 'name'])->get()->toArray();
                     if ($languages) {
                         foreach ($languages as $index => $language) {
-                            $priceEditions = PriceEditionValues::select(
-                                ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
-                            )->where(['status' => 1, 'is_deleted'=> 1, 'language_id' => $language['id']])->orderBy("sort", "asc")->get()->toArray();
+                            // $priceEditions = PriceEditionValues::select(
+                            //     ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
+                            // )->where(['status' => 1, 'is_deleted'=> 1, 'language_id' => $language['id']])->orderBy("sort", "asc")->get()->toArray();
+                            
+                            $priceEditions = PriceEditionValues::GetList($language['id'],$value['publisher_id']);
                             if ($priceEditions) {
                                 $prices[$index]['language'] = $language['name'];
                                 foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
                                     $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
-                                    $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
+                                    $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['name'];
                                     $prices[$index]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
                                     $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
                                     $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
-                                        $priceEdition['rule'],
+                                        $priceEdition['rules'],
                                         $value['price']
                                     ) . ";");
                                     if ($index == 0 && $keyPriceEdition == 0) {
