@@ -30,7 +30,6 @@ class IndexController extends Controller {
         //最新报告(热门报告)
         if (checkSiteAccessData(['168report'])) {
             $data['hot_product_list'] = $this->getHotProductList($request);
-            $end_time = microtime(true);
             // 报告数据
             $priceEdition = [];
             if(!empty($data['hot_product_list']['products'] )) {
