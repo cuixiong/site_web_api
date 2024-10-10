@@ -38,6 +38,11 @@ class ProductPdf extends Base
 
     public function getTemplatePath()
     {
+
+        $tempPath = resource_path('views') . '/'.env('APP_NAME')."pdfTempale.php";
+        if(file_exists($tempPath) && is_file($tempPath) ){
+            $this->templatePath = $tempPath;
+        }
         if ($this->templatePath === null) {
             $this->templatePath = $this->defaultTemplatePath;
             if (!is_file($this->templatePath)) {

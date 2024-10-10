@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Common;
 use App\Models\Information;
+use App\Models\Languages;
 use App\Models\News;
 use App\Models\Office;
 use App\Models\Partner;
@@ -29,6 +30,16 @@ class IndexController extends Controller {
         //最新报告(热门报告)
         if (checkSiteAccessData(['168report'])) {
             $data['hot_product_list'] = $this->getHotProductList($request);
+            // 报告数据
+            $priceEdition = [];
+            if(!empty($data['hot_product_list']['products'] )) {
+                $publisherIdList = [];
+                foreach ($data['hot_product_list']['products'] as $for_p){
+                    $publisherIdList[] = $for_p['publisher_id'];
+                }
+                $languages = Languages::GetList();
+                $priceEdition = Products::getPriceEdition($publisherIdList, $languages);
+            }
             foreach ($data['hot_product_list']['products'] as &$forProduct) {
                 $time = time();
                 //判断当前报告是否在优惠时间内
@@ -38,7 +49,7 @@ class IndexController extends Controller {
                     $forProduct['discount_status'] = 2;
                 }
                 //此处站点 , 需额外返回价格版本
-                $forProduct['prices'] = Products::CountPrice($forProduct['price'], $forProduct['publisher_id']);
+                $forProduct['prices'] = Products::countPriceEditionPrice($priceEdition[$forProduct['publisher_id']],$forProduct['price']) ?? [];
             }
         }else{
             $data['hot_product_list'] = $this->getHotProductList($request);

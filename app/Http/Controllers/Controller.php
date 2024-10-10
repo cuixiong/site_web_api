@@ -32,15 +32,11 @@ class Controller extends BaseController {
         $setKeyPrefix = env('APP_NAME').':';
         $is_open_check_key = $setKeyPrefix.'is_open_check_security';
         $is_open_check_security = Redis::get($is_open_check_key) ?? 0;
-        if (empty($is_open_check_security)) {
-            $securityCheckWhiteIplist = [];
+        if ($is_open_check_security > 0) {
             $white_ip_securty_check_key = $setKeyPrefix.'white_ip_security_check';
             $securityCheckWhiteIps = Redis::get($white_ip_securty_check_key) ?? '';
-            if (!empty($securityCheckWhiteIps)) {
-                $securityCheckWhiteIplist = explode(',', $securityCheckWhiteIps);
-            }
-            $securityCheckWhiteIplist[] = '127.0.0.1';
-            if (!in_array(request()->ip(), $securityCheckWhiteIplist)) {
+            $checkRes = $this->isIpAllowed(request()->ip(), $securityCheckWhiteIps);
+            if (!$checkRes) {
                 $this->securityCheck();
             }
         }
@@ -188,6 +184,10 @@ class Controller extends BaseController {
     }
 
     public function isIpAllowed($ip, $whitelist) {
+        if($ip == '127.0.0.1') {
+            //本地的直接跳过
+            return true;
+        }
         if (empty($whitelist)) {
             return false;
         }

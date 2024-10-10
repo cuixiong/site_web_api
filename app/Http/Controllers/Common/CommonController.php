@@ -19,6 +19,7 @@ use App\Models\SearchRank;
 use App\Models\System;
 use App\Models\SystemValue;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 
 class CommonController extends Controller {
     /**
@@ -444,15 +445,23 @@ class CommonController extends Controller {
      * @return array
      */
     private function getChianRegionData() {
-        $provinces = City::select(['id', 'name'])->where(['type' => 1])->get()->toArray();
-        $data = [];
-        foreach ($provinces as $province) {
-            $data[] = [
-                "id"   => $province["id"],
-                "name" => $province["name"],
-                'sons' => City::select(['id', 'name'])->where(['type' => 2, 'pid' => $province['id']])->get()->toArray(
-                ),
-            ];
+        $app_name = env('APP_NAME');
+        $cacheKey = $app_name.'_city_cache_key';
+        $cityCacheData = Redis::get($cacheKey);
+        if(empty($cityCacheData )) {
+            $data = [];
+            $provinces = City::select(['id', 'name'])->where(['type' => 1])->get()->toArray();
+            foreach ($provinces as $province) {
+                $data[] = [
+                    "id"   => $province["id"],
+                    "name" => $province["name"],
+                    'sons' => City::select(['id', 'name'])->where(['type' => 2, 'pid' => $province['id']])->get()
+                                  ->toArray(),
+                ];
+            }
+            Redis::set($cacheKey, json_encode($data));
+        }else{
+            $data = json_decode($cityCacheData, true);
         }
 
         return $data;
