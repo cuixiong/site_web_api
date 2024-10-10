@@ -20,6 +20,7 @@ class Controller extends BaseController {
             // 'api/common/top-menus',//测试
             //支付相关
             'api/order/wechat-order',
+            'api/order/details', //微信扫码轮询是否支付成功
             'api/wx-empower/index1',
             'api/order/pay',
         ];
