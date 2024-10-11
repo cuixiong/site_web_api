@@ -337,6 +337,7 @@ class SendEmailController extends Controller {
             //$result['country'] = DictionaryValue::GetDicOptions('Country');
             $productsName = '';
             $productLink = '';
+            $categoryEmail = '';
             if (isset($data['product_id']) && !empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
                                         ->select(
@@ -351,6 +352,8 @@ class SendEmailController extends Controller {
                                         )->first();
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
+                // 分类邮箱
+                $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
             }
             $data['country'] = Country::where('id', $data['country_id'])->value('name');
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
@@ -394,6 +397,12 @@ class SendEmailController extends Controller {
             )->first();
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
+            
+            // 收件人额外加上分类邮箱
+            if($categoryEmail){
+                $categoryEmail = explode(',', $categoryEmail);
+                $emails = array_merge($emails, $categoryEmail);
+            }
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
@@ -403,7 +412,7 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
+            // $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
