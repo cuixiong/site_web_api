@@ -423,6 +423,7 @@ class SendEmailController extends Controller {
             // $data['country'] = Country::where('id',$data['country_id'])->value('name');
             $productsName = '';
             $productLink = '';
+            $categoryEmail = '';
             if (isset($data['product_id']) && !empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
                                         ->select(
@@ -437,6 +438,10 @@ class SendEmailController extends Controller {
                                         )->first();
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
+                
+                // 分类邮箱
+                $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
+
             }
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
@@ -488,6 +493,11 @@ class SendEmailController extends Controller {
             $scene->title = $scene->title.":  {$productsName}";
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
+            // 收件人额外加上分类邮箱
+            if($categoryEmail){
+                $categoryEmail = explode(',', $categoryEmail);
+                $emails = array_merge($emails, $categoryEmail);
+            }
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
@@ -577,6 +587,7 @@ class SendEmailController extends Controller {
             $addressDetail = $data['address'] ?? '';
             $productsName = '';
             $productLink = '';
+            $categoryEmail = '';
             if (isset($data['product_id']) && !empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
                                         ->select(
@@ -591,6 +602,8 @@ class SendEmailController extends Controller {
                                         )->first();
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
+                // 分类邮箱
+                $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
             }
             $area = $this->getAreaName($data);
             $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
@@ -636,6 +649,12 @@ class SendEmailController extends Controller {
             $scene->title = $scene->title.":  {$productsName}";
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
+            
+            // 收件人额外加上分类邮箱
+            if($categoryEmail){
+                $categoryEmail = explode(',', $categoryEmail);
+                $emails = array_merge($emails, $categoryEmail);
+            }
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
