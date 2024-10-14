@@ -179,7 +179,7 @@ class Products extends Base
 
     /**
      * 获取价格版本
-     * @param array|int $publisherIds 
+     * @param array|int $publisherIds
      */
     public static function getPriceEdition(
         $publisherIds,

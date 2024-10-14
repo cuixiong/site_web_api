@@ -11,6 +11,7 @@ use App\Models\DictionaryValue;
 use App\Models\LanguageWebsite;
 use App\Models\Link;
 use App\Models\Menu;
+use App\Models\MessageLanguageVersion;
 use App\Models\News;
 use App\Models\PlateValue;
 use App\Models\ProductsCategory;
@@ -59,6 +60,13 @@ class CommonController extends Controller {
         $data['buy_time'] = DictionaryValue::GetDicOptions('Buy_Time');
         // 获知渠道,原为联系我们控制器Dictionary函数中代码，现复制至此处
         $data['channel'] = DictionaryValue::GetDicOptions('Channel_Type');
+
+        // 语言版本
+        $data['language_version'] = MessageLanguageVersion::where('status', 1)
+                                                            ->select(['name', 'id'])
+                                                            ->orderBy('sort', 'ASC')
+                                                            ->get()
+                                                            ->toArray();
 
         ReturnJson(true, '', $data);
     }

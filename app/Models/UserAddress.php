@@ -7,7 +7,7 @@ use App\Models\Base;
 class UserAddress extends Base {
     protected $fillable
                        = ['user_id', 'address', 'city_id', 'province_id', 'consignee', 'contact_number', 'is_default',
-                          'email'];
+                          'email' , 'company'];
     protected $table   = 'user_address';
     protected $appends = ['province_name', 'city_name'];
 
