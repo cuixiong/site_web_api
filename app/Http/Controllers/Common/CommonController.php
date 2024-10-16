@@ -547,6 +547,7 @@ class CommonController extends Controller {
                          ['id', 'link', 'name', 'banner_title', 'banner_short_title', 'parent_id', 'seo_title',
                           'seo_keyword', 'seo_description']
                      )
+                     ->orderBy('sort', 'ASC')
                      ->get()->toArray();
 
         // 这里只处理两层，等需要多层再用递归
