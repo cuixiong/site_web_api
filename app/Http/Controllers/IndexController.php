@@ -426,7 +426,7 @@ class IndexController extends Controller {
 
             if(!empty($productShowPriceEdition)){
                 // 提取这些报告的出版商id，统一查出涉及的价格版本
-                $publisherIdArray = array_unique(array_column($newProductList, 'publisher_id'));
+                $publisherIdArray = array_unique(array_column($newProductList->toArray(), 'publisher_id'));
                 $languages = Languages::GetList();
                 $priceEdition = Products::getPriceEdition($publisherIdArray, $languages);
             }
@@ -570,7 +570,7 @@ class IndexController extends Controller {
             $newProductList = $productQuery->select($productSelect)->get();
             if(!empty($productShowPriceEdition)){
                 // 提取这些报告的出版商id，统一查出涉及的价格版本
-                $publisherIdArray = array_unique(array_column($newProductList, 'publisher_id'));
+                $publisherIdArray = array_unique(array_column($newProductList->toArray(), 'publisher_id'));
                 $languages = Languages::GetList();
                 $priceEdition = Products::getPriceEdition($publisherIdArray, $languages);
             }
