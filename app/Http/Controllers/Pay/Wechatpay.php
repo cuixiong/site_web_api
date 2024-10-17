@@ -56,6 +56,7 @@ class Wechatpay extends Pay
             if($domain){
                 $domain = trim($domain,'/');
             }
+
             $business_url = $domain.'/api/order/wechat-order';
             $redirecturi = $wxTransferDomain.'/api/wx-empower/index1?business_url='.$business_url."&referer=".$referer;
             $url = $this->wechatTool->getOAuthUrl($redirecturi, $order->id);
@@ -65,6 +66,11 @@ class Wechatpay extends Pay
         }
 
         try {
+            $imgDomain = env('APP_URL_BACKUP' , '');
+            if($imgDomain){
+                $imgDomain = trim($imgDomain,'/');
+            }
+
             if ($this->getOption(self::KEY_IS_MOBILE) == self::OPTION_ENABLE) { // h5 支付
 
                 $wechat_type = 'h5';
@@ -130,7 +136,7 @@ class Wechatpay extends Pay
                     <head>
                         <meta charset="UTF-8">
                         <title>WeChat Pay</title>
-                        <link rel="shortcut icon" href="https://admin.globalinforesearch.com.cn/images/wechatpay/logo.ico" />
+                        <link rel="shortcut icon" href="$imgDomain/wechat/logo.ico" />
                         <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
                         <meta name="format-detection" content="telephone=no" />
                         <meta http-equiv="Cache-Control" content="no-transform,no-siteapp">
@@ -192,7 +198,7 @@ class Wechatpay extends Pay
                     </head>
                     <body>
                         <div class="main">
-                            <div class="logo"><img class="wechatpay" src="https://admin.globalinforesearch.com.cn/images/wechatpay/logo.webp"></div><!-- 微信支付 logo -->
+                            <div class="logo"><img class="wechatpay" src="$imgDomain/wechat/logo.webp"></div><!-- 微信支付 logo -->
                             <div class="detail">
                                 <span class="amount"><strong><sup>￥</sup>$orderAmount</strong></span>
                                 <span>商户全称: </span><span>$merchantName</span>
@@ -201,7 +207,7 @@ class Wechatpay extends Pay
                             </div>
                             <div class="qrcode">
                                 <div><img class="wechatpay" src="$qrcodeUrl"></div><!-- 微信支付 二维码 -->
-                                <div><img class="wechatpay" src="https://admin.globalinforesearch.com.cn/images/wechatpay/instructions.webp"></div><!-- 微信支付 二维码说明 -->
+                                <div><img class="wechatpay" src="$imgDomain/wechat/instructions.webp"></div><!-- 微信支付 二维码说明 -->
                             </div>
                         </div>
                     </body>
