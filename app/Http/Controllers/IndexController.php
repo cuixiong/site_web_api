@@ -10,10 +10,12 @@ use App\Models\Office;
 use App\Models\Partner;
 use App\Models\Products;
 use App\Http\Controllers\Controller;
+use App\Models\Authority;
 use App\Models\Comment;
 use App\Models\ProductDescription;
 use App\Models\ProductsCategory;
 use App\Models\Qualification;
+use App\Models\QuoteCategory;
 use App\Models\SystemValue;
 use App\Services\SenWordsService;
 use Illuminate\Http\Request;
@@ -68,7 +70,7 @@ class IndexController extends Controller {
         // 客户评价
         $data['comment'] = $this->getCustomersComment($request);
         // 资质认证
-        $data['qualification_list'] = $this->getQualificationList(1 , 4);
+        $data['qualification_list'] = $this->getQualificationList($request);
 
         ReturnJson(true, '', $data);
     }
@@ -704,24 +706,78 @@ class IndexController extends Controller {
         return $list;
     }
     
+    
     /**
      * 资质认证
      */
-    public function getQualificationList($page = 1, $pageSize = 4)
+    public function getQualificationList(Request $request)
     {
-        $list = Qualification::select([
+        $page = $request->qualification_page ?? 1;
+        $pageSize = $request->qualification_size ?? 5;
+
+        $query = Qualification::select([
             'id',
             'name as title',
             'thumbnail as thumb',
             'image as img'
         ])
-            ->orderBy('sort', 'asc')
+            ->where('status', 1);
+        $count = (clone $query)->count();
+
+        $list = $query->orderBy('sort', 'asc')
             ->orderBy('id', 'desc')
-            ->where('status', 1)
             ->offset(($page - 1) * $pageSize)
             ->limit($pageSize)
             ->get()
             ->toArray();
-        return $list;
+
+        $data = [
+            'list' => $list,
+            'count' => intval($count),
+            'page' => $page,
+            'pageSize' => $pageSize,
+            'pageCount' => ceil($page / $pageSize),
+        ];
+        return $data;
+    }
+
+    
+    /**
+     * 权威引用 common控制器也有个权威引用，这个是有返回分页的，到时等前端改完我再删除common控制器的
+     */
+    public function getQuoteList(Request $request)
+    {
+        $category_id = $request->quote_category_id ?? 0;
+        $page = $request->quote_page ?? 1;
+        $pageSize = $request->quote_size ?? 4;
+
+        $category = QuoteCategory::select(['id', 'name'])
+        ->where("status", 1)
+        ->orderBy('sort', 'asc')->get()->toArray() ?? [];
+
+        array_unshift($category, ['id' => '0', 'name' => '全部']);
+
+        // 数据
+        $query = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id'])->where("status", 1);
+        if ($category_id) {
+            $query = $query->where('category_id', $category_id);
+        }
+
+        $count = (clone $query)->count();
+
+        $list = $query->orderBy('sort', 'asc')
+            ->orderBy('id', 'desc')
+            ->offset(($page - 1) * $pageSize)
+            ->limit($pageSize)
+            ->get()->toArray();
+
+        $data = [
+            'list' => $list,
+            'count' => intval($count),
+            'page' => $page,
+            'pageSize' => $pageSize,
+            'pageCount' => ceil($page / $pageSize),
+        ];
+        return $data;
     }
 }
