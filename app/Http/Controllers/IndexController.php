@@ -72,6 +72,7 @@ class IndexController extends Controller {
         // 资质认证
         $data['qualification_list'] = $this->getQualificationList($request);
 
+        $data['quote_list'] = $this->getQuoteList($request);
         ReturnJson(true, '', $data);
     }
 
@@ -736,7 +737,7 @@ class IndexController extends Controller {
             'count' => intval($count),
             'page' => $page,
             'pageSize' => $pageSize,
-            'pageCount' => ceil($page / $pageSize),
+            'pageCount' => ceil($count / $pageSize),
         ];
         return $data;
     }
@@ -776,7 +777,7 @@ class IndexController extends Controller {
             'count' => intval($count),
             'page' => $page,
             'pageSize' => $pageSize,
-            'pageCount' => ceil($page / $pageSize),
+            'pageCount' => ceil($count / $pageSize),
         ];
         return $data;
     }
