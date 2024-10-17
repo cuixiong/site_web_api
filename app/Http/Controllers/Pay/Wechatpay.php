@@ -70,6 +70,8 @@ class Wechatpay extends Pay
             if($imgDomain){
                 $imgDomain = trim($imgDomain,'/');
             }
+            $siteName = env('APP_NAME');
+            // $siteName = 'gircn';
 
             if ($this->getOption(self::KEY_IS_MOBILE) == self::OPTION_ENABLE) { // h5 支付
 
@@ -136,7 +138,7 @@ class Wechatpay extends Pay
                     <head>
                         <meta charset="UTF-8">
                         <title>WeChat Pay</title>
-                        <link rel="shortcut icon" href="$imgDomain/wechat/logo.ico" />
+                        <link rel="shortcut icon" href="$imgDomain/site/$siteName/wechat/logo.ico" />
                         <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
                         <meta name="format-detection" content="telephone=no" />
                         <meta http-equiv="Cache-Control" content="no-transform,no-siteapp">
@@ -198,7 +200,7 @@ class Wechatpay extends Pay
                     </head>
                     <body>
                         <div class="main">
-                            <div class="logo"><img class="wechatpay" src="$imgDomain/wechat/logo.webp"></div><!-- 微信支付 logo -->
+                            <div class="logo"><img class="wechatpay" src="$imgDomain/site/$siteName/wechat/logo.webp"></div><!-- 微信支付 logo -->
                             <div class="detail">
                                 <span class="amount"><strong><sup>￥</sup>$orderAmount</strong></span>
                                 <span>商户全称: </span><span>$merchantName</span>
@@ -207,7 +209,7 @@ class Wechatpay extends Pay
                             </div>
                             <div class="qrcode">
                                 <div><img class="wechatpay" src="$qrcodeUrl"></div><!-- 微信支付 二维码 -->
-                                <div><img class="wechatpay" src="$imgDomain/wechat/instructions.webp"></div><!-- 微信支付 二维码说明 -->
+                                <div><img class="wechatpay" src="$imgDomain/site/$siteName/wechat/instructions.webp"></div><!-- 微信支付 二维码说明 -->
                             </div>
                         </div>
                     </body>
