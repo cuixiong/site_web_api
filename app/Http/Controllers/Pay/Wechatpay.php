@@ -66,7 +66,7 @@ class Wechatpay extends Pay
         }
 
         try {
-            $imgDomain = env('APP_URL_BACKUP' , '');
+            $imgDomain = env('IMAGE_URL_BACKUP' , '');
             if($imgDomain){
                 $imgDomain = trim($imgDomain,'/');
             }
