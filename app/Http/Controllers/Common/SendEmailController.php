@@ -92,12 +92,15 @@ class SendEmailController extends Controller {
             // ];
             // $verifyUrl = $data['domain'] . '/?verifyemail=' . $emailCode . '&' . http_build_query($dataQuery);
             $verifyUrl = $data['domain'].'/?verifyemail='.$emailCode.'&token='.$token;
+            
+            // $imgDomain = env('IMAGE_URL');
+            $imgDomain = env('IMAGE_URL_BACKUP','');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
                 'contactUsUrl' => rtrim($data['domain'], '/').'/contact-us',
                 'homeUrl'      => $data['domain'],
-                'backendUrl'   => env('IMAGE_URL'),
+                'backendUrl'   => $imgDomain,
                 'verifyUrl'    => $verifyUrl,
                 'userName'     => $data['name'],
                 'area'         => City::where('id', $data['city_id'])->value('name'),
@@ -142,12 +145,14 @@ class SendEmailController extends Controller {
             $data['domain'] = 'https://'.$_SERVER['SERVER_NAME'];
             $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
+            // $imgDomain = env('IMAGE_URL');
+            $imgDomain = env('IMAGE_URL_BACKUP','');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
                 'contactUsUrl' => rtrim($data['domain'], '/').'/contact-us',
                 'homeUrl'      => $data['domain'],
-                'backendUrl'   => env('IMAGE_URL'),
+                'backendUrl'   => $imgDomain,
                 'userName'     => $data['name'],
                 'area'         => City::where('id', $data['area_id'])->value('name'),
                 'dateTime'     => date('Y-m-d', time()),
@@ -211,13 +216,15 @@ class SendEmailController extends Controller {
                 $scene->email_sender_id
             );
             $domain = 'http://'.$_SERVER['SERVER_NAME'];
+            // $imgDomain = env('IMAGE_URL');
+            $imgDomain = env('IMAGE_URL_BACKUP','');
             $data = $user;
             $data['userName'] = $data['name'];
             $data['homePage'] = $domain;
             $data['myAccountUrl'] = rtrim($domain, '/').'/account/account-infor';
             $data['contactUsUrl'] = rtrim($domain, '/').'/contact-us';
             $data['homeUrl'] = $domain;
-            $data['backendUrl'] = env('IMAGE_URL');
+            $data['backendUrl'] = $imgDomain;
             $verifyUrl = $data['domain'].'/signIn/resetPassword?verifyemail=do-reset-register=&email='.$user['email']
                          .'&token='.$user['token'];
             $data['verifyUrl'] = $verifyUrl;
@@ -273,6 +280,8 @@ class SendEmailController extends Controller {
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $addressDetail = $data['address'] ?? '';
             $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
+            // $imgDomain = env('IMAGE_URL');
+            $imgDomain = env('IMAGE_URL_BACKUP','');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -287,7 +296,7 @@ class SendEmailController extends Controller {
                 'content'      => $data['content'],
                 'dateTime'     => date('Y-m-d'),
                 'language'     => $languageList[$ContactUs['language_version']] ?? '',
-                'backendUrl'   => env('IMAGE_URL'),
+                'backendUrl'   => $imgDomain,
                 'link'         => $productLink,
                 'productsName' => $productsName,
             ];
@@ -362,6 +371,8 @@ class SendEmailController extends Controller {
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
+            // $imgDomain = env('IMAGE_URL');
+            $imgDomain = env('IMAGE_URL_BACKUP','');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -374,7 +385,7 @@ class SendEmailController extends Controller {
                 'phone'        => $data['phone'] ? $data['phone'] : '',
                 'plantTimeBuy' => $data['buy_time'],
                 'content'      => $data['content'],
-                'backendUrl'   => env('IMAGE_URL'),
+                'backendUrl'   => $imgDomain,
                 'link'         => $productLink,
                 'productsName' => $productsName,
                 'dateTime'     => date('Y-m-d'),
@@ -458,6 +469,8 @@ class SendEmailController extends Controller {
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
+            // $imgDomain = env('IMAGE_URL');
+            $imgDomain = env('IMAGE_URL_BACKUP','');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -470,7 +483,7 @@ class SendEmailController extends Controller {
                 'phone'        => $data['phone'] ? $data['phone'] : '',
                 'plantTimeBuy' => $data['buy_time'],
                 'content'      => $data['content'],
-                'backendUrl'   => env('IMAGE_URL'),
+                'backendUrl'   => $imgDomain,
                 'link'         => $productLink,
                 'productsName' => $productsName,
                 'dateTime'     => date('Y-m-d'),
@@ -532,6 +545,8 @@ class SendEmailController extends Controller {
             $area = $this->getAreaName($data);
             $addressDetail = $data['address'] ?? '';
             $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
+            // $imgDomain = env('IMAGE_URL');
+            $imgDomain = env('IMAGE_URL_BACKUP','');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -545,7 +560,7 @@ class SendEmailController extends Controller {
                 'plantTimeBuy' => $data['buy_time'],
                 //'content' => $data['remarks'],
                 'content'      => $data['content'],
-                'backendUrl'   => env('IMAGE_URL'),
+                'backendUrl'   => $imgDomain,
                 'dateTime'     => date('Y-m-d'),
                 'language'     => $languageList[$ContactUs['language_version']] ?? '',
             ];
@@ -616,6 +631,8 @@ class SendEmailController extends Controller {
             }
             $area = $this->getAreaName($data);
             $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
+            // $imgDomain = env('IMAGE_URL');
+            $imgDomain = env('IMAGE_URL_BACKUP','');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -628,7 +645,7 @@ class SendEmailController extends Controller {
                 'phone'        => $data['phone'] ?: '',
                 'plantTimeBuy' => $data['buy_time'],
                 'content'      => $data['content'],
-                'backendUrl'   => env('IMAGE_URL'),
+                'backendUrl'   => $imgDomain,
                 'link'         => $productLink,
                 'productsName' => $productsName,
                 'dateTime'     => date('Y-m-d'),
@@ -687,6 +704,8 @@ class SendEmailController extends Controller {
                 ReturnJson(false, '未找到订单数据');
             }
             $data['domain'] = env('DOMAIN_URL', 'https://mmgcn.marketmonitorglobal.com.cn');
+            // $imgDomain = env('IMAGE_URL');
+            $imgDomain = env('IMAGE_URL_BACKUP','');
             // $PayName = Pay::where('id', $data['pay_type'])->value('name');
             $PayName = Pay::where('code', $data['pay_code'])->value('name');
             $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
@@ -743,8 +762,8 @@ class SendEmailController extends Controller {
                     // 如果报告图片、分类图片为空，使用系统默认图片
                     $tempThumb = !empty($defaultImg) ? $defaultImg : '';
                 }
-                $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$tempThumb;
-                // $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/') . $products->getThumbImgAttribute();
+                $goods_data['thumb'] = rtrim($imgDomain, '/').$tempThumb;
+                // $goods_data['thumb'] = rtrim($imgDomain, '/') . $products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;
             }
@@ -755,7 +774,7 @@ class SendEmailController extends Controller {
                 'myAccountUrl'       => rtrim($data['domain'], '/').'/account/account-infor',
                 'contactUsUrl'       => rtrim($data['domain'], '/').'/contact-us',
                 'homeUrl'            => rtrim($data['domain'], '/').'/account/order',
-                'backendUrl'         => env('IMAGE_URL', ''),
+                'backendUrl'         => $imgDomain,
                 'userName'           => $data['username'] ? $data['username'] : '',
                 'userEmail'          => $data['email'],
                 'userCompany'        => $data['company'],
@@ -843,6 +862,8 @@ class SendEmailController extends Controller {
             // 默认图片
             // 若报告图片为空，则使用系统设置的默认报告高清图
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+            // $imgDomain = env('IMAGE_URL');
+            $imgDomain = env('IMAGE_URL_BACKUP','');
             foreach ($orderGoodsList as $key => $OrderGoods) {
                 $goods_data = [];
                 $priceEditionId = $OrderGoods['price_edition'];
@@ -889,8 +910,8 @@ class SendEmailController extends Controller {
                     // 如果报告图片、分类图片为空，使用系统默认图片
                     $tempThumb = !empty($defaultImg) ? $defaultImg : '';
                 }
-                $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/').$tempThumb;
-                // $goods_data['thumb'] = rtrim(env('IMAGE_URL', ''), '/') . $products->getThumbImgAttribute();
+                $goods_data['thumb'] = rtrim($imgDomain, '/').$tempThumb;
+                // $goods_data['thumb'] = rtrim($imgDomain, '/') . $products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;
             }
@@ -902,7 +923,7 @@ class SendEmailController extends Controller {
                 'myAccountUrl'       => rtrim($data['domain'], '/').'/account/account-infor',
                 'contactUsUrl'       => rtrim($data['domain'], '/').'/contact-us',
                 'homeUrl'            => $data['domain'],
-                'backendUrl'         => env('IMAGE_URL', ''),
+                'backendUrl'         => $imgDomain,
                 'userName'           => $data['username'] ?: '',
                 'userEmail'          => $data['email'],
                 'userCompany'        => $data['company'],
