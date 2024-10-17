@@ -322,19 +322,28 @@ class IndexController extends Controller {
         $dataType = $request->hot_data_type ?? 0;
         // 返回分类数量，在 dataType 为 1|2 时
         $categoryLimit = $request->hot_category_size ?? 4;
-        // 返回报告数量/每个分类的报告数量
+        // 当前数据为第几页
+        $productPage = $request->hot_product_page ?? 1;
+        // 返回报告数量/每个分类的(每页)报告数量
         $productLimit = $request->hot_product_size ?? 6;
+        // 是否返回价格版本
+        $productShowPriceEdition = $request->hot_product_price_edition ?? 0;
+
         // dataType 为 1 时，页面根据点击分类选项卡切换报告数据
         $categoryID = $request->hot_category_id ?? 0;
         $data = [];
         // 报告基本查询
         $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url', 'publisher_id' , 'discount_type', 'discount', 'discount_amount', 'discount_time_begin', 'discount_time_end'];
-        $productQuery = Products::where('status', 1)
-                                ->where("show_hot", 1)
-                                ->where("published_date", "<=", time())
+        
+        $productCountQuery = Products::where("status", 1)
+                                ->where('show_recommend', 1)
+                                ->where("published_date", "<=", time());
+
+        $productQuery = (clone $productCountQuery)
                                 ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
                                 ->orderBy('published_date', 'desc')
                                 ->orderBy('id', 'desc')
+                                ->offset(($productPage - 1) * $productLimit)
                                 ->limit($productLimit);
         // 分类基本查询
         $categoryQuery = ProductsCategory::select(['id', 'name', 'link', 'thumb', 'icon', 'icon_hover'])
@@ -346,6 +355,11 @@ class IndexController extends Controller {
                                          ->limit($categoryLimit);
         if ($dataType == 0) {
             // $newProductList = $productQuery->get();
+            $count = $productCountQuery->count();
+            $data['count'] = intval($count);
+            $data['page'] = $productPage;
+            $data['pageSize'] = $productLimit;
+            $data['pageCount'] = ceil($count / $productLimit);
         } elseif ($dataType == 1) {
             //获取热门分类
             $categories = $categoryQuery->get()->toArray();
@@ -409,6 +423,14 @@ class IndexController extends Controller {
             // gir用的两张默认图...
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
             $newProductList = $productQuery->select($productSelect)->get();
+
+            if(!empty($productShowPriceEdition)){
+                // 提取这些报告的出版商id，统一查出涉及的价格版本
+                $publisherIdArray = array_unique(array_column($newProductList, 'publisher_id'));
+                $languages = Languages::GetList();
+                $priceEdition = Products::getPriceEdition($publisherIdArray, $languages);
+            }
+
             foreach ($newProductList as $key => $value) {
                 $this->handlerNewProductList($value);
                 $newProductList[$key]['category_name'] = isset($categoryNames[$value->category_id])
@@ -417,6 +439,13 @@ class IndexController extends Controller {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                 }
+                
+                // 价格版本
+                $publisher_id = $value['publisher_id'];
+                if(!empty($productShowPriceEdition) && isset($priceEdition[$publisher_id])){
+                    $newProductList[$key]['prices'] = Products::countPriceEditionPrice($priceEdition[$publisher_id],$value['price'],) ?? [];
+                }
+                
             }
             $data['products'] = $newProductList;
         }
@@ -439,19 +468,26 @@ class IndexController extends Controller {
         $dataType = $request->recommend_data_type ?? 0;
         // 返回分类数量，在 dataType 为 1|2 时
         $categoryLimit = $request->recommend_category_size ?? 4;
-        // 返回报告数量/每个分类的报告数量
+        // 当前数据为第几页
+        $productPage = $request->recommend_product_page ?? 1;
+        // 返回报告数量/每个分类的(每页)报告数量
         $productLimit = $request->recommend_product_size ?? 6;
         // dataType 为 1 时，页面根据点击分类选项卡切换报告数据
         $categoryID = $request->recommend_category_id ?? 0;
+        // 是否返回价格版本
+        $productShowPriceEdition = $request->recommend_product_price_edition ?? 0;
+        $count = 0;
         $data = [];
         // 报告基本查询
         $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',];
-        $productQuery = Products::where("status", 1)
+        $productCountQuery = Products::where("status", 1)
                                 ->where('show_recommend', 1)
-                                ->where("published_date", "<=", time())
+                                ->where("published_date", "<=", time());
+        $productQuery = (clone $productCountQuery)
                                 ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
                                 ->orderBy('published_date', 'desc')
                                 ->orderBy('id', 'desc')
+                                ->offset(($productPage - 1) * $productLimit)
                                 ->limit($productLimit);
         // 分类基本查询
         $categoryQuery = ProductsCategory::select(['id', 'name', 'link', 'thumb', 'icon', 'icon_hover'])
@@ -461,8 +497,14 @@ class IndexController extends Controller {
                                          ->orderBy('sort', 'asc')
                                          ->orderBy('updated_at', 'desc')
                                          ->limit($categoryLimit);
+                                        
         if ($dataType == 0) {
             // $newProductList = $productQuery->get();
+            $count = $productCountQuery->count();
+            $data['count'] = intval($count);
+            $data['page'] = $productPage;
+            $data['pageSize'] = $productLimit;
+            $data['pageCount'] = ceil($count / $productLimit);
         } elseif ($dataType == 1) {
             //获取推荐分类
             $categories = $categoryQuery->get()->toArray();
@@ -526,6 +568,12 @@ class IndexController extends Controller {
             // gir用的两张默认图...
             $defaultImg = SystemValue::where('key', 'default_report_img2')->value('value');
             $newProductList = $productQuery->select($productSelect)->get();
+            if(!empty($productShowPriceEdition)){
+                // 提取这些报告的出版商id，统一查出涉及的价格版本
+                $publisherIdArray = array_unique(array_column($newProductList, 'publisher_id'));
+                $languages = Languages::GetList();
+                $priceEdition = Products::getPriceEdition($publisherIdArray, $languages);
+            }
             foreach ($newProductList as $key => $value) {
                 $this->handlerNewProductList($value);
                 $newProductList[$key]['category_name'] = isset($categoryNames[$value->category_id])
@@ -533,6 +581,12 @@ class IndexController extends Controller {
                 if (empty($value->thumb)) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
+                }
+
+                // 价格版本
+                $publisher_id = $value['publisher_id'];
+                if(!empty($productShowPriceEdition) && isset($priceEdition[$publisher_id])){
+                    $newProductList[$key]['prices'] = Products::countPriceEditionPrice($priceEdition[$publisher_id],$value['price'],) ?? [];
                 }
             }
             $data['products'] = $newProductList;
