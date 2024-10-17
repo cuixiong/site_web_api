@@ -13,6 +13,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\ProductDescription;
 use App\Models\ProductsCategory;
+use App\Models\Qualification;
 use App\Models\SystemValue;
 use App\Services\SenWordsService;
 use Illuminate\Http\Request;
@@ -66,6 +67,9 @@ class IndexController extends Controller {
         }
         // 客户评价
         $data['comment'] = $this->getCustomersComment($request);
+        // 资质认证
+        $data['qualification_list'] = $this->getQualificationList(1 , 4);
+
         ReturnJson(true, '', $data);
     }
 
@@ -697,6 +701,27 @@ class IndexController extends Controller {
             }
         }
 
+        return $list;
+    }
+    
+    /**
+     * 资质认证
+     */
+    public function getQualificationList($page = 1, $pageSize = 4)
+    {
+        $list = Qualification::select([
+            'id',
+            'name as title',
+            'thumbnail as thumb',
+            'image as img'
+        ])
+            ->orderBy('sort', 'asc')
+            ->orderBy('id', 'desc')
+            ->where('status', 1)
+            ->offset(($page - 1) * $pageSize)
+            ->limit($pageSize)
+            ->get()
+            ->toArray();
         return $list;
     }
 }
