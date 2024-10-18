@@ -68,6 +68,8 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::get('customers-comments', [\App\Http\Controllers\IndexController::class, 'customersComments'])->name(
             '客户评价'
         );
+        Route::get('quote', [\App\Http\Controllers\IndexController::class, 'getQuoteList'])->name('权威引用');
+        Route::get('qualification', [\App\Http\Controllers\IndexController::class, 'getQualificationList'])->name('资质认证');
     });
     // Plate控制器(页面板块)
     Route::prefix('plate')->group(function () {

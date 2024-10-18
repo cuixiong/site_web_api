@@ -53,7 +53,7 @@ class CommonController extends Controller {
         //报告分类
         $data['product_cagory'] = $this->getProductCagory();
         //权威引用
-        $data['quote_list'] = $this->getQuoteList(0, 1 , 4);
+        $data['quote_list'] = $this->getQuoteList($request);
 
         // 总控字典部分
         // 计划购买时间 ,原为联系我们控制器Dictionary函数中代码，现复制至此处
@@ -71,7 +71,12 @@ class CommonController extends Controller {
         ReturnJson(true, '', $data);
     }
 
-    public function getQuoteList($category_id = 0, $page = 1, $pageSize = 4) {
+    public function getQuoteList() {
+        
+        $category_id = $request->quote_category_id ?? 0;
+        $page = $request->quote_page ?? 1;
+        $pageSize = $request->quote_size ?? 4;
+
         $category = QuoteCategory::select(['id', 'name'])
                                  ->where("status" , 1)
                                  ->orderBy('sort', 'asc')->get()->toArray() ?? [];

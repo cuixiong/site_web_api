@@ -61,7 +61,8 @@ class IndexController extends Controller {
         $data['recommend_product_list'] = $this->getRecommendProductList($request);
         //合作伙伴接口
         $data['partner_list'] = $this->getPartnerList($request);
-        //行业新闻
+
+        //行业新闻 默认无分页 前端传hasPagination
         $data['industry_news_list'] = $this->getIndustryNews($request);
         //热点资讯
         if (checkSiteAccessData(['168report'])) {
@@ -69,10 +70,15 @@ class IndexController extends Controller {
         }
         // 客户评价
         $data['comment'] = $this->getCustomersComment($request);
-        // 资质认证
-        $data['qualification_list'] = $this->getQualificationList($request);
 
-        $data['quote_list'] = $this->getQuoteList($request);
+
+        if (checkSiteAccessData(['yhcn'])){
+            // 权威引用 默认有分页
+            $data['quote_list'] = $this->getQuoteList($request);
+            // 资质认证 默认有分页
+            $data['qualification_list'] = $this->getQualificationList($request);
+        }
+
         ReturnJson(true, '', $data);
     }
 
@@ -628,18 +634,22 @@ class IndexController extends Controller {
      * @return array
      */
     private function getIndustryNews(Request $request): array {
-        $limit = $request->news_size ?? 4;
+        $page = $request->news_page ?? 1;
+        $pageSize = $request->news_size ?? 4;
+        $hasPagination = isset($request->news_pagination) && ($request->news_pagination == 1)? true :false;
         // 这里keywords可能改成tags，都是逗号分割取第一个
-        $list = News::where('status', 1)
+        $query = News::where('status', 1)
                     ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url', 'keywords'])
                     ->where('show_home', 1) // 是否在首页显示
-                    ->where('upload_at', '<=', time())
+                    ->where('upload_at', '<=', time());
             //->orderBy('sort', 'desc')
-                    ->orderBy('upload_at', 'desc')
-                    ->orderBy('id', 'desc')
-                    ->limit($limit)
-                    ->get()
-                    ->toArray();
+        $count = (clone $query)->count();
+        $list = $query->orderBy('upload_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->offset(($page - 1) * $pageSize)
+                ->limit($pageSize)
+                ->get()
+                ->toArray();
         if ($list) {
             foreach ($list as $key => $item) {
                 $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
@@ -648,7 +658,16 @@ class IndexController extends Controller {
                 $list[$key]['keywords'] = count($keywords) > 0 ? $keywords[0] : '';
             }
         }
-
+        if($hasPagination){
+            $data = [
+                'list' => $list,
+                'count' => intval($count),
+                'page' => $page,
+                'pageSize' => $pageSize,
+                'pageCount' => ceil($count / $pageSize),
+            ];
+            return $data;
+        }
         return $list;
     }
 
@@ -744,7 +763,7 @@ class IndexController extends Controller {
 
     
     /**
-     * 权威引用 common控制器也有个权威引用，这个是有返回分页的，到时等前端改完我再删除common控制器的
+     * 权威引用 有分页
      */
     public function getQuoteList(Request $request)
     {
