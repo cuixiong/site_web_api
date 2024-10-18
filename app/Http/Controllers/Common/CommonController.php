@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
 use App\Models\Authority;
 use App\Models\City;
+use App\Models\Comment;
 use App\Models\Common;
 use App\Models\DictionaryValue;
 use App\Models\LanguageWebsite;
@@ -55,8 +56,14 @@ class CommonController extends Controller {
         $data['product_cagory'] = $this->getProductCagory();
         //权威引用
         $data['quote_list'] = $this->getQuoteList($request);
-        //办公室
-        $data['office_region'] = $this->getofficeRegion($request);
+        
+
+        if (checkSiteAccessData(['yhcn'])){
+            // 客户评价
+            $data['comment'] = $this->getCustomersComment($request);
+            // 办公室
+            $data['office_region'] = $this->getofficeRegion($request);
+        }
         
         // 总控字典部分
         // 计划购买时间 ,原为联系我们控制器Dictionary函数中代码，现复制至此处
@@ -644,14 +651,50 @@ class CommonController extends Controller {
     }
 
 
-    // 办公室
+    // 办公室 所在地点 
     public function getofficeRegion(Request $request)
     {
         $list = Office::select(['region'])
         ->where('status', 1)
-        ->orderBy('sort', 'desc')
+        ->orderBy('sort', 'asc')
         ->orderBy('id', 'desc')
         ->pluck('region');
         return $list;
+    }
+    
+    /**
+     *
+     * @return array
+     */
+    private function getCustomersComment(Request $request): array
+    {
+        $pageSize = $request->comment_size ?? 4;
+        $page = $request->comment_page ?? 1;
+
+        $query = Comment::select(['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at'])->where('status', 1);
+
+        $count = (clone $query)->count();
+        $list = $query->orderBy('id', 'desc')
+        //->orderBy('sort', 'desc')
+        ->offset(($page - 1) * $pageSize)
+            ->limit($pageSize)
+            ->get()
+            ->toArray();
+
+        if ($list) {
+            foreach ($list as $key => $item) {
+                $list[$key]['comment_at_format'] = date('Y-m-d', $item['comment_at']);
+                $list[$key]['image'] = Common::cutoffSiteUploadPathPrefix($item['image']);
+            }
+        }
+
+        $data = [
+            'list' => $list,
+            'count' => intval($count),
+            'page' => $page,
+            'pageSize' => $pageSize,
+            'pageCount' => ceil($count / $pageSize),
+        ];
+        return $data;
     }
 }
