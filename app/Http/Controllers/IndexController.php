@@ -651,7 +651,7 @@ class IndexController extends Controller {
         $hasPagination = isset($request->news_pagination) && ($request->news_pagination == 1)? true :false;
         // 这里keywords可能改成tags，都是逗号分割取第一个
         $query = News::where('status', 1)
-                    ->select(['id', 'thumb', 'title', 'description', 'upload_at', 'url', 'keywords'])
+                    ->select(['id', 'thumb', 'title', 'short_title','description', 'upload_at', 'url', 'keywords'])
                     ->where('show_home', 1) // 是否在首页显示
                     ->where('upload_at', '<=', time());
             //->orderBy('sort', 'desc')
@@ -664,6 +664,9 @@ class IndexController extends Controller {
                 ->toArray();
         if ($list) {
             foreach ($list as $key => $item) {
+                $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
+                $list[$key]['month_day'] = date('Y-m', $item['upload_at']);
+                $list[$key]['year'] = date('Y', $item['upload_at']);
                 $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
                 $list[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
                 $keywords = explode(',', $list[$key]['keywords'] ?? '');
