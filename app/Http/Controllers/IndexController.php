@@ -99,6 +99,18 @@ class IndexController extends Controller {
         $list = $this->getIndustryNews($request);
         ReturnJson(true, '', $list);
     }
+    
+    // 权威引用
+    public function quotes(Request $request) {
+        $data = $this->getQuoteList($request);
+        ReturnJson(true, '', $data);
+    }
+
+    // 资质认证
+    public function qualifications(Request $request) {
+        $data = $this->getQualificationList($request);
+        ReturnJson(true, '', $data);
+    }
 
     // 合作伙伴
     public function partners(Request $request) {
