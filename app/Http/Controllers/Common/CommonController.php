@@ -56,7 +56,7 @@ class CommonController extends Controller {
         //权威引用
         $data['quote_list'] = $this->getQuoteList($request);
         //办公室
-        $data['offices'] = $this->getoffice($request);
+        $data['office_region'] = $this->getofficeRegion($request);
         
         // 总控字典部分
         // 计划购买时间 ,原为联系我们控制器Dictionary函数中代码，现复制至此处
@@ -643,25 +643,15 @@ class CommonController extends Controller {
         return $frontMenus;
     }
 
-    
+
     // 办公室
-    public function getoffice(Request $request) {
-        $count = Office::where('status', 1)->count();
-        $list = Office::where('status', 1)
-                      ->orderBy('sort', 'desc')
-                      ->orderBy('id', 'desc')
-                      ->get();
-        foreach ($list as &$value) {
-            $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
-            $value['national_flag'] = Common::cutoffSiteUploadPathPrefix($value['national_flag']);
-        }
-        $data = [
-            'list' => $list,
-            'count' => intval($count),
-            // 'page' => $page,
-            // 'pageSize' => $pageSize,
-            // 'pageCount' => ceil($count / $pageSize),
-        ];
-        return $data;
+    public function getofficeRegion(Request $request)
+    {
+        $list = Office::select(['region'])
+        ->where('status', 1)
+        ->orderBy('sort', 'desc')
+        ->orderBy('id', 'desc')
+        ->pluck('region');
+        return $list;
     }
 }
