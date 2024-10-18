@@ -81,7 +81,7 @@ class CommonController extends Controller {
         ReturnJson(true, '', $data);
     }
 
-    public function getQuoteList() {
+    public function getQuoteList(Request $request) {
         
         $category_id = $request->quote_category_id ?? 0;
         $page = $request->quote_page ?? 1;
