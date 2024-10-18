@@ -13,6 +13,7 @@ use App\Models\Link;
 use App\Models\Menu;
 use App\Models\MessageLanguageVersion;
 use App\Models\News;
+use App\Models\Office;
 use App\Models\PlateValue;
 use App\Models\ProductsCategory;
 use App\Models\QuoteCategory;
@@ -54,7 +55,9 @@ class CommonController extends Controller {
         $data['product_cagory'] = $this->getProductCagory();
         //权威引用
         $data['quote_list'] = $this->getQuoteList($request);
-
+        //办公室
+        $data['offices'] = $this->getoffice($request);
+        
         // 总控字典部分
         // 计划购买时间 ,原为联系我们控制器Dictionary函数中代码，现复制至此处
         $data['buy_time'] = DictionaryValue::GetDicOptions('Buy_Time');
@@ -638,5 +641,27 @@ class CommonController extends Controller {
         }
 
         return $frontMenus;
+    }
+
+    
+    // 办公室
+    public function getoffice(Request $request) {
+        $count = Office::where('status', 1)->count();
+        $list = Office::where('status', 1)
+                      ->orderBy('sort', 'desc')
+                      ->orderBy('id', 'desc')
+                      ->get();
+        foreach ($list as &$value) {
+            $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
+            $value['national_flag'] = Common::cutoffSiteUploadPathPrefix($value['national_flag']);
+        }
+        $data = [
+            'list' => $list,
+            'count' => intval($count),
+            // 'page' => $page,
+            // 'pageSize' => $pageSize,
+            // 'pageCount' => ceil($count / $pageSize),
+        ];
+        return $data;
     }
 }
