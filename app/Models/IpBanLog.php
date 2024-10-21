@@ -16,5 +16,5 @@ use App\Models\Base;
 class IpBanLog extends Base {
     protected $table = 'ip_ban_log';
     // 设置允许入库字段,数组形式
-    protected $fillable = ['id', 'ip', 'ip_addr', 'route', 'sort', 'status'];
+    protected $fillable = ['id', 'ip', 'ip_addr', 'route', 'ban_time', 'ban_cnt', 'muti_ip' ,'ua_header', 'sort', 'status'];
 }

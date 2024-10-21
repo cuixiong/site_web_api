@@ -21,17 +21,18 @@ class IpBanLogService {
         }
         $addData = [
             'ip'         => $data['ip'],
+            'muti_ip'    => $data['muti_ip'],
             'route'      => $data['route'],
+            'ua_header'  => $data['ua_header'],
+            'ban_time'   => $data['ban_time'],
+            'ban_cnt'    => $data['ban_cnt'],
             'created_at' => $data['created_at'],
             'updated_at' => $data['updated_at'],
         ];
         //ip转换地址
         $ipAddr = (new IPAddrService($data['ip']))->getAddrStrByIp();
-
         $addData['ip_addr'] = $ipAddr;
 
         return IpBanLog::create($addData);
     }
-
-
 }

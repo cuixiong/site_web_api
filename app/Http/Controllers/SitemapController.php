@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Information;
 use App\Models\Menu;
 use App\Models\News;
 use App\Models\Products;
@@ -41,6 +42,7 @@ class SitemapController extends Controller
             ->clearMap()
             ->sitemapMenus()
             ->sitemapNews()
+            ->sitemapInformation()
             ->sitemapHotInfo()
             ->sitemapProducts()
             ->sitemapMain()
@@ -54,6 +56,7 @@ class SitemapController extends Controller
         $this->clearMap()
             ->sitemapMenus()
             ->sitemapNews()
+            ->sitemapInformation()
             ->sitemapHotInfo()
             ->sitemapProducts()
             ->sitemapMain()
@@ -126,6 +129,31 @@ class SitemapController extends Controller
         $str = $this->createMap($locs);
 
         file_put_contents($this->dir . '/' . 'news.xml', $str);
+
+        return $this;
+    }
+
+
+    public function sitemapInformation()
+    {
+        $news = Information::select(['id', 'title', 'url', 'category_id'])
+                    ->where('upload_at','<=',time())
+            // ->where('category_id',1)
+                    ->get()->toArray(); //获取所有
+        $locs = [];
+        foreach ($news as $new) {
+            if (!empty($new['url'])) {
+                $locs[] = '/information' . '/' . $new['id'] . '/' . $new['url'];
+            } else {
+                $new['title'] = str_replace(' ', '-', $new['title']); // 把关键词里的空格转换成中划线“-”，
+                $new['title'] = strtolower($new['title']);            // 再转化成小写，就是我们要的url（自定义链接）
+                $locs[] = '/information' . '/' . $new['id'] . '/' . $new['title'];
+            }
+        }
+
+        $str = $this->createMap($locs);
+
+        file_put_contents($this->dir . '/' . 'information.xml', $str);
 
         return $this;
     }
