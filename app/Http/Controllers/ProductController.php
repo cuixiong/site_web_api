@@ -265,7 +265,7 @@ class ProductController extends Controller
             ReturnJson(false, '产品ID不允许为空！', []);
         }
         $product = Products::where(['id' => $product_id, 'status' => 1])->select(
-            ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date']
+            ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date','hits','downloads']
         )->first();
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
         if (!empty($product) && $product->published_date->timestamp < time()) {
