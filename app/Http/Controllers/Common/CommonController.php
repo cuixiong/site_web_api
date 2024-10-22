@@ -110,7 +110,7 @@ class CommonController extends Controller {
      * @return mixed
      */
     private function getProductCagory() {
-        $field = ['id', 'name', 'link','icon'];
+        $field = ['id', 'name', 'link','icon' , 'icon_hover'];
         $data = ProductsCategory::select($field)
                                 ->where('status', 1)
                                 ->get()

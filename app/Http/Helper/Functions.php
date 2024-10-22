@@ -115,5 +115,21 @@ function checkSiteAccessData($siteNameLit) {
     return false;
 }
 
+function get_client_ip() {
+    $header = request()->header();
+    $ip = $header['x-forwarded-for'] ?? '';
+    if(empty($ip )){
+        $ip = $header['client-ip'] ?? '';
+    }
+    if(empty($ip )){
+        $ip = request()->ip();
+    }
+    if(!empty($ip) && is_array($ip)){
+        $ip = array_shift($ip);
+    }
+    return $ip;
+}
+
+
 
 

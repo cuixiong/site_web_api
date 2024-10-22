@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SystemValue;
 use App\Services\IpBanLogService;
+use App\Services\ReqLogService;
 use App\Services\SlidingWindowRateLimiter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -28,71 +30,12 @@ class Controller extends BaseController {
         if ($route && in_array($route, $excludeRoute)) {
             return;
         }
-        //值为1开启,默认关闭  接口安全检查
-        $setKeyPrefix = env('APP_NAME').':';
-        $is_open_check_key = $setKeyPrefix.'is_open_check_security';
-        $is_open_check_security = Redis::get($is_open_check_key) ?? 0;
-        if ($is_open_check_security > 0) {
-            $white_ip_securty_check_key = $setKeyPrefix.'white_ip_security_check';
-            $securityCheckWhiteIps = Redis::get($white_ip_securty_check_key) ?? '';
-            $checkRes = $this->isIpAllowed(request()->ip(), $securityCheckWhiteIps);
-            if (!$checkRes) {
-                $this->securityCheck();
-            }
-        }
-        //值为1开启,默认关闭,  接口限流策略
-        $is_open_limit_key = $setKeyPrefix.'is_open_limit_req';
-        $is_open_limit_req = Redis::get($is_open_limit_key) ?? 0;
-        if ($is_open_limit_req > 0) {
-            //ip封禁验证
-            $route = request()->route();
-            $routeUril = '';
-            if (!empty($route->uri)) {
-                $routeUril = $route->uri;
-            }
-            $ip = request()->ip();
-            $ip_white_rules_key = $setKeyPrefix.'ip_white_rules';
-            $whiteIplist = Redis::get($ip_white_rules_key) ?? [];
-            //ip白名单验证
-            $checkRes = $this->isIpAllowed($ip, $whiteIplist);
-            if (!$checkRes) {
-                //获取封禁配置
-                $windows_time_key = $setKeyPrefix.'window_time';
-                $windowsTime = Redis::get($windows_time_key) ?? 5;
-                $req_limit_key = $setKeyPrefix.'req_limit';
-                $reqLimit = Redis::get($req_limit_key) ?? 10;
-                $expire_time_key = $setKeyPrefix.'expire_time';
-                $expireTime = Redis::get($expire_time_key) ?? 60;
-                $ipCacheKey = $ip.':'.$routeUril;
-                $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->slideIsAllowed(
-                    $ipCacheKey
-                );
-//            $res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->simpleIsAllowed($ipCacheKey);
-                if (!$res) {
-                    //添加封禁日志
-                    $this->addBanLog($ip, $routeUril);
-                    http_response_code(429);
-                    ReturnJson(false, '请求频率过快~');
-                }
-            }
-        }
-    }
 
-    /**
-     * 添加封禁日志
-     *
-     * @param $ip
-     * @param $route
-     *
-     */
-    public function addBanLog($ip, $route) {
-        $data = [
-            'ip'         => $ip,
-            'route'      => $route,
-            'created_at' => time(),
-            'updated_at' => time(),
-        ];
-        (new IpBanLogService())->addIpBanLog($data);
+        $this->signCheck();
+        //UA请求头封禁
+        $this->checkUaHeader();
+        //IP限流封禁
+        $this->ipRateLimit();
     }
 
     // TODO: cuizhixiong 2024/6/28 暂时写死,后期弄成可配置的签名key
@@ -184,7 +127,7 @@ class Controller extends BaseController {
     }
 
     public function isIpAllowed($ip, $whitelist) {
-        if($ip == '127.0.0.1') {
+        if ($ip == '127.0.0.1') {
             //本地的直接跳过
             return true;
         }
@@ -247,5 +190,183 @@ class Controller extends BaseController {
         }
 
         return $sign;
+    }
+
+    /**
+     *  校验UA头
+     */
+    public function checkUaHeader() {
+        $header = request()->header();
+        if (empty($header['user-agent'])) {
+            return true;
+        }
+        $ip = get_client_ip();
+        $real_ip = $ip;
+        $hidden = $this->getSetValByKey('is_open_ua_limit_req');
+        if ($hidden > 0) {
+            $req_ua_limit = $this->getSetValByKey('ua_limit');
+            $req_ua_window_time = $this->getSetValByKey('ua_window_time');
+            $ua_expire_time = $this->getSetValByKey('ua_expire_time') ?? 60;
+            $append_ua_expire_time = $this->getSetValByKey('append_ua_expire_time') ?? 5;
+            $route = request()->route();
+            $routeUril = '';
+            if (!empty($route->uri)) {
+                $routeUril = $route->uri;
+            }
+            $cache_prefix_key = 'rate_ua_limit:';
+            //白名单
+            $ua_info = $this->getSetValByKey('ua_white_list') ?? '';
+            $ua_list = explode("\n", $ua_info);
+            $slidingWindowRateLimiter = new SlidingWindowRateLimiter(
+                $req_ua_window_time, $req_ua_limit, $ua_expire_time, $cache_prefix_key
+            );
+            $slidingWindowRateLimiter->appendExpireTime = $append_ua_expire_time;
+            foreach ($header['user-agent'] as $forUserAgent) {
+                if (!in_array($forUserAgent, $ua_list)) {
+                    //$reqKey = $forUserAgent.":".$routeUril;
+                    $reqKey = $forUserAgent;
+                    $res = $slidingWindowRateLimiter->slideIsAllowedPlus($reqKey);
+                    if (!$res) {
+                        //添加封禁日志
+                        $cacheKey = $cache_prefix_key.$reqKey;
+                        $banKey = $cacheKey.":ban";
+                        $ban_time = Redis::ttl($banKey);
+
+                        $ban_cnt_key = $cacheKey.":banCount";
+                        $ban_cnt = Redis::get($ban_cnt_key);
+                        $header = request()->header();
+                        $data = [
+                            'ip'         => $real_ip,
+                            'ua_info'    => json_encode([$header['user-agent']]),
+                            'ban_time'   => $ban_time,
+                            'ban_cnt'    => $ban_cnt,
+                            'route'      => $routeUril,
+                            'created_at' => time(),
+                            'updated_at' => time(),
+                        ];
+                        (new ReqLogService())->addReqLog($data);
+                        http_response_code(403);
+                        ReturnJson(false, '请稍后重试1');
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    private function signCheck() {
+        //$setKeyPrefix = env('APP_NAME').':';
+        //值为1开启,默认关闭  接口安全检查
+        //$is_open_check_key = $setKeyPrefix.'is_open_check_security';
+        //$is_open_check_security = Redis::get($is_open_check_key) ?? 0;
+        $is_open_check_security = $this->getSetValByKey('is_open_check_security');
+        if ($is_open_check_security > 0) {
+            //$white_ip_securty_check_key = $setKeyPrefix.'white_ip_security_check';
+            //$securityCheckWhiteIps = Redis::get($white_ip_securty_check_key) ?? '';
+            $securityCheckWhiteIps = $this->getSetValByKey('white_ip_security_check') ?? '';
+            $checkRes = $this->isIpAllowed(request()->ip(), $securityCheckWhiteIps);
+            if (!$checkRes) {
+                $this->securityCheck();
+            }
+        }
+    }
+
+    private function getSetValByKey($setKey) {
+        if (in_array($setKey, ['is_open_limit_req', 'is_open_ua_limit_req', 'is_open_check_security'])) {
+            $valueFiled = 'hidden';
+        } else {
+            $valueFiled = 'value';
+        }
+        $val = SystemValue::query()->where("key", $setKey)->value($valueFiled);
+
+        return $val;
+        //todo  缓存需要维护, 先暂时读数据库, 后续再优化
+        $setKeyPrefix = env('APP_NAME').':';
+        $cache_key = $setKeyPrefix.$setKey;
+        if (Redis::EXISTS($cache_key)) {
+            return Redis::get($cache_key);
+        } else {
+            if (in_array($setKey, [])) {
+                $valueFiled = 'hidden';
+            } else {
+                $valueFiled = 'value';
+            }
+            $val = SystemValue::query()->where("key", $setKey)->value($valueFiled);
+            Redis::set($cache_key, $val);
+
+            return $val;
+        }
+    }
+
+    /**
+     *
+     * @param string $setKeyPrefix
+     * @param string $ip
+     *
+     */
+    private function ipRateLimit() {
+        $ip = get_client_ip();
+        $real_ip = $ip;
+        //值为1开启,默认关闭,  接口限流策略
+        $is_open_limit_req = $this->getSetValByKey('is_open_limit_req') ?? 0;
+        if ($is_open_limit_req > 0) {
+            //ip封禁验证
+            $route = request()->route();
+            $routeUril = '';
+            if (!empty($route->uri)) {
+                $routeUril = $route->uri;
+            }
+            $whiteIplist = $this->getSetValByKey('ip_white_rules') ?? '';
+            //ip白名单验证
+            $checkRes = $this->isIpAllowed($ip, $whiteIplist);
+            if (!$checkRes) {
+                //获取封禁配置
+                $windowsTime = $this->getSetValByKey('window_time') ?? 5;
+                $reqLimit = $this->getSetValByKey('req_limit') ?? 10;
+                $expireTime = $this->getSetValByKey('expire_time') ?? 60;
+                $append_expire_time = $this->getSetValByKey('append_expire_time') ?? 60;
+                //多段IP
+                $afterIp = explode(".", $ip);
+                $ban_ip_level = $this->getSetValByKey('ban_ip_level') ?? 0;
+                if (in_array($ban_ip_level, [1, 2, 3])) {
+                    //获取当前ip的请求次数
+                    for ($i = 4 - $ban_ip_level; $i < 4; $i++) {
+                        $afterIp[$i] = '*';
+                    }
+                    $ip = implode('.', $afterIp);
+                }
+                $ipCacheKey = $ip.':'.$routeUril;
+                $slidingWindowRateLimiter = new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime);
+                $slidingWindowRateLimiter->appendExpireTime = $append_expire_time;
+                $res = $slidingWindowRateLimiter->slideIsAllowedPlus(
+                    $ipCacheKey
+                );
+                //$res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->simpleIsAllowed($ipCacheKey);
+                if (!$res) {
+                    $reqKey = $slidingWindowRateLimiter->prefix.$ipCacheKey;
+                    $banKey = $reqKey.":ban";
+                    $ban_time = Redis::ttl($banKey);
+                    $ban_cnt_key = $reqKey.":banCount";
+                    $ban_cnt = Redis::get($ban_cnt_key);
+                    $header = request()->header();
+                    $data = [
+                        'ip'         => $real_ip,
+                        'muti_ip'    => $ip,
+                        'ua_header'  => json_encode([$header['user-agent']]),
+                        'ban_time'   => $ban_time,
+                        'ban_cnt'    => $ban_cnt,
+                        'route'      => $routeUril,
+                        'created_at' => time(),
+                        'updated_at' => time(),
+                    ];
+                    //添加封禁日志
+                    (new IpBanLogService())->addIpBanLog($data);
+                    http_response_code(429);
+                    ReturnJson(false, '请求频率过快~');
+                }
+            }
+        }
     }
 }
