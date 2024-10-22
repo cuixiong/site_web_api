@@ -223,8 +223,8 @@ class Controller extends BaseController {
             $slidingWindowRateLimiter->appendExpireTime = $append_ua_expire_time;
             foreach ($header['user-agent'] as $forUserAgent) {
                 if (!in_array($forUserAgent, $ua_list)) {
-                    //$reqKey = $forUserAgent.":".$routeUril;
-                    $reqKey = $forUserAgent;
+                    $reqKey = $forUserAgent.":".$routeUril;
+                    //$reqKey = $forUserAgent;
                     $res = $slidingWindowRateLimiter->slideIsAllowedPlus($reqKey);
                     if (!$res) {
                         //添加封禁日志
@@ -338,14 +338,15 @@ class Controller extends BaseController {
                     $ip = implode('.', $afterIp);
                 }
                 $ipCacheKey = $ip.':'.$routeUril;
-                $slidingWindowRateLimiter = new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime);
+                $prefix = 'rate_limit:';
+                $slidingWindowRateLimiter = new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime, $prefix);
                 $slidingWindowRateLimiter->appendExpireTime = $append_expire_time;
                 $res = $slidingWindowRateLimiter->slideIsAllowedPlus(
                     $ipCacheKey
                 );
                 //$res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->simpleIsAllowed($ipCacheKey);
                 if (!$res) {
-                    $reqKey = $slidingWindowRateLimiter->prefix.$ipCacheKey;
+                    $reqKey = $prefix.$ipCacheKey;
                     $banKey = $reqKey.":ban";
                     $ban_time = Redis::ttl($banKey);
                     $ban_cnt_key = $reqKey.":banCount";
