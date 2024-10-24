@@ -88,23 +88,22 @@ class CartController extends Controller {
             
             //每个报告加上分类信息
             $tempCategoryId = $value['category_id'];
-            $product['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
-            $product['category_thumb'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
+            $shopCartData[$key]['category_name'] = $value['category_id'];
+            $shopCartData[$key]['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
+            $category_thumb = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
 
             // 图片获取
             $tempThumb = '';
-            if (!empty($product['thumb'])) {
-                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['thumb']);
-            } elseif (!empty($product['category_thumb'])) {
-                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
+            if (!empty($value['thumb'])) {
+                $tempThumb = Common::cutoffSiteUploadPathPrefix($value['thumb']);
+            } elseif (!empty($category_thumb)) {
+                $tempThumb = Common::cutoffSiteUploadPathPrefix($category_thumb);
             } else {
                 // 如果报告图片、分类图片为空，使用系统默认图片
                 $tempThumb = !empty($defaultImg) ? $defaultImg : '';
             }
 
             $shopCartData[$key]['thumb'] = $tempThumb;
-            $shopCartData[$key]['category_id'] = $product['category_id'];
-            $shopCartData[$key]['category_name'] = $product['category_name'];
             $shopCartData[$key]['name'] = $value['name'];
             $shopCartData[$key]['goods_id'] = $value['goods_id'];
             $shopCartData[$key]['url'] = $value['url'];
