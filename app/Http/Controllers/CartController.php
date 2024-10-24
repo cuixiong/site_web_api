@@ -103,6 +103,8 @@ class CartController extends Controller {
             }
 
             $shopCartData[$key]['thumb'] = $tempThumb;
+            $shopCartData[$key]['category_id'] = $product['category_id'];
+            $shopCartData[$key]['category_name'] = $product['category_name'];
             $shopCartData[$key]['name'] = $value['name'];
             $shopCartData[$key]['goods_id'] = $value['goods_id'];
             $shopCartData[$key]['url'] = $value['url'];
