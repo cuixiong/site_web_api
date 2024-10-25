@@ -19,13 +19,21 @@ class ContactUsController extends Controller {
     public function Add(Request $request)
     {
         $params = $request->all();
+        $email = $params['email'] ?? '';
+        //校验邮箱规则
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            ReturnJson(false, '邮箱格式不正确');
+        }
+        $product_id = $params['product_id'] ?? 0;
+        $appName = env('APP_NAME' , '');
+        currentLimit($request , 60 , $appName , $email.$product_id);
 
         $sceneCode = $params['code'] ?? '';
         $category_id = MessageCategory::where('code', $sceneCode)->value('id');
 
         $model = new ContactUs();
         $model->name = $params['name'] ?? '';
-        $model->email = $params['email'] ?? '';
+        $model->email = $email;
         $model->company = $params['company'] ?? '';
         if (!empty($params['buy_time'])) {
             $model->buy_time = $params['buy_time'] ?? 0;
@@ -37,7 +45,7 @@ class ContactUsController extends Controller {
         $model->category_id = $category_id ?? 0;
         $model->phone = $params['phone'] ?? '';
         $model->content = $params['content'] ?? '';
-        $model->product_id = $params['product_id'] ?? 0;
+        $model->product_id = $product_id;
         $model->language_version = $params['language'] ?? 0;
         $model->address = $params['address'] ?? '';
         if ($model->save()) {
