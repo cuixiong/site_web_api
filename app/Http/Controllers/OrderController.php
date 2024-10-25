@@ -263,7 +263,18 @@ class OrderController extends Controller {
                 $pay_set['pay_exchange_rate'] = $palpalPaySetList['paypal_pay_exchange_rate'] ?? 1;
                 $pay_set['pay_tax_rate'] = $palpalPaySetList['paypal_pay_tax_rate'] ?? 0;
                 $pay_set['pay_coin_type'] = $palpalPaySetList['paypal_pay_coin_type'] ?? 'CNY';
+            } elseif ($payCode == PayConst::PAY_TYPE_AIRWALLEXPAY) {
+                $airwallexPaySetList = SystemValue::query()->where("alias", 'airwallex_pay_set')
+                                               ->where("status", 1)
+                                               ->where("hidden", 1)
+                                               ->pluck("value", "key")->toArray();
+                $pay_set['pay_exchange_rate'] = $airwallexPaySetList['airwallex_pay_exchange_rate'] ?? 1;
+                $pay_set['pay_tax_rate'] = $airwallexPaySetList['airwallex_pay_tax_rate'] ?? 0;
+                $pay_set['pay_coin_type'] = $airwallexPaySetList['airwallex_pay_coin_type'] ?? 'CNY';
             }
+
+
+
             $pay_set['pay_coin_type_symbol'] = PayConst::$coinTypeSymbol[$pay_set['pay_coin_type']] ?? '¥';
             $item['pay_set'] = $pay_set;
             $item['img'] = Common::cutoffSiteUploadPathPrefix($item['img']);

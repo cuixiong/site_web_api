@@ -100,7 +100,6 @@ class OrderTrans extends Base {
             $caclueData['coupon_amount'] = $this->couponPrice($caclueData['exchange_amount'], $coupon_id);
             $actually_paid_all = bcsub($caclueData['exchange_amount'], $caclueData['coupon_amount'], 2);
         }
-
         if ($actually_paid_all <= 0) {
             $this->errno = ApiCode::ORDER_AMOUNT_ERROR;
 
@@ -440,6 +439,14 @@ class OrderTrans extends Base {
             $tax_rate = $palpalPaySetList['paypal_pay_tax_rate'] ?? $tax_rate;
             $exchange_rate = $palpalPaySetList['paypal_pay_exchange_rate'] ?? $exchange_rate;
             $pay_coin_type = $palpalPaySetList['paypal_pay_coin_type'] ?? $pay_coin_type;
+        } elseif ($payCode == PayConst::PAY_TYPE_AIRWALLEXPAY) {
+            $airwallexPaySetList = SystemValue::query()->where("alias", 'airwallex_pay_set')
+                                              ->where("status", 1)
+                                              ->where("hidden", 1)
+                                              ->pluck("value", "key")->toArray();
+            $exchange_rate = $airwallexPaySetList['airwallex_pay_exchange_rate'] ?? 1;
+            $tax_rate = $airwallexPaySetList['airwallex_pay_tax_rate'] ?? 0;
+            $pay_coin_type = $airwallexPaySetList['airwallex_pay_coin_type'] ?? 'CNY';
         }
         //折后金额*汇率
         $exchange_amount = bcmul($orderAmount, $exchange_rate, 2);
