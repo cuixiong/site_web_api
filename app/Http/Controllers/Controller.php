@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BanWhiteList;
 use App\Models\SystemValue;
 use App\Services\IpBanLogService;
 use App\Services\ReqLogService;
@@ -30,7 +31,6 @@ class Controller extends BaseController {
         if ($route && in_array($route, $excludeRoute)) {
             return;
         }
-
         $this->signCheck();
         //UA请求头封禁
         $this->checkUaHeader();
@@ -213,16 +213,23 @@ class Controller extends BaseController {
             if (!empty($route->uri)) {
                 $routeUril = $route->uri;
             }
-            $cache_prefix_key = 'rate_ua_limit:';
+            $cache_prefix_key = env('APP_NAME').'_rate_ua_limit:';
             //白名单
-            $ua_info = $this->getSetValByKey('ua_white_list') ?? '';
-            $ua_list = explode("\n", $ua_info);
-            $slidingWindowRateLimiter = new SlidingWindowRateLimiter(
-                $req_ua_window_time, $req_ua_limit, $ua_expire_time, $cache_prefix_key
-            );
-            $slidingWindowRateLimiter->appendExpireTime = $append_ua_expire_time;
-            foreach ($header['user-agent'] as $forUserAgent) {
-                if (!in_array($forUserAgent, $ua_list)) {
+            //$ua_info = $this->getSetValByKey('ua_white_list') ?? '';
+            //$ua_list = BanWhiteList::query()->where("type" , 2)->where("status" , 1)->pluck('ban_str')->toArray();
+            $banStrs = BanWhiteList::query()->where("type", 1)
+                                   ->where("status", 1)
+                                   ->pluck('ban_str')
+                                   ->toArray();
+            $whiteIplist = implode("\n", $banStrs);
+            //ip白名单验证
+            $checkRes = $this->isIpAllowed($ip, $whiteIplist);
+            if (!$checkRes) {
+                $slidingWindowRateLimiter = new SlidingWindowRateLimiter(
+                    $req_ua_window_time, $req_ua_limit, $ua_expire_time, $cache_prefix_key
+                );
+                $slidingWindowRateLimiter->appendExpireTime = $append_ua_expire_time;
+                foreach ($header['user-agent'] as $forUserAgent) {
                     $reqKey = $forUserAgent.":".$routeUril;
                     //$reqKey = $forUserAgent;
                     $res = $slidingWindowRateLimiter->slideIsAllowedPlus($reqKey);
@@ -231,13 +238,13 @@ class Controller extends BaseController {
                         $cacheKey = $cache_prefix_key.$reqKey;
                         $banKey = $cacheKey.":ban";
                         $ban_time = Redis::ttl($banKey);
-
                         $ban_cnt_key = $cacheKey.":banCount";
                         $ban_cnt = Redis::get($ban_cnt_key);
                         $header = request()->header();
+                        $user_agent = $header['user-agent'] ?? [];
                         $data = [
                             'ip'         => $real_ip,
-                            'ua_info'    => json_encode([$header['user-agent']]),
+                            'ua_info'    => implode("\n", $user_agent),
                             'ban_time'   => $ban_time,
                             'ban_cnt'    => $ban_cnt,
                             'route'      => $routeUril,
@@ -318,7 +325,9 @@ class Controller extends BaseController {
             if (!empty($route->uri)) {
                 $routeUril = $route->uri;
             }
-            $whiteIplist = $this->getSetValByKey('ip_white_rules') ?? '';
+            //$whiteIplist = $this->getSetValByKey('ip_white_rules') ?? '';
+            $banStrs = BanWhiteList::query()->where("type", 1)->where("status", 1)->pluck('ban_str')->toArray();
+            $whiteIplist = implode("\n", $banStrs);
             //ip白名单验证
             $checkRes = $this->isIpAllowed($ip, $whiteIplist);
             if (!$checkRes) {
@@ -338,7 +347,7 @@ class Controller extends BaseController {
                     $ip = implode('.', $afterIp);
                 }
                 $ipCacheKey = $ip.':'.$routeUril;
-                $prefix = 'rate_limit:';
+                $prefix = env('APP_NAME').'_rate_limit:';
                 $slidingWindowRateLimiter = new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime, $prefix);
                 $slidingWindowRateLimiter->appendExpireTime = $append_expire_time;
                 $res = $slidingWindowRateLimiter->slideIsAllowedPlus(
@@ -352,10 +361,11 @@ class Controller extends BaseController {
                     $ban_cnt_key = $reqKey.":banCount";
                     $ban_cnt = Redis::get($ban_cnt_key);
                     $header = request()->header();
+                    $user_agent = $header['user-agent'] ?? [];
                     $data = [
                         'ip'         => $real_ip,
                         'muti_ip'    => $ip,
-                        'ua_header'  => json_encode([$header['user-agent']]),
+                        'ua_header'  => implode("\n", $user_agent),
                         'ban_time'   => $ban_time,
                         'ban_cnt'    => $ban_cnt,
                         'route'      => $routeUril,

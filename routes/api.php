@@ -232,6 +232,10 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::any('notify/wisepay', [\App\Http\Controllers\Pay\Notify::class, 'wiseNotify'])->name('wise支付回调');
     // paypal支付回调
     Route::any('notify/paypal', [\App\Http\Controllers\Pay\Notify::class, 'paypalNotify'])->name('paypal支付回调');
+    // airwallex支付回调
+    Route::any('notify/airwallex', [\App\Http\Controllers\Pay\Notify::class, 'airwallexNotify'])->name(
+        'airwallex支付回调'
+    );
     // News控制器
     Route::prefix('news')->group(function () {
         Route::post('index', [\App\Http\Controllers\NewsController::class, 'Index'])->name('新闻列表');
@@ -264,6 +268,10 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         );
         Route::post('sync-redis-val', [\App\Http\Controllers\Third\ThirdRespController::class, 'syncRedisVal'])->name(
             '发送邮件'
+        );
+
+        Route::post('clear-ban', [\App\Http\Controllers\Third\ThirdRespController::class, 'clearBan'])->name(
+            '清除封禁'
         );
     });
     Route::get('get/client-ip', [\App\Http\Controllers\PublicController::class, 'getClientIp'])->name('获取客户端IP');
