@@ -13,6 +13,8 @@
 namespace App\Http\Controllers\Pay;
 
 
+use backend\models\OrderGoods;
+
 class AirwallexPay extends Pay {
     public $apiUrl     = '';
     public $client_id  = '';
@@ -96,9 +98,16 @@ class AirwallexPay extends Pay {
         $payData['metadata'] = [];
         $payData['metadata']['order_number'] = $orderNumber;
         $payData['request_id'] = $orderNumber.'-'.time();
+
         // 后面托管页面展示描述，在此我填写报告名称 长度32
-        //$orderGoodsName = $order->getProductNameAttribute();
         //$payData['descriptor'] = $orderGoodsName;
+        $orderGoodsName = $order->getProductNameAttribute();
+        $orderGoodsNameList = explode('\n', $orderGoodsName);
+        $payData['order']['products'] = [];
+        foreach ($orderGoodsNameList as $valueName) {
+            $payData['order']['products'][] = ['name' => $valueName];
+        }
+
         list($code, $resData) = $airwallex->paymentIntent->create($payData);
         if (!empty($code) && $code == 201) {
             $intent_id = $resData->id;
