@@ -293,6 +293,8 @@ class ProductController extends Controller
                 'p.discount_time_begin',
                 'p.discount_time_end',
                 'p.publisher_id',
+                'p.hits',
+                'p.downloads',
             ];
             $product_desc = (new Products)->from('product_routine as p')->select($fieldList)->leftJoin(
                 'product_category as cate',

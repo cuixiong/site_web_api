@@ -61,11 +61,23 @@ class IndexController extends Controller {
         //行业新闻
         $data['industry_news_list'] = $this->getIndustryNews($request);
         //热点资讯
-        if (checkSiteAccessData(['168report'])) {
+        if (checkSiteAccessData(['168report' , 'tycn'])) {
             $data['hot_news_info_list'] = $this->getHotInfoNews($request);
         }
         // 客户评价
         $data['comment'] = $this->getCustomersComment($request);
+
+        //返回对应的分类数据
+        if(checkSiteAccessData(['tycn'])){
+            $cate = ProductsCategory::query()
+                                    ->where("show_home", 1)
+                                    ->where("status", 1)
+                                    ->select(['id', 'name', 'seo_title', 'link', 'icon' , 'icon_hover'])
+                                    ->orderBy('sort', 'asc')
+                                    ->limit(7)->get()->toArray();
+            $data['cate'] = $cate;
+        }
+
         ReturnJson(true, '', $data);
     }
 
