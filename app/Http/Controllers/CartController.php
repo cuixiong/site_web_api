@@ -388,6 +388,9 @@ class CartController extends Controller {
                 $product = Products::from('product_routine as product')
                 ->leftJoin('product_category as category', 'product.category_id', '=', 'category.id')
                 ->select([
+                    'product.category_id',
+                    'category.name as category_name',
+                    'category.link as category_link',
                     'category.thumb as category_thumb',
                     'product.name',
                     'product.id as goods_id',
