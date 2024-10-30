@@ -327,7 +327,14 @@ class Controller extends BaseController {
             }
             //$whiteIplist = $this->getSetValByKey('ip_white_rules') ?? '';
             $banStrs = BanWhiteList::query()->where("type", 1)->where("status", 1)->pluck('ban_str')->toArray();
-            $whiteIplist = implode("\n", $banStrs);
+            $banIpList = [];
+            foreach ($banStrs as $banjsonStr){
+                $forBanIpList = @json_decode($banjsonStr, true);
+                if(!empty($forBanIpList ) && is_array($forBanIpList)) {
+                    $banIpList = array_merge($banIpList, $forBanIpList);
+                }
+            }
+            $whiteIplist = implode("\n", $banIpList);
             //ip白名单验证
             $checkRes = $this->isIpAllowed($ip, $whiteIplist);
             if (!$checkRes) {

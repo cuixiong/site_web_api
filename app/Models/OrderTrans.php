@@ -415,39 +415,13 @@ class OrderTrans extends Base {
         $tax_rate = 0;
         $exchange_rate = 1;
         $pay_coin_type = PayConst::COIN_TYPE_CNY;
-        if ($payCode == PayConst::PAY_TYPE_STRIPEPAY) {
-            $stripePaySetList = SystemValue::query()->where("alias", 'stripe_pay_set')
-                                           ->where("status", 1)
-                                           ->where("hidden", 1)
-                                           ->pluck("value", "key")->toArray();
-            $tax_rate = $stripePaySetList['stripe_pay_tax_rate'] ?? $tax_rate;
-            $exchange_rate = $stripePaySetList['stripe_pay_exchange_rate'] ?? $exchange_rate;
-            $pay_coin_type = $stripePaySetList['stripe_pay_coin_type'] ?? $pay_coin_type;
-        } elseif ($payCode == PayConst::PAY_TYPE_FIRSTDATAPAY) {
-            $firstDataPaySetList = SystemValue::query()->where("alias", 'first_data_pay_set')
-                                              ->where("status", 1)
-                                              ->where("hidden", 1)
-                                              ->pluck("value", "key")->toArray();
-            $tax_rate = $firstDataPaySetList['first_data_pay_tax_rate'] ?? $tax_rate;
-            $exchange_rate = $firstDataPaySetList['first_data_pay_exchange_rate'] ?? $exchange_rate;
-            $pay_coin_type = $firstDataPaySetList['first_data_pay_coin_type'] ?? $pay_coin_type;
-        } elseif ($payCode == PayConst::PAY_TYPE_PAYPAL) {
-            $palpalPaySetList = SystemValue::query()->where("alias", 'paypal_pay_set')
-                                           ->where("status", 1)
-                                           ->where("hidden", 1)
-                                           ->pluck("value", "key")->toArray();
-            $tax_rate = $palpalPaySetList['paypal_pay_tax_rate'] ?? $tax_rate;
-            $exchange_rate = $palpalPaySetList['paypal_pay_exchange_rate'] ?? $exchange_rate;
-            $pay_coin_type = $palpalPaySetList['paypal_pay_coin_type'] ?? $pay_coin_type;
-        } elseif ($payCode == PayConst::PAY_TYPE_AIRWALLEXPAY) {
-            $airwallexPaySetList = SystemValue::query()->where("alias", 'airwallex_pay_set')
-                                              ->where("status", 1)
-                                              ->where("hidden", 1)
-                                              ->pluck("value", "key")->toArray();
-            $exchange_rate = $airwallexPaySetList['airwallex_pay_exchange_rate'] ?? 1;
-            $tax_rate = $airwallexPaySetList['airwallex_pay_tax_rate'] ?? 0;
-            $pay_coin_type = $airwallexPaySetList['airwallex_pay_coin_type'] ?? 'CNY';
+        $payInfo = Pay::query()->where("code", $payCode)->first();
+        if(empty($payInfo )){
+            return [];
         }
+        $tax_rate = $payInfo->pay_tax_rate ?? $tax_rate;
+        $exchange_rate = $payInfo->pay_exchange_rate ?? $exchange_rate;
+        $pay_coin_type = $payInfo->pay_coin_type ?? $pay_coin_type;
         //折后金额*汇率
         $exchange_amount = bcmul($orderAmount, $exchange_rate, 2);
 //        //税
@@ -477,17 +451,14 @@ class OrderTrans extends Base {
         // $payCode = Pay::query()->where("id", $payType)->value("code");
         $tax_rate = 0;
         $exchange_rate = 1;
-        if ($payCode == PayConst::PAY_TYPE_STRIPEPAY) {
-            $stripePaySetList = SystemValue::query()->where("alias", 'stripe_pay_set')
-                                           ->pluck("value", "key")->toArray();
-            $tax_rate = $stripePaySetList['stripe_pay_tax_rate'] ?? 0;
-            $exchange_rate = $stripePaySetList['stripe_pay_exchange_rate'] ?? 1;
-        } elseif ($payCode == PayConst::PAY_TYPE_FIRSTDATAPAY) {
-            $firstDataPaySetList = SystemValue::query()->where("alias", 'first_data_pay_set')
-                                              ->pluck("value", "key")->toArray();
-            $tax_rate = $firstDataPaySetList['first_data_pay_tax_rate'] ?? 0;
-            $exchange_rate = $firstDataPaySetList['first_data_pay_exchange_rate'] ?? 1;
+        $pay_coin_type = PayConst::COIN_TYPE_CNY;
+        $payInfo = Pay::query()->where("code", $payCode)->first();
+        if (empty($payInfo)) {
+            return [$tax_rate, $exchange_rate];
         }
+        $tax_rate = $payInfo->pay_tax_rate ?? $tax_rate;
+        $exchange_rate = $payInfo->pay_exchange_rate ?? $exchange_rate;
+        $pay_coin_type = $payInfo->pay_coin_type ?? $pay_coin_type;
 
         return [$tax_rate, $exchange_rate];
     }

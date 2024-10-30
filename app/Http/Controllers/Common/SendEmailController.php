@@ -92,9 +92,8 @@ class SendEmailController extends Controller {
             // ];
             // $verifyUrl = $data['domain'] . '/?verifyemail=' . $emailCode . '&' . http_build_query($dataQuery);
             $verifyUrl = $data['domain'].'/?verifyemail='.$emailCode.'&token='.$token;
-            
             // $imgDomain = env('IMAGE_URL');
-            $imgDomain = env('IMAGE_URL_BACKUP','');
+            $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -146,7 +145,7 @@ class SendEmailController extends Controller {
             $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
             // $imgDomain = env('IMAGE_URL');
-            $imgDomain = env('IMAGE_URL_BACKUP','');
+            $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -217,7 +216,7 @@ class SendEmailController extends Controller {
             );
             $domain = 'http://'.$_SERVER['SERVER_NAME'];
             // $imgDomain = env('IMAGE_URL');
-            $imgDomain = env('IMAGE_URL_BACKUP','');
+            $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data = $user;
             $data['userName'] = $data['name'];
             $data['homePage'] = $domain;
@@ -281,7 +280,7 @@ class SendEmailController extends Controller {
             $addressDetail = $data['address'] ?? '';
             $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             // $imgDomain = env('IMAGE_URL');
-            $imgDomain = env('IMAGE_URL_BACKUP','');
+            $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -372,7 +371,7 @@ class SendEmailController extends Controller {
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             // $imgDomain = env('IMAGE_URL');
-            $imgDomain = env('IMAGE_URL_BACKUP','');
+            $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -408,9 +407,8 @@ class SendEmailController extends Controller {
             )->first();
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
-            
             // 收件人额外加上分类邮箱
-            if($categoryEmail){
+            if ($categoryEmail) {
                 $categoryEmail = explode(',', $categoryEmail);
                 $emails = array_merge($emails, $categoryEmail);
             }
@@ -458,10 +456,8 @@ class SendEmailController extends Controller {
                                         )->first();
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
-                
                 // 分类邮箱
                 $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
-
             }
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
@@ -470,7 +466,7 @@ class SendEmailController extends Controller {
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             // $imgDomain = env('IMAGE_URL');
-            $imgDomain = env('IMAGE_URL_BACKUP','');
+            $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -516,7 +512,7 @@ class SendEmailController extends Controller {
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             // 收件人额外加上分类邮箱
-            if($categoryEmail){
+            if ($categoryEmail) {
                 $categoryEmail = explode(',', $categoryEmail);
                 $emails = array_merge($emails, $categoryEmail);
             }
@@ -546,7 +542,7 @@ class SendEmailController extends Controller {
             $addressDetail = $data['address'] ?? '';
             $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             // $imgDomain = env('IMAGE_URL');
-            $imgDomain = env('IMAGE_URL_BACKUP','');
+            $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -632,7 +628,7 @@ class SendEmailController extends Controller {
             $area = $this->getAreaName($data);
             $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             // $imgDomain = env('IMAGE_URL');
-            $imgDomain = env('IMAGE_URL_BACKUP','');
+            $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
                 'homePage'     => $data['domain'],
                 'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
@@ -675,9 +671,8 @@ class SendEmailController extends Controller {
             $scene->title = $scene->title.":  {$productsName}";
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
-            
             // 收件人额外加上分类邮箱
-            if($categoryEmail){
+            if ($categoryEmail) {
                 $categoryEmail = explode(',', $categoryEmail);
                 $emails = array_merge($emails, $categoryEmail);
             }
@@ -705,9 +700,19 @@ class SendEmailController extends Controller {
             }
             $data['domain'] = env('DOMAIN_URL', 'https://mmgcn.marketmonitorglobal.com.cn');
             // $imgDomain = env('IMAGE_URL');
-            $imgDomain = env('IMAGE_URL_BACKUP','');
+            $imgDomain = env('IMAGE_URL_BACKUP', '');
             // $PayName = Pay::where('id', $data['pay_type'])->value('name');
-            $PayName = Pay::where('code', $data['pay_code'])->value('name');
+            $payInfo = Pay::query()->where('code', $data['pay_code'])->first();
+            $PayName = '';
+            $tax_rate = 0;
+            $exchange_rate = 1;
+            if (!empty($payInfo)) {
+                $PayName = $payInfo->name;
+                $tax_rate = $payInfo->pay_tax_rate;
+                $exchange_rate = $payInfo->pay_exchange_rate;
+            }
+            $exchange_coupon_amount = bcmul($data['coupon_amount'], $exchange_rate, 2);
+            $exchange_order_amount = bcmul($data['order_amount'], $exchange_rate, 2);
             $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
             $languageList = Languages::GetListById();
             $goods_data_list = [];
@@ -770,29 +775,31 @@ class SendEmailController extends Controller {
             $areaInfo = $this->getAreaName($data);
             $addres = $areaInfo.' '.$data['address'];
             $data2 = [
-                'homePage'           => $data['domain'],
-                'myAccountUrl'       => rtrim($data['domain'], '/').'/account/account-infor',
-                'contactUsUrl'       => rtrim($data['domain'], '/').'/contact-us',
-                'homeUrl'            => rtrim($data['domain'], '/').'/account/order',
-                'backendUrl'         => $imgDomain,
-                'userName'           => $data['username'] ? $data['username'] : '',
-                'userEmail'          => $data['email'],
-                'userCompany'        => $data['company'],
-                'userAddress'        => $addres,
-                'userPhone'          => $data['phone'] ? $data['phone'] : '',
-                'orderStatus'        => '未付款',
-                'paymentMethod'      => $PayName,
-                'orderAmount'        => $data['order_amount'],
-                'preferentialAmount' => $data['coupon_amount'],
-                'orderActuallyPaid'  => $data['actually_paid'],
-                'pay_coin_symbol'    => PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '', // 支付符号,
-                'orderNumber'        => $data['order_number'],
-                'paymentLink'        => $data['domain'].'/api/order/pay?order_id='.$data['id'],
-                'orderDetails'       => $data['domain'].'/account?orderdetails='.$data['id'],
-                'goods'              => $goods_data_list,
-                'userId'             => $data['user_id'],
-                'dateTime'           => date('Y-m-d H:i:s', time()),
-                'sumGoodsCnt'        => $sum_goods_cnt,
+                'homePage'               => $data['domain'],
+                'myAccountUrl'           => rtrim($data['domain'], '/').'/account/account-infor',
+                'contactUsUrl'           => rtrim($data['domain'], '/').'/contact-us',
+                'homeUrl'                => rtrim($data['domain'], '/').'/account/order',
+                'backendUrl'             => $imgDomain,
+                'userName'               => $data['username'] ? $data['username'] : '',
+                'userEmail'              => $data['email'],
+                'userCompany'            => $data['company'],
+                'userAddress'            => $addres,
+                'userPhone'              => $data['phone'] ? $data['phone'] : '',
+                'orderStatus'            => '未付款',
+                'paymentMethod'          => $PayName,
+                'orderAmount'            => $data['order_amount'],
+                'preferentialAmount'     => $data['coupon_amount'],
+                'orderActuallyPaid'      => $data['actually_paid'],
+                'exchange_order_amount'  => $exchange_order_amount,
+                'exchange_coupon_amount' => $exchange_coupon_amount,
+                'pay_coin_symbol'        => PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '', // 支付符号,
+                'orderNumber'            => $data['order_number'],
+                'paymentLink'            => $data['domain'].'/api/order/pay?order_id='.$data['id'],
+                'orderDetails'           => $data['domain'].'/account?orderdetails='.$data['id'],
+                'goods'                  => $goods_data_list,
+                'userId'                 => $data['user_id'],
+                'dateTime'               => date('Y-m-d H:i:s', time()),
+                'sumGoodsCnt'            => $sum_goods_cnt,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
                                    ->pluck('value', 'key')
@@ -852,8 +859,18 @@ class SendEmailController extends Controller {
             $user = User::find($data['user_id']);
             $user = $user ? $user->toArray() : [];
             $data['domain'] = env('DOMAIN_URL', 'https://mmgcn.marketmonitorglobal.com.cn');
-            $PayName = Pay::where('code', $data['pay_code'])->value('name');
             // $PayName = Pay::where('id', $data['pay_type'])->value('name');
+            $payInfo = Pay::query()->where('code', $data['pay_code'])->first();
+            $PayName = '';
+            $tax_rate = 0;
+            $exchange_rate = 1;
+            if (!empty($payInfo)) {
+                $PayName = $payInfo->name;
+                $tax_rate = $payInfo->pay_tax_rate;
+                $exchange_rate = $payInfo->pay_exchange_rate;
+            }
+            $exchange_coupon_amount = bcmul($data['coupon_amount'], $exchange_rate, 2);
+            $exchange_order_amount = bcmul($data['order_amount'], $exchange_rate, 2);
             $orderGoodsList = OrderGoods::where('order_id', $Order['id'])->get()->toArray();
             $languageList = Languages::GetListById();
             $goods_data_list = [];
@@ -863,7 +880,7 @@ class SendEmailController extends Controller {
             // 若报告图片为空，则使用系统设置的默认报告高清图
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
             // $imgDomain = env('IMAGE_URL');
-            $imgDomain = env('IMAGE_URL_BACKUP','');
+            $imgDomain = env('IMAGE_URL_BACKUP', '');
             foreach ($orderGoodsList as $key => $OrderGoods) {
                 $goods_data = [];
                 $priceEditionId = $OrderGoods['price_edition'];
@@ -919,29 +936,31 @@ class SendEmailController extends Controller {
             $provinceName = City::where('id', $data['province_id'])->value('name');
             $addres = $provinceName.' '.$cityName.' '.$data['address'];
             $data2 = [
-                'homePage'           => $data['domain'],
-                'myAccountUrl'       => rtrim($data['domain'], '/').'/account/account-infor',
-                'contactUsUrl'       => rtrim($data['domain'], '/').'/contact-us',
-                'homeUrl'            => $data['domain'],
-                'backendUrl'         => $imgDomain,
-                'userName'           => $data['username'] ?: '',
-                'userEmail'          => $data['email'],
-                'userCompany'        => $data['company'],
-                'userAddress'        => $addres,
-                'userPhone'          => $data['phone'] ?: '',
-                'orderStatus'        => '已付款',
-                'paymentMethod'      => $PayName,
-                'orderAmount'        => $data['order_amount'],
-                'preferentialAmount' => $data['coupon_amount'],
-                'orderActuallyPaid'  => $data['actually_paid'],
-                'pay_coin_symbol'    => PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '', // 支付符号,
-                'orderNumber'        => $data['order_number'],
-                'paymentLink'        => $data['domain'].'/api/order/pay?order_id='.$data['id'],
-                'orderDetails'       => $data['domain'].'/account?orderdetails='.$data['id'],
-                'goods'              => $goods_data_list,
-                'userId'             => $data['user_id'],
-                'dateTime'           => date('Y-m-d H:i:s', time()),
-                'sumGoodsCnt'        => $sum_goods_cnt,
+                'homePage'               => $data['domain'],
+                'myAccountUrl'           => rtrim($data['domain'], '/').'/account/account-infor',
+                'contactUsUrl'           => rtrim($data['domain'], '/').'/contact-us',
+                'homeUrl'                => $data['domain'],
+                'backendUrl'             => $imgDomain,
+                'userName'               => $data['username'] ?: '',
+                'userEmail'              => $data['email'],
+                'userCompany'            => $data['company'],
+                'userAddress'            => $addres,
+                'userPhone'              => $data['phone'] ?: '',
+                'orderStatus'            => '已付款',
+                'paymentMethod'          => $PayName,
+                'orderAmount'            => $data['order_amount'],
+                'preferentialAmount'     => $data['coupon_amount'],
+                'orderActuallyPaid'      => $data['actually_paid'],
+                'pay_coin_symbol'        => PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '', // 支付符号,
+                'exchange_order_amount'  => $exchange_order_amount,
+                'exchange_coupon_amount' => $exchange_coupon_amount,
+                'orderNumber'            => $data['order_number'],
+                'paymentLink'            => $data['domain'].'/api/order/pay?order_id='.$data['id'],
+                'orderDetails'           => $data['domain'].'/account?orderdetails='.$data['id'],
+                'goods'                  => $goods_data_list,
+                'userId'                 => $data['user_id'],
+                'dateTime'               => date('Y-m-d H:i:s', time()),
+                'sumGoodsCnt'            => $sum_goods_cnt,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
                                    ->pluck('value', 'key')
