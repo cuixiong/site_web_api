@@ -138,6 +138,22 @@ class PlateController extends Controller
                 ])->get()->toArray();
             $alias = $category['alias'];
             $data[$alias] = $forData;
+            // 标题和短标题可能带有年份，需动态每年变化
+            if ($data['items'] && count($data['items'])>0) {
+                // 网站设置获取品牌创立年份
+                $establishYear = SystemValue::where('key', 'establish_year')->value('value');
+                $year = date('Y', time());
+                if ($establishYear && !empty($establishYear) && intval($establishYear) > 0) {
+                    // 至今已有几年
+                    $upToNow = date('Y', time()) - $establishYear;
+                    foreach ($data['items'] as $key => $item) {
+                        $data['items'][$key]['title'] = str_replace('%year', $year, $data['items'][$key]['title']);
+                        $data['items'][$key]['title'] = str_replace('%c', $upToNow, $data['items'][$key]['title']);
+                        $data['items'][$key]['short_title'] = str_replace('%year', $year, $data['items'][$key]['short_title']);
+                        $data['items'][$key]['short_title'] = str_replace('%c', $upToNow, $data['items'][$key]['short_title']);
+                    }
+                }
+            }
         }
         ReturnJson(true, '请求成功', $data);
     }
@@ -161,22 +177,6 @@ class PlateController extends Controller
                 'short_title',
                 'icon'
             ])->get()->toArray();
-        // 标题和短标题可能带有年份，需动态每年变化
-        if ($data['items']) {
-            // 网站设置获取品牌创立年份
-            $establishYear = SystemValue::where('key', 'establish_year')->value('value');
-            $year = date('Y', time());
-            if ($establishYear && !empty($establishYear) && intval($establishYear) > 0) {
-                // 至今已有几年
-                $upToNow = date('Y', time()) - $establishYear;
-                foreach ($data['items'] as $key => $item) {
-                    $data['items'][$key]['title'] = str_replace('%year', $year, $data['items'][$key]['title']);
-                    $data['items'][$key]['title'] = str_replace('%c', $upToNow, $data['items'][$key]['title']);
-                    $data['items'][$key]['short_title'] = str_replace('%year', $year, $data['items'][$key]['short_title']);
-                    $data['items'][$key]['short_title'] = str_replace('%c', $upToNow, $data['items'][$key]['short_title']);
-                }
-            }
-        }
         ReturnJson(true, '请求成功', $data);
     }
 }
