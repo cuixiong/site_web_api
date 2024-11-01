@@ -164,7 +164,7 @@ class PlateController extends Controller
         // 标题和短标题可能带有年份，需动态每年变化
         if ($data['items']) {
             // 网站设置获取品牌创立年份
-            $establishYear = SystemValue::where('key', 'establishYear')->value('value');
+            $establishYear = SystemValue::where('key', 'establish_year')->value('value');
             $year = date('Y', time());
             if ($establishYear && !empty($establishYear) && intval($establishYear) > 0) {
                 // 至今已有几年
