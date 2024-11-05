@@ -318,6 +318,7 @@ class OrderController extends Controller {
         foreach ($orderGoods as $forOrderGoods) {
             $sum_quantity += $forOrderGoods['goods_number'];
         }
+        $order_status = Order::PAY_STATUS_TYPE[$order['is_pay']] ?? '';
         $data = [
             'order'  => [
                 'order_amount'           => $order['order_amount'], // 订单总额
@@ -328,7 +329,7 @@ class OrderController extends Controller {
                 'exchange_coupon_amount' => bcmul($order['coupon_amount'], $exchange_rate, 2), // coupon
                 'sum_quantity'           => $sum_quantity,
                 'pay_coin_symbol'        => PayConst::$coinTypeSymbol[$order['pay_coin_type']] ?? '', // 支付符号
-                'order_status'           => OrderStatus::where('id', $order['is_pay'])->value('name'),
+                'order_status'           => $order_status,
                 // 'pay_type'        => ModelsPay::where('id', $order['pay_type'])->value('name'),
                 'pay_code'               => ModelsPay::where('code', $order['pay_code'])->value('name'),
                 'order_number'           => $orderNumber,
@@ -457,11 +458,7 @@ class OrderController extends Controller {
             $rdata['data'] = $rs;
             $rdata['pageNum'] = $request->pageNum;
             $rdata['pageSize'] = $request->pageSize;
-            if ($rs) {
-                ReturnJson(true, '获取成功', $rdata);
-            } else {
-                ReturnJson(false, '获取失败');
-            }
+            ReturnJson(true, '获取成功', $rdata);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }

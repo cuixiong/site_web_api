@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccessLog;
 use App\Models\BanWhiteList;
 use App\Models\SystemValue;
+use App\Services\IPAddrService;
 use App\Services\IpBanLogService;
 use App\Services\ReqLogService;
 use App\Services\SlidingWindowRateLimiter;
@@ -31,6 +33,9 @@ class Controller extends BaseController {
         if ($route && in_array($route, $excludeRoute)) {
             return;
         }
+        //请求日志记录
+        $this->accessLog();
+        // 签名检查
         $this->signCheck();
         //UA请求头封禁
         $this->checkUaHeader();
@@ -328,9 +333,9 @@ class Controller extends BaseController {
             //$whiteIplist = $this->getSetValByKey('ip_white_rules') ?? '';
             $banStrs = BanWhiteList::query()->where("type", 1)->where("status", 1)->pluck('ban_str')->toArray();
             $banIpList = [];
-            foreach ($banStrs as $banjsonStr){
+            foreach ($banStrs as $banjsonStr) {
                 $forBanIpList = @json_decode($banjsonStr, true);
-                if(!empty($forBanIpList ) && is_array($forBanIpList)) {
+                if (!empty($forBanIpList) && is_array($forBanIpList)) {
                     $banIpList = array_merge($banIpList, $forBanIpList);
                 }
             }
@@ -386,5 +391,27 @@ class Controller extends BaseController {
                 }
             }
         }
+    }
+
+    public function accessLog() {
+        $header = request()->header();
+        $ua_info = $header['user-agent'];
+        $route = request()->route();
+        $routeUril = '';
+        if (!empty($route->uri)) {
+            $routeUril = $route->uri;
+        }
+        $ip = get_client_ip();
+        //ip转换地址
+        $ipAddr = (new IPAddrService($ip))->getAddrStrByIp();
+        $addData = [];
+        $addData['ip'] = $ip;
+        $addData['ip_addr'] = $ipAddr;
+        $addData['route'] = $routeUril;
+        $addData['ua_info'] = implode("\n", $ua_info);
+        $addData['referer'] = $_SERVER['HTTP_REFERER'] ?? '';
+        $addData['log_time'] = time();
+        $addData['log_date'] = date('Y-m-d');
+        AccessLog::create($addData);
     }
 }

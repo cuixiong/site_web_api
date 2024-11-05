@@ -13,6 +13,8 @@
 namespace App\Http\Controllers\Pay;
 
 
+use App\Models\Order;
+
 class AirwallexPay extends Pay {
     public $apiUrl     = '';
     public $client_id  = '';
@@ -46,15 +48,31 @@ class AirwallexPay extends Pay {
             //验签
             $secret = $this->webhook_id;
             $makeSignature = hash_hmac('sha256', $timestamp.$body, $secret);
-            \Log::error(
-                '签名数据比较:'.json_encode([$signature, $makeSignature]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__
-            );
+
             if ($makeSignature != $signature) {
                 \Log::error('验签失败!:'.'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
 
                 return false;
             }
             $out_trade_no = $reqData['data']['object']['merchant_order_id'];
+            $status = $reqData['data']['object']['status'];
+            if($status != 'SUCCEEDED'){
+                //不是成功状态, 修改订单状态为失败, 且跳过
+                $order = Order::where('order_number', $out_trade_no)->first();
+                if (!$order) {
+                    \Log::error('返回结果数据:$out_trade_no'.$out_trade_no.' . 订单不存在 文件路径:'.__CLASS__.'  行号:'.__LINE__);
+                    return false;
+                }
+                if ($order['is_pay'] == Order::PAY_UNPAID) {
+                    //未支付状态改为支付失败状态
+                    $order->is_pay = Order::PAY_FAILED;
+                    $order->updated_at = time();
+                    $order->save();
+                    return false;
+                }
+                return false;
+            }
+
             $trade_no = $reqData['data']['object']['latest_payment_attempt']['provider_transaction_id'];
             $total_amount = $reqData['data']['object']['latest_payment_attempt']['amount'];
             $gmt_payment = strtotime($reqData['created_at']);

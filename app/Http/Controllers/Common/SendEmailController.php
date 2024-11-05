@@ -278,7 +278,6 @@ class SendEmailController extends Controller {
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $addressDetail = $data['address'] ?? '';
-            $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
@@ -294,7 +293,7 @@ class SendEmailController extends Controller {
                 'plantTimeBuy' => $data['buy_time'],
                 'content'      => $data['content'],
                 'dateTime'     => date('Y-m-d'),
-                'language'     => $languageList[$ContactUs['language_version']] ?? '',
+                'language'     => $ContactUs['language_version'] ?? '',
                 'backendUrl'   => $imgDomain,
                 'link'         => $productLink,
                 'productsName' => $productsName,
@@ -369,7 +368,6 @@ class SendEmailController extends Controller {
             $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-            $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
@@ -389,7 +387,7 @@ class SendEmailController extends Controller {
                 'productsName' => $productsName,
                 'dateTime'     => date('Y-m-d'),
                 'url'          => $productLink,
-                'language'     => $languageList[$ContactUs['language_version']] ?? '',
+                'language'     => $ContactUs['language_version'] ?? '',
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
                                    ->pluck('value', 'key')
@@ -464,7 +462,6 @@ class SendEmailController extends Controller {
             $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-            $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
@@ -485,7 +482,7 @@ class SendEmailController extends Controller {
                 'dateTime'     => date('Y-m-d'),
                 'url'          => $productLink,
                 'country'      => '',
-                'language'     => $languageList[$ContactUs['language_version']] ?? '',
+                'language'     => $ContactUs['language_version'] ?? '',
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
                                    ->pluck('value', 'key')
@@ -540,7 +537,6 @@ class SendEmailController extends Controller {
             $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $area = $this->getAreaName($data);
             $addressDetail = $data['address'] ?? '';
-            $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
@@ -558,7 +554,7 @@ class SendEmailController extends Controller {
                 'content'      => $data['content'],
                 'backendUrl'   => $imgDomain,
                 'dateTime'     => date('Y-m-d'),
-                'language'     => $languageList[$ContactUs['language_version']] ?? '',
+                'language'     => $ContactUs['language_version'] ?? '',
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
                                    ->pluck('value', 'key')
@@ -626,7 +622,6 @@ class SendEmailController extends Controller {
                 $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
             }
             $area = $this->getAreaName($data);
-            $languageList = DB::table('message_language_versions')->pluck('name', 'id')->toArray();
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
@@ -645,7 +640,7 @@ class SendEmailController extends Controller {
                 'link'         => $productLink,
                 'productsName' => $productsName,
                 'dateTime'     => date('Y-m-d'),
-                'language'     => $languageList[$ContactUs['language_version']] ?? '',
+                'language'     => $ContactUs['language_version'] ?? '',
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
                                    ->pluck('value', 'key')
@@ -774,6 +769,12 @@ class SendEmailController extends Controller {
             }
             $areaInfo = $this->getAreaName($data);
             $addres = $areaInfo.' '.$data['address'];
+            if($data['pay_coin_type'] == PayConst::COIN_TYPE_USD) {
+                $pay_coin_symbol = PayConst::COIN_TYPE_USD;
+            }else{
+                $pay_coin_symbol = PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '';
+            }
+
             $data2 = [
                 'homePage'               => $data['domain'],
                 'myAccountUrl'           => rtrim($data['domain'], '/').'/account/account-infor',
@@ -792,7 +793,7 @@ class SendEmailController extends Controller {
                 'orderActuallyPaid'      => $data['actually_paid'],
                 'exchange_order_amount'  => $exchange_order_amount,
                 'exchange_coupon_amount' => $exchange_coupon_amount,
-                'pay_coin_symbol'        => PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '', // 支付符号,
+                'pay_coin_symbol'        => $pay_coin_symbol, // 支付符号,
                 'orderNumber'            => $data['order_number'],
                 'paymentLink'            => $data['domain'].'/api/order/pay?order_id='.$data['id'],
                 'orderDetails'           => $data['domain'].'/account?orderdetails='.$data['id'],
@@ -935,6 +936,11 @@ class SendEmailController extends Controller {
             $cityName = City::where('id', $data['city_id'])->value('name');
             $provinceName = City::where('id', $data['province_id'])->value('name');
             $addres = $provinceName.' '.$cityName.' '.$data['address'];
+            if($data['pay_coin_type'] == PayConst::COIN_TYPE_USD) {
+                $pay_coin_symbol = PayConst::COIN_TYPE_USD;
+            }else{
+                $pay_coin_symbol = PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '';
+            }
             $data2 = [
                 'homePage'               => $data['domain'],
                 'myAccountUrl'           => rtrim($data['domain'], '/').'/account/account-infor',
@@ -951,7 +957,7 @@ class SendEmailController extends Controller {
                 'orderAmount'            => $data['order_amount'],
                 'preferentialAmount'     => $data['coupon_amount'],
                 'orderActuallyPaid'      => $data['actually_paid'],
-                'pay_coin_symbol'        => PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '', // 支付符号,
+                'pay_coin_symbol'        => $pay_coin_symbol, // 支付符号,
                 'exchange_order_amount'  => $exchange_order_amount,
                 'exchange_coupon_amount' => $exchange_coupon_amount,
                 'orderNumber'            => $data['order_number'],

@@ -4,20 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Common\SendEmailController;
 use App\Models\ContactUs;
-use App\Models\System;
-use App\Models\SystemValue;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use App\Models\DictionaryValue;
-use App\Models\MessageLanguageVersion;
 use App\Models\Country;
 use App\Models\City;
 use App\Models\MessageCategory;
 
 class ContactUsController extends Controller {
     // 免费样本/定制报告
-    public function Add(Request $request)
-    {
+    public function Add(Request $request) {
         $params = $request->all();
         $email = $params['email'] ?? '';
         //校验邮箱规则
@@ -25,12 +20,10 @@ class ContactUsController extends Controller {
             ReturnJson(false, '邮箱格式不正确');
         }
         $product_id = $params['product_id'] ?? 0;
-        $appName = env('APP_NAME' , '');
-        currentLimit($request , 60 , $appName , $email.$product_id);
-
+        $appName = env('APP_NAME', '');
+        currentLimit($request, 60, $appName, $email.$product_id);
         $sceneCode = $params['code'] ?? '';
         $category_id = MessageCategory::where('code', $sceneCode)->value('id');
-
         $model = new ContactUs();
         $model->name = $params['name'] ?? '';
         $model->email = $email;
@@ -51,16 +44,15 @@ class ContactUsController extends Controller {
         if ($model->save()) {
             // 根据code发送对应场景
             $sceneCode = $params['code'] ?? '';
-            if($sceneCode == 'productSample'){
+            if ($sceneCode == 'productSample') {
                 (new SendEmailController)->productSample($model->id);
-            }elseif($sceneCode == 'customized'){
+            } elseif ($sceneCode == 'customized') {
                 (new SendEmailController)->customized($model->id);
-            }elseif($sceneCode == 'contactUs'){
+            } elseif ($sceneCode == 'contactUs') {
                 (new SendEmailController)->contactUs($model->id);
-            }else{
+            } else {
                 (new SendEmailController)->sendMessageEmail($model->id, $sceneCode);
             }
-
             ReturnJson(true, '', $model);
         } else {
             ReturnJson(false, $model->getModelError());
@@ -88,12 +80,7 @@ class ContactUsController extends Controller {
             $provinces[$key]['children'] = $cities;
         }
         $result['city'] = $provinces;
-        // 语言版本
-        $result['language_version'] = MessageLanguageVersion::where('status', 1)
-                                                            ->select(['name', 'id'])
-                                                            ->orderBy('sort', 'ASC')
-                                                            ->get()
-                                                            ->toArray();
+
 
         ReturnJson(true, '', $result);
     }
