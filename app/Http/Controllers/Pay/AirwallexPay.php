@@ -21,6 +21,8 @@ class AirwallexPay extends Pay {
     public $secret_id  = '';
     public $webhook_id = '';
 
+    public $env = '';
+
     public function __construct() {
         $this->client_id = env('airwallex_client_id', '7EAouLiHRdqmTgIy0C-yrA');
         $this->secret_id = env(
@@ -30,6 +32,8 @@ class AirwallexPay extends Pay {
         $this->webhook_id = env('airwallex_webhook_id', 'whsec_OF_wESDsqyVQXk2ozFj2GpBbPNlobouu');
         //$this->apiUrl = env('', 'https://api.airwallex.com');
         $this->apiUrl = env('airwallex_api_url', 'https://api-demo.airwallex.com');
+
+        $this->env = env('airwallex_env', 'demo');
     }
 
     public function createFormdata($order) {
@@ -124,7 +128,8 @@ class AirwallexPay extends Pay {
             $hostPageHtml = $this->hostPage(
                 $order->id, $intent_id,
                 $client_secret,
-                'USD'
+                'USD',
+                $this->env
             );
 
             return $hostPageHtml;
