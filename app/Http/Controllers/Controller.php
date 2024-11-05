@@ -34,7 +34,7 @@ class Controller extends BaseController {
             return;
         }
         //请求日志记录
-        $this->accessLog();
+        //$this->accessLog();
         // 签名检查
         $this->signCheck();
         //UA请求头封禁
