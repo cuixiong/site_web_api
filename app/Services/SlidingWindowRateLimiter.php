@@ -96,7 +96,7 @@ class SlidingWindowRateLimiter {
                 if banCount == 1 then
                     redis.call("SETEX", key .. ":banCount", 86400, banCount)  -- 设置封禁次数，过期时间24小时
                 else
-                     redis.call("SET", key .. ":banCount", banCount)  -- 其他情况下只更新次数，不设置过期时间
+                    redis.call("SET", key .. ":banCount", banCount)  -- 其他情况下只更新次数，不设置过期时间
                 end
 
                 return 0
