@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b1679a3383cebac9a2e5cd6600bd2191",
+    "content-hash": "aefa70ab293c923e1c4ba832f29bb602",
     "packages": [
         {
             "name": "adbario/php-dot-notation",
@@ -1712,55 +1712,6 @@
                 "source": "https://github.com/itbdw/ip-database/tree/master"
             },
             "time": "2018-03-25T06:41:36+00:00"
-        },
-        {
-            "name": "jitoot/airwallex-php-api",
-            "version": "v1.0.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/jitoot/airwallex-php-api.git",
-                "reference": "306553a713f9942e4ef4302b3f2674ebc87a7927"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/jitoot/airwallex-php-api/zipball/306553a713f9942e4ef4302b3f2674ebc87a7927",
-                "reference": "306553a713f9942e4ef4302b3f2674ebc87a7927",
-                "shasum": "",
-                "mirrors": [
-                    {
-                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
-                        "preferred": true
-                    }
-                ]
-            },
-            "require": {
-                "ext-curl": "*",
-                "ext-json": "*",
-                "ext-mbstring": "*",
-                "php": ">=5.6.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^5"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Jitoot\\Airwallex\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "authors": [
-                {
-                    "name": "James Pok",
-                    "email": "jitoot@gmail.com"
-                }
-            ],
-            "description": "PHP API for Airwallex Payment API",
-            "support": {
-                "issues": "https://github.com/jitoot/airwallex-php-api/issues",
-                "source": "https://github.com/jitoot/airwallex-php-api/tree/v1.0.1"
-            },
-            "time": "2022-11-19T23:59:58+00:00"
         },
         {
             "name": "laravel/framework",
