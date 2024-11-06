@@ -37,10 +37,15 @@ class Controller extends BaseController {
         //$this->accessLog();
         // 签名检查
         $this->signCheck();
-        //UA请求头封禁
-        $this->checkUaHeader();
-        //IP限流封禁
-        $this->ipRateLimit();
+
+        //$whiteIplist = $this->getSetValByKey('ip_white_rules') ?? '';
+        $checkRes = $this->checkWhiteIp();
+        if (!$checkRes) {
+            //UA请求头封禁
+            $this->checkUaHeader();
+            //IP限流封禁
+            $this->ipRateLimit();
+        }
     }
 
     // TODO: cuizhixiong 2024/6/28 暂时写死,后期弄成可配置的签名key
@@ -330,65 +335,52 @@ class Controller extends BaseController {
             if (!empty($route->uri)) {
                 $routeUril = $route->uri;
             }
-            //$whiteIplist = $this->getSetValByKey('ip_white_rules') ?? '';
-            $banStrs = BanWhiteList::query()->where("type", 1)->where("status", 1)->pluck('ban_str')->toArray();
-            $banIpList = [];
-            foreach ($banStrs as $banjsonStr) {
-                $forBanIpList = @json_decode($banjsonStr, true);
-                if (!empty($forBanIpList) && is_array($forBanIpList)) {
-                    $banIpList = array_merge($banIpList, $forBanIpList);
+
+            //获取封禁配置
+            $windowsTime = $this->getSetValByKey('window_time') ?? 5;
+            $reqLimit = $this->getSetValByKey('req_limit') ?? 10;
+            $expireTime = $this->getSetValByKey('expire_time') ?? 60;
+            $append_expire_time = $this->getSetValByKey('append_expire_time') ?? 60;
+            //多段IP
+            $afterIp = explode(".", $ip);
+            $ban_ip_level = $this->getSetValByKey('ban_ip_level') ?? 0;
+            if (in_array($ban_ip_level, [1, 2, 3])) {
+                //获取当前ip的请求次数
+                for ($i = 4 - $ban_ip_level; $i < 4; $i++) {
+                    $afterIp[$i] = '*';
                 }
+                $ip = implode('.', $afterIp);
             }
-            $whiteIplist = implode("\n", $banIpList);
-            //ip白名单验证
-            $checkRes = $this->isIpAllowed($ip, $whiteIplist);
-            if (!$checkRes) {
-                //获取封禁配置
-                $windowsTime = $this->getSetValByKey('window_time') ?? 5;
-                $reqLimit = $this->getSetValByKey('req_limit') ?? 10;
-                $expireTime = $this->getSetValByKey('expire_time') ?? 60;
-                $append_expire_time = $this->getSetValByKey('append_expire_time') ?? 60;
-                //多段IP
-                $afterIp = explode(".", $ip);
-                $ban_ip_level = $this->getSetValByKey('ban_ip_level') ?? 0;
-                if (in_array($ban_ip_level, [1, 2, 3])) {
-                    //获取当前ip的请求次数
-                    for ($i = 4 - $ban_ip_level; $i < 4; $i++) {
-                        $afterIp[$i] = '*';
-                    }
-                    $ip = implode('.', $afterIp);
-                }
-                $ipCacheKey = $ip.':'.$routeUril;
-                $prefix = env('APP_NAME').'_rate_limit:';
-                $slidingWindowRateLimiter = new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime, $prefix);
-                $slidingWindowRateLimiter->appendExpireTime = $append_expire_time;
-                $res = $slidingWindowRateLimiter->slideIsAllowedPlus(
-                    $ipCacheKey
-                );
-                //$res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->simpleIsAllowed($ipCacheKey);
-                if (!$res) {
-                    $reqKey = $prefix.$ipCacheKey;
-                    $banKey = $reqKey.":ban";
-                    $ban_time = Redis::ttl($banKey);
-                    $ban_cnt_key = $reqKey.":banCount";
-                    $ban_cnt = Redis::get($ban_cnt_key);
-                    $header = request()->header();
-                    $user_agent = $header['user-agent'] ?? [];
-                    $data = [
-                        'ip'         => $real_ip,
-                        'muti_ip'    => $ip,
-                        'ua_header'  => implode("\n", $user_agent),
-                        'ban_time'   => $ban_time,
-                        'ban_cnt'    => $ban_cnt,
-                        'route'      => $routeUril,
-                        'created_at' => time(),
-                        'updated_at' => time(),
-                    ];
-                    //添加封禁日志
-                    (new IpBanLogService())->addIpBanLog($data);
-                    http_response_code(429);
-                    ReturnJson(false, '请求频率过快~');
-                }
+            $ipCacheKey = $ip.':'.$routeUril;
+            $prefix = env('APP_NAME').'_rate_limit:';
+            $slidingWindowRateLimiter = new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime, $prefix);
+            $slidingWindowRateLimiter->appendExpireTime = $append_expire_time;
+            $res = $slidingWindowRateLimiter->slideIsAllowedPlus(
+                $ipCacheKey
+            );
+            //$res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->simpleIsAllowed($ipCacheKey);
+            if (!$res) {
+                $reqKey = $prefix.$ipCacheKey;
+                $banKey = $reqKey.":ban";
+                $ban_time = Redis::ttl($banKey);
+                $ban_cnt_key = $reqKey.":banCount";
+                $ban_cnt = Redis::get($ban_cnt_key);
+                $header = request()->header();
+                $user_agent = $header['user-agent'] ?? [];
+                $data = [
+                    'ip'         => $real_ip,
+                    'muti_ip'    => $ip,
+                    'ua_header'  => implode("\n", $user_agent),
+                    'ban_time'   => $ban_time,
+                    'ban_cnt'    => $ban_cnt,
+                    'route'      => $routeUril,
+                    'created_at' => time(),
+                    'updated_at' => time(),
+                ];
+                //添加封禁日志
+                (new IpBanLogService())->addIpBanLog($data);
+                http_response_code(429);
+                ReturnJson(false, '请求频率过快~');
             }
         }
     }
@@ -413,5 +405,27 @@ class Controller extends BaseController {
         $addData['log_time'] = time();
         $addData['log_date'] = date('Y-m-d');
         AccessLog::create($addData);
+    }
+
+    /**
+     * 白名单校验
+     *
+     * @return bool
+     */
+    private function checkWhiteIp(): bool {
+        $banStrs = BanWhiteList::query()->where("type", 1)->where("status", 1)->pluck('ban_str')->toArray();
+        $banIpList = [];
+        foreach ($banStrs as $banjsonStr) {
+            $forBanIpList = @json_decode($banjsonStr, true);
+            if (!empty($forBanIpList) && is_array($forBanIpList)) {
+                $banIpList = array_merge($banIpList, $forBanIpList);
+            }
+        }
+        $whiteIplist = implode("\n", $banIpList);
+        //ip白名单验证
+        $ip = get_client_ip();
+        $checkRes = $this->isIpAllowed($ip, $whiteIplist);
+
+        return $checkRes;
     }
 }
