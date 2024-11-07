@@ -412,7 +412,7 @@ class PageController extends Controller
             'custom', // 合作客户
         ])
             ->where('status', 1)
-            ->andWhere('is_analyst', 1)
+            ->where('is_analyst', 1)
             ->orderBy('sort', 'asc')
             ->get()
             ->toArray();
