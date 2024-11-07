@@ -70,11 +70,11 @@ class PageController extends Controller
         //权威引用分类
         //$category = DictionaryValue::GetDicOptions('quote_cage');
         $category = QuoteCategory::select(['id', 'name'])
-                                  ->where("status" , 1)
-                                  ->orderBy('sort', 'asc')->get()->toArray() ?? [];
-        if($isALL){
+            ->where("status", 1)
+            ->orderBy('sort', 'asc')->get()->toArray() ?? [];
+        if ($isALL) {
             array_unshift($category, ['id' => '0', 'name' => '全部']);
-        }elseif(!$isALL && empty($category_id) && $category && is_array($category) && count($category)>0){
+        } elseif (!$isALL && empty($category_id) && $category && is_array($category) && count($category) > 0) {
             $category_id = $category[0];
         }
 
@@ -84,7 +84,7 @@ class PageController extends Controller
             $model = $model->where('category_id', $category_id);
         }
         //过滤状态
-        $model->where("status" , 1);
+        $model->where("status", 1);
         $count = $model->count();
         $result = $model->offset(($page - 1) * $pageSize)->limit($pageSize)->get()->toArray();
         foreach ($result as $key => $item) {
@@ -110,8 +110,8 @@ class PageController extends Controller
         if (empty($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = Authority::select(['name as title', 'body as content' , 'description' ,'id' , 'keyword' , 'name' , 'created_at as time' , 'big_image as img'])->where('id', $id)->first();
-        $data['time'] = date("Y-m-d" , $data['time']);
+        $data = Authority::select(['name as title', 'body as content', 'description', 'id', 'keyword', 'name', 'created_at as time', 'big_image as img'])->where('id', $id)->first();
+        $data['time'] = date("Y-m-d", $data['time']);
         // 新闻/权威引用等如果内容带有链接，则该链接在移动端无法正常换行，因此后端在此协助处理
         $data['content'] = str_replace('href="', 'style="word-wrap:break-word;word-break:break-all;" href="', $data['content']);
         ReturnJson(true, '', $data);
@@ -126,7 +126,7 @@ class PageController extends Controller
         if (!empty($keyword)) {
             $keyword = explode(',', $keyword);
             $keyword = $keyword[0];
-        }else{
+        } else {
             ReturnJson(true, 'success', []);
         }
 
@@ -217,7 +217,7 @@ class PageController extends Controller
                         foreach ($languages as $index => $language) {
                             $priceEditions = PriceEditionValues::select(
                                 ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
-                            )->where(['status' => 1, 'is_deleted'=> 1, 'language_id' => $language['id']])->orderBy("sort", "asc")->get()->toArray();
+                            )->where(['status' => 1, 'is_deleted' => 1, 'language_id' => $language['id']])->orderBy("sort", "asc")->get()->toArray();
                             if ($priceEditions) {
                                 $prices[$index]['language'] = $language['name'];
                                 foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
@@ -400,6 +400,45 @@ class PageController extends Controller
     }
 
     /**
+     * 团队成员-分析师
+     */
+    public function AnalystGroup(Request $request)
+    {
+        $analystList = TeamMember::select([
+            'name',
+            'industry_id',
+            'area', // 研究领域
+            'experience', // 参与项目/经验
+            'custom', // 合作客户
+        ])
+            ->where('status', 1)
+            ->andWhere('is_analyst', 1)
+            ->orderBy('sort', 'asc')
+            ->get()
+            ->toArray();
+        $data = [];
+        if ($analystList) {
+            $industryIds = array_unique(array_column($analystList, 'industry_id'));
+            $industryArray = ProductsCategory::query()->select(['id', 'name'])->whereIn('id', $industryIds)->pluck('name', 'id')->toArray();
+
+            foreach ($analystList as $member) {
+                if (empty($member['industry_id'])) {
+                    continue;
+                }
+                if (!isset($data[$member['industry_id']])) {
+                    $data[$member['industry_id']] = [
+                        'name' => $industryArray[$member['industry_id']], 
+                        'item' => []
+                    ];
+                }
+                $data[$member['industry_id']]['item'][] = $member;
+            }
+            $data = array_values($data);
+        }
+        ReturnJson(true, '', $data);
+    }
+
+    /**
      * 资质认证
      */
     public function Qualification(Request $request)
@@ -463,7 +502,7 @@ class PageController extends Controller
 
         $list = $query->offset(($page - 1) * $pageSize)->limit($pageSize)->orderBy('id', 'desc')->get()->toArray();
 
-        foreach ($list as $key => $item){
+        foreach ($list as $key => $item) {
             $list[$key]['comment_at_format'] = date('Y-m-d', $item['comment_at']);
             $list[$key]['image'] = Common::cutoffSiteUploadPathPrefix($item['image']);
         }
@@ -491,7 +530,7 @@ class PageController extends Controller
             ->where('status', 1)
             ->where('id', $id)
             ->first();
-        if($data){
+        if ($data) {
             $data['comment_at_format'] = date('Y-m-d', $data['comment_at']);
         }
         ReturnJson(true, '', $data);
