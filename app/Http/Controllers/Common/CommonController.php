@@ -62,7 +62,7 @@ class CommonController extends Controller {
             // 客户评价
             $data['comment'] = $this->getCustomersComment($request);
             // 办公室
-            $data['office_region'] = $this->getofficeRegion($request);
+            $data['offices'] = $this->getofficeRegion($request);
         }
         
         // 总控字典部分
@@ -654,11 +654,14 @@ class CommonController extends Controller {
     // 办公室 所在地点 
     public function getofficeRegion(Request $request)
     {
-        $list = Office::select(['region'])
-        ->where('status', 1)
-        ->orderBy('sort', 'asc')
-        ->orderBy('id', 'desc')
-        ->pluck('region');
+        $list = Office::where('status', 1)
+                      ->orderBy('sort', 'desc')
+                      ->orderBy('id', 'desc')
+                      ->get();
+        foreach ($list as &$value) {
+            $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
+            $value['national_flag'] = Common::cutoffSiteUploadPathPrefix($value['national_flag']);
+        }
         return $list;
     }
     
