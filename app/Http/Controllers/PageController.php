@@ -428,7 +428,7 @@ class PageController extends Controller
                 }
                 if (!isset($data[$member['industry_id']])) {
                     $data[$member['industry_id']] = [
-                        'name' => $industryArray[$member['industry_id']], 
+                        'name' => $industryArray[$member['industry_id']],
                         'item' => []
                     ];
                 }
@@ -540,7 +540,11 @@ class PageController extends Controller
     /**
      * 公司发展历程
      */
-    public function CompanyHistory(Request $request){
+    public function CompanyHistory(Request $request)
+    {
+
+        $params = $request->all();
+        $type = $params['type'];
 
         $result = History::select([
             'year',
@@ -550,11 +554,23 @@ class PageController extends Controller
             ->where('status', 1)
             ->get()
             ->toArray();
-
+        if ($type == 1 && $result) {
+            $historyData = [
+                'up' => [],
+                'down' => [],
+            ];
+            foreach ($result as $key => $item) {
+                if ($key % 2 == 0) {
+                    $historyData['up'] = $item;
+                } else {
+                    $historyData['down'] = $item;
+                }
+            }
+            $result = $historyData;
+        }
         $data = [
             'result' => $result,
         ];
         ReturnJson(true, '', $data);
     }
-
 }
