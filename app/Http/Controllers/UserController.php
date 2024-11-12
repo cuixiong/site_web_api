@@ -135,6 +135,7 @@ class UserController extends Controller {
             'area_id'    => [$user->province_id, $user->city_id],
             'company'    => $user->company,// 公司
             'login_time' => $user->login_time,// 最近登陆的时间
+            'login_time_format' => date('Y-m-d H:i:s', $user->login_time),// 最近登陆的时间
             'token'      => $token,// token
             'address'    => $user->address,
         ];
