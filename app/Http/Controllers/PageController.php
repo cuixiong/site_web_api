@@ -561,9 +561,9 @@ class PageController extends Controller
             ];
             foreach ($result as $key => $item) {
                 if ($key % 2 == 0) {
-                    $historyData['up'] = $item;
+                    $historyData['up'][] = $item;
                 } else {
-                    $historyData['down'] = $item;
+                    $historyData['down'][] = $item;
                 }
             }
             $result = $historyData;
