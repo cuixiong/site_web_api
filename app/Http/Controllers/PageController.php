@@ -9,6 +9,7 @@ use App\Models\Comment;
 use App\Models\Common;
 use App\Models\ContactUs;
 use App\Models\DictionaryValue;
+use App\Models\History;
 use App\Models\Languages;
 use App\Models\Menu;
 use App\Models\Page;
@@ -535,4 +536,25 @@ class PageController extends Controller
         }
         ReturnJson(true, '', $data);
     }
+
+    /**
+     * 公司发展历程
+     */
+    public function CompanyHistory(Request $request){
+
+        $result = History::select([
+            'year',
+            'body as content',
+        ])
+            ->orderBy('sort', 'asc')
+            ->where('status', 1)
+            ->get()
+            ->toArray();
+
+        $data = [
+            'result' => $result,
+        ];
+        ReturnJson(true, '', $data);
+    }
+
 }
