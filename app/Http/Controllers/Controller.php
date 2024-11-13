@@ -34,10 +34,9 @@ class Controller extends BaseController {
             return;
         }
         //请求日志记录
-        //$this->accessLog();
+        $this->accessLog();
         // 签名检查
         $this->signCheck();
-
         //$whiteIplist = $this->getSetValByKey('ip_white_rules') ?? '';
         $checkRes = $this->checkWhiteIp();
         if (!$checkRes) {
@@ -335,7 +334,6 @@ class Controller extends BaseController {
             if (!empty($route->uri)) {
                 $routeUril = $route->uri;
             }
-
             //获取封禁配置
             $windowsTime = $this->getSetValByKey('window_time') ?? 5;
             $reqLimit = $this->getSetValByKey('req_limit') ?? 10;
@@ -393,6 +391,19 @@ class Controller extends BaseController {
         if (!empty($route->uri)) {
             $routeUril = $route->uri;
         }
+
+        $input = request()->input();
+        $view_uri = $input['view_uri'] ?? '';
+        if ($routeUril == 'api/product/description') {
+            $routeUril = $view_uri;
+        } elseif ($routeUril == 'api/news/view') {
+            $routeUril = $view_uri;
+        } elseif ($routeUril == 'api/information/view') {
+            $routeUril = $view_uri;
+        }else{
+            return true;
+        }
+
         $ip = get_client_ip();
         //ip转换地址
         $ipAddr = (new IPAddrService($ip))->getAddrStrByIp();
