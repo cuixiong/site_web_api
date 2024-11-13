@@ -391,19 +391,20 @@ class Controller extends BaseController {
         if (!empty($route->uri)) {
             $routeUril = $route->uri;
         }
-
         $input = request()->input();
-        $view_uri = $input['view_uri'] ?? '';
+        $url_view = $input['url'] ?? '';
         if ($routeUril == 'api/product/description') {
-            $routeUril = $view_uri;
+            $url_id = $input['product_id'] ?? '';
+            $routeUril = "/reports/{$url_id}/{$url_view}";
         } elseif ($routeUril == 'api/news/view') {
-            $routeUril = $view_uri;
+            $url_id = $input['id'] ?? '';
+            $routeUril = "/news/{$url_id}/{$url_view}";
         } elseif ($routeUril == 'api/information/view') {
-            $routeUril = $view_uri;
-        }else{
+            $url_id = $input['id'] ?? '';
+            $routeUril = "/information/{$url_id}/{$url_view}";
+        } else {
             return true;
         }
-
         $ip = get_client_ip();
         //ip转换地址
         $ipAddr = (new IPAddrService($ip))->getAddrStrByIp();
