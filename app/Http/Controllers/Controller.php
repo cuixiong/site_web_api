@@ -33,13 +33,14 @@ class Controller extends BaseController {
         if ($route && in_array($route, $excludeRoute)) {
             return;
         }
-        //请求日志记录
-        $this->accessLog();
+
         // 签名检查
         $this->signCheck();
         //$whiteIplist = $this->getSetValByKey('ip_white_rules') ?? '';
         $checkRes = $this->checkWhiteIp();
         if (!$checkRes) {
+            //请求日志记录
+            $this->accessLog();
             //UA请求头封禁
             $this->checkUaHeader();
             //IP限流封禁
