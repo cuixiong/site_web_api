@@ -266,6 +266,14 @@ class PageController extends Controller
         $params = $request->all();
         $name = $params['name'];
         $email = $params['email'];
+
+        //校验邮箱规则
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            ReturnJson(false, '邮箱格式不正确');
+        }
+        $appName = env('APP_NAME' , '');
+        currentLimit($request , 60 , $appName , $email);
+
         $province_id = $params['province_id'];
         $city_id = $params['city_id'];
         $phone = $params['phone'];
@@ -286,7 +294,7 @@ class PageController extends Controller
         //$model->remarks = $content;
         $model->content = $content;
         $model->status = 0;
-        $languageId = $params['language'] ?? 0;
+        $languageId = $params['language'] ?? '';
         $model->language_version = $languageId;
         if ($model->save()) {
             (new SendEmailController)->contactUs($model->id); // 发送邮件

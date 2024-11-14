@@ -29,15 +29,16 @@ class IndexController extends Controller {
      * @param Request $request
      *
      */
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
         //最新报告(热门报告)
         if (checkSiteAccessData(['168report'])) {
             $data['hot_product_list'] = $this->getHotProductList($request);
             // 报告数据
             $priceEdition = [];
-            if(!empty($data['hot_product_list']['products'] )) {
+            if (!empty($data['hot_product_list']['products'])) {
                 $publisherIdList = [];
-                foreach ($data['hot_product_list']['products'] as $for_p){
+                foreach ($data['hot_product_list']['products'] as $for_p) {
                     $publisherIdList[] = $for_p['publisher_id'];
                 }
                 $languages = Languages::GetList();
@@ -52,9 +53,9 @@ class IndexController extends Controller {
                     $forProduct['discount_status'] = 2;
                 }
                 //此处站点 , 需额外返回价格版本
-                $forProduct['prices'] = Products::countPriceEditionPrice($priceEdition[$forProduct['publisher_id']],$forProduct['price']) ?? [];
+                $forProduct['prices'] = Products::countPriceEditionPrice($priceEdition[$forProduct['publisher_id']], $forProduct['price']) ?? [];
             }
-        }else{
+        } else {
             $data['hot_product_list'] = $this->getHotProductList($request);
         }
         //获取推荐报告
@@ -65,18 +66,26 @@ class IndexController extends Controller {
         //行业新闻 默认无分页 前端传hasPagination
         $data['industry_news_list'] = $this->getIndustryNews($request);
         //热点资讯
-        if (checkSiteAccessData(['168report'])) {
+        if (checkSiteAccessData(['168report', 'tycn'])) {
             $data['hot_news_info_list'] = $this->getHotInfoNews($request);
         }
         // 客户评价
         $data['comment'] = $this->getCustomersComment($request);
 
-
-        if (checkSiteAccessData(['yhcn'])){
+        if (checkSiteAccessData(['yhcn'])) {
             // 权威引用 默认有分页
             $data['quote_list'] = $this->getQuoteList($request);
             // 资质认证 默认有分页
             $data['qualification_list'] = $this->getQualificationList($request);
+        } elseif (checkSiteAccessData(['tycn'])) {
+            //返回对应的分类数据
+            $cate = ProductsCategory::query()
+                ->where("show_home", 1)
+                ->where("status", 1)
+                ->select(['id', 'name', 'seo_title', 'link', 'icon', 'icon_hover'])
+                ->orderBy('sort', 'asc')
+                ->limit(7)->get()->toArray();
+            $data['cate'] = $cate;
         }
 
         ReturnJson(true, '', $data);

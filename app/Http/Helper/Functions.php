@@ -1,4 +1,7 @@
 <?php
+
+use Illuminate\Support\Facades\Redis;
+
 /**
  * 返回JSON格式响应
  *
@@ -129,6 +132,26 @@ function get_client_ip() {
     }
     return $ip;
 }
+
+
+/**
+ * 接口请求频率限制
+ */
+function currentLimit($request, $second = 10, $site = '', $userId = '') {
+    $route = $request->route();
+    $actionInfo = $route->getAction();
+    $currentLimitKey = $actionInfo['controller'];
+    if(empty($site )){
+        $site = $request->header('Site');
+    }
+    $currentLimitKey = $currentLimitKey."_{$site}_{$userId}";
+    $isExist = Redis::get($currentLimitKey);
+    if (!empty($isExist)) {
+        ReturnJson(false, '请求频率过快');
+    }
+    Redis::setex($currentLimitKey, $second, 1);
+}
+
 
 
 

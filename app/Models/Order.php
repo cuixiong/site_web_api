@@ -9,12 +9,14 @@ class Order extends Base {
     const PAY_SUCCESS = 2;
     const PAY_CANCEL  = 3;
     const PAY_FINISH  = 4;
+    const PAY_FAILED  = 5;
     const PAY_STATUS_TYPE
                       = [
             self::PAY_UNPAID  => '未支付',
             self::PAY_SUCCESS => '已支付',
             self::PAY_CANCEL  => '已取消',
             self::PAY_FINISH  => '已完成',
+            self::PAY_FAILED  => '支付失败',
         ];
     protected $table       = 'orders';
     protected $appends     = ['is_pay_text', 'create_date', 'is_invoice', 'order_product'];
@@ -87,14 +89,14 @@ class Order extends Base {
         return $goodsInfo ?? [];
     }
 
-    public function getAddressInfoAttribute()
-    {
-
+    public function getAddressInfoAttribute() {
         // 所在地区
-        $country = isset($this->attributes['country_id']) ? Country::where('id', $this->attributes['country_id'])->value('name') : '';
-        $province = isset($this->attributes['province_id']) ? City::where('id', $this->attributes['province_id'])->value('name') : '';
-        $city = isset($this->attributes['city_id']) ? City::where('id', $this->attributes['city_id'])->value('name') : '';
-
+        $country = isset($this->attributes['country_id']) ? Country::where('id', $this->attributes['country_id'])
+                                                                   ->value('name') : '';
+        $province = isset($this->attributes['province_id']) ? City::where('id', $this->attributes['province_id'])
+                                                                  ->value('name') : '';
+        $city = isset($this->attributes['city_id']) ? City::where('id', $this->attributes['city_id'])->value('name')
+            : '';
         $rdata = [
             'username' => $this->attributes['username'] ?? '',
             'company'  => $this->attributes['company'] ?? '',
@@ -102,8 +104,8 @@ class Order extends Base {
             'email'    => $this->attributes['email'] ?? '',
             'address'  => $this->attributes['address'] ?? '',
             'country'  => !empty($country) ? $country : '',
-            'province'  => !empty($province) ? $province : '',
-            'city'  => !empty($city) ? $city : '',
+            'province' => !empty($province) ? $province : '',
+            'city'     => !empty($city) ? $city : '',
         ];
 
         // TODO: cuizhixiong 2024/4/30   province_id  city_id

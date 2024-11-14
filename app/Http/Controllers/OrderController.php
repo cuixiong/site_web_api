@@ -28,6 +28,7 @@ use App\Services\OrderService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Hash;
 
 class OrderController extends Controller {
@@ -213,14 +214,11 @@ class OrderController extends Controller {
         $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
         $isWechat = isWeixin() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
         $pay->setOption(Pay::KEY_IS_WECHAT, $isWechat);
-
-
-        try{
+        try {
             return $pay->do($order);
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             ReturnJson(false, '拉起支付失败,订单已过期!');
         }
-
     }
 
     /**
@@ -237,33 +235,15 @@ class OrderController extends Controller {
             $pay_set = [
                 'pay_exchange_rate' => 1,
                 'pay_tax_rate'      => 0,
-                'pay_coin_type'     => 'CNY'
+                'pay_coin_type'     => PayConst::COIN_TYPE_CNY
             ];
-            if ($payCode == PayConst::PAY_TYPE_STRIPEPAY) {
-                $stripreData = SystemValue::query()->where("alias", 'stripe_pay_set')
-                                          ->where("status", 1)
-                                          ->where("hidden", 1)
-                                          ->pluck("value", "key")->toArray();
-                $pay_set['pay_exchange_rate'] = $stripreData['stripe_pay_exchange_rate'] ?? 1;
-                $pay_set['pay_tax_rate'] = $stripreData['stripe_pay_tax_rate'] ?? 0;
-                $pay_set['pay_coin_type'] = $stripreData['stripe_pay_coin_type'] ?? 'CNY';
-            } elseif ($payCode == PayConst::PAY_TYPE_FIRSTDATAPAY) {
-                $firstdataPayData = SystemValue::query()->where("alias", 'first_data_pay_set')
-                                               ->where("status", 1)
-                                               ->where("hidden", 1)
-                                               ->pluck("value", "key")->toArray();
-                $pay_set['pay_exchange_rate'] = $firstdataPayData['first_data_pay_exchange_rate'] ?? 1;
-                $pay_set['pay_tax_rate'] = $firstdataPayData['first_data_pay_tax_rate'] ?? 0;
-                $pay_set['pay_coin_type'] = $firstdataPayData['first_data_pay_coin_type'] ?? 'CNY';
-            } elseif ($payCode == PayConst::PAY_TYPE_PAYPAL) {
-                $palpalPaySetList = SystemValue::query()->where("alias", 'paypal_pay_set')
-                                               ->where("status", 1)
-                                               ->where("hidden", 1)
-                                               ->pluck("value", "key")->toArray();
-                $pay_set['pay_exchange_rate'] = $palpalPaySetList['paypal_pay_exchange_rate'] ?? 1;
-                $pay_set['pay_tax_rate'] = $palpalPaySetList['paypal_pay_tax_rate'] ?? 0;
-                $pay_set['pay_coin_type'] = $palpalPaySetList['paypal_pay_coin_type'] ?? 'CNY';
+            $payInfo = ModelsPay::query()->where("code", $payCode)->first();
+            if (empty($payInfo)) {
+                return $pay_set;
             }
+            $pay_set['pay_tax_rate'] = $payInfo->pay_tax_rate;
+            $pay_set['pay_exchange_rate'] = $payInfo->pay_exchange_rate;
+            $pay_set['pay_coin_type'] = $payInfo->pay_coin_type;
             $pay_set['pay_coin_type_symbol'] = PayConst::$coinTypeSymbol[$pay_set['pay_coin_type']] ?? '¥';
             $item['pay_set'] = $pay_set;
             $item['img'] = Common::cutoffSiteUploadPathPrefix($item['img']);
@@ -291,6 +271,14 @@ class OrderController extends Controller {
             // 主动查询订单状态
             // 未付款
             ReturnJson(true, '', ['is_pay' => $orderStatus, 'order_number' => $orderNumber]);
+        }
+        $payInfo = \App\Models\Pay::query()->where('code', $order['pay_code'])->first();
+        $exchange_rate = 1;
+        if (!empty($payInfo)) {
+            $exchange_rate = $payInfo->pay_exchange_rate;
+            if ($exchange_rate <= 0) {
+                $exchange_rate = 1;
+            }
         }
         $orderGoods = OrderGoods::from('order_goods')->select([
                                                                   'product.name',
@@ -330,20 +318,23 @@ class OrderController extends Controller {
         foreach ($orderGoods as $forOrderGoods) {
             $sum_quantity += $forOrderGoods['goods_number'];
         }
+        $order_status = Order::PAY_STATUS_TYPE[$order['is_pay']] ?? '';
         $data = [
             'order'  => [
-                'order_amount'    => $order['order_amount'], // 订单总额
-                'discount_value'  => $order['coupon_amount'], // 优惠金额
-                'actually_paid'   => $order['actually_paid'], // 实付金额
-                'pay_coin_type'   => $order['pay_coin_type'], // 支付符号
-                'sum_quantity'    => $sum_quantity,
-                'pay_coin_symbol' => PayConst::$coinTypeSymbol[$order['pay_coin_type']] ?? '', // 支付符号
-                'order_status'    => OrderStatus::where('id', $order['is_pay'])->value('name'),
+                'order_amount'           => $order['order_amount'], // 订单总额
+                'discount_value'         => $order['coupon_amount'], // 优惠金额
+                'actually_paid'          => $order['actually_paid'], // 实付金额
+                'pay_coin_type'          => $order['pay_coin_type'], // 支付符号
+                'exchange_order_amount'  => bcmul($order['order_amount'], $exchange_rate, 2), // 订单总额
+                'exchange_coupon_amount' => bcmul($order['coupon_amount'], $exchange_rate, 2), // coupon
+                'sum_quantity'           => $sum_quantity,
+                'pay_coin_symbol'        => PayConst::$coinTypeSymbol[$order['pay_coin_type']] ?? '', // 支付符号
+                'order_status'           => $order_status,
                 // 'pay_type'        => ModelsPay::where('id', $order['pay_type'])->value('name'),
-                'pay_code'        => ModelsPay::where('code', $order['pay_code'])->value('name'),
-                'order_number'    => $orderNumber,
-                'pay_time'        => $payTime,
-                'remarks'         => $order['remarks'] ? $order['remarks'] : '',
+                'pay_code'               => ModelsPay::where('code', $order['pay_code'])->value('name'),
+                'order_number'           => $orderNumber,
+                'pay_time'               => $payTime,
+                'remarks'                => $order['remarks'] ? $order['remarks'] : '',
             ],
             'goods'  => $orderGoods,
             'user'   => $_user,           // 用户的初始账户信息
@@ -456,19 +447,18 @@ class OrderController extends Controller {
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $fields = ['id', 'created_at', 'order_number', 'order_amount', 'actually_paid', 'is_pay'];
+            $fields = ['id', 'created_at', 'order_number', 'order_amount', 'actually_paid', 'is_pay' , 'pay_coin_type'];
             $model->select($fields);
-            $rs = $model->get();
+            $rs = $model->get()->toArray();
+            foreach ($rs as &$v){
+                $v['pay_coin_symbol'] = PayConst::$coinTypeSymbol[$v['pay_coin_type']] ?? '';
+            }
             $rdata = [];
             $rdata['count'] = $count;
             $rdata['data'] = $rs;
             $rdata['pageNum'] = $request->pageNum;
             $rdata['pageSize'] = $request->pageSize;
-            if ($rs) {
-                ReturnJson(true, '获取成功', $rdata);
-            } else {
-                ReturnJson(false, '获取失败');
-            }
+            ReturnJson(true, '获取成功', $rdata);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
@@ -575,20 +565,19 @@ class OrderController extends Controller {
         }
     }
 
-    public function changePayType(Request $request)
-    {
+    public function changePayType(Request $request) {
         try {
             $model = new Order();
             $request->validate(
                 [
-                    'order_id'    => 'required|integer',
+                    'order_id' => 'required|integer',
                     //    'pay_type_id' => 'required|integer',
                     'pay_code' => 'required',
                 ],
                 [
-                    'order_id.required'    => '订单ID不能为空',
-                    'order_id.integer'     => '订单ID必须为数字',
-                    'pay_code.required'    => '支付方式code不能为空',
+                    'order_id.required' => '订单ID不能为空',
+                    'order_id.integer'  => '订单ID必须为数字',
+                    'pay_code.required' => '支付方式code不能为空',
                     //    'pay_type_id.required' => '支付方式不能为空',
                     //    'pay_type_id.integer'  => '支付方式必须为数字',
                 ]
@@ -612,9 +601,9 @@ class OrderController extends Controller {
             //                     ->count();
             $payCode = $request->input('pay_code');
             $isExist = ModelsPay::query()
-                ->where("code", $payCode)
-                ->where("status", 1)
-                ->count();
+                                ->where("code", $payCode)
+                                ->where("status", 1)
+                                ->count();
             if (empty($isExist) || $isExist <= 0) {
                 ReturnJson(false, '支付方式不存在');
             }

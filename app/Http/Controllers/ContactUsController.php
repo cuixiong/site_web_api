@@ -4,28 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Common\SendEmailController;
 use App\Models\ContactUs;
-use App\Models\System;
-use App\Models\SystemValue;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use App\Models\DictionaryValue;
-use App\Models\MessageLanguageVersion;
 use App\Models\Country;
 use App\Models\City;
 use App\Models\MessageCategory;
 
 class ContactUsController extends Controller {
     // 免费样本/定制报告
-    public function Add(Request $request)
-    {
+    public function Add(Request $request) {
         $params = $request->all();
-
+        $email = $params['email'] ?? '';
+        //校验邮箱规则
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            ReturnJson(false, '邮箱格式不正确');
+        }
+        $product_id = $params['product_id'] ?? 0;
+        $appName = env('APP_NAME', '');
+        currentLimit($request, 60, $appName, $email.$product_id);
         $sceneCode = $params['code'] ?? '';
         $category_id = MessageCategory::where('code', $sceneCode)->value('id');
-
         $model = new ContactUs();
         $model->name = $params['name'] ?? '';
-        $model->email = $params['email'] ?? '';
+        $model->email = $email;
         $model->company = $params['company'] ?? '';
         if (!empty($params['buy_time'])) {
             $model->buy_time = $params['buy_time'] ?? 0;
@@ -37,22 +38,21 @@ class ContactUsController extends Controller {
         $model->category_id = $category_id ?? 0;
         $model->phone = $params['phone'] ?? '';
         $model->content = $params['content'] ?? '';
-        $model->product_id = $params['product_id'] ?? 0;
+        $model->product_id = $product_id;
         $model->language_version = $params['language'] ?? 0;
         $model->address = $params['address'] ?? '';
         if ($model->save()) {
             // 根据code发送对应场景
             $sceneCode = $params['code'] ?? '';
-            if($sceneCode == 'productSample'){
+            if ($sceneCode == 'productSample') {
                 (new SendEmailController)->productSample($model->id);
-            }elseif($sceneCode == 'customized'){
+            } elseif ($sceneCode == 'customized') {
                 (new SendEmailController)->customized($model->id);
-            }elseif($sceneCode == 'contactUs'){
+            } elseif ($sceneCode == 'contactUs') {
                 (new SendEmailController)->contactUs($model->id);
-            }else{
+            } else {
                 (new SendEmailController)->sendMessageEmail($model->id, $sceneCode);
             }
-
             ReturnJson(true, '', $model);
         } else {
             ReturnJson(false, $model->getModelError());
@@ -80,12 +80,7 @@ class ContactUsController extends Controller {
             $provinces[$key]['children'] = $cities;
         }
         $result['city'] = $provinces;
-        // 语言版本
-        $result['language_version'] = MessageLanguageVersion::where('status', 1)
-                                                            ->select(['name', 'id'])
-                                                            ->orderBy('sort', 'ASC')
-                                                            ->get()
-                                                            ->toArray();
+
 
         ReturnJson(true, '', $result);
     }
