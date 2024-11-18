@@ -221,14 +221,11 @@
     <body>
     
     <div class="headerW">
-        <!--<a href="<?=$homeUrl?>"><?=$homepage?></a>-->
         <div class="logo_title">
             <img src="<?=env('IMAGE_URL');?>/site/<?=env('APP_NAME');?>/pdf/pdf_title.webp" alt="logo"> 
-            <!--<img src="F:\十二月html\pdf_title.webp" alt="">-->
             <div class="logo">
                 <a href="/">
                      <img src="<?=env('IMAGE_URL');?>/site/<?=env('APP_NAME');?>/pdf/logo.webp" alt="logo"> 
-                    <!--<img src="F:\十二月html\logo.webp" alt="logo">-->
                 </a>
             </div>
         </div>
@@ -256,7 +253,7 @@
                         </p>
                         <p>
                             <span>服务形式 :</span>
-                            <span><?=$Report_format['value']?></span>
+                            <span><?=$serviceMethod?></span>
                         </p>
                         <p>
                             <span>客户服务专线 :</span>

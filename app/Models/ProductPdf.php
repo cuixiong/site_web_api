@@ -114,6 +114,9 @@ class ProductPdf extends Base
         $adminEmail = SystemValue::where('key', 'siteEmail')->value('value');
         $adminPhone = SystemValue::where('key', 'sitePhone')->value('value');
         $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+        
+        // 服务方式文本
+        $serviceMethod = SystemValue::where(['key' => 'Service', 'status' => 1])->value('value');
         $productThumb = !empty($product['thumb']) ?$product['thumb'] : $defaultImg;
         $productThumb = env('IMAGE_URL') . Common::cutoffSiteUploadPathPrefix($productThumb);
 
@@ -146,7 +149,7 @@ class ProductPdf extends Base
             'thumb' => $productThumb,
             'email' => $adminEmail ?? '',
             'phone' => $adminPhone ?? '',
-
+            'serviceMethod' => !empty($serviceMethod)?$serviceMethod:'',
 
             'homeUrl' => env('APP_URL'),
             // 'homepage' => parse_url(Yii::$app->params['frontend_domain'])['host'],
