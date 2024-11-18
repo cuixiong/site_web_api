@@ -552,7 +552,7 @@ class PageController extends Controller
     {
 
         $params = $request->all();
-        $type = $params['type'];
+        $type = isset($params['type'])? $params['type']:0;
 
         $result = History::select([
             'year',
