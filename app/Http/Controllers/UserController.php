@@ -362,6 +362,7 @@ class UserController extends Controller {
                 $user['province_id'],
                 $user['city_id']
             ];
+            $data['token'] = $user['token'];
             ReturnJson(true, '', $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage(), []);
