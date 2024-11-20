@@ -279,6 +279,7 @@ class ProductController extends Controller
                 'p.id',
                 'p.published_date',
                 'cate.name as category',
+                'cate.name as category_name',
                 'cate.keyword_suffix',
                 'cate.product_tag',
                 'p.pages',

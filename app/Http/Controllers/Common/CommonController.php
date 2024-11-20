@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
 use App\Models\Authority;
 use App\Models\City;
+use App\Models\Comment;
 use App\Models\Common;
 use App\Models\DictionaryValue;
 use App\Models\LanguageWebsite;
@@ -13,6 +14,7 @@ use App\Models\Link;
 use App\Models\Menu;
 use App\Models\MessageLanguageVersion;
 use App\Models\News;
+use App\Models\Office;
 use App\Models\PlateValue;
 use App\Models\ProductsCategory;
 use App\Models\QuoteCategory;
@@ -53,7 +55,16 @@ class CommonController extends Controller {
         //报告分类
         $data['product_cagory'] = $this->getProductCagory();
         //权威引用
-        $data['quote_list'] = $this->getQuoteList(0, 1, 4);
+        $data['quote_list'] = $this->getQuoteList($request);
+        
+
+        if (checkSiteAccessData(['yhcn'])){
+            // 客户评价
+            $data['comment'] = $this->getCustomersComment($request);
+            // 办公室
+            $data['offices'] = $this->getofficeRegion($request);
+        }
+        
         // 总控字典部分
         // 计划购买时间 ,原为联系我们控制器Dictionary函数中代码，现复制至此处
         $data['buy_time'] = DictionaryValue::GetDicOptions('Buy_Time');
@@ -78,7 +89,12 @@ class CommonController extends Controller {
         ReturnJson(true, '', $data);
     }
 
-    public function getQuoteList($category_id = 0, $page = 1, $pageSize = 4) {
+    public function getQuoteList(Request $request) {
+        
+        $category_id = $request->quote_category_id ?? 0;
+        $page = $request->quote_page ?? 1;
+        $pageSize = $request->quote_size ?? 4;
+
         $category = QuoteCategory::select(['id', 'name'])
                                  ->where("status", 1)
                                  ->orderBy('sort', 'asc')->get()->toArray() ?? [];
@@ -627,5 +643,56 @@ class CommonController extends Controller {
         }
 
         return $frontMenus;
+    }
+
+
+    // 办公室 所在地点 
+    public function getofficeRegion(Request $request)
+    {
+        $list = Office::where('status', 1)
+                      ->orderBy('sort', 'desc')
+                      ->orderBy('id', 'desc')
+                      ->get();
+        foreach ($list as &$value) {
+            $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
+            $value['national_flag'] = Common::cutoffSiteUploadPathPrefix($value['national_flag']);
+        }
+        return $list;
+    }
+    
+    /**
+     *
+     * @return array
+     */
+    private function getCustomersComment(Request $request): array
+    {
+        $pageSize = $request->comment_size ?? 4;
+        $page = $request->comment_page ?? 1;
+
+        $query = Comment::select(['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at'])->where('status', 1);
+
+        $count = (clone $query)->count();
+        $list = $query->orderBy('id', 'desc')
+        //->orderBy('sort', 'desc')
+        ->offset(($page - 1) * $pageSize)
+            ->limit($pageSize)
+            ->get()
+            ->toArray();
+
+        if ($list) {
+            foreach ($list as $key => $item) {
+                $list[$key]['comment_at_format'] = date('Y-m-d', $item['comment_at']);
+                $list[$key]['image'] = Common::cutoffSiteUploadPathPrefix($item['image']);
+            }
+        }
+
+        $data = [
+            'list' => $list,
+            'count' => intval($count),
+            'page' => $page,
+            'pageSize' => $pageSize,
+            'pageCount' => ceil($count / $pageSize),
+        ];
+        return $data;
     }
 }

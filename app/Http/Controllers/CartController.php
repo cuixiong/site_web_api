@@ -73,7 +73,7 @@ class CartController extends Controller {
         
         // 分类信息
         $categoryIds = array_column($shopCart, 'category_id');
-        $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->whereIn('id', $categoryIds)->get()->toArray();
+        $categoryData = ProductsCategory::select(['id', 'name', 'thumb','link'])->whereIn('id', $categoryIds)->get()->toArray();
         $categoryData = array_column($categoryData, null, 'id');
         // 默认图片
         // 若报告图片为空，则使用系统设置的默认报告高清图
@@ -85,18 +85,24 @@ class CartController extends Controller {
             // } else {
             //     $thumbImg = ProductsCategory::where('id', $value['category_id'])->value('thumb');
             // }
-            
+
             //每个报告加上分类信息
             $tempCategoryId = $value['category_id'];
-            $product['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
-            $product['category_thumb'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
+            $shopCartData[$key]['category_id'] = $value['category_id'];
+            $shopCartData[$key]['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
+            $shopCartData[$key]['category'] =  [
+                'id' => isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['id']) ? $categoryData[$tempCategoryId]['id'] : '',
+                'name' => isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '',
+                'link' => isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['link']) ? $categoryData[$tempCategoryId]['link'] : '',
+            ];
+            $category_thumb = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
 
             // 图片获取
             $tempThumb = '';
-            if (!empty($product['thumb'])) {
-                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['thumb']);
-            } elseif (!empty($product['category_thumb'])) {
-                $tempThumb = Common::cutoffSiteUploadPathPrefix($product['category_thumb']);
+            if (!empty($value['thumb'])) {
+                $tempThumb = Common::cutoffSiteUploadPathPrefix($value['thumb']);
+            } elseif (!empty($category_thumb)) {
+                $tempThumb = Common::cutoffSiteUploadPathPrefix($category_thumb);
             } else {
                 // 如果报告图片、分类图片为空，使用系统默认图片
                 $tempThumb = !empty($defaultImg) ? $defaultImg : '';
@@ -382,6 +388,9 @@ class CartController extends Controller {
                 $product = Products::from('product_routine as product')
                 ->leftJoin('product_category as category', 'product.category_id', '=', 'category.id')
                 ->select([
+                    'product.category_id',
+                    'category.name as category_name',
+                    'category.link as category_link',
                     'category.thumb as category_thumb',
                     'product.name',
                     'product.id as goods_id',

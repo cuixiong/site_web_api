@@ -101,13 +101,17 @@ class NewsController extends Controller {
         if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = News::select(['title', 'upload_at', 'hits', 'url', 'tags', 'content', 'keywords', 'description'])
+        $data = News::select(['title', 'upload_at', 'hits', 'url', 'tags', 'content', 'keywords', 'description','category_id'])
                     ->where(['id' => $id, 'status' => 1])
                     ->first();
         if ($data) {
             if(!empty($data->upload_at ) && $data->upload_at > time()){
                 ReturnJson(false, '新闻未发布，请稍后查看！');
             }
+            
+            $data['category'] = ProductsCategory::select(['id', 'name', 'link'])->where(
+                'id', $data['category_id']
+            )->first();
 
             // real_hits + 1
             News::where(['id' => $id])->increment('real_hits');
@@ -147,7 +151,7 @@ class NewsController extends Controller {
             //获取相关报告
             $data['relevant_product'] = $this->getRelevantProduct($data['tags']);
             //获取相关新闻
-            if (checkSiteAccessData(['168report'])) {
+            if (checkSiteAccessData(['168report'])||checkSiteAccessData(['yhcn'])) {
                 //相关新闻
                 $data['relevant_news'] = $this->getRelevantNews($data['tags'], $id);
             }

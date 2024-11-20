@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Menu;
 use App\Models\Plate;
+use App\Models\SystemValue;
 
 class PlateController extends Controller
 {
@@ -135,6 +136,22 @@ class PlateController extends Controller
                     'icon',
                     'content',
                 ])->get()->toArray();
+            // 标题和短标题可能带有年份，需动态每年变化
+            if ($forData['items'] && count($forData['items'])>0) {
+                // 网站设置获取品牌创立年份
+                $establishYear = SystemValue::where('key', 'establish_year')->value('value');
+                $year = date('Y', time());
+                if ($establishYear && !empty($establishYear) && intval($establishYear) > 0) {
+                    // 至今已有几年
+                    $upToNow = date('Y', time()) - $establishYear;
+                    foreach ($forData['items'] as $key => $item) {
+                        $forData['items'][$key]['title'] = str_replace('%year', $year, $forData['items'][$key]['title']);
+                        $forData['items'][$key]['title'] = str_replace('%c', $upToNow, $forData['items'][$key]['title']);
+                        $forData['items'][$key]['short_title'] = str_replace('%year', $year, $forData['items'][$key]['short_title']);
+                        $forData['items'][$key]['short_title'] = str_replace('%c', $upToNow, $forData['items'][$key]['short_title']);
+                    }
+                }
+            }
             $alias = $category['alias'];
             $data[$alias] = $forData;
         }

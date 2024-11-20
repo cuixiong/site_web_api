@@ -68,6 +68,8 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::get('customers-comments', [\App\Http\Controllers\IndexController::class, 'customersComments'])->name(
             '客户评价'
         );
+        Route::get('quotes', [\App\Http\Controllers\IndexController::class, 'quotes'])->name('权威引用');
+        Route::get('qualifications', [\App\Http\Controllers\IndexController::class, 'qualifications'])->name('资质认证');
     });
     // Plate控制器(页面板块)
     Route::prefix('plate')->group(function () {
@@ -108,8 +110,10 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::get('quote-relevant-product', [\App\Http\Controllers\PageController::class, 'QuoteRelevantProduct'])
              ->name('权威引用相关报告');
         Route::get('team-member', [\App\Http\Controllers\PageController::class, 'TeamMember'])->name('团队成员');
+        Route::get('analyst-group', [\App\Http\Controllers\PageController::class, 'AnalystGroup'])->name('分析师团队');
         Route::get('qualification', [\App\Http\Controllers\PageController::class, 'Qualification'])->name('资质认证');
         Route::get('faqs', [\App\Http\Controllers\PageController::class, 'Faqs'])->name('常见问题');
+        Route::get('company-history', [\App\Http\Controllers\PageController::class, 'CompanyHistory'])->name('发展历程');
         Route::get('customer-evaluations', [\App\Http\Controllers\PageController::class, 'CustomerEvaluations'])->name(
             '客户评价-列表'
         );
