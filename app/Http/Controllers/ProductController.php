@@ -588,6 +588,10 @@ class ProductController extends Controller
                     continue;
                     //throw $th;
                 }
+                if(!isset($numMatch[0][0])){
+                    //continue;
+                    return '';
+                }
                 $num = str_replace(' ', '', $numMatch[0][0]);
                 $value = trim($value, "\r\n");
                 $value = trim($value, "\r");
