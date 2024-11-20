@@ -345,7 +345,8 @@ class UserController extends Controller {
      *
      * @return array
      */
-    public function Info(Request $request) {
+    public function Info(Request $request)
+    {
         try {
             $user = $request->user;
             $userId = $user->id;
@@ -363,6 +364,8 @@ class UserController extends Controller {
                 $user['city_id']
             ];
             // $data['token'] = $user['token'];
+            $data['login_time'] = !empty($user['login_time']) ? $user['login_time'] : '';
+            $data['login_time_format'] = date('Y-m-d H:i:s', $user['login_time']);
             ReturnJson(true, '', $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage(), []);
