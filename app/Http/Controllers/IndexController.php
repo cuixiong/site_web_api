@@ -534,6 +534,8 @@ class IndexController extends Controller {
                                         
         if ($dataType == 0) {
             // $newProductList = $productQuery->get();
+            $categories = $categoryQuery->get()->toArray();
+            $data['category'] = $categories;
             $count = $productCountQuery->count();
             $data['count'] = intval($count);
             $data['page'] = $productPage;
