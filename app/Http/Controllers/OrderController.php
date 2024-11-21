@@ -447,7 +447,7 @@ class OrderController extends Controller {
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $fields = ['id', 'created_at', 'order_number', 'order_amount', 'actually_paid', 'is_pay' , 'pay_coin_type'];
+            $fields = ['id', 'created_at', 'order_number', 'order_amount', 'actually_paid', 'is_pay' , 'pay_coin_type', 'pay_code'];
             $model->select($fields);
             $rs = $model->get()->toArray();
             foreach ($rs as &$v){
