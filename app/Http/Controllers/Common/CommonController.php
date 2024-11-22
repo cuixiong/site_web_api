@@ -41,7 +41,7 @@ class CommonController extends Controller {
         //产品标签
         $data['product_tags'] = $this->getProductTags($request);
         //语言网站
-        $data['language_website'] = $this->getWebSiteLan();
+        $data['language_website'] = $this->getWebSiteLanBySystem();
         //获取顶部菜单
         $data['top_menu'] = $this->getTopMenus();
         //获取网站站点配置
@@ -551,6 +551,33 @@ class CommonController extends Controller {
                                ->toArray();
 
         return $data;
+    }
+
+    /**
+     * 其它语言网站根据需求写在系统设置处，不再单独使用LanguageWebsite
+     * 
+     * @return mixed
+     */
+    private function getWebSiteLanBySystem()
+    {
+
+        $siteInfoKey = 'site_lan';
+        $setId = System::select(['id'])
+            ->where('status', 1)
+            ->where('alias', $siteInfoKey)
+            ->get()
+            ->value('id');
+        $result = [];
+        if ($setId) {
+            $result = SystemValue::where('parent_id', $setId)
+                ->where('status', 1)
+                ->where('hidden', 1)
+                ->select(['name', 'value as url'])
+                ->get()
+                ->toArray();
+        }
+
+        return $result;
     }
 
     /**
