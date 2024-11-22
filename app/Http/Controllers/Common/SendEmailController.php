@@ -774,6 +774,13 @@ class SendEmailController extends Controller {
             }else{
                 $pay_coin_symbol = PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '';
             }
+            // 订单创建时间
+            $orderCreatedTime = '';
+            if(isset($data['created_at']) && !empty($data['created_at']) && is_int($data['created_at'])){
+                $orderCreatedTime = date('Y-m-d H:i:s', $data['created_at']);
+            }elseif(isset($data['created_at']) && !empty($data['created_at']) && is_string($data['created_at'])){
+                $orderCreatedTime = $data['created_at'];
+            }
 
             $data2 = [
                 'homePage'               => $data['domain'],
@@ -800,7 +807,7 @@ class SendEmailController extends Controller {
                 'goods'                  => $goods_data_list,
                 'userId'                 => $data['user_id'],
                 'dateTime'               => date('Y-m-d H:i:s', time()),
-                'orderTime'              => (!empty($data['created_at']) && is_int($data['created_at'])) ? date('Y-m-d H:i:s', $data['created_at']):'',
+                'orderTime'              => $orderCreatedTime,
                 'sumGoodsCnt'            => $sum_goods_cnt,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
