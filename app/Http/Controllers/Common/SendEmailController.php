@@ -800,7 +800,7 @@ class SendEmailController extends Controller {
                 'goods'                  => $goods_data_list,
                 'userId'                 => $data['user_id'],
                 'dateTime'               => date('Y-m-d H:i:s', time()),
-                'orderTime'              => date('Y-m-d H:i:s', $data['created_at']),
+                'orderTime'              => (!empty($data['created_at']) && is_int($data['created_at'])) ? date('Y-m-d H:i:s', $data['created_at']):'',
                 'sumGoodsCnt'            => $sum_goods_cnt,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
