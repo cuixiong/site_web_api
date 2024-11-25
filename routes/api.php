@@ -88,7 +88,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     // Product控制器(报告)
     Route::prefix('product')->group(function () {
         Route::get('list', [\App\Http\Controllers\ProductController::class, 'List'])->name('报告列表');
-        Route::get('description', [\App\Http\Controllers\ProductController::class, 'Description'])->name('报告详情');
+        Route::any('description', [\App\Http\Controllers\ProductController::class, 'Description'])->name('报告详情');
         Route::get('view-log', [\App\Http\Controllers\ProductController::class, 'viewProductLog'])->name(
             '详情浏览记录'
         );
@@ -243,7 +243,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     // News控制器
     Route::prefix('news')->group(function () {
         Route::post('index', [\App\Http\Controllers\NewsController::class, 'Index'])->name('新闻列表');
-        Route::get('view', [\App\Http\Controllers\NewsController::class, 'View'])->name('新闻详情');
+        Route::any('view', [\App\Http\Controllers\NewsController::class, 'View'])->name('新闻详情');
         Route::get('relevant', [\App\Http\Controllers\NewsController::class, 'Relevant'])->name('相关新闻');
         Route::get('relevant-products', [\App\Http\Controllers\NewsController::class, 'RelevantProducts'])->name(
             '相关报告列表'
@@ -252,7 +252,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     // Information控制器 (热门资讯)
     Route::prefix('information')->group(function () {
         Route::post('index', [\App\Http\Controllers\InformationController::class, 'Index'])->name('热门资讯列表');
-        Route::get('view', [\App\Http\Controllers\InformationController::class, 'View'])->name('热门资讯详情');
+        Route::any('view', [\App\Http\Controllers\InformationController::class, 'View'])->name('热门资讯详情');
         Route::get('relevant', [\App\Http\Controllers\InformationController::class, 'Relevant'])->name('相关热门资讯');
         Route::get('relevant-products', [\App\Http\Controllers\InformationController::class, 'RelevantProducts'])->name(
             '相关报告列表'

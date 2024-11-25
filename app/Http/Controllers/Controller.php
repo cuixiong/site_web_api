@@ -409,8 +409,23 @@ class Controller extends BaseController {
         $ip = get_client_ip();
         //ip转换地址
         $ipAddr = (new IPAddrService($ip))->getAddrStrByIp();
+        $afterIp = explode(".", $ip);
+        if(!empty($afterIp) && is_array($afterIp)) {
+            $ip_muti_second = $afterIp[0].".".$afterIp[1];
+            $ip_muti_third = $afterIp[0].".".$afterIp[1].".".$afterIp[2];
+        }else{
+            $ip_muti_second = '';
+            $ip_muti_third = '';
+        }
         $addData = [];
         $addData['ip'] = $ip;
+        $addData['ip_muti_second'] = $ip_muti_second;
+        $addData['ip_muti_third'] = $ip_muti_third;
+        //$contentLength = $_SERVER['CONTENT_LENGTH']; bytes
+        //优点:可以获取 POST 请求的请求体大小。
+        //缺点:只能获取 POST 请求的数据，无法统计整个页面的流量。
+        $addData['content_size'] = $_SERVER['CONTENT_LENGTH'] ?? 0;
+
         $addData['ip_addr'] = $ipAddr;
         $addData['route'] = $routeUril;
         $addData['ua_info'] = implode("\n", $ua_info);

@@ -765,6 +765,9 @@ class SendEmailController extends Controller {
                 $goods_data['thumb'] = rtrim($imgDomain, '/').$tempThumb;
                 // $goods_data['thumb'] = rtrim($imgDomain, '/') . $products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
+                $goods_data['goods_number'] = $OrderGoods['goods_number'];
+                $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
+                $goods_data['sum_original_price'] = bcmul($goods_data['goods_original_price'] , $goods_data['goods_number'] , 2);
                 $goods_data_list[] = $goods_data;
             }
             $areaInfo = $this->getAreaName($data);
@@ -915,10 +918,14 @@ class SendEmailController extends Controller {
                 $goods_data['language'] = $language;
                 $goods_data['price_edition'] = isset($priceEdition['name']) && !empty($priceEdition['name'])
                     ? $priceEdition['name'] : '';
-                $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
+                if($data['coupon_id'] > 0){
+                    $goods_data['goods_present_price'] = $OrderGoods['goods_original_price'];
+                }else {
+                    $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
+                }
                 //$goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 $goods_data['goods_sum_price'] = bcmul(
-                    $OrderGoods['goods_present_price'],
+                    $goods_data['goods_present_price'],
                     $OrderGoods['goods_number'],
                     2
                 );
@@ -939,6 +946,9 @@ class SendEmailController extends Controller {
                 $goods_data['thumb'] = rtrim($imgDomain, '/').$tempThumb;
                 // $goods_data['thumb'] = rtrim($imgDomain, '/') . $products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
+                $goods_data['goods_number'] = $OrderGoods['goods_number'];
+                $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
+                $goods_data['sum_original_price'] = bcmul($goods_data['goods_original_price'] , $goods_data['goods_number'] , 2);
                 $goods_data_list[] = $goods_data;
             }
             $cityName = City::where('id', $data['city_id'])->value('name');
