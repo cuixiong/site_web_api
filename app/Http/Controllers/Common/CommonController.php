@@ -682,7 +682,7 @@ class CommonController extends Controller {
     public function getofficeRegion(Request $request)
     {
         $list = Office::where('status', 1)
-                      ->orderBy('sort', 'desc')
+                      ->orderBy('sort', 'asc')
                       ->orderBy('id', 'desc')
                       ->get();
         foreach ($list as &$value) {
