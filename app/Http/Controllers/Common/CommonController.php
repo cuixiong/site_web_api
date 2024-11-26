@@ -58,12 +58,6 @@ class CommonController extends Controller {
         $data['quote_list'] = $this->getQuoteList($request);
         
 
-        if (checkSiteAccessData(['yhcn'])){
-            // 客户评价
-            $data['comment'] = $this->getCustomersComment($request);
-            // 办公室
-            $data['offices'] = $this->getofficeRegion($request);
-        }
         
         // 总控字典部分
         // 计划购买时间 ,原为联系我们控制器Dictionary函数中代码，现复制至此处
@@ -86,6 +80,17 @@ class CommonController extends Controller {
                                     ->limit(20)->get()->toArray();
             $data['cate'] = $cate;
         }
+        
+        if (checkSiteAccessData(['yhcn'])){
+            // 客户评价
+            $data['comment'] = $this->getCustomersComment($request);
+            // 办公室
+            $data['offices'] = $this->getofficeRegion($request);
+        }elseif(checkSiteAccessData(['lpicn'])){
+            // 办公室
+            $data['offices'] = $this->getofficeRegion($request);
+        }
+        
         ReturnJson(true, '', $data);
     }
 
