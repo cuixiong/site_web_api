@@ -424,7 +424,11 @@ class Controller extends BaseController {
         //$contentLength = $_SERVER['CONTENT_LENGTH']; bytes
         //优点:可以获取 POST 请求的请求体大小。
         //缺点:只能获取 POST 请求的数据，无法统计整个页面的流量。
-        $addData['content_size'] = $_SERVER['CONTENT_LENGTH'] ?? 0;
+        if(empty($_SERVER['CONTENT_LENGTH'] ) && $_SERVER['CONTENT_LENGTH'] <= 0){
+            $addData['content_size'] = $_SERVER['CONTENT_LENGTH'];
+        }else{
+            $addData['content_size'] = 0;
+        }
 
         $addData['ip_addr'] = $ipAddr;
         $addData['route'] = $routeUril;
