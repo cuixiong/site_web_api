@@ -108,10 +108,14 @@ class NewsController extends Controller {
             if(!empty($data->upload_at ) && $data->upload_at > time()){
                 ReturnJson(false, '新闻未发布，请稍后查看！');
             }
-            
-            $data['category'] = ProductsCategory::select(['id', 'name', 'link'])->where(
+
+            $category = ProductsCategory::select(['id', 'name', 'link'])->where(
                 'id', $data['category_id']
             )->first();
+            if(!empty($category )){
+                $category = $category->toArray();
+            }
+            $data['category'] = $category;
 
             // real_hits + 1
             News::where(['id' => $id])->increment('real_hits');
@@ -367,7 +371,7 @@ class NewsController extends Controller {
                     $data[$key]['tag_list'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['product_tag']) ? explode(",", $categoryData[$tempCategoryId]['product_tag']) : [];
 
                     $data[$key]['thumb'] = Products::getThumbImgUrl($value);
-                    
+
                     if (empty($data[$key]['thumb'])) {
                         // 如果报告图片、分类图片为空，使用系统默认图片
                         $data[$key]['thumb']= !empty($defaultImg) ? $defaultImg : '';
@@ -411,7 +415,7 @@ class NewsController extends Controller {
                             // $priceEditions = PriceEditionValues::select(
                             //     ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
                             // )->where(['status' => 1, 'is_deleted'=> 1, 'language_id' => $language['id']])->orderBy("sort", "asc")->get()->toArray();
-                            
+
                             $priceEditions = PriceEditionValues::GetList($language['id'],$value['publisher_id']);
                             if ($priceEditions) {
                                 $prices[$index]['language'] = $language['name'];

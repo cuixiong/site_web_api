@@ -98,13 +98,21 @@ class InformationController extends Controller {
         if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = Information::select(['title', 'upload_at', 'hits', 'tags', 'content', 'keywords', 'description'])
+        $data = Information::select(['title', 'upload_at', 'hits', 'tags', 'content', 'keywords', 'description' , 'category_id'])
                            ->where(['id' => $id, 'status' => 1])
                            ->first();
         if ($data) {
             if(!empty($data->upload_at ) && $data->upload_at > time()){
                 ReturnJson(false, '新闻未发布，请稍后查看！');
             }
+
+            $category = ProductsCategory::select(['id', 'name', 'link'])->where(
+                'id', $data['category_id']
+            )->first();
+            if(!empty($category )){
+                $category = $category->toArray();
+            }
+            $data['category'] = $category;
 
             // real_hits + 1
             Information::where(['id' => $id])->increment('real_hits');
@@ -335,7 +343,7 @@ class InformationController extends Controller {
                 ->get()
                 ->toArray();
             if ($result) {
-                
+
                 $time = time();
                 // 默认图片
                 // 若报告图片为空，则使用系统设置的默认报告高清图
@@ -346,7 +354,7 @@ class InformationController extends Controller {
                 $categoryData = array_column($categoryData, null, 'id');
 
                 foreach ($result as $key => $value) {
-                    
+
 
                     //每个报告加上分类信息
                     $tempCategoryId = $value['category_id'];
@@ -356,13 +364,13 @@ class InformationController extends Controller {
                     $data[$key]['tag_list'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['product_tag']) ? explode(",", $categoryData[$tempCategoryId]['product_tag']) : [];
 
                     $data[$key]['thumb'] = Products::getThumbImgUrl($value);
-                    
+
                     if (empty($data[$key]['thumb'])) {
                         // 如果报告图片、分类图片为空，使用系统默认图片
                         $data[$key]['thumb']= !empty($defaultImg) ? $defaultImg : '';
                     }
 
-                    
+
 
                     // $data[$key]['thumb'] = Products::getThumbImgUrl($value);
                     $data[$key]['name'] = $value['name'];
@@ -377,7 +385,7 @@ class InformationController extends Controller {
                     $data[$key]['discount_time_begin'] = $value['discount_time_begin'];
                     $data[$key]['discount_time_end'] = $value['discount_time_end'];
 
-                    
+
                     //判断当前报告是否在优惠时间内
                     if ($data[$key]['discount_time_begin'] <= $time && $data[$key]['discount_time_end'] >= $time) {
                         $data[$key]['discount_status'] = 1;

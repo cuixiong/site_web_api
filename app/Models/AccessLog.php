@@ -10,19 +10,19 @@ class AccessLog extends Base {
     // 设置允许入库字段,数组形式
     protected $fillable
         = [
-            'id', 'ip', 'ip_addr', 'route', 'ua_info', 'referer', 'log_time', 'log_date', 'sort', 'status'
+            'id', 'ip', 'ip_muti_second', 'ip_muti_third', 'content_size', 'ip_addr', 'route', 'ua_info', 'referer', 'log_time', 'log_date', 'sort', 'status'
         ];
 
-    public function __construct($log_date = '') {
-        parent::__construct();
-        if(empty($log_date )){
-            $log_date = date('Ym');
-        }
-        if (!empty($log_date) && is_numeric($log_date)) {
-            $this->setTableName($log_date);
-            $this->checkAndCreateTable();
-        }
-    }
+//    public function __construct($log_date = '') {
+//        parent::__construct();
+//        if(empty($log_date )){
+//            $log_date = date('Ym');
+//        }
+//        if (!empty($log_date) && is_numeric($log_date)) {
+//            $this->setTableName($log_date);
+//            $this->checkAndCreateTable();
+//        }
+//    }
 
     //设置表名
     protected function setTableName($log_date = '') {
