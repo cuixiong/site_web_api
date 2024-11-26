@@ -80,7 +80,7 @@ class PageController extends Controller
         }
 
         // 数据
-        $model = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id'])->orderBy('sort', 'asc');
+        $model = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id'])->orderBy('sort', 'asc')->orderBy('id', 'desc');
         if ($category_id) {
             $model = $model->where('category_id', $category_id);
         }
