@@ -16,6 +16,7 @@ use App\Models\ProductDescription;
 use App\Models\ProductsCategory;
 use App\Models\Qualification;
 use App\Models\QuoteCategory;
+use App\Models\System;
 use App\Models\SystemValue;
 use App\Services\SenWordsService;
 use Illuminate\Http\Request;
@@ -55,6 +56,19 @@ class IndexController extends Controller {
                 //此处站点 , 需额外返回价格版本
                 $forProduct['prices'] = Products::countPriceEditionPrice($priceEdition[$forProduct['publisher_id']], $forProduct['price']) ?? [];
             }
+        } elseif (checkSiteAccessData(['lpicn'])) {
+            
+            $data['hot_product_list'] = $this->getHotProductList($request);
+            // lpicn数据的图片不太一样
+            $systemKey = 'hotReportDefaultImg';
+            $systemId = System::select(['id'])->where('status', 1)->where('alias', $systemKey)->get()->value('id');
+            $hotReportDefaultImgData = SystemValue::where('parent_id', $systemId)->where('hidden', 1)->select(['value'])->pluck('value')->toArray();
+            if ($hotReportDefaultImgData && $data['hot_product_list']['products']) {
+                foreach ($data['hot_product_list']['products'] as $key => $item) {
+                    if($key < count($hotReportDefaultImgData))
+                    $data['hot_product_list']['products'][$key]['thumb'] = $hotReportDefaultImgData[$key];
+                }
+            }
         } else {
             $data['hot_product_list'] = $this->getHotProductList($request);
         }
@@ -75,6 +89,9 @@ class IndexController extends Controller {
         if (checkSiteAccessData(['yhcn'])) {
             // 权威引用 默认有分页
             $data['quote_list'] = $this->getQuoteList($request);
+            // 资质认证 默认有分页
+            $data['qualification_list'] = $this->getQualificationList($request);
+        } else if (checkSiteAccessData(['lpicn'])) {
             // 资质认证 默认有分页
             $data['qualification_list'] = $this->getQualificationList($request);
         } elseif (checkSiteAccessData(['tycn'])) {
@@ -678,6 +695,8 @@ class IndexController extends Controller {
                 $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
                 $list[$key]['month_day'] = date('Y-m', $item['upload_at']);
                 $list[$key]['year'] = date('Y', $item['upload_at']);
+                $list[$key]['month'] = date('m', $item['upload_at']);
+                $list[$key]['day'] = date('d', $item['upload_at']);
                 $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
                 $list[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
                 $keywords = explode(',', $list[$key]['keywords'] ?? '');
