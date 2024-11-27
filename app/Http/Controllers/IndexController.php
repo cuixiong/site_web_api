@@ -123,7 +123,7 @@ class IndexController extends Controller {
     public function RecommendProduct(Request $request) {
         $data = $this->getRecommendProductList($request); 
         if (checkSiteAccessData(['lpicn'])) {
-            $data['recommend_product_list']['products'] = $this->recommendProductHandleByLpicn($data['recommend_product_list']['products']);
+            $data['products'] = $this->recommendProductHandleByLpicn($data['products']);
         }
         ReturnJson(true, 'success', $data);
     }
