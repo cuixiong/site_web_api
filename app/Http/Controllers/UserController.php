@@ -127,17 +127,17 @@ class UserController extends Controller {
         $user->token = $token;
         $user->update();
         $data = [
-            'id'         => $user->id,// ID
-            'name'       => $user->name,// 名称
-            'username'   => $user->username,// 用户名
-            'email'      => $user->email,// 邮箱
-            'phone'      => $user->phone,// 手机号
-            'area_id'    => [$user->province_id, $user->city_id],
-            'company'    => $user->company,// 公司
-            'login_time' => $user->login_time,// 最近登陆的时间
+            'id'                => $user->id,// ID
+            'name'              => $user->name,// 名称
+            'username'          => $user->username,// 用户名
+            'email'             => $user->email,// 邮箱
+            'phone'             => $user->phone,// 手机号
+            'area_id'           => [$user->province_id, $user->city_id],
+            'company'           => $user->company,// 公司
+            'login_time'        => $user->login_time,// 最近登陆的时间
             'login_time_format' => date('Y-m-d H:i:s', $user->login_time),// 最近登陆的时间
-            'token'      => $token,// token
-            'address'    => $user->address,
+            'token'             => $token,// token
+            'address'           => $user->address,
         ];
         ReturnJson(true, '', $data);
     }
@@ -205,7 +205,7 @@ class UserController extends Controller {
             $model->password = Hash::make($request->get('password'));
             $model->save();
             ReturnJson(true, trans('lang.request_success'));
-        }catch (DecryptException $de){
+        } catch (DecryptException $de) {
             ReturnJson(false, trans('lang.token_error'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -257,8 +257,7 @@ class UserController extends Controller {
      * @param int $scene  场景：1代表用户进入自己的个人中心，2代表用户下单。
      * @param int $price  前端传过来的订单总价（原价）
      */
-    public function Coupons(Request $request)
-    {
+    public function Coupons(Request $request) {
         $status = $request->status;
         $scene = $request->scene;
         $price = $request->price;
@@ -270,20 +269,20 @@ class UserController extends Controller {
         //        }
         $userId = $request->user()->id;
         $result = CouponUser::from('coupon_users as user')
-        ->select([
-            'coupon.type',
-            'value',
-            'coupon.time_end',
-            'coupon.time_begin',
-            'coupon.code',
-            'coupon.id',
-            'user.is_used'
-        ])
-            ->leftJoin('coupons as coupon', 'user.coupon_id', '=', 'coupon.id')
-            ->where([
-                'user.user_id'  => $userId,
-                'coupon.status' => 1,
-            ]);
+                            ->select([
+                                         'coupon.type',
+                                         'value',
+                                         'coupon.time_end',
+                                         'coupon.time_begin',
+                                         'coupon.code',
+                                         'coupon.id',
+                                         'user.is_used'
+                                     ])
+                            ->leftJoin('coupons as coupon', 'user.coupon_id', '=', 'coupon.id')
+                            ->where([
+                                        'user.user_id'  => $userId,
+                                        'coupon.status' => 1,
+                                    ]);
         switch ($status) {
             case 1: // 未使用的优惠券
                 $result = $result->where('user.is_used', CouponUser::isUsedNO);
@@ -305,7 +304,6 @@ class UserController extends Controller {
                 })->orWhere('type', 1);
             });
         }
-
         $result = $result->get()->toArray();
         $data = [];
         if (!empty($result) && is_array($result)) {
@@ -345,8 +343,7 @@ class UserController extends Controller {
      *
      * @return array
      */
-    public function Info(Request $request)
-    {
+    public function Info(Request $request) {
         try {
             $user = $request->user;
             $userId = $user->id;
@@ -445,26 +442,45 @@ class UserController extends Controller {
 
     public function changePassword(Request $request) {
         try {
-            $validator = Validator::make(
-                $request->all(),
-                [
-                    'old_password' => 'required',
-                    'new_password' => 'required|min:6',
-                ],
-                [
-                    'old_password.required' => '请输入旧密码',
-                    'new_password.required' => '请输入新密码',
-                    'new_password.min'      => '新密码不能少于6位',
-                ]
-            );
-            if ($validator->fails()) {
-                ReturnJson(false, $validator->errors()->first());
-            }
-            $input = $request->all();
-            $user = $request->user;
-            $user = User::findOrFail($user->id);
-            if (!Hash::check($input['old_password'], $user->password)) {
-                ReturnJson(false, '旧密码错误');
+            if (checkSiteAccessData(['tycn'])) {
+                $validator = Validator::make(
+                    $request->all(),
+                    [
+                        'new_password' => 'required|min:6',
+                    ],
+                    [
+                        'new_password.required' => '请输入新密码',
+                        'new_password.min'      => '新密码不能少于6位',
+                    ]
+                );
+                if ($validator->fails()) {
+                    ReturnJson(false, $validator->errors()->first());
+                }
+                $input = $request->all();
+                $user = $request->user;
+                $user = User::findOrFail($user->id);
+            } else {
+                $validator = Validator::make(
+                    $request->all(),
+                    [
+                        'old_password' => 'required',
+                        'new_password' => 'required|min:6',
+                    ],
+                    [
+                        'old_password.required' => '请输入旧密码',
+                        'new_password.required' => '请输入新密码',
+                        'new_password.min'      => '新密码不能少于6位',
+                    ]
+                );
+                if ($validator->fails()) {
+                    ReturnJson(false, $validator->errors()->first());
+                }
+                $input = $request->all();
+                $user = $request->user;
+                $user = User::findOrFail($user->id);
+                if (!Hash::check($input['old_password'], $user->password)) {
+                    ReturnJson(false, '旧密码错误');
+                }
             }
             $user->password = Hash::make($input['new_password']);
             $rs = $user->save();
