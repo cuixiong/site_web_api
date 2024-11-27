@@ -430,7 +430,7 @@ class CommonController extends Controller {
         }
         $result = Menu::select(
             [
-                'name', 'banner_pc', 'banner_mobile', 'banner_title', 'banner_short_title', 'seo_title', 'seo_keyword',
+                'name', 'banner_pc', 'banner_mobile', 'banner_title', 'banner_short_title', 'banner_content', 'seo_title', 'seo_keyword',
                 'seo_description'
             ]
         )->where(['link' => $link])->orderBy('sort', 'ASC')->first();
