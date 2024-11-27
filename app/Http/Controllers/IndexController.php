@@ -73,7 +73,12 @@ class IndexController extends Controller {
             $data['hot_product_list'] = $this->getHotProductList($request);
         }
         //获取推荐报告
-        $data['recommend_product_list'] = $this->getRecommendProductList($request);
+        if (checkSiteAccessData(['lpicn'])) {
+            $data['recommend_product_list'] = $this->getRecommendProductList($request);
+            $data['recommend_product_list']['products'] = $this->recommendProductHandleByLpicn($data['recommend_product_list']['products']);
+        }else{
+            $data['recommend_product_list'] = $this->getRecommendProductList($request);
+        }
         //合作伙伴接口
         $data['partner_list'] = $this->getPartnerList($request);
 
@@ -116,9 +121,13 @@ class IndexController extends Controller {
 
     // 推荐报告
     public function RecommendProduct(Request $request) {
-        $data = $this->getRecommendProductList($request);
+        $data = $this->getRecommendProductList($request); 
+        if (checkSiteAccessData(['lpicn'])) {
+            $data['recommend_product_list']['products'] = $this->recommendProductHandleByLpicn($data['recommend_product_list']['products']);
+        }
         ReturnJson(true, 'success', $data);
     }
+
 
     // 行业新闻
     public function RecommendNews(Request $request) {
@@ -646,6 +655,37 @@ class IndexController extends Controller {
         }
 
         return $data;
+    }
+
+    // lpi处理推荐报告数据
+    public function recommendProductHandleByLpicn($data)
+    {
+        $newData = [];
+        if ($data) {
+            $data = (gettype($data) == 'object') ? $data->toArray():$data;
+            $systemKey = 'recommendReportDefaultImg';
+            $systemId = System::select(['id'])->where('status', 1)->where('alias', $systemKey)->get()->value('id');
+            $recommendReportDefaultImgData = SystemValue::where('parent_id', $systemId)->where('hidden', 1)->select(['value'])->pluck('value')->toArray();
+            if ($recommendReportDefaultImgData && $data) {
+                //报告每6个分组，每个分组为首第一条数据使用系统设置图片
+                $productGroupData = array_chunk($data, 6);
+                foreach ($productGroupData as $groupKey => $group) {
+                    $newData[$groupKey] = [];
+                    foreach ($group as $key => $item) {
+                        if ($key == 0) {
+                            if (count($recommendReportDefaultImgData) > $groupKey) {
+                                $item['thumb'] = $recommendReportDefaultImgData[$groupKey] ?? '';
+                            }
+                            //描述
+                            $newData[$groupKey]['top'] = $item;
+                        } else {
+                            $newData[$groupKey]['bottom'][] = $item;
+                        }
+                    }
+                }
+            }
+        }
+        return $newData;
     }
 
     /**
