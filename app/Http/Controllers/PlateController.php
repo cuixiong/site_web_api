@@ -152,8 +152,20 @@ class PlateController extends Controller
                     }
                 }
             }
+            
             $alias = $category['alias'];
-            $data[$alias] = $forData;
+            //有相同的别名合并成数组
+            if(isset($data[$alias]) && isset($data[$alias]['category'])){
+                $temp = $data[$alias];
+                $data[$alias] = [];
+                $data[$alias][] = $temp;
+                $data[$alias][] = $forData;
+            }else if(isset($data[$alias]) && !isset($data[$alias]['category'])){
+                $data[$alias][] = $forData;
+            }else{
+                $data[$alias] = $forData;
+            }
+            
         }
         ReturnJson(true, '请求成功', $data);
     }
