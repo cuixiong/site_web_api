@@ -118,6 +118,7 @@ class PlateController extends Controller
             'mb_image as img_mobile',
             'icon',
             'title',
+            'short_title',
             'content as description'
         ])->where('page_id', $menu_id)->get()->toArray();
 
