@@ -96,11 +96,14 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::get('news', [\App\Http\Controllers\ProductController::class, 'News'])->name('更多资讯');
         Route::get('filters', [\App\Http\Controllers\ProductController::class, 'Filters'])->name('筛选条件');
         Route::get('output-pdf', [\App\Http\Controllers\ProductController::class, 'OutputPdf'])->name('下载PDF');
+
+        Route::get('customized-info', [\App\Http\Controllers\ProductController::class, 'customizedInfo'])->name('tycn新增接口');
     });
     // ContactUs控制器(联系我们)
     Route::prefix('contact-us')->group(function () {
         Route::post('add', [\App\Http\Controllers\ContactUsController::class, 'Add'])->name('新增数据');
         Route::get('dictionary', [\App\Http\Controllers\ContactUsController::class, 'Dictionary'])->name('字典数据');
+        Route::get('company-overview', [\App\Http\Controllers\ContactUsController::class, 'companyOverview'])->name('公司信息');
     });
     // System控制器(网站设置)
     Route::prefix('page')->group(function () {

@@ -57,7 +57,7 @@ class IndexController extends Controller {
                 $forProduct['prices'] = Products::countPriceEditionPrice($priceEdition[$forProduct['publisher_id']], $forProduct['price']) ?? [];
             }
         } elseif (checkSiteAccessData(['lpicn'])) {
-            
+
             $data['hot_product_list'] = $this->getHotProductList($request);
             // lpicn数据的图片不太一样
             $systemKey = 'hotReportDefaultImg';
@@ -78,6 +78,9 @@ class IndexController extends Controller {
             $data['recommend_product_list']['products'] = $this->recommendProductHandleByLpicn($data['recommend_product_list']['products']);
         }else{
             $data['recommend_product_list'] = $this->getRecommendProductList($request);
+            if (checkSiteAccessData(['tycn'])) {
+                $data['recommend_product_list']['products'] = $this->handlerExtraCateImg($data['recommend_product_list']['products']);
+            }
         }
         //合作伙伴接口
         $data['partner_list'] = $this->getPartnerList($request);
@@ -102,11 +105,11 @@ class IndexController extends Controller {
         } elseif (checkSiteAccessData(['tycn'])) {
             //返回对应的分类数据
             $cate = ProductsCategory::query()
-                ->where("show_home", 1)
+                ->where("is_recommend", 1)
                 ->where("status", 1)
                 ->select(['id', 'name', 'seo_title', 'link', 'icon', 'icon_hover'])
                 ->orderBy('sort', 'asc')
-                ->limit(7)->get()->toArray();
+                ->limit(10)->get()->toArray();
             $data['cate'] = $cate;
         }
 
@@ -121,7 +124,7 @@ class IndexController extends Controller {
 
     // 推荐报告
     public function RecommendProduct(Request $request) {
-        $data = $this->getRecommendProductList($request); 
+        $data = $this->getRecommendProductList($request);
         if (checkSiteAccessData(['lpicn'])) {
             $data['products'] = $this->recommendProductHandleByLpicn($data['products']);
         }
@@ -134,7 +137,7 @@ class IndexController extends Controller {
         $list = $this->getIndustryNews($request);
         ReturnJson(true, '', $list);
     }
-    
+
     // 权威引用
     public function quotes(Request $request) {
         $data = $this->getQuoteList($request);
@@ -394,7 +397,7 @@ class IndexController extends Controller {
         $data = [];
         // 报告基本查询
         $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url', 'publisher_id' , 'discount_type', 'discount', 'discount_amount', 'discount_time_begin', 'discount_time_end'];
-        
+
         $productCountQuery = Products::where("status", 1)
                                 ->where('show_recommend', 1)
                                 ->where("published_date", "<=", time());
@@ -499,13 +502,13 @@ class IndexController extends Controller {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                 }
-                
+
                 // 价格版本
                 $publisher_id = $value['publisher_id'];
                 if(!empty($productShowPriceEdition) && isset($priceEdition[$publisher_id])){
                     $newProductList[$key]['prices'] = Products::countPriceEditionPrice($priceEdition[$publisher_id],$value['price'],) ?? [];
                 }
-                
+
             }
             $data['products'] = $newProductList;
         }
@@ -557,7 +560,7 @@ class IndexController extends Controller {
                                          ->orderBy('sort', 'asc')
                                          ->orderBy('updated_at', 'desc')
                                          ->limit($categoryLimit);
-                                        
+
         if ($dataType == 0) {
             // $newProductList = $productQuery->get();
             $categories = $categoryQuery->get()->toArray();
@@ -657,6 +660,17 @@ class IndexController extends Controller {
         return $data;
     }
 
+    public function handlerExtraCateImg($cateList) {
+        $key = 'recommendReportDefaultImg';
+        $recommendImgList = SystemValue::where('alias', $key)->where('hidden', 1)->select(['value'])->pluck('value')->toArray();
+        foreach ($cateList as $key => &$cate){
+            if(!empty($recommendImgList[$key])){
+                $cate['thumb'] = $recommendImgList[$key];
+            }
+        }
+        return $cateList;
+    }
+
     // lpi处理推荐报告数据
     public function recommendProductHandleByLpicn($data)
     {
@@ -697,7 +711,7 @@ class IndexController extends Controller {
         $limit = $request->partner_size ?? 20;
         $list = Partner::where('status', 1)
                        ->select(['id', 'name', 'logo',])
-                       ->orderBy('sort', 'desc')
+                       ->orderBy('sort', 'asc')
                        ->orderBy('id', 'desc')
                        ->limit($limit)
                        ->get()
@@ -810,8 +824,8 @@ class IndexController extends Controller {
 
         return $list;
     }
-    
-    
+
+
     /**
      * 资质认证
      */
@@ -846,7 +860,7 @@ class IndexController extends Controller {
         return $data;
     }
 
-    
+
     /**
      * 权威引用 有分页
      */

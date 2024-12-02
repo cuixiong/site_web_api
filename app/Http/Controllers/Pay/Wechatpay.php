@@ -66,7 +66,7 @@ class Wechatpay extends Pay
         }
 
         try {
-            $imgDomain = env('IMAGE_URL_BACKUP' , '');
+            $imgDomain = env('IMAGE_URL_BACKUP' , 'https://email.marketmonitorglobal.com.cn');
             if($imgDomain){
                 $imgDomain = trim($imgDomain,'/');
             }
