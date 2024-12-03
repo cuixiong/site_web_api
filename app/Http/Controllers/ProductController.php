@@ -148,7 +148,12 @@ class ProductController extends Controller {
                 $products[] = $value;
             }
         }
-        $productCagory = $this->getProductCagory();
+        if (checkSiteAccessData(['tycn'])) {
+            $productCagoryId = $this->GetProductCateList($keyword, 0);
+            $productCagory = $this->getProductCagory($productCagoryId);
+        } else {
+            $productCagory = $this->getProductCagory([]);
+        }
         $data = [
             'productCagory'   => $productCagory,
             'products'        => $products,
@@ -172,6 +177,23 @@ class ProductController extends Controller {
                 return $this->SearchForSphinx($category_id, $keyword, $page, $pageSize);
             } else {
                 return $this->SearchForMysql($category_id, $keyword, $page, $pageSize);
+            }
+        } catch (\Exception $e) {
+            \Log::error('应用端查询失败,异常信息为:'.json_encode([$e->getMessage()]));
+            ReturnJson(false, '请求失败,请稍后再试');
+        }
+    }
+
+    /**
+     * 搜索产品分类数据
+     */
+    private function GetProductCateList($keyword = '', $category_id = 0) {
+        try {
+            $hidden = SystemValue::where('key', 'sphinx')->value('hidden');
+            if ($hidden == 1) {
+                return $this->getCateIdListBySphinx($category_id, $keyword);
+            } else {
+                return $this->getCateIdByCondition($category_id, $keyword);
             }
         } catch (\Exception $e) {
             \Log::error('应用端查询失败,异常信息为:'.json_encode([$e->getMessage()]));
@@ -931,9 +953,12 @@ class ProductController extends Controller {
      *
      * @return mixed
      */
-    private function getProductCagory() {
+    private function getProductCagory($idList) {
         $field = ['id', 'name', 'link'];
         $data = ProductsCategory::select($field)
+                                ->when(!empty($idList), function ($query) use ($idList) {
+                                    $query->whereIn('id', $idList);
+                                })
                                 ->where('status', 1)
                                 ->get()
                                 ->toArray();
@@ -1035,7 +1060,6 @@ class ProductController extends Controller {
             if (empty($data)) {
                 ReturnJson(false, '数据错误', []);
             }
-
             foreach ($data as $key => $section_item) {
                 $data[$key]['content'] = [];
                 if ($key == 'customized_remark2') {
@@ -1061,10 +1085,62 @@ class ProductController extends Controller {
                 }
                 unset($data[$key]['alias']);
             }
-
             ReturnJson(true, '', $data);
         } catch (\Exception $e) {
             ReturnJson(false, '未知错误', $e->getMessage());
         }
+    }
+
+    /**
+     *
+     * @param mixed $category_id
+     * @param mixed $keyword
+     *
+     * @return mixed
+     */
+    private function getCateIdByCondition(mixed $category_id, mixed $keyword) {
+        $query = Products::where(['status' => 1])
+                         ->where("published_date", "<", time());
+        // 分类ID
+        if (!empty($category_id)) {
+            $query = $query->where('category_id', $category_id);
+        }
+        // 关键词
+        if ($keyword) {
+            $query = $query->where(function ($query) use ($keyword) {
+                $query->where('name', 'like', '%'.$keyword.'%');
+                if (is_numeric($keyword)) {
+                    $query->orWhere('id', $keyword);
+                }
+            });
+        }
+        $cateIdList = $query->groupBy('category_id')->pluck('category_id')->toArray();
+
+        return $cateIdList;
+    }
+
+    public function getCateIdListBySphinx($category_id, $keyword) {
+        $sphinxSrevice = new SphinxService();
+        $conn = $sphinxSrevice->getConnection();
+        //报告昵称,英文昵称匹配查询
+        $query = (new SphinxQL($conn))->select('*')
+                                      ->from('products_rt');
+        $query = $query->where('status', '=', 1);
+        $query = $query->where("published_date", "<", time());
+        // 分类ID
+        if (!empty($category_id)) {
+            $query = $query->where('category_id', intval($category_id));
+        }
+        //精确搜索, 多字段匹配
+        if (!empty($keyword)) {
+            $val = '"'.$keyword.'"';
+            $query->match(['name', 'english_name'], $val, true);
+        }
+        $query->groupBy('category_id')->setSelect('category_id');
+        $result = $query->execute();
+        $cateIdList = $result->fetchAllAssoc();
+        $data = array_column($cateIdList, 'category_id');
+
+        return $data;
     }
 }
