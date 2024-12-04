@@ -45,8 +45,8 @@ class SitemapController extends Controller
             ->sitemapInformation()
             ->sitemapHotInfo()
             ->sitemapProducts()
-            ->sitemapMain()
-            ->sitemapCategory();
+            ->sitemapCategory()
+            ->sitemapMain();
             // ->autoUpdateSitemap() // 谷歌推送
             // ->BaiduPushSitemap(); // 百度推送
         ReturnJson(true);
@@ -59,8 +59,8 @@ class SitemapController extends Controller
             ->sitemapInformation()
             ->sitemapHotInfo()
             ->sitemapProducts()
-            ->sitemapMain()
-            ->sitemapCategory();
+            ->sitemapCategory()
+            ->sitemapMain();
         // ->autoUpdateSitemap() // 谷歌推送
         // ->BaiduPushSitemap(); // 百度推送
     }
@@ -210,7 +210,7 @@ class SitemapController extends Controller
 
                 $str = $this->createMap($locs);
 
-                file_put_contents($this->dir . '/' . $category["link"] . $file_number . '.xml', $str);
+                file_put_contents($this->dir . '/sitemap_' . $category["link"] . $file_number . '.xml', $str);
                 //收取分类最新的数据提交到百度start
                 $aa = ceil(count($categories[$key]['products']) / $number);
                 if ($aa == $file_number) {
@@ -232,7 +232,8 @@ class SitemapController extends Controller
             if (php_sapi_name() == 'cli') {
                 chmod($item, 0777);
             }
-            return '/sitemap/' . basename($item);
+            return '/' . basename($item);
+            // return '/sitemap/' . basename($item);
             // return '/' . basename($item);
         }, glob($dir . '/sitemap/*.xml'));
         $str = $this->createMap($locs);
