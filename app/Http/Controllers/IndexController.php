@@ -405,7 +405,7 @@ class IndexController extends Controller {
                           'publisher_id', 'discount_type', 'discount', 'discount_amount', 'discount_time_begin',
                           'discount_time_end'];
         $productCountQuery = Products::where("status", 1)
-                                     ->where('show_recommend', 1)
+                                     ->where('show_hot', 1)
                                      ->where("published_date", "<=", time());
         $productQuery = (clone $productCountQuery)
             ->orderBy('sort', 'asc') // 排序权重：sort > 发布时间 > id
