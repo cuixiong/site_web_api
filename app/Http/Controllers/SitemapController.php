@@ -78,7 +78,7 @@ class SitemapController extends Controller
         //        echo '<pre>';print_r($locs);die;
         $str = $this->createMap($locs);
 
-        file_put_contents($this->dir . '/' . 'page.xml', $str);
+        file_put_contents($this->dir . '/sitemap_' . 'page.xml', $str);
 
         return $this;
     }
@@ -128,7 +128,7 @@ class SitemapController extends Controller
 
         $str = $this->createMap($locs);
 
-        file_put_contents($this->dir . '/' . 'news.xml', $str);
+        file_put_contents($this->dir . '/sitemap_' . 'news.xml', $str);
 
         return $this;
     }
@@ -153,7 +153,7 @@ class SitemapController extends Controller
 
         $str = $this->createMap($locs);
 
-        file_put_contents($this->dir . '/' . 'information.xml', $str);
+        file_put_contents($this->dir . '/sitemap_' . 'information.xml', $str);
 
         return $this;
     }
@@ -177,7 +177,7 @@ class SitemapController extends Controller
 
         $str = $this->createMap($locs);
 
-        file_put_contents($this->dir . '/' . 'information.xml', $str);
+        file_put_contents($this->dir . '/sitemap_' . 'information.xml', $str);
 
         return $this;
     }
