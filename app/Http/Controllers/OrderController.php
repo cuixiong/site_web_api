@@ -75,6 +75,14 @@ class OrderController extends Controller {
                     'email'     => $email,
                     'day_begin' => date('Y.m.d', $coupon->time_begin),
                     'day_end'   => date('Y.m.d', $coupon->time_end),
+                    
+                    'day_begin_year' => date('Y', $coupon->time_begin),
+                    'day_begin_month' => date('m', $coupon->time_begin),
+                    'day_begin_day' => date('d', $coupon->time_begin),
+                    'day_end_year'   => date('Y', $coupon->time_end),
+                    'day_end_month'   => date('m', $coupon->time_end),
+                    'day_end_day'   => date('d', $coupon->time_end),
+
                 ];
                 $model = new User();
                 $modelCouponUser = new CouponUser();
