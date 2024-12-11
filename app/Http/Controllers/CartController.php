@@ -123,6 +123,7 @@ class CartController extends Controller {
             $shopCartData[$key]['discount_type'] = $value['discount_type'];
             $shopCartData[$key]['discount_amount'] = $value['discount_amount'];
             $shopCartData[$key]['discount'] = $value['discount'];
+            
             $shopCartData[$key]['discount_time_begin'] = $value['discount_time_begin'] ? date(
                 'Y-m-d',
                 $value['discount_time_begin']
@@ -134,6 +135,14 @@ class CartController extends Controller {
             //判断当前报告是否在优惠时间内
             if ($value['discount_time_begin'] <= $time && $value['discount_time_end'] >= $time) {
                 $shopCartData[$key]['discount_status'] = 1;
+
+                //前端要求的时间格式，可能因网站有异，因此拆分多个
+                $shopCartData[$key]['discount_time_begin_year'] = date('Y', $value['discount_time_begin']);
+                $shopCartData[$key]['discount_time_begin_month'] =  date('m', $value['discount_time_begin']);
+                $shopCartData[$key]['discount_time_begin_day'] =  date('d', $value['discount_time_begin']);
+                $shopCartData[$key]['discount_time_end_year'] = date('Y', $value['discount_time_end']);
+                $shopCartData[$key]['discount_time_end_month'] =  date('m', $value['discount_time_end']);
+                $shopCartData[$key]['discount_time_end_day'] =  date('d', $value['discount_time_end']);
             } else {
                 $shopCartData[$key]['discount_status'] = 0;
                 // 过期需返回正常的折扣
