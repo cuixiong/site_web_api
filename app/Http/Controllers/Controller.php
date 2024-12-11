@@ -34,11 +34,12 @@ class Controller extends BaseController {
             return;
         }
 
-        // 签名检查
-        $this->signCheck();
-        //$whiteIplist = $this->getSetValByKey('ip_white_rules') ?? '';
+        // 签名检查 (系统配置那一个)
+        //$this->signCheck();
         $checkRes = $this->checkWhiteIp();
         if (!$checkRes) {
+            //签名检查
+            $this->securityCheck();
             //请求日志记录
             $this->accessLog();
             //UA请求头封禁
