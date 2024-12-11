@@ -98,6 +98,14 @@ class ProductController extends Controller
                 //判断当前报告是否在优惠时间内
                 if ($productsData['discount_time_begin'] <= $time && $productsData['discount_time_end'] >= $time) {
                     $value['discount_status'] = 1;
+                    
+                    //前端要求的时间格式，可能因网站有异，因此拆分多个
+                    $value['discount_time_begin_year'] = date('Y', $productsData['discount_time_begin']);
+                    $value['discount_time_begin_month'] =  date('m', $productsData['discount_time_begin']);
+                    $value['discount_time_begin_day'] =  date('d', $productsData['discount_time_begin']);
+                    $value['discount_time_end_year'] = date('Y', $productsData['discount_time_end']);
+                    $value['discount_time_end_month'] =  date('m', $productsData['discount_time_end']);
+                    $value['discount_time_end_day'] =  date('d', $productsData['discount_time_end']);
                 } else {
                     $value['discount_status'] = 0;
                     // 过期需返回正常的折扣
@@ -111,6 +119,7 @@ class ProductController extends Controller
                 $value['discount_type'] = $productsData['discount_type'];
                 $value['discount_time_begin'] = $productsData['discount_time_begin'];
                 $value['discount_time_end'] = $productsData['discount_time_end'];
+                
                 //分类
                 $category = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->find($value['category_id']);
                 if (empty($value['thumb']) && !empty($category)) {
@@ -1058,16 +1067,16 @@ class ProductController extends Controller
 
                 //返回打折信息
                 $time = time();
-                if ($data[$index]['discount_time_begin'] <= $time && $data[$index]['discount_time_end'] >= $time) {
+                if ($product['discount_time_begin'] <= $time && $product['discount_time_end'] >= $time) {
                     $data[$index]['discount_status'] = 1;
 
                     //前端要求的时间格式，可能因网站有异，因此拆分多个
-                    $data[$index]['discount_time_begin_year'] = date('Y', $data[$index]['discount_time_begin']);
-                    $data[$index]['discount_time_begin_month'] =  date('m', $data[$index]['discount_time_begin']);
-                    $data[$index]['discount_time_begin_day'] =  date('d', $data[$index]['discount_time_begin']);
-                    $data[$index]['discount_time_end_year'] = date('Y', $data[$index]['discount_time_end']);
-                    $data[$index]['discount_time_end_month'] =  date('m', $data[$index]['discount_time_end']);
-                    $data[$index]['discount_time_end_day'] =  date('d', $data[$index]['discount_time_end']);
+                    $data[$index]['discount_time_begin_year'] = date('Y', $product['discount_time_begin']);
+                    $data[$index]['discount_time_begin_month'] =  date('m', $product['discount_time_begin']);
+                    $data[$index]['discount_time_begin_day'] =  date('d', $product['discount_time_begin']);
+                    $data[$index]['discount_time_end_year'] = date('Y', $product['discount_time_end']);
+                    $data[$index]['discount_time_end_month'] =  date('m', $product['discount_time_end']);
+                    $data[$index]['discount_time_end_day'] =  date('d', $product['discount_time_end']);
                 } else {
                     $data[$index]['discount_status'] = 0;
                     // 过期需返回正常的折扣
