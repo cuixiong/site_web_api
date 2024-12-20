@@ -82,7 +82,7 @@ class IndexController extends Controller {
             );
         } else {
             $data['recommend_product_list'] = $this->getRecommendProductList($request);
-            if (checkSiteAccessData(['tycn'])) {
+            if (checkSiteAccessData(['tycn', 'mrrs'])) {
                 if ($request->recommend_data_type == 2) {
                     $data['recommend_product_list'] = $this->handlerExtraPlusCateImg($data['recommend_product_list']);
                 } else {

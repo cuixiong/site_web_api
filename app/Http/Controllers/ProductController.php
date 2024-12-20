@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DateFilter;
 use App\Models\Plate;
 use App\Models\PlateValue;
+use App\Models\Publishers;
 use App\Models\SearchRank;
 use App\Models\ViewProductsLog;
 use App\Services\IPAddrService;
@@ -31,152 +33,172 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 class ProductController extends Controller {
     // 获取报告列表信息
     public function List(Request $request) {
-        $page = $request->page ? intval($request->page) : 1; // 页码
-        $pageSize = $request->pageSize ? intval($request->pageSize) : 10; // 每页显示数量
-        $category_id = $request->category_id ?? 0; // 分类ID
-        $keyword = trim($request->keyword) ?? null; // 搜索关键词
-        if (!empty($keyword)) {
-            //点击关键词一次, 需要增加一次点击次数
-            SearchRank::query()->where('name', $keyword)->increment('hits');
-        }
-        $categorySeoInfo = [
-            'category_name'   => '',
-            'seo_title'       => '',
-            'seo_keyword'     => '',
-            'seo_description' => '',
-        ];
-        if (!empty($category_id)) {
-            $categorySeoData = ProductsCategory::query()
-                                               ->select(
-                                                   [
-                                                       'name as category_name',
-                                                       'seo_title',
-                                                       'seo_keyword',
-                                                       'seo_description'
-                                                   ]
-                                               )
-                                               ->where('id', $category_id)->first();
-            if (!empty($categorySeoData)) {
-                $categorySeoInfo = $categorySeoData->toArray();
-                // 统一格式，null改成空串
-                $categorySeoInfo['category_name'] = !empty($categorySeoInfo['category_name'])
-                    ? $categorySeoInfo['category_name'] : '';
-                $categorySeoInfo['seo_title'] = !empty($categorySeoInfo['seo_title']) ? $categorySeoInfo['seo_title']
-                    : '';
-                $categorySeoInfo['seo_keyword'] = !empty($categorySeoInfo['seo_keyword'])
-                    ? $categorySeoInfo['seo_keyword'] : '';
-                $categorySeoInfo['seo_description'] = !empty($categorySeoInfo['seo_description'])
-                    ? $categorySeoInfo['seo_description'] : '';
+        try {
+            $page = $request->page ? intval($request->page) : 1; // 页码
+            $pageSize = $request->pageSize ? intval($request->pageSize) : 10; // 每页显示数量
+            $category_id = $request->category_id ?? 0; // 分类ID
+            $keyword = trim($request->keyword) ?? null; // 搜索关键词
+            if (!empty($keyword)) {
+                //点击关键词一次, 需要增加一次点击次数
+                SearchRank::query()->where('name', $keyword)->increment('hits');
             }
-        }
-        $res = $this->GetProductResult($page, $pageSize, $keyword, $category_id);
-        $result = $res['list'];
-        $count = $res['count'];
-        $searchEngine = $res['type'] ?? '';
-        $products = [];
-        if ($result) {
-            $languages = Languages::GetList();
-            $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
-            // 报告数据
-            $ids = array_column($result, 'id');
-            $productsDataArray = Products::query()->whereIn('id', $ids)->get()->toArray();
-            $productsDataArray = array_column($productsDataArray, null, 'id');
-            // 提取这些报告的出版商id，统一查出涉及的价格版本
-            $publisherIdArray = array_unique(array_column($productsDataArray, 'publisher_id'));
-            $priceEdition = Products::getPriceEdition($publisherIdArray, $languages);
-            // 价格版本缓存
-            foreach ($result as $key => $value) {
-                //报告数据
-                $time = time();
-                if (empty($productsDataArray[$value['id']])) {
-                    unset($result[$key]);
-                    continue;
+            $categorySeoInfo = [
+                'category_name'   => '',
+                'seo_title'       => '',
+                'seo_keyword'     => '',
+                'seo_description' => '',
+            ];
+            $input_params = $request->input();
+            if (!empty($input_params['date_id'])) {
+                $date_info = DateFilter::find($input_params['date_id']);
+                if (!empty($date_info)) {
+                    $input_params['published_date'][] = time() - 86400 * $date_info['date_end'];
+                    $input_params['published_date'][] = time() - 86400 * $date_info['date_begin'];
                 }
-                $productsData = $productsDataArray[$value['id']];
-                //判断当前报告是否在优惠时间内
-                if ($productsData['discount_time_begin'] <= $time && $productsData['discount_time_end'] >= $time) {
-                    $value['discount_status'] = 1;
-                } else {
-                    $value['discount_status'] = 0;
-                    // 过期需返回正常的折扣
-                    $productsData['discount_amount'] = 0;
-                    $productsData['discount'] = 100;
-                    $productsData['discount_time_begin'] = null;
-                    $productsData['discount_time_end'] = null;
-                }
-                $value['discount'] = $productsData['discount'];
-                $value['discount_amount'] = $productsData['discount_amount'];
-                $value['discount_type'] = $productsData['discount_type'];
-                $value['discount_time_begin'] = $productsData['discount_time_begin'];
-                $value['discount_time_end'] = $productsData['discount_time_end'];
-                //分类
-                $category = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->find($value['category_id']);
-                if (empty($value['thumb']) && !empty($category)) {
-                    $value['thumb'] = $category['thumb'];
-                }
-                if (empty($value['thumb'])) {
-                    // 若报告图片为空，则使用系统设置的默认报告高清图
-                    $value['thumb'] = !empty($defaultImg) ? $defaultImg : '';
-                }
-                $value['thumb'] = Common::cutoffSiteUploadPathPrefix($value['thumb']);
-                if (is_numeric($value['published_date'])) {
-                    $suffix = date('Y', $value['published_date']);
-                    $value['published_date'] = $value['published_date'] ? date(
-                        'Y-m-d',
-                        $value['published_date']
-                    ) : '';
-                } else {
-                    $suffix = date('Y', strtotime($value['published_date']));
-                    $value['published_date'] = $value['published_date'] ? date(
-                        'Y-m-d',
-                        strtotime($value['published_date'])
-                    ) : '';
-                }
-                $description = (new ProductDescription($suffix))->where('product_id', $value['id'])->value(
-                    'description'
-                );
-                $description = mb_substr($description, 0, 120, 'UTF-8');
-                $value['description'] = $description;
-                $value['category'] = $category ? [
-                    'id'   => $category['id'],
-                    'name' => $category['name'],
-                    'link' => $category['link'],
-                ] : [];
-                $publisher_id = $productsData['publisher_id'];
-                $value['prices'] = Products::countPriceEditionPrice($priceEdition[$publisher_id], $value['price'],) ??
-                                   [];
-                $products[] = $value;
             }
+            if (!empty($category_id)) {
+                $categorySeoData = ProductsCategory::query()
+                                                   ->select(
+                                                       [
+                                                           'name as category_name',
+                                                           'seo_title',
+                                                           'seo_keyword',
+                                                           'seo_description'
+                                                       ]
+                                                   )
+                                                   ->where('id', $category_id)->first();
+                if (!empty($categorySeoData)) {
+                    $categorySeoInfo = $categorySeoData->toArray();
+                    // 统一格式，null改成空串
+                    $categorySeoInfo['category_name'] = !empty($categorySeoInfo['category_name'])
+                        ? $categorySeoInfo['category_name'] : '';
+                    $categorySeoInfo['seo_title'] = !empty($categorySeoInfo['seo_title'])
+                        ? $categorySeoInfo['seo_title']
+                        : '';
+                    $categorySeoInfo['seo_keyword'] = !empty($categorySeoInfo['seo_keyword'])
+                        ? $categorySeoInfo['seo_keyword'] : '';
+                    $categorySeoInfo['seo_description'] = !empty($categorySeoInfo['seo_description'])
+                        ? $categorySeoInfo['seo_description'] : '';
+                }
+            }
+            $res = $this->GetProductResult($page, $pageSize, $keyword, $category_id, $input_params);
+            $result = $res['list'];
+            $count = $res['count'];
+            $searchEngine = $res['type'] ?? '';
+            $products = [];
+            if ($result) {
+                $languages = Languages::GetList();
+                $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+                // 报告数据
+                $ids = array_column($result, 'id');
+                $productsDataArray = Products::query()->whereIn('id', $ids)->get()->toArray();
+                $productsDataArray = array_column($productsDataArray, null, 'id');
+                // 提取这些报告的出版商id，统一查出涉及的价格版本
+                $publisherIdArray = array_unique(array_column($productsDataArray, 'publisher_id'));
+                $priceEdition = Products::getPriceEdition($publisherIdArray, $languages);
+                // 价格版本缓存
+                foreach ($result as $key => $value) {
+                    //报告数据
+                    $time = time();
+                    if (empty($productsDataArray[$value['id']])) {
+                        unset($result[$key]);
+                        continue;
+                    }
+                    $productsData = $productsDataArray[$value['id']];
+                    //判断当前报告是否在优惠时间内
+                    if ($productsData['discount_time_begin'] <= $time && $productsData['discount_time_end'] >= $time) {
+                        $value['discount_status'] = 1;
+                    } else {
+                        $value['discount_status'] = 0;
+                        // 过期需返回正常的折扣
+                        $productsData['discount_amount'] = 0;
+                        $productsData['discount'] = 100;
+                        $productsData['discount_time_begin'] = null;
+                        $productsData['discount_time_end'] = null;
+                    }
+                    $value['discount'] = $productsData['discount'];
+                    $value['discount_amount'] = $productsData['discount_amount'];
+                    $value['discount_type'] = $productsData['discount_type'];
+                    $value['discount_time_begin'] = $productsData['discount_time_begin'];
+                    $value['discount_time_end'] = $productsData['discount_time_end'];
+                    //分类
+                    $category = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->find($value['category_id']);
+                    if (empty($value['thumb']) && !empty($category)) {
+                        $value['thumb'] = $category['thumb'];
+                    }
+                    if (empty($value['thumb'])) {
+                        // 若报告图片为空，则使用系统设置的默认报告高清图
+                        $value['thumb'] = !empty($defaultImg) ? $defaultImg : '';
+                    }
+                    $value['thumb'] = Common::cutoffSiteUploadPathPrefix($value['thumb']);
+                    if (is_numeric($value['published_date'])) {
+                        $suffix = date('Y', $value['published_date']);
+                        $value['published_date'] = $value['published_date'] ? date(
+                            'Y-m-d',
+                            $value['published_date']
+                        ) : '';
+                    } else {
+                        $suffix = date('Y', strtotime($value['published_date']));
+                        $value['published_date'] = $value['published_date'] ? date(
+                            'Y-m-d',
+                            strtotime($value['published_date'])
+                        ) : '';
+                    }
+                    $description = (new ProductDescription($suffix))->where('product_id', $value['id'])->value(
+                        'description'
+                    );
+                    $description = mb_substr($description, 0, 120, 'UTF-8');
+                    $value['description'] = $description;
+                    $value['category'] = $category ? [
+                        'id'   => $category['id'],
+                        'name' => $category['name'],
+                        'link' => $category['link'],
+                    ] : [];
+                    $publisher_id = $productsData['publisher_id'];
+                    $value['prices'] = Products::countPriceEditionPrice($priceEdition[$publisher_id], $value['price'],)
+                                       ??
+                                       [];
+                    $products[] = $value;
+                }
+            }
+            if (checkSiteAccessData(['tycn'])) {
+                $productCagoryId = $this->GetProductCateList($keyword, 0);
+                $productCagory = $this->getProductCagory($productCagoryId);
+            } else {
+                $productCagory = $this->getProductCagory([]);
+            }
+            $data = [
+                'productCagory'   => $productCagory,
+                'products'        => $products,
+                "page"            => intVal($page),
+                "pageSize"        => intVal($pageSize),
+                "count"           => intVal($count),
+                'pageCount'       => ceil($count / $pageSize),
+                'categorySeoInfo' => $categorySeoInfo,
+                'searchEngine'    => $searchEngine //搜索引擎
+            ];
+            if (checkSiteAccessData(['mrrs'])) {
+                //获取日期下拉列表
+                $data['date_conditin_list'] = $this->getDateConditinList($input_params);
+                //获取出版商下拉列表
+                $data['published_list'] = $this->getPublishedList($input_params);
+            }
+            ReturnJson(true, '请求成功', $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, '未知错误'.$e->getMessage(), []);
         }
-        if (checkSiteAccessData(['tycn'])) {
-            $productCagoryId = $this->GetProductCateList($keyword, 0);
-            $productCagory = $this->getProductCagory($productCagoryId);
-        } else {
-            $productCagory = $this->getProductCagory([]);
-        }
-        $data = [
-            'productCagory'   => $productCagory,
-            'products'        => $products,
-            "page"            => intVal($page),
-            "pageSize"        => intVal($pageSize),
-            "count"           => intVal($count),
-            'pageCount'       => ceil($count / $pageSize),
-            'categorySeoInfo' => $categorySeoInfo,
-            'searchEngine'    => $searchEngine //搜索引擎
-        ];
-        ReturnJson(true, '请求成功', $data);
     }
 
     /**
      * 搜索产品数据
      */
-    private function GetProductResult($page, $pageSize, $keyword = '', $category_id = 0) {
+    private function GetProductResult($page, $pageSize, $keyword = '', $category_id = 0, $input_params = []) {
         try {
             $hidden = SystemValue::where('key', 'sphinx')->value('hidden');
             if ($hidden == 1) {
-                return $this->SearchForSphinx($category_id, $keyword, $page, $pageSize);
+                return $this->SearchForSphinx($category_id, $keyword, $page, $pageSize, $input_params);
             } else {
-                return $this->SearchForMysql($category_id, $keyword, $page, $pageSize);
+                return $this->SearchForMysql($category_id, $keyword, $page, $pageSize, $input_params);
             }
         } catch (\Exception $e) {
             \Log::error('应用端查询失败,异常信息为:'.json_encode([$e->getMessage()]));
@@ -690,7 +712,7 @@ class ProductController extends Controller {
      *
      * @return array
      */
-    private function SearchForMysql(mixed $category_id, mixed $keyword, $page, $pageSize): array {
+    private function SearchForMysql(mixed $category_id, mixed $keyword, $page, $pageSize, $input_params = []): array {
         $field = [
             'name',
             'english_name',
@@ -724,6 +746,15 @@ class ProductController extends Controller {
                 }
             });
         }
+        //出版商
+        if (!empty($input_params['publisher_id'])) {
+            $query = $query->where('publisher_id', intval($input_params['publisher_id']));
+        }
+        //出版时间
+        if (!empty($input_params['published_date']) && is_array($input_params['published_date'])) {
+            $published_date_list = array_map('intval', $input_params['published_date']);
+            $query = $query->whereBetween('published_date', $published_date_list);
+        }
         // 获取当前复合条件的总数量
         $count = $query->count();
         // 排序 显示发布时间 》 排序 》 id
@@ -736,16 +767,20 @@ class ProductController extends Controller {
         return ['list' => $list, 'count' => $count, 'type' => 'mysql'];
     }
 
-    public function SearchForSphinx($category_id, $keyword, $page, $pageSize) {
+    public function SearchForSphinx($category_id, $keyword, $page, $pageSize, $input_params = []) {
         $sphinxSrevice = new SphinxService();
         $conn = $sphinxSrevice->getConnection();
-        $idProducts = $this->getProductById($conn, $category_id, $keyword);
+        $idProducts = $this->getProductById($conn, $category_id, $keyword, $input_params);
         //报告昵称,英文昵称匹配查询
         $query = (new SphinxQL($conn))->select('*')
-                                      ->from('products_rt')
-                                      ->orderBy('sort', 'asc')
-                                      ->orderBy('published_date', 'desc')
-                                      ->orderBy('id', 'desc');
+                                      ->from('products_rt');
+        if (!empty($input_params['orderBy'])) {
+            $query = $query->orderBy($input_params['orderBy'], 'asc');
+        } else {
+            $query = $query->orderBy('sort', 'asc')
+                           ->orderBy('published_date', 'desc')
+                           ->orderBy('id', 'desc');
+        }
         $query = $query->where('status', '=', 1);
         $query = $query->where("published_date", "<", time());
         // 分类ID
@@ -756,6 +791,15 @@ class ProductController extends Controller {
         if (!empty($keyword)) {
             $val = '"'.$keyword.'"';
             $query->match(['name', 'english_name'], $val, true);
+        }
+        //出版商
+        if (!empty($input_params['publisher_id'])) {
+            $query = $query->where('publisher_id', intval($input_params['publisher_id']));
+        }
+        //出版时间
+        if (!empty($input_params['published_date']) && is_array($input_params['published_date'])) {
+            $published_date_list = array_map('intval', $input_params['published_date']);
+            $query = $query->where('published_date', 'BETWEEN', $published_date_list);
         }
         //查询总数
         $countQuery = $query->setSelect('COUNT(*) as cnt');
@@ -851,7 +895,11 @@ class ProductController extends Controller {
      *
      * @return array
      */
-    private function getProductById(Connection|bool $conn, $category_id, $keyword): array {
+    private function getProductById(Connection|bool $conn, $category_id, $keyword, $input_params = []): array {
+        //无关键词 或者关键词不是数字时，不返回数据
+        if (empty($keyword) || is_numeric($keyword)) {
+            return [];
+        }
         $query = (new SphinxQL($conn))->select('*')
                                       ->from('products_rt')
                                       ->orderBy('sort', 'asc')
@@ -861,6 +909,15 @@ class ProductController extends Controller {
         // 分类ID
         if (!empty($category_id)) {
             $query = $query->where('category_id', intval($category_id));
+        }
+        //出版商
+        if (!empty($input_params['publisher_id'])) {
+            $query = $query->where('publisher_id', intval($input_params['publisher_id']));
+        }
+        //出版时间
+        if (!empty($input_params['published_date']) && is_array($input_params['published_date'])) {
+            $published_date_list = array_map('intval', $input_params['published_date']);
+            $query = $query->where('published_date', 'BETWEEN', $published_date_list);
         }
         //id查询
         $idProducts = [];
@@ -1142,5 +1199,173 @@ class ProductController extends Controller {
         $data = array_column($cateIdList, 'category_id');
 
         return $data;
+    }
+
+    public function getDateConditinList($input_params) {
+        $date_filter = DateFilter::query()->where('status', 1)->get()->toArray();
+        $after_date_fiter_list = [];
+        $db_date_list = $this->getDateFitterByCondition($input_params);
+        if (!empty($db_date_list)) {
+            $min_published_date = $db_date_list['min_published_date'];
+            $max_published_date = $db_date_list['max_published_date'];
+            $timestamp = time();
+            foreach ($date_filter as $key => $value) {
+                //多少天前时间戳
+                $begin_day_time = $timestamp - $value['date_begin'] * 86400;
+                $end_day_time = $timestamp - $value['date_begin'] * 86400;
+                if ($begin_day_time >= $min_published_date && $end_day_time <= $max_published_date) {
+                    $new_data = [];
+                    $new_data['date_id'] = $value['id'];
+                    $new_data['date'] = $value['date_begin'].'~'.$value['date_end'].' Days';
+                    $after_date_fiter_list[] = $new_data;
+                }
+            }
+        }
+        array_unshift($after_date_fiter_list, [
+            'date_id' => '0',
+            'date'    => 'All',
+        ]);
+
+        return $after_date_fiter_list;
+    }
+
+    public function getDateFitterByCondition($input_params) {
+        try {
+            $hidden = SystemValue::where('key', 'sphinx')->value('hidden');
+            if ($hidden == 1) {
+                //sphinx
+                $query = $this->getSphinxQueryParms($input_params);
+                $query->setSelect(
+                    ['min(published_date) as min_published_date , max(published_date) as max_published_date']
+                );
+                $result = $query->execute();
+
+                return $result->fetchAssoc();
+            } else {
+                $query = Products::where(['status' => 1])
+                                 ->where("published_date", "<", time())
+                                 ->selectRaw(
+                                     'min(published_date) as min_published_date , max(published_date) as max_published_date'
+                                 );
+                // 分类ID
+                if (!empty($input_params['category_id'])) {
+                    $query = $query->where('category_id', intval($input_params['category_id']));
+                }
+                // 关键词
+                if (!empty($input_params['keyword'])) {
+                    $keyword = $input_params['keyword'];
+                    $query = $query->where(function ($query) use ($keyword) {
+                        $query->where('name', 'like', '%'.$keyword.'%');
+                        if (is_numeric($keyword)) {
+                            $query->orWhere('id', $keyword);
+                        }
+                    });
+                }
+                //出版商
+                if (!empty($input_params['publisher_id'])) {
+                    $query = $query->where('publisher_id', intval($input_params['publisher_id']));
+                }
+                //出版时间
+                if (!empty($input_params['published_date']) && is_array($input_params['published_date'])) {
+                    $published_date_list = array_map('intval', $input_params['published_date']);
+                    $query = $query->whereBetween('published_date', $published_date_list);
+                }
+
+                return $query->first();
+            }
+        } catch (\Exception $e) {
+            \Log::error('应用端查询失败,异常信息为:'.json_encode([$e->getMessage()]));
+            ReturnJson(false, '请求失败,请稍后再试');
+        }
+    }
+
+    public function getPublishedList($input_params) {
+        try {
+            $hidden = SystemValue::where('key', 'sphinx')->value('hidden');
+            if ($hidden == 1) {
+                $query = $this->getSphinxQueryParms($input_params);
+                $query->groupBy('publisher_id')->setSelect(['publisher_id']);
+                $result = $query->execute();
+                $publisher_id_list = $result->fetchAssoc();
+            } else {
+                $field = ['publisher_id'];
+                $query = Products::where(['status' => 1])
+                                 ->where("published_date", "<", time())
+                                 ->select($field);
+                // 分类ID
+                if (!empty($input_params['category_id'])) {
+                    $query = $query->where('category_id', intval($input_params['category_id']));
+                }
+                // 关键词
+                if (!empty($input_params['keyword'])) {
+                    $keyword = $input_params['keyword'];
+                    $query = $query->where(function ($query) use ($keyword) {
+                        $query->where('name', 'like', '%'.$keyword.'%');
+                        if (is_numeric($keyword)) {
+                            $query->orWhere('id', $keyword);
+                        }
+                    });
+                }
+                //出版商
+                if (!empty($input_params['publisher_id'])) {
+                    $query = $query->where('publisher_id', intval($input_params['publisher_id']));
+                }
+                //出版时间
+                if (!empty($input_params['published_date']) && is_array($input_params['published_date'])) {
+                    $published_date_list = array_map('intval', $input_params['published_date']);
+                    $query = $query->whereBetween('published_date', $published_date_list);
+                }
+                $publisher_id_list = $query->groupBy('publisher_id')->pluck('publisher_id')->toArray();
+            }
+            $publishers_data = [];
+            if (!empty($publisher_id_list)) {
+                $publishers_data = Publishers::query()->where('status', 1)
+                                             ->whereIn('id', $publisher_id_list)
+                                             ->select(['name', 'id'])->get()->toArray();
+            }
+            array_unshift($publishers_data, [
+                'id'   => '0',
+                'name' => 'All',
+            ]);
+
+            return $publishers_data;
+        } catch (\Exception $e) {
+            \Log::error('应用端查询失败,异常信息为:'.json_encode([$e->getMessage()]));
+            ReturnJson(false, '请求失败,请稍后再试');
+        }
+    }
+
+    /**
+     *
+     * @param          $input_params
+     *
+     * @return SphinxQL
+     */
+    private function getSphinxQueryParms($input_params): SphinxQL {
+        $sphinxSrevice = new SphinxService();
+        $conn = $sphinxSrevice->getConnection();
+        $query = (new SphinxQL($conn))->select('*')
+                                      ->from('products_rt');
+        $query = $query->where('status', '=', 1);
+        $query = $query->where("published_date", "<", time());
+        if (!empty($input_params['category_id'])) {
+            $query = $query->where('category_id', intval($input_params['category_id']));
+        }
+        //精确搜索, 多字段匹配
+        if (!empty($input_params['keyword'])) {
+            $val = '"'.$input_params['keyword'].'"';
+            $query->match(['name', 'english_name'], $val, true);
+        }
+        //出版商
+        if (!empty($input_params['publisher_id'])) {
+            $query = $query->where('publisher_id', intval($input_params['publisher_id']));
+        }
+        //出版时间
+        if (!empty($input_params['published_date']) && is_array($input_params['published_date'])) {
+            $published_date_list = array_map('intval', $input_params['published_date']);
+            $query = $query->where('published_date', 'BETWEEN', $published_date_list);
+        }
+
+        return $query;
     }
 }

@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Common;
 use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
 use App\Models\Authority;
+use App\Models\Channel;
 use App\Models\City;
 use App\Models\Comment;
 use App\Models\Common;
+use App\Models\Country;
 use App\Models\DictionaryValue;
 use App\Models\LanguageWebsite;
 use App\Models\Link;
@@ -16,6 +18,7 @@ use App\Models\MessageLanguageVersion;
 use App\Models\News;
 use App\Models\Office;
 use App\Models\PlateValue;
+use App\Models\Position;
 use App\Models\ProductsCategory;
 use App\Models\QuoteCategory;
 use App\Models\SearchRank;
@@ -56,6 +59,15 @@ class CommonController extends Controller {
         $data['product_cagory'] = $this->getProductCagory();
         //权威引用
         $data['quote_list'] = $this->getQuoteList($request);
+
+        if(checkSiteAccessData(['mrrs'])){
+            //国家数据
+            $data['country_list'] = $this->getCountryData();
+            //来源数据
+            $data['channel_list'] = $this->getChannelData();
+            //职位下拉
+            $data['position_list'] = $this->getPositionList();
+        }
 
 
 
@@ -119,10 +131,39 @@ class CommonController extends Controller {
     /**
      *
      *
+     * @return array
+     */
+    private function getCountryData() {
+        $app_name = env('APP_NAME');
+        $cacheKey = $app_name.'_country_cache_key';
+        $countryCacheData = Redis::get($cacheKey);
+        if (empty($countryCacheData)) {
+            $countryList = Country::query()->select(['id' , 'name' , 'acronym' , 'code'])->where('status' , 1)->orderBy('sort' , 'asc')->get()->toArray();
+            Redis::set($cacheKey, json_encode($countryList));
+            return $countryList;
+        } else {
+            $countryList = json_decode($countryCacheData, true);
+            return $countryList;
+        }
+    }
+
+    private function getChannelData() {
+        $channelList = Channel::query()->get()->toArray();
+        return $channelList;
+    }
+
+    private function getPositionList() {
+        $positionList = Position::query()->get()->toArray();
+        return $positionList;
+    }
+
+    /**
+     *
+     *
      * @return mixed
      */
     private function getProductCagory() {
-        $field = ['id', 'name', 'link', 'icon', 'icon_hover'];
+        $field = ['id', 'name', 'link', 'icon', 'icon_hover' , 'show_home'];
         $data = ProductsCategory::select($field)
                                 ->where('status', 1)
                                 ->get()

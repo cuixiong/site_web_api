@@ -350,6 +350,8 @@ class OrderController extends Controller {
         if (empty($code) || empty($state)) {
             throw new \Exception('invalid param');
         }
+//        $orderNumber = $state;
+//        $order = Order::query()->where("order_number" , $orderNumber)->first();
         $orderId = $state;
         $order = Order::find($orderId);
         if (empty($order)) {
@@ -388,13 +390,23 @@ class OrderController extends Controller {
                         window.location='$returnUrl';
                     } else if (res.err_msg == "get_brand_wcpay_request:cancel" || res.err_msg == "get_brand_wcpay_request:fail") {
                         alert('支付取消');
-                        window.location='$referer';
+                        var turl = '$referer';
+                        if(turl){
+                            window.location = turl;
+                        } else {
+                            window.location='/';
+                        }
                     } else if (res.err_msg == "system:function_not_implement") {
                         window.document.write("<h1>请使用手机微信打开</h1>");
                         alert('请使用手机微信打开');
                     } else {
                         alert('支付取消');
-                        window.location='$referer';
+                        var turl = '$referer';
+                        if(turl){
+                            window.location = turl;
+                        } else {
+                            window.location='/';
+                        }
                     }
                 });
             }
