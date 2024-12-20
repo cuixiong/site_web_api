@@ -26,6 +26,7 @@ class ContactUsController extends Controller {
         $category_id = MessageCategory::where('code', $sceneCode)->value('id');
         $model = new ContactUs();
         $model->name = $params['name'] ?? '';
+        $model->product_name = !empty($params['product_name']) ? $params['product_name']: '';
         $model->email = $email;
         $model->company = $params['company'] ?? '';
         if (!empty($params['buy_time'])) {
