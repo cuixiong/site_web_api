@@ -9,6 +9,7 @@ use App\Models\Comment;
 use App\Models\Common;
 use App\Models\ContactUs;
 use App\Models\DictionaryValue;
+use App\Models\FaqCategory;
 use App\Models\History;
 use App\Models\Languages;
 use App\Models\Menu;
@@ -25,13 +26,11 @@ use App\Models\SystemValue;
 use App\Models\TeamMember;
 use Illuminate\Http\Request;
 
-class PageController extends Controller
-{
+class PageController extends Controller {
     /**
      * 获取单页面内容
      */
-    public function Get(Request $request)
-    {
+    public function Get(Request $request) {
         $link = $request->link ?? 'index';
         if (empty($link)) {
             ReturnJson(false, 'link is empty');
@@ -46,7 +45,6 @@ class PageController extends Controller
             $year = bcsub(date('Y'), 2022); // 两个任意精度数字的减法
             $content = str_replace('%s', bcadd(15, $year), $content);
         }
-
         if ($link == 'about') { // 其中的单页【公司简介】（link值是about）比较特殊：后台此单页富文本编辑器的内容要返回a和b两部分给前端，a和b中间嵌入其它内容。
             $divisionArray = explode('<div id="division"></div>', $content);
             $special = [
@@ -61,26 +59,24 @@ class PageController extends Controller
     /**
      * 权威引用列表
      */
-    public function Quotes(Request $request)
-    {
+    public function Quotes(Request $request) {
         $page = !empty($request->page) ? $request->page : 1;
         $pageSize = !empty($request->pageSize) ? $request->pageSize : 16;
         $isALL = !isset($request->is_all) || !empty($request->is_all) ? true : false;
         $category_id = !empty($request->category_id) ? $request->category_id : 0;
-
         //权威引用分类
         //$category = DictionaryValue::GetDicOptions('quote_cage');
         $category = QuoteCategory::select(['id', 'name'])
-            ->where("status", 1)
-            ->orderBy('sort', 'asc')->get()->toArray() ?? [];
+                                 ->where("status", 1)
+                                 ->orderBy('sort', 'asc')->get()->toArray() ?? [];
         if ($isALL) {
             array_unshift($category, ['id' => '0', 'name' => '全部']);
         } elseif (!$isALL && empty($category_id) && $category && is_array($category) && count($category) > 0) {
             $category_id = $category[0];
         }
-
         // 数据
-        $model = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id'])->orderBy('sort', 'asc')->orderBy('id', 'desc');
+        $model = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id'])->orderBy('sort', 'asc')
+                          ->orderBy('id', 'desc');
         if ($category_id) {
             $model = $model->where('category_id', $category_id);
         }
@@ -92,12 +88,12 @@ class PageController extends Controller
             $result[$key]['img'] = Common::cutoffSiteUploadPathPrefix($result[$key]['img']);
         }
         $data = [
-            'result' => $result,
-            'category' => $category,
-            'page' => $page,
-            'pageSize' => $pageSize,
+            'result'    => $result,
+            'category'  => $category,
+            'page'      => $page,
+            'pageSize'  => $pageSize,
             'pageCount' => ceil($count / $pageSize),
-            'count' => intval($count),
+            'count'     => intval($count),
         ];
         ReturnJson(true, '', $data);
     }
@@ -105,22 +101,24 @@ class PageController extends Controller
     /**
      * 权威引用单个查询
      */
-    public function Quote(Request $request)
-    {
+    public function Quote(Request $request) {
         $id = $request->id;
         if (empty($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = Authority::select(['name as title', 'body as content', 'description', 'id', 'keyword', 'name', 'created_at as time', 'big_image as img'])->where('id', $id)->first();
+        $data = Authority::select(
+            ['name as title', 'body as content', 'description', 'id', 'keyword', 'name', 'created_at as time',
+             'big_image as img']
+        )->where('id', $id)->first();
         $data['time'] = date("Y-m-d", $data['time']);
         // 新闻/权威引用等如果内容带有链接，则该链接在移动端无法正常换行，因此后端在此协助处理
-        $data['content'] = str_replace('href="', 'style="word-wrap:break-word;word-break:break-all;" href="', $data['content']);
+        $data['content'] = str_replace(
+            'href="', 'style="word-wrap:break-word;word-break:break-all;" href="', $data['content']
+        );
         ReturnJson(true, '', $data);
     }
 
-    public function QuoteRelevantProduct(Request $request): array
-    {
-
+    public function QuoteRelevantProduct(Request $request): array {
         $id = $request->id ? $request->id : null;
         $limit = !empty($request->pageSize) ? $request->pageSize : 5;
         $keyword = Authority::where('id', $id)->value('keyword');
@@ -130,11 +128,8 @@ class PageController extends Controller
         } else {
             ReturnJson(true, 'success', []);
         }
-
-
         $data = [];
         if ($keyword) {
-
             $select = [
                 'id',
                 'name',
@@ -151,26 +146,28 @@ class PageController extends Controller
                 'discount_time_begin',
                 'discount_time_end'
             ];
-
             $data = Products::GetRelevantProductResult(-1, $keyword, 1, $limit, 'keywords', $select);
-
             if ($data) {
                 // 分类信息
                 $categoryIds = array_column($data, 'category_id');
-                $categoryData = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->whereIn('id', $categoryIds)->get()->toArray();
+                $categoryData = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->whereIn('id', $categoryIds)
+                                                ->get()->toArray();
                 $categoryData = array_column($categoryData, null, 'id');
                 // 默认图片
                 // 若报告图片为空，则使用系统设置的默认报告高清图
                 $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
-
                 foreach ($data as $key => $value) {
-
                     //每个报告加上分类信息
                     $tempCategoryId = $value['category_id'];
-                    $value['category_name'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
-                    $value['category_thumb'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['thumb']) ? $categoryData[$tempCategoryId]['thumb'] : '';
-                    $value['category_link'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['link']) ? $categoryData[$tempCategoryId]['link'] : '';
-
+                    $value['category_name'] = isset($categoryData[$tempCategoryId])
+                                              && isset($categoryData[$tempCategoryId]['name'])
+                        ? $categoryData[$tempCategoryId]['name'] : '';
+                    $value['category_thumb'] = isset($categoryData[$tempCategoryId])
+                                               && isset($categoryData[$tempCategoryId]['thumb'])
+                        ? $categoryData[$tempCategoryId]['thumb'] : '';
+                    $value['category_link'] = isset($categoryData[$tempCategoryId])
+                                              && isset($categoryData[$tempCategoryId]['link'])
+                        ? $categoryData[$tempCategoryId]['link'] : '';
                     // 图片获取
                     $tempThumb = '';
                     if (!empty($value['thumb'])) {
@@ -181,18 +178,15 @@ class PageController extends Controller
                         // 如果报告图片、分类图片为空，使用系统默认图片
                         $tempThumb = !empty($defaultImg) ? $defaultImg : '';
                     }
-
                     $data[$key]['thumb'] = $tempThumb;
                     $data[$key]['category_name'] = $value['category_name'];
                     $data[$key]['category_link'] = $value['category_link'];
-
                     // $data[$key]['thumb'] = Products::getThumbImgUrl($value);
                     $data[$key]['name'] = $value['name'];
                     $data[$key]['keyword'] = $value['keywords'];
                     $data[$key]['english_name'] = $value['english_name'];
                     // $data[$key]['description'] = $value['description_seo'];
                     $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
-
                     //判断当前报告是否在优惠时间内
                     $time = time();
                     if ($data[$key]['discount_time_begin'] <= $time && $data[$key]['discount_time_end'] >= $time) {
@@ -205,7 +199,6 @@ class PageController extends Controller
                         $data[$key]['discount_time_begin'] = null;
                         $data[$key]['discount_time_end'] = null;
                     }
-
                     $data[$key]['description'] = (new ProductDescription(
                         date('Y', strtotime($value['published_date']))
                     ))->where('product_id', $value['id'])->value('description');
@@ -218,18 +211,23 @@ class PageController extends Controller
                         foreach ($languages as $index => $language) {
                             $priceEditions = PriceEditionValues::select(
                                 ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
-                            )->where(['status' => 1, 'is_deleted' => 1, 'language_id' => $language['id']])->orderBy("sort", "asc")->get()->toArray();
+                            )->where(['status' => 1, 'is_deleted' => 1, 'language_id' => $language['id']])->orderBy(
+                                "sort", "asc"
+                            )->get()->toArray();
                             if ($priceEditions) {
                                 $prices[$index]['language'] = $language['name'];
                                 foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
                                     $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
                                     $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['edition'];
-                                    $prices[$index]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
+                                    $prices[$index]['data'][$keyPriceEdition]['is_logistics']
+                                        = $priceEdition['is_logistics'];
                                     $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
-                                    $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
-                                        $priceEdition['rule'],
-                                        $value['price']
-                                    ) . ";");
+                                    $prices[$index]['data'][$keyPriceEdition]['price'] = eval(
+                                        "return ".sprintf(
+                                            $priceEdition['rule'],
+                                            $value['price']
+                                        ).";"
+                                    );
                                     if ($index == 0 && $keyPriceEdition == 0) {
                                         // 以第一个价格版本作为显示的价格版本
                                         $data[$key]['price'] = $prices[$index]['data'][$keyPriceEdition]['price'];
@@ -246,41 +244,37 @@ class PageController extends Controller
                 }
             }
         }
-
         ReturnJson(true, 'success', $data);
     }
 
     /**
      * 联系我们（表单）
-     * @param string $username 姓名
-     * @param string $email 邮箱地址
-     * @param integer $province_id 省份编号
-     * @param integer $city_id 城市编号
-     * @param string $phone 电话号码
-     * @param string $company 公司名称
+     *
+     * @param string  $username      姓名
+     * @param string  $email         邮箱地址
+     * @param integer $province_id   省份编号
+     * @param integer $city_id       城市编号
+     * @param string  $phone         电话号码
+     * @param string  $company       公司名称
      * @param integer $plan_buy_time 计划购买时间
-     * @param string $content 留言反馈
+     * @param string  $content       留言反馈
      */
-    public function ContactUs(Request $request)
-    {
+    public function ContactUs(Request $request) {
         $params = $request->all();
         $name = $params['name'];
         $email = $params['email'];
-
         //校验邮箱规则
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             ReturnJson(false, '邮箱格式不正确');
         }
-        $appName = env('APP_NAME' , '');
-        currentLimit($request , 60 , $appName , $email);
-
+        $appName = env('APP_NAME', '');
+        currentLimit($request, 60, $appName, $email);
         $province_id = $params['province_id'];
         $city_id = $params['city_id'];
         $phone = $params['phone'];
         $company = $params['company'];
         $plan_buy_time = $params['plan_buy_time'];
         $content = $params['content'];
-
         $model = new ContactUs();
         $model->category_id = $params['category_id'] ?? 0;
         $model->name = $name;
@@ -306,17 +300,17 @@ class PageController extends Controller
 
     /**
      * 定制报告（表单）
-     * @param string $username 姓名
-     * @param string $email 邮箱地址
-     * @param integer $province_id 省份编号
-     * @param integer $city_id 城市编号
-     * @param string $phone 电话号码
-     * @param string $company 公司名称
+     *
+     * @param string  $username      姓名
+     * @param string  $email         邮箱地址
+     * @param integer $province_id   省份编号
+     * @param integer $city_id       城市编号
+     * @param string  $phone         电话号码
+     * @param string  $company       公司名称
      * @param integer $plan_buy_time 计划购买时间
-     * @param string $content 留言反馈
+     * @param string  $content       留言反馈
      */
-    public function CustomReports(Request $request)
-    {
+    public function CustomReports(Request $request) {
         $params = $request->all();
         $name = $params['name'];
         $email = $params['email'];
@@ -326,7 +320,6 @@ class PageController extends Controller
         $company = $params['company'];
         $plan_buy_time = $params['plan_buy_time'];
         $content = $params['content'];
-
         $model = new ContactUs();
         $model->name = $name;
         $model->email = $email;
@@ -349,17 +342,17 @@ class PageController extends Controller
 
     /**
      * 联系我们（表单）
-     * @param string $username 姓名
-     * @param string $email 邮箱地址
-     * @param integer $province_id 省份编号
-     * @param integer $city_id 城市编号
-     * @param string $phone 电话号码
-     * @param string $company 公司名称
+     *
+     * @param string  $username      姓名
+     * @param string  $email         邮箱地址
+     * @param integer $province_id   省份编号
+     * @param integer $city_id       城市编号
+     * @param string  $phone         电话号码
+     * @param string  $company       公司名称
      * @param integer $plan_buy_time 计划购买时间
-     * @param string $content 留言反馈
+     * @param string  $content       留言反馈
      */
-    public function ApplicationSample(Request $request)
-    {
+    public function ApplicationSample(Request $request) {
         $params = $request->all();
         $name = $params['name'];
         $email = $params['email'];
@@ -369,7 +362,6 @@ class PageController extends Controller
         $company = $params['company'];
         $plan_buy_time = $params['plan_buy_time'];
         $content = $params['content'];
-
         $model = new ContactUs();
         $model->name = $name;
         $model->email = $email;
@@ -388,48 +380,46 @@ class PageController extends Controller
         }
     }
 
-
     /**
      * 团队成员
      */
-    public function TeamMember(Request $request)
-    {
+    public function TeamMember(Request $request) {
         $data = TeamMember::select([
-            'name',
-            'position as post',
-            'image as img',
-            'custom as sketch',
-            'describe'
-        ])
-            ->where('status', 1)
-            ->orderBy('sort', 'asc')
-            ->get()
-            ->toArray();
+                                       'name',
+                                       'position as post',
+                                       'image as img',
+                                       'custom as sketch',
+                                       'describe'
+                                   ])
+                          ->where('status', 1)
+                          ->orderBy('sort', 'asc')
+                          ->get()
+                          ->toArray();
         ReturnJson(true, '', $data);
     }
 
     /**
      * 团队成员-分析师
      */
-    public function AnalystGroup(Request $request)
-    {
+    public function AnalystGroup(Request $request) {
         $analystList = TeamMember::select([
-            'name',
-            'industry_id',
-            'area', // 研究领域
-            'experience', // 参与项目/经验
-            'custom', // 合作客户
-        ])
-            ->where('status', 1)
-            ->where('is_analyst', 1)
-            ->orderBy('sort', 'asc')
-            ->get()
-            ->toArray();
+                                              'name',
+                                              'industry_id',
+                                              'area', // 研究领域
+                                              'experience', // 参与项目/经验
+                                              'custom', // 合作客户
+                                          ])
+                                 ->where('status', 1)
+                                 ->where('is_analyst', 1)
+                                 ->orderBy('sort', 'asc')
+                                 ->get()
+                                 ->toArray();
         $data = [];
         if ($analystList) {
             $industryIds = array_unique(array_column($analystList, 'industry_id'));
-            $industryArray = ProductsCategory::query()->select(['id', 'name'])->whereIn('id', $industryIds)->pluck('name', 'id')->toArray();
-
+            $industryArray = ProductsCategory::query()->select(['id', 'name'])->whereIn('id', $industryIds)->pluck(
+                'name', 'id'
+            )->toArray();
             foreach ($analystList as $member) {
                 if (empty($member['industry_id'])) {
                     continue;
@@ -450,36 +440,33 @@ class PageController extends Controller
     /**
      * 资质认证
      */
-    public function Qualification(Request $request)
-    {
+    public function Qualification(Request $request) {
         $params = $request->all();
         $page = $params['page'] ?? 1;
         $pageSize = $params['pageSize'] ?? 12;
-
         $result = Qualification::select([
-            'id',
-            'name as title',
-            'thumbnail as thumb',
-            'image as img'
-        ])
-            ->orderBy('sort', 'asc')
-            ->where('status', 1)
-            ->offset(($page - 1) * $pageSize)
-            ->limit($pageSize)
-            ->get()
-            ->toArray();
+                                            'id',
+                                            'name as title',
+                                            'thumbnail as thumb',
+                                            'image as img'
+                                        ])
+                               ->orderBy('sort', 'asc')
+                               ->where('status', 1)
+                               ->offset(($page - 1) * $pageSize)
+                               ->limit($pageSize)
+                               ->get()
+                               ->toArray();
         $count = Qualification::where('status', 1)->count();
-
         foreach ($result as $key => $item) {
             $result[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($result[$key]['thumb']);
             $result[$key]['img'] = Common::cutoffSiteUploadPathPrefix($result[$key]['img']);
         }
         $data = [
-            'result' => $result,
-            'page' => $page,
-            'pageSize' => $pageSize,
+            'result'    => $result,
+            'page'      => $page,
+            'pageSize'  => $pageSize,
             'pageCount' => ceil($count / $pageSize),
-            'count' => intval($count),
+            'count'     => intval($count),
         ];
         ReturnJson(true, '', $data);
     }
@@ -487,41 +474,61 @@ class PageController extends Controller
     /**
      * 常见问题
      */
-    public function Faqs()
-    {
-        $data = Problem::select(['problem as question', 'reply as answer'])->where('status', 1)->orderBy('sort', 'asc')->get()->toArray();
-        ReturnJson(true, '', $data);
+    public function Faqs() {
+        try {
+            if (checkSiteAccessData(['mrrs'])) {
+                $facateGoryList = FaqCategory::query()->where('status', 1)->orderBy('sort', 'asc')->select(
+                    ['id', 'name']
+                )
+                                             ->get()->toArray();
+                $data = [];
+                if (!empty($facateGoryList)) {
+                    $category_id_list = array_column($facateGoryList, 'id');
+                    $problemList = Problem::query()->whereIn("category_id", $category_id_list)->selectRaw(
+                        'id , category_id , problem as question , reply as answer'
+                    )->get()->toArray();
+                    $problemList = array_reduce($problemList, function ($carry, $item) {
+                        $carry[$item['category_id']][] = $item;
+                        return $carry;
+                    }, []);
+                    foreach ($facateGoryList as &$facateGory) {
+                        $facateGory['faqs'] = $problemList[$facateGory['id']];
+                    }
+                    $data = $facateGoryList;
+                }
+            } else {
+                $data = Problem::select(['problem as question', 'reply as answer'])->where('status', 1)->orderBy(
+                    'sort', 'asc'
+                )->get()->toArray();
+            }
+            ReturnJson(true, '', $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage(), []);
+        }
     }
 
     /**
      * 客户评价-列表
      */
-    public function CustomerEvaluations(Request $request)
-    {
+    public function CustomerEvaluations(Request $request) {
         $params = $request->all();
         $page = $params['page'] ?? 1;
         $pageSize = $params['pageSize'] ?? 16;
-
-
         $query = Comment::where('status', 1)
-            ->select(['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at'])
-            ->where('status', 1);
-
+                        ->select(['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at'])
+                        ->where('status', 1);
         $count = $query->count();
-
         $list = $query->offset(($page - 1) * $pageSize)->limit($pageSize)->orderBy('id', 'desc')->get()->toArray();
-
         foreach ($list as $key => $item) {
             $list[$key]['comment_at_format'] = date('Y-m-d', $item['comment_at']);
             $list[$key]['image'] = Common::cutoffSiteUploadPathPrefix($item['image']);
         }
-
         $data = [
-            'result' => $list,
-            "page" => $page,
-            "pageSize" => $pageSize,
+            'result'    => $list,
+            "page"      => $page,
+            "pageSize"  => $pageSize,
             'pageCount' => ceil($count / $pageSize),
-            "count" => intval($count),
+            "count"     => intval($count),
         ];
         ReturnJson(true, '', $data);
     }
@@ -529,16 +536,15 @@ class PageController extends Controller
     /**
      * 客户评价-详情
      */
-    public function CustomerEvaluation(Request $request)
-    {
+    public function CustomerEvaluation(Request $request) {
         $id = $request->id;
         if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }
         $data = Comment::select(['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at'])
-            ->where('status', 1)
-            ->where('id', $id)
-            ->first();
+                       ->where('status', 1)
+                       ->where('id', $id)
+                       ->first();
         if ($data) {
             $data['comment_at_format'] = date('Y-m-d', $data['comment_at']);
         }
@@ -548,23 +554,20 @@ class PageController extends Controller
     /**
      * 公司发展历程
      */
-    public function CompanyHistory(Request $request)
-    {
-
+    public function CompanyHistory(Request $request) {
         $params = $request->all();
-        $type = isset($params['type'])? $params['type']:0;
-
+        $type = isset($params['type']) ? $params['type'] : 0;
         $result = History::select([
-            'year',
-            'body as content',
-        ])
-            ->orderBy('sort', 'asc')
-            ->where('status', 1)
-            ->get()
-            ->toArray();
+                                      'year',
+                                      'body as content',
+                                  ])
+                         ->orderBy('sort', 'asc')
+                         ->where('status', 1)
+                         ->get()
+                         ->toArray();
         if ($type == 1 && $result) {
             $historyData = [
-                'up' => [],
+                'up'   => [],
                 'down' => [],
             ];
             foreach ($result as $key => $item) {
