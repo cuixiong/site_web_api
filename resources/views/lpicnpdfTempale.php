@@ -47,8 +47,8 @@
 
             </div>
             <div class="_r_div1">
-                <p style="width: 200px;">报告格式:<?= $product_format ?></p>|
-                <p style="width: 280px;margin-left: 20px;">交付方式:<?= $product_delivery_method ?></p>
+                <p style="width: 200px;">报告格式:<?= $serviceMethod ?></p>|
+                <p style="width: 280px;margin-left: 20px;">交付方式:<?= $payMethod ?></p>
             </div>
         </div>
     </div>
@@ -58,8 +58,10 @@
             <p style="width: 146px;height: 35px;background: #3958B9;margin-right: 4px;text-align: center;color: #FFFFFF;line-height: 35px;">
             </p>
 
-            <?php foreach ($editionAll as $index => $edition) { ?>
-                <?php if ($index < count($editionAll) - 1) { ?>
+            <?php
+            $editionAll = isset($prices[0]) && is_array($prices[0]) ? array_column($prices[0], 'edition') : [];
+            foreach ($editionAll as $index => $edition) {
+                if ($index < count($editionAll) - 1) { ?>
                     <p style="width: 224px;height: 35px;background: #3958B9;margin-right: 4px;text-align: center;color: #FFFFFF;line-height: 35px;">
                         <?= $edition ?>
                     </p>
@@ -136,7 +138,7 @@
     <div class="title_content3">
         <?= $tables_and_figures ?>
     </div>
-    
+
     <div class="book_div4">
         <img src="<?= env('IMAGE_URL'); ?>/site/<?= env('APP_NAME'); ?>/pdf/images/zhuangShi02.webp" alt="yeJiao">
         <p><a href="<?= $url ?>" style="text-decoration:none;color: #ffffff;"><?= $homepage ?></a></p>
