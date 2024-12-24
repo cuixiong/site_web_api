@@ -541,6 +541,24 @@ class SendEmailController extends Controller
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
+            $productsName = '';
+            $productLink = '';
+            if (isset($data['product_id']) && !empty($data['product_id'])) {
+                $productsInfo = Products::query()->where("id", $data['product_id'])
+                    ->select(
+                        [
+                            'url',
+                            'thumb',
+                            'name',
+                            'id as product_id',
+                            'published_date',
+                            'category_id'
+                        ]
+                    )->first();
+                $productsName = !empty($productsInfo) ? $productsInfo->name : '';
+                $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
+            }
+
             $token = $data['email'] . '&' . $data['id'];
             $data['token'] = base64_encode($token);
             $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
@@ -564,6 +582,8 @@ class SendEmailController extends Controller
                 'backendUrl'   => $imgDomain,
                 'dateTime'     => date('Y-m-d'),
                 'language'     => $ContactUs['language_version'] ?? '',
+                'link'         => $productLink,
+                'productsName' => $productsName,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
                 ->pluck('value', 'key')
