@@ -107,6 +107,9 @@ class ProductPdf extends Base
             'table_of_content',
             'tables_and_figures',
             'companies_mentioned',
+            'description_en',
+            'table_of_content_en',
+            'tables_and_figures_en',
         ])->where('product_id', $productId)->first()->toArray();
         $product = array_merge($product, $description ?? []);
         // return $product;
@@ -148,6 +151,9 @@ class ProductPdf extends Base
             'table_of_content' => isset($product['table_of_content']) ? trim($product['table_of_content']) : '',
             'tables_and_figures' => isset($product['tables_and_figures']) ? trim($product['tables_and_figures']) : '',
             'companies_mentioned' => isset($product['companies_mentioned']) ? trim($product['companies_mentioned']) : '',
+            'description_en' => isset($product['description_en']) ? trim($product['description_en']) : '',
+            'table_of_content_en' => isset($product['table_of_content_en']) ? trim($product['table_of_content_en']) : '',
+            'tables_and_figures_en' => isset($product['tables_and_figures_en']) ? trim($product['tables_and_figures_en']) : '',
             'category_name' => $product['category_name'] ?? '',
             'thumb' => $productThumb,
             'email' => $adminEmail ?? '',

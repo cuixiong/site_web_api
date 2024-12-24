@@ -59,7 +59,7 @@
             </p>
 
             <?php
-            $editionAll = isset($prices[0]) && is_array($prices[0]) ? array_column($prices[0], 'edition') : [];
+            $editionAll = isset($prices[0]['data']) && is_array($prices[0]['data']) ? array_column($prices[0]['data'], 'edition') : [];
             foreach ($editionAll as $index => $edition) {
                 if ($index < count($editionAll) - 1) { ?>
                     <p style="width: 224px;height: 35px;background: #3958B9;margin-right: 4px;text-align: center;color: #FFFFFF;line-height: 35px;">
@@ -74,22 +74,22 @@
             <?php } ?>
         </div>
 
-        <?php foreach ($prices as $language => $item) { ?>
+        <?php foreach ($prices as $key => $item) { ?>
             <div class="tit_con_div1">
                 <p style="width: 146px;height: 35px;background: #F6FAFF;margin-right: 4px;padding-left: 25px;color: #333333;line-height: 35px;font-weight: bold;">
-                    <?= $language ?>
+                    <?= $item['language'] ?>
                 </p>
 
                 <?php $i = 1;
-                foreach ($item as $edition => $price) { ?>
+                foreach ($item['data'] as $edition => $price) { ?>
                     <?php if ($i < count($item) - 1) { ?>
                         <p style="width: 224px;height: 35px;background: #F6FAFF;margin-right: 4px;text-align: center;color: #333333;line-height: 35px;">
-                            <?= !empty($price) ? $price . '元' : '' ?>
+                            <?= !empty($price['price']) ? $price['price'] . '元' : '' ?>
                         </p>
                     <?php } else { ?>
 
                         <p style="width: 224px;height: 35px;background: #F6FAFF;text-align: center;color: #333333;line-height: 35px;">
-                            <?= !empty($price) ? $price . '元' : '' ?>
+                            <?= !empty($price['price']) ? $price['price'] . '元' : '' ?>
                         </p>
                     <?php } ?>
                     <?php $i++; ?>
@@ -107,7 +107,7 @@
     </div>
 
     <div class="title_content3">
-        <?= $description ?>
+        <pre><?= $description ?></pre>
     </div>
 
     <!-- 报告目录 -->
@@ -117,7 +117,7 @@
     </div>
 
     <div class="title_content3">
-        <?= $table_of_content ?>
+        <pre><?= $table_of_content ?></pre>
     </div>
 
     <!-- 报告图表 -->
@@ -127,7 +127,7 @@
     </div>
 
     <div class="title_content3">
-        <?= $tables_and_figures ?>
+        <pre><?= $tables_and_figures ?></pre>
     </div>
     <!-- 提及的公司 -->
     <div class="title_content2">
@@ -136,12 +136,44 @@
     </div>
 
     <div class="title_content3">
-        <?= $tables_and_figures ?>
+        <pre><?= $tables_and_figures ?></pre>
     </div>
+
+    
+    <!-- 内容摘要(英) -->
+    <div class="title_content2">
+        <p class="tit_con2_p1">内容摘要(英)</p>
+        <img class="tit_con2_img1" src="<?= env('IMAGE_URL'); ?>/site/<?= env('APP_NAME'); ?>/pdf/images/zhuangShi.webp" alt="zhuangShi">
+    </div>
+
+    <div class="title_content3">
+        <pre><?= $description_en ?></pre>
+    </div>
+
+    <!-- 报告目录(英) -->
+    <div class="title_content2">
+        <p class="tit_con2_p1">报告目录(英)</p>
+        <img class="tit_con2_img1" src="<?= env('IMAGE_URL'); ?>/site/<?= env('APP_NAME'); ?>/pdf/images/zhuangShi.webp" alt="zhuangShi">
+    </div>
+
+    <div class="title_content3">
+        <pre><?= $table_of_content_en ?></pre>
+    </div>
+
+    <!-- 报告图表(英) -->
+    <div class="title_content2">
+        <p class="tit_con2_p1">报告图表(英)</p>
+        <img class="tit_con2_img1" src="<?= env('IMAGE_URL'); ?>/site/<?= env('APP_NAME'); ?>/pdf/images/zhuangShi.webp" alt="zhuangShi">
+    </div>
+
+    <div class="title_content3">
+        <pre><?= $tables_and_figures_en ?></pre>
+    </div>
+
 
     <div class="book_div4">
         <img src="<?= env('IMAGE_URL'); ?>/site/<?= env('APP_NAME'); ?>/pdf/images/zhuangShi02.webp" alt="yeJiao">
-        <p><a href="<?= $url ?>" style="text-decoration:none;color: #ffffff;"><?= $homepage ?></a></p>
+        <p><a href="<?= $homeUrl ?>" style="text-decoration:none;color: #ffffff;"><?= $homeUrl ?></a></p>
     </div>
 </body>
 
