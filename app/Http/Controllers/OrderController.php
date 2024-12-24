@@ -358,6 +358,11 @@ class OrderController extends Controller {
         if (empty($code) || empty($state)) {
             throw new \Exception('invalid param');
         }
+        
+        // 从邮件链接跳转支付的，如果取消支付，则跳回首页
+        if (strpos($referer, '/order/wechat-order') !== false || empty($referer)) {
+            $referer = env('APP_URL');
+        }
         $orderId = $state;
         $order = Order::find($orderId);
         if (empty($order)) {

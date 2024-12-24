@@ -34,11 +34,11 @@ class Controller extends BaseController {
             return;
         }
 
-        // 签名检查
-        $this->signCheck();
-        //$whiteIplist = $this->getSetValByKey('ip_white_rules') ?? '';
+        // 签名检查 (系统配置那一个)
         $checkRes = $this->checkWhiteIp();
         if (!$checkRes) {
+            //签名检查
+            $this->signCheck();
             //请求日志记录
             $this->accessLog();
             //UA请求头封禁
@@ -227,13 +227,14 @@ class Controller extends BaseController {
             //白名单
             //$ua_info = $this->getSetValByKey('ua_white_list') ?? '';
             //$ua_list = BanWhiteList::query()->where("type" , 2)->where("status" , 1)->pluck('ban_str')->toArray();
-            $banStrs = BanWhiteList::query()->where("type", 1)
-                                   ->where("status", 1)
-                                   ->pluck('ban_str')
-                                   ->toArray();
-            $whiteIplist = implode("\n", $banStrs);
-            //ip白名单验证
-            $checkRes = $this->isIpAllowed($ip, $whiteIplist);
+//            $banStrs = BanWhiteList::query()->where("type", 1)
+//                                   ->where("status", 1)
+//                                   ->pluck('ban_str')
+//                                   ->toArray();
+//            $whiteIplist = implode("\n", $banStrs);
+//            //ip白名单验证
+//            $checkRes = $this->isIpAllowed($ip, $whiteIplist);
+            $checkRes = false; //需求改动, 白名单已经在上面验证了, 所以暂时关闭
             if (!$checkRes) {
                 $slidingWindowRateLimiter = new SlidingWindowRateLimiter(
                     $req_ua_window_time, $req_ua_limit, $ua_expire_time, $cache_prefix_key
@@ -282,11 +283,11 @@ class Controller extends BaseController {
         if ($is_open_check_security > 0) {
             //$white_ip_securty_check_key = $setKeyPrefix.'white_ip_security_check';
             //$securityCheckWhiteIps = Redis::get($white_ip_securty_check_key) ?? '';
-            $securityCheckWhiteIps = $this->getSetValByKey('white_ip_security_check') ?? '';
-            $checkRes = $this->isIpAllowed(request()->ip(), $securityCheckWhiteIps);
-            if (!$checkRes) {
+//            $securityCheckWhiteIps = $this->getSetValByKey('white_ip_security_check') ?? '';
+//            $checkRes = $this->isIpAllowed(request()->ip(), $securityCheckWhiteIps);
+//            if (!$checkRes) {
                 $this->securityCheck();
-            }
+//            }
         }
     }
 

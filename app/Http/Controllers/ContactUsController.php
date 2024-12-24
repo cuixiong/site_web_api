@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Common\SendEmailController;
 use App\Models\ContactUs;
+use App\Models\Plate;
+use App\Models\PlateValue;
 use Illuminate\Http\Request;
 use App\Models\DictionaryValue;
 use App\Models\Country;
@@ -30,9 +32,9 @@ class ContactUsController extends Controller {
         $model->email = $email;
         $model->company = $params['company'] ?? '';
         if (!empty($params['buy_time'])) {
-            $model->buy_time = $params['buy_time'] ?? 0;
+            $model->buy_time = $params['buy_time'] ?? '';
         } else {
-            $model->buy_time = $params['plan_buy_time'] ?? 0;
+            $model->buy_time = $params['plan_buy_time'] ?? '';
         }
         $model->province_id = $params['province_id'] ?? 0;
         $model->city_id = $params['city_id'] ?? 0;
@@ -81,8 +83,31 @@ class ContactUsController extends Controller {
             $provinces[$key]['children'] = $cities;
         }
         $result['city'] = $provinces;
-
-
         ReturnJson(true, '', $result);
+    }
+
+    public function companyOverview() {
+        try {
+            $info = Plate::query()->select(['id', 'pc_image', 'mb_image', 'icon'])
+                         ->whereIn('alias', ['company_overview'])
+                         ->first();
+            if (empty($info)) {
+                ReturnJson(false, '暂无数据');
+            }
+            $list = PlateValue::query()->select([
+                                                    'title',
+                                                    'short_title',
+                                                    'content',
+                                                    'image',
+                                                    'icon'
+                                                ])->where('parent_id', $info['id'])
+                              ->get()->toArray();
+            $data = [];
+            $data['content'] = $info;
+            $data['list'] = $list;
+            ReturnJson(true, '', $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, '未知错误', $e->getMessage());
+        }
     }
 }

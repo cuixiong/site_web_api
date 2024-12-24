@@ -56,9 +56,9 @@ class CommonController extends Controller {
         $data['product_cagory'] = $this->getProductCagory();
         //权威引用
         $data['quote_list'] = $this->getQuoteList($request);
-        
 
-        
+
+
         // 总控字典部分
         // 计划购买时间 ,原为联系我们控制器Dictionary函数中代码，现复制至此处
         $data['buy_time'] = DictionaryValue::GetDicOptions('Buy_Time');
@@ -73,14 +73,14 @@ class CommonController extends Controller {
         //返回对应的分类数据
         if(checkSiteAccessData(['tycn'])){
             $cate = ProductsCategory::query()
-                                    ->where("show_home", 1)
+                                    ->where("is_recommend", 1)
                                     ->where("status", 1)
                                     ->select(['id', 'name', 'seo_title', 'link', 'icon' , 'icon_hover'])
                                     ->orderBy('sort' , 'ASC')
                                     ->limit(20)->get()->toArray();
             $data['cate'] = $cate;
         }
-        
+
         if (checkSiteAccessData(['yhcn'])){
             // 客户评价
             $data['comment'] = $this->getCustomersComment($request);
@@ -90,12 +90,12 @@ class CommonController extends Controller {
             // 办公室
             $data['offices'] = $this->getofficeRegion($request);
         }
-        
+
         ReturnJson(true, '', $data);
     }
 
     public function getQuoteList(Request $request) {
-        
+
         $category_id = $request->quote_category_id ?? 0;
         $page = $request->quote_page ?? 1;
         $pageSize = $request->quote_size ?? 4;
@@ -560,7 +560,7 @@ class CommonController extends Controller {
 
     /**
      * 其它语言网站根据需求写在系统设置处，不再单独使用LanguageWebsite
-     * 
+     *
      * @return mixed
      */
     private function getWebSiteLanBySystem()
@@ -678,7 +678,7 @@ class CommonController extends Controller {
     }
 
 
-    // 办公室 所在地点 
+    // 办公室 所在地点
     public function getofficeRegion(Request $request)
     {
         $list = Office::where('status', 1)
@@ -691,7 +691,7 @@ class CommonController extends Controller {
         }
         return $list;
     }
-    
+
     /**
      *
      * @return array
