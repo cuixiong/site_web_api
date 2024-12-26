@@ -156,7 +156,7 @@ class ProductController extends Controller {
                 $products[] = $value;
             }
         }
-        if (checkSiteAccessData(['tycn'])) {
+        if (checkSiteAccessData(['tycn','lpicn'])) {
             $productCagoryId = $this->GetProductCateList($keyword, 0);
             $productCagory = $this->getProductCagory($productCagoryId);
         } else {
