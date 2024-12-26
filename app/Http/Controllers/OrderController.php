@@ -75,6 +75,14 @@ class OrderController extends Controller {
                     'email'     => $email,
                     'day_begin' => date('Y.m.d', $coupon->time_begin),
                     'day_end'   => date('Y.m.d', $coupon->time_end),
+
+                    'day_begin_year' => date('Y', $coupon->time_begin),
+                    'day_begin_month' => date('m', $coupon->time_begin),
+                    'day_begin_day' => date('d', $coupon->time_begin),
+                    'day_end_year'   => date('Y', $coupon->time_end),
+                    'day_end_month'   => date('m', $coupon->time_end),
+                    'day_end_day'   => date('d', $coupon->time_end),
+
                 ];
                 $model = new User();
                 $modelCouponUser = new CouponUser();
@@ -350,8 +358,11 @@ class OrderController extends Controller {
         if (empty($code) || empty($state)) {
             throw new \Exception('invalid param');
         }
-//        $orderNumber = $state;
-//        $order = Order::query()->where("order_number" , $orderNumber)->first();
+
+        // 从邮件链接跳转支付的，如果取消支付，则跳回首页
+        if (strpos($referer, '/order/wechat-order') !== false || empty($referer)) {
+            $referer = env('APP_URL');
+        }
         $orderId = $state;
         $order = Order::find($orderId);
         if (empty($order)) {
@@ -390,23 +401,13 @@ class OrderController extends Controller {
                         window.location='$returnUrl';
                     } else if (res.err_msg == "get_brand_wcpay_request:cancel" || res.err_msg == "get_brand_wcpay_request:fail") {
                         alert('支付取消');
-                        var turl = '$referer';
-                        if(turl){
-                            window.location = turl;
-                        } else {
-                            window.location='/';
-                        }
+                        window.location='$referer';
                     } else if (res.err_msg == "system:function_not_implement") {
                         window.document.write("<h1>请使用手机微信打开</h1>");
                         alert('请使用手机微信打开');
                     } else {
                         alert('支付取消');
-                        var turl = '$referer';
-                        if(turl){
-                            window.location = turl;
-                        } else {
-                            window.location='/';
-                        }
+                        window.location='$referer';
                     }
                 });
             }

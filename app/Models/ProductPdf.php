@@ -107,6 +107,9 @@ class ProductPdf extends Base
             'table_of_content',
             'tables_and_figures',
             'companies_mentioned',
+            'description_en',
+            'table_of_content_en',
+            'tables_and_figures_en',
         ])->where('product_id', $productId)->first()->toArray();
         $product = array_merge($product, $description ?? []);
         // return $product;
@@ -114,10 +117,13 @@ class ProductPdf extends Base
         $adminEmail = SystemValue::where('key', 'siteEmail')->value('value');
         $adminPhone = SystemValue::where('key', 'sitePhone')->value('value');
         $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
-        
-        // 服务方式文本
+
+        // 服务方式/报告格式 文本
         $serviceMethod = SystemValue::where(['key' => 'Service', 'status' => 1])->value('value');
-        $productThumb = !empty($product['thumb']) ?$product['thumb'] : $defaultImg;
+        // 支付方式/交付方式 文本
+        $payMethod = SystemValue::where(['key' => 'PayMethod', 'status' => 1])->value('value');
+
+        $productThumb = !empty($product['thumb']) ? $product['thumb'] : $defaultImg;
         $productThumb = env('IMAGE_URL') . Common::cutoffSiteUploadPathPrefix($productThumb);
 
         $product_id = $product['id'] ?? '';
@@ -145,12 +151,15 @@ class ProductPdf extends Base
             'table_of_content' => isset($product['table_of_content']) ? trim($product['table_of_content']) : '',
             'tables_and_figures' => isset($product['tables_and_figures']) ? trim($product['tables_and_figures']) : '',
             'companies_mentioned' => isset($product['companies_mentioned']) ? trim($product['companies_mentioned']) : '',
+            'description_en' => isset($product['description_en']) ? trim($product['description_en']) : '',
+            'table_of_content_en' => isset($product['table_of_content_en']) ? trim($product['table_of_content_en']) : '',
+            'tables_and_figures_en' => isset($product['tables_and_figures_en']) ? trim($product['tables_and_figures_en']) : '',
             'category_name' => $product['category_name'] ?? '',
             'thumb' => $productThumb,
             'email' => $adminEmail ?? '',
             'phone' => $adminPhone ?? '',
-            'serviceMethod' => !empty($serviceMethod)?$serviceMethod:'',
-
+            'serviceMethod' => !empty($serviceMethod) ? $serviceMethod : '',
+            'payMethod' => !empty($payMethod) ? $payMethod : '',
             'homeUrl' => env('APP_URL'),
             // 'homepage' => parse_url(Yii::$app->params['frontend_domain'])['host'],
         ];

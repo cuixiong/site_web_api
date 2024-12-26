@@ -328,6 +328,14 @@ class UserController extends Controller {
                 $data[$key]['value'] = $value['type'] == 1 ? round($value['value'], 0) : (float)$value['value'];
                 $data[$key]['day_begin'] = $value['time_begin'] ? date('Y.m.d', $value['time_begin']) : '';
                 $data[$key]['day_end'] = $value['time_end'] ? date('Y.m.d', $value['time_end']) : '';
+                
+                $data[$key]['day_begin_year'] = date('Y', $value['time_begin']);
+                $data[$key]['day_begin_month'] = date('m', $value['time_begin']);
+                $data[$key]['day_begin_day'] = date('d', $value['time_begin']);
+                $data[$key]['day_end_year'] = date('Y', $value['time_end']);
+                $data[$key]['day_end_month'] = date('m', $value['time_end']);
+                $data[$key]['day_end_day'] = date('d', $value['time_end']);
+
                 $data[$key]['code'] = $value['code'];
                 $data[$key]['status'] = $couponStatus;
             }
