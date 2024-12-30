@@ -14,11 +14,13 @@ use App\Models\SystemValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class NewsController extends Controller {
+class NewsController extends Controller
+{
     /**
      * 行业新闻列表
      */
-    public function Index(Request $request) {
+    public function Index(Request $request)
+    {
         $page = $request->page ?? 1;
         $pageSize = $request->pageSize ?? 10;
         $keyword = $request->keyword;
@@ -28,11 +30,21 @@ class NewsController extends Controller {
         $where = [
             'status' => 1,
         ];
-        $field = ['thumb', 'title', 'upload_at as release_at', 'tags', 'description', 'category_id', 'id',
-                  'url' , 'hits', 'keywords'];
+        $field = [
+            'thumb',
+            'title',
+            'upload_at as release_at',
+            'tags',
+            'description',
+            'category_id',
+            'id',
+            'url',
+            'hits',
+            'keywords'
+        ];
         $query = News::select($field)
-                     ->where($where)
-                     ->where('upload_at', '<=', time());
+            ->where($where)
+            ->where('upload_at', '<=', time());
         if (!empty($type_id)) {
             $query = $query->where('type', $type_id);
         }
@@ -40,7 +52,7 @@ class NewsController extends Controller {
             $keyword = explode(" ", $keyword);
             for ($i = 0; $i <= count($keyword); $i++) {
                 if (!empty($keyword[$i])) {
-                    $query = $query->where('title', 'LIKE', '%'.$keyword[$i].'%');
+                    $query = $query->where('title', 'LIKE', '%' . $keyword[$i] . '%');
                 }
             }
         }
@@ -49,17 +61,17 @@ class NewsController extends Controller {
             $query = $query->where($industryIdWhere);
         }
         if (!empty($tag)) {
-            $query = $query->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
+            $query = $query->whereRaw(DB::raw('FIND_IN_SET("' . $tag . '",tags)'));
         }
         $count = $query->count();
 
         $result = $query->orderBy('sort', 'asc')
-                        ->orderBy('upload_at', 'desc')
-                        ->orderBy('id', 'desc')
-                        ->offset(($page - 1) * $pageSize)
-                        ->limit($pageSize)
-                        ->get()
-                        ->toArray();
+            ->orderBy('upload_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->offset(($page - 1) * $pageSize)
+            ->limit($pageSize)
+            ->get()
+            ->toArray();
 
 
         $news = [];
@@ -69,12 +81,13 @@ class NewsController extends Controller {
                 $news[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($news[$key]['thumb']);
                 $news[$key]['title'] = $value['title'];
                 $news[$key]['create_time_format'] = $value['release_at'] ? date('Y-m-d', $value['release_at']) : '';
-                $news[$key]['month_day'] = $value['release_at'] ? date('m-d', $value['release_at']) : ''; 
+                $news[$key]['month_day'] = $value['release_at'] ? date('m-d', $value['release_at']) : '';
                 $news[$key]['year'] = $value['release_at'] ? date('Y', $value['release_at']) : '';
                 $news[$key]['month'] = $value['release_at'] ? date('m', $value['release_at']) : '';
                 $news[$key]['day'] = $value['release_at'] ? date('d', $value['release_at']) : '';
                 $news[$key]['category'] = ProductsCategory::select(['id', 'name', 'link'])->where(
-                    'id', $value['category_id']
+                    'id',
+                    $value['category_id']
                 )->first();
                 $news[$key]['tags'] = $value['tags'] ? explode(',', $value['tags']) : [];
                 $news[$key]['description'] = $value['description'];
@@ -97,24 +110,26 @@ class NewsController extends Controller {
     /**
      * 行业新闻详情
      */
-    public function View(Request $request) {
+    public function View(Request $request)
+    {
         $id = $request->id;
         $url = $request->url;
         if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = News::select(['title', 'upload_at', 'hits', 'url', 'tags', 'content', 'keywords', 'description','category_id'])
-                    ->where(['id' => $id, 'status' => 1])
-                    ->first();
+        $data = News::select(['title', 'upload_at', 'hits', 'url', 'tags', 'content', 'keywords', 'description', 'category_id', 'sort'])
+            ->where(['id' => $id, 'status' => 1])
+            ->first();
         if ($data) {
-            if(!empty($data->upload_at ) && $data->upload_at > time()){
+            if (!empty($data->upload_at) && $data->upload_at > time()) {
                 ReturnJson(false, '新闻未发布，请稍后查看！');
             }
 
             $category = ProductsCategory::select(['id', 'name', 'link'])->where(
-                'id', $data['category_id']
+                'id',
+                $data['category_id']
             )->first();
-            if(!empty($category )){
+            if (!empty($category)) {
                 $category = $category->toArray();
             }
             $data['category'] = $category;
@@ -124,18 +139,19 @@ class NewsController extends Controller {
             News::where(['id' => $id])->increment('hits');
             $data['tags'] = $data['tags'] ? explode(',', $data['tags']) : [];
             $data['upload_at_format'] = $data['upload_at'] ? date('Y-m-d', $data['upload_at']) : '';
-            list($prevId, $nextId) = $this->getNextPrevId($request, $id);
+            // list($prevId, $nextId) = $this->getNextPrevId($request, $id); // 暂时注释看看效果
+            list($prevId, $nextId) = $this->getNextPrevId2($request, $id, $data['upload_at'], $data['sort']);
             //查询上一篇
             if (!empty($prevId)) {
                 $prev = News::select(['id', 'title', 'url', 'category_id'])
-                            ->where("id", $prevId)
-                            ->first();
+                    ->where("id", $prevId)
+                    ->first();
             }
             //查询下一篇
             if (!empty($nextId)) {
                 $next = News::select(['id', 'title', 'url', 'category_id'])
-                            ->where("id", $nextId)
-                            ->first();
+                    ->where("id", $nextId)
+                    ->first();
             }
             $prev_next = [];
             if (!empty($prev)) {
@@ -157,7 +173,7 @@ class NewsController extends Controller {
             //获取相关报告
             $data['relevant_product'] = $this->getRelevantProduct($data['tags']);
             //获取相关新闻
-            if (checkSiteAccessData(['168report'])||checkSiteAccessData(['yhcn'])) {
+            if (checkSiteAccessData(['168report']) || checkSiteAccessData(['yhcn'])) {
                 //相关新闻
                 $data['relevant_news'] = $this->getRelevantNews($data['tags'], $id);
             }
@@ -165,11 +181,11 @@ class NewsController extends Controller {
             ReturnJson(true, 'success', $data);
         } else {
             $news_relate = News::select(['id', 'url'])
-                               ->where(['url' => $url, 'status' => 1])
-                               ->where("id" , "<>" , $id)
-                               ->orderBy('upload_at', 'desc')
-                               ->orderBy('id', 'desc')
-                               ->first();
+                ->where(['url' => $url, 'status' => 1])
+                ->where("id", "<>", $id)
+                ->orderBy('upload_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
             if (!empty($news_relate)) {
                 ReturnJson(1, '', $news_relate);
             } else {
@@ -181,7 +197,8 @@ class NewsController extends Controller {
     /**
      * 相关新闻资讯列表：由于数据之间没有相关性，所以取随机的几条数据
      */
-    public function Relevant(Request $request) {
+    public function Relevant(Request $request)
+    {
         $id = $request->id; // 从详情页获取id，根据该id获取相关数据
         if (empty($id)) {
             ReturnJson(false, 'id is empty');
@@ -196,7 +213,8 @@ class NewsController extends Controller {
      * 取新闻的关键词去搜报告的关键词，只有完全匹配的并且报告的出版日期是当前年份的才取出来
      * "热点资讯详情"和“行业新闻详情”两个页面通用的【相关报告列表】接口。
      */
-    public function RelevantProducts(Request $request) {
+    public function RelevantProducts(Request $request)
+    {
         $id = $request->id ? $request->id : null;
         $keyword = News::where('id', $id)->value('tags');
         if (!empty($keyword)) {
@@ -213,7 +231,8 @@ class NewsController extends Controller {
      *
      * @return int[]
      */
-    private function getNextPrevId(Request $request, mixed $id): array {
+    private function getNextPrevId(Request $request, mixed $id): array
+    {
         //查询上一个 ， 下一个
         $page = $request->page ?? 1;
         $pageSize = $request->pageSize ?? 10;
@@ -231,12 +250,12 @@ class NewsController extends Controller {
         $industry_id = $request->industry_id;
         $tag = trim($request->tag);
         $query = News::query()->where('status', 1)
-                     ->where("upload_at", "<=", time());
+            ->where("upload_at", "<=", time());
         if (!empty($keyword)) {
             $keyword = explode(" ", $keyword);
             for ($i = 0; $i <= count($keyword); $i++) {
                 if (!empty($keyword[$i])) {
-                    $query = $query->where('title', 'LIKE', '%'.$keyword[$i].'%');
+                    $query = $query->where('title', 'LIKE', '%' . $keyword[$i] . '%');
                 }
             }
         }
@@ -245,15 +264,15 @@ class NewsController extends Controller {
             $query = $query->where($industryIdWhere);
         }
         if (!empty($tag)) {
-            $query->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
+            $query->whereRaw(DB::raw('FIND_IN_SET("' . $tag . '",tags)'));
         }
         $sortIdList = $query->orderBy('sort', 'asc')
-                            ->orderBy('upload_at', 'desc')
-                            ->orderBy('id', 'desc')
-                            ->offset($offset)
-                            ->limit($pageSize)
-                            ->pluck('id')
-                            ->toArray();
+            ->orderBy('upload_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->offset($offset)
+            ->limit($pageSize)
+            ->pluck('id')
+            ->toArray();
         $prevId = 0;
         $nextId = 0;
         foreach ($sortIdList as $key => $sortId) {
@@ -262,6 +281,68 @@ class NewsController extends Controller {
                 $nextId = isset($sortIdList[$key + 1]) ? $sortIdList[$key + 1] : 0;
             }
         }
+
+        return array($prevId, $nextId);
+    }
+
+    /**
+     * 尝试优化上下一页
+     * @param Request $request
+     * @param mixed   $id
+     *
+     * @return int[]
+     */
+
+    private function getNextPrevId2(Request $request, $id, $upload_at, $sort = 0)
+    {
+        $keyword = $request->keyword;
+        $industry_id = $request->industry_id;
+        $tag = trim($request->tag);
+        $query = News::query()->where('status', 1)
+            ->where("upload_at", "<=", time());
+
+        if (!empty($keyword)) {
+            $keyword = explode(" ", $keyword);
+            for ($i = 0; $i <= count($keyword); $i++) {
+                if (!empty($keyword[$i])) {
+                    $query = $query->where('title', 'LIKE', '%' . $keyword[$i] . '%');
+                }
+            }
+        }
+        if (!empty($industry_id)) {
+            $industryIdWhere = ['type' => $industry_id];
+            $query = $query->where($industryIdWhere);
+        }
+        if (!empty($tag)) {
+            $query->whereRaw(DB::raw('FIND_IN_SET("' . $tag . '",tags)'));
+        }
+        $query->where('id', '<>', $id)
+            ->orderBy('sort', 'asc')
+            ->orderBy('upload_at', 'desc')
+            ->orderBy('id', 'desc');
+
+        $prevId = $query->where(function ($query) use ($sort, $upload_at) {
+            $query->where('sort', '<', $sort)
+                ->orWhere(function ($subQuery) use ($sort, $upload_at) {
+                    $subQuery->where('sort', $sort)
+                        ->where('upload_at', '<=', $upload_at);
+                });
+        })
+            ->limit(1)
+            ->value('id');
+
+        $nextId = $query->where(function ($query) use ($sort, $upload_at) {
+            $query->where('sort', '>', $sort)
+                ->orWhere(function ($subQuery) use ($sort, $upload_at) {
+                    $subQuery->where('sort', $sort)
+                        ->where('upload_at', '>=', $upload_at);
+                });
+        })
+            ->limit(1)
+            ->value('id');
+
+        $prevId = !empty($prevId) ? $prevId : 0;
+        $nextId = !empty($nextId) ? $nextId : 0;
 
         return array($prevId, $nextId);
     }
@@ -376,7 +457,7 @@ class NewsController extends Controller {
 
                     if (empty($data[$key]['thumb'])) {
                         // 如果报告图片、分类图片为空，使用系统默认图片
-                        $data[$key]['thumb']= !empty($defaultImg) ? $defaultImg : '';
+                        $data[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                     }
 
                     $data[$key]['name'] = $value['name'];
@@ -418,7 +499,7 @@ class NewsController extends Controller {
                             //     ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
                             // )->where(['status' => 1, 'is_deleted'=> 1, 'language_id' => $language['id']])->orderBy("sort", "asc")->get()->toArray();
 
-                            $priceEditions = PriceEditionValues::GetList($language['id'],$value['publisher_id']);
+                            $priceEditions = PriceEditionValues::GetList($language['id'], $value['publisher_id']);
                             if ($priceEditions) {
                                 $prices[$index]['language'] = $language['name'];
                                 foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
