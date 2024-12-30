@@ -316,28 +316,32 @@ class NewsController extends Controller
         if (!empty($tag)) {
             $query->whereRaw(DB::raw('FIND_IN_SET("' . $tag . '",tags)'));
         }
-        $query->where('id', '<>', $id)
-            ->orderBy('sort', 'asc')
-            ->orderBy('upload_at', 'desc')
-            ->orderBy('id', 'desc');
 
-        $prevId = $query->where(function ($query) use ($sort, $upload_at) {
+        $prevId = (clone $query)->where(function ($query) use ($sort, $upload_at) {
             $query->where('sort', '<', $sort)
                 ->orWhere(function ($subQuery) use ($sort, $upload_at) {
                     $subQuery->where('sort', $sort)
                         ->where('upload_at', '<=', $upload_at);
                 });
         })
+            ->where('id', '<>', $id)
+            ->orderBy('sort', 'desc')
+            ->orderBy('upload_at', 'desc')
+            ->orderBy('id', 'desc')
             ->limit(1)
             ->value('id');
 
-        $nextId = $query->where(function ($query) use ($sort, $upload_at) {
+        $nextId = (clone $query)->where(function ($query) use ($sort, $upload_at) {
             $query->where('sort', '>', $sort)
                 ->orWhere(function ($subQuery) use ($sort, $upload_at) {
                     $subQuery->where('sort', $sort)
                         ->where('upload_at', '>=', $upload_at);
                 });
         })
+            ->where('id', '<>', $id)
+            ->orderBy('sort', 'asc')
+            ->orderBy('upload_at', 'asc')
+            ->orderBy('id', 'desc')
             ->limit(1)
             ->value('id');
 
