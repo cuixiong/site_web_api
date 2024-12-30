@@ -15,16 +15,16 @@ class UsersRequest extends FormRequest {
         $rules = [
             'name'        => 'required',
             'email'       => 'required',
-            'province_id' => 'required',
+            //'province_id' => 'required',
             'phone'       => 'required',
-            'company'     => 'required',
+//            'company'     => 'required',
         ];
         $message = [
             'name.required'        => '名称不能为空',
             'email.required'       => '邮箱不能为空',
-            'province_id.required' => '地区不能为空',
+            //'province_id.required' => '地区不能为空',
             'phone.required'       => '电话不能为空',
-            'company.required'     => '公司不能为空',
+//            'company.required'     => '公司不能为空',
         ];
 
         return $this->validateRequest($request, $rules, $message);

@@ -328,7 +328,7 @@ class UserController extends Controller {
                 $data[$key]['value'] = $value['type'] == 1 ? round($value['value'], 0) : (float)$value['value'];
                 $data[$key]['day_begin'] = $value['time_begin'] ? date('Y.m.d', $value['time_begin']) : '';
                 $data[$key]['day_end'] = $value['time_end'] ? date('Y.m.d', $value['time_end']) : '';
-                
+
                 $data[$key]['day_begin_year'] = date('Y', $value['time_begin']);
                 $data[$key]['day_begin_month'] = date('m', $value['time_begin']);
                 $data[$key]['day_begin_day'] = date('d', $value['time_begin']);
@@ -433,7 +433,7 @@ class UserController extends Controller {
             $user->username = $name;
             $user->email = $input['email'];
             $user->phone = $input['phone'];
-            $user->company = $input['company'];
+            $user->company = $input['company'] ?? '';
             $user->address = $input['address'] ?? '';
             $user->province_id = $input['province_id'] ?? 0;
             $user->city_id = $input['city_id'] ?? 0;
