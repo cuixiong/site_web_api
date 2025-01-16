@@ -36,6 +36,8 @@ class ContactUsController extends Controller {
         } else {
             $model->buy_time = $params['plan_buy_time'] ?? '';
         }
+
+        $model->country_id = $params['country_id'] ?? 0;
         $model->province_id = $params['province_id'] ?? 0;
         $model->city_id = $params['city_id'] ?? 0;
         $model->category_id = $category_id ?? 0;
@@ -44,6 +46,8 @@ class ContactUsController extends Controller {
         $model->product_id = $product_id;
         $model->language_version = $params['language'] ?? 0;
         $model->address = $params['address'] ?? '';
+        $model->channel = $params['channel'] ?? 0;
+        $model->channel_name = $params['channel_name'] ?? 0;
         if ($model->save()) {
             // 根据code发送对应场景
             $sceneCode = $params['code'] ?? '';

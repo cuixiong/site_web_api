@@ -7,10 +7,8 @@ use App\Models\Invoices;
 use App\Models\Order;
 use Illuminate\Http\Request;
 
-class InvoicesController extends Controller
-{
-    public function list(Request $request)
-    {
+class InvoicesController extends Controller {
+    public function list(Request $request) {
         try {
             $status = $request->input('status', '0');
             if (
@@ -24,48 +22,35 @@ class InvoicesController extends Controller
             }
             $userId = $request->user->id;
             $model = new Invoices();
-            $model = $model->where('user_id', $userId)->when($status, function ($query) use ($status) {
+            $model = $model->where('invoices.user_id', $userId)->when($status, function ($query) use ($status) {
                 if ($status == 1) {
-                    $query->where('apply_status', Invoices::applyInvoiceStatus);
+                    $query->where('invoices.apply_status', Invoices::applyInvoiceStatus);
                 } elseif ($status == 2) { //已开票
-                    $query->where('apply_status', Invoices::alreadyInvoiceStatus);
+                    $query->where('invoices.apply_status', Invoices::alreadyInvoiceStatus);
                 }
-            })->orderBy('id', 'desc');
+            })->orderBy('invoices.id', 'desc');
             $count = $model->count();
-            // 查询偏移量
-            if (!empty($request->pageNum) && !empty($request->pageSize)) {
-                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            $rs = [];
+            if ($count > 0) {
+                $model->leftJoin('orders', 'orders.id', '=', 'invoices.order_id');
+                $model->selectRaw('invoices.* , orders.order_number');
+                // 查询偏移量
+                if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                    $model->offset(($request->pageNum - 1) * $request->pageSize);
+                }
+                // 查询条数
+                if (!empty($request->pageSize)) {
+                    $model->limit($request->pageSize);
+                } else {
+                    $model->limit(15);
+                }
+                $rs = $model->get();
             }
-            // 查询条数
-            if (!empty($request->pageSize)) {
-                $model->limit($request->pageSize);
-            } else {
-                $model->limit(15);
-            }
-            $fields = [
-                'id',
-                'title',    // 发票抬头
-                'created_at',
-                'status',
-                'apply_status',
-                'price',
-                // 国内字段
-                'invoice_type', // 发票类型
-                'company_name', // 公司名称
-                'company_address', // 公司地址（注册地址）
-                'tax_code', // 纳税人识别码
-                'phone',    // 注册电话
-                'bank_name',    // 开户行
-                'bank_account', // 银行账号
-
-            ];
-            $model->select($fields);
-            $rs = $model->get();
             $rdata = [];
             $rdata['data'] = $rs;
             $rdata['count'] = $count;
-            $rdata['pageNum'] = $request->pageNum;
-            $rdata['pageSize'] = $request->pageSize;
+            $rdata['pageNum'] = $request->pageNum ?? 1;
+            $rdata['pageSize'] = $request->pageSize ?? 15;
             if ($rs) {
                 ReturnJson(true, '获取成功', $rdata);
             } else {
@@ -76,8 +61,7 @@ class InvoicesController extends Controller
         }
     }
 
-    public function form(Request $request)
-    {
+    public function form(Request $request) {
         try {
             $model = new Invoices();
             $record = $model->findOrFail($request->id);
@@ -88,9 +72,7 @@ class InvoicesController extends Controller
         }
     }
 
-
-    public function apply(Request $request)
-    {
+    public function apply(Request $request) {
         try {
             (new InvoicesRequest())->apply($request);
             $input = $request->all();
@@ -109,18 +91,20 @@ class InvoicesController extends Controller
                 ReturnJson(false, '该订单已经申请过');
             }
             $addData = [
-                'company_name'    => $input['company_name'],
-                'company_address' => $input['company_address'],
-                'tax_code'        => $input['tax_code'],
+                'company_name'    => $input['company_name'] ?? '',
+                'company_address' => $input['company_address'] ?? '',
+                'contact_person'  => $input['contact_person'] ?? '',
+                'contact_detail'  => $input['contact_detail'] ?? '',
+                'tax_code'        => $input['tax_code'] ?? '',
                 'invoice_type'    => $input['invoice_type'],
                 'price'           => $orderObj->actually_paid,
                 'user_id'         => $userId,
                 'order_id'        => $input['order_id'],
                 'title'           => $orderObj->product_name,
                 'apply_status'    => 1,
-                'phone'           => $input['phone'],
-                'bank_name'       => $input['bank_name'],
-                'bank_account'    => $input['bank_account'],
+                'phone'           => $input['phone'] ?? '',
+                'bank_name'       => $input['bank_name'] ?? '',
+                'bank_account'    => $input['bank_account'] ?? '',
             ];
             $rs = $model->create($addData);
             if (!$rs) {
@@ -134,17 +118,15 @@ class InvoicesController extends Controller
 
     /**
      * 有个单页有个不需要登录和订单的开票操作，但需要额外传递报告名称
-     * 
+     *
      */
-    public function applySinglePage(Request $request)
-    {
+    public function applySinglePage(Request $request) {
         try {
             (new InvoicesRequest())->applySinglePage($request);
             $input = $request->all();
-            if(!isset($input['price']) || !is_numeric($input['price'])){
+            if (!isset($input['price']) || !is_numeric($input['price'])) {
                 ReturnJson(false, 'price is not a number');
             }
-            
             $model = new Invoices();
             $addData = [
                 'order_id'        => 0,

@@ -261,6 +261,12 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
             '相关报告列表'
         );
     });
+    // publisher 控制器
+    Route::prefix('publisher')->group(function () {
+        Route::get('alphabetic-search', [\App\Http\Controllers\PublisherController::class, 'alphabeticSearch'])->name('新闻列表');
+        Route::any('publishers', [\App\Http\Controllers\PublisherController::class, 'publishers'])->name('新闻详情');
+        Route::get('search-auto', [\App\Http\Controllers\PublisherController::class, 'searchAuto'])->name('相关新闻');
+    });
     // Sitemap(网站地图)控制器
     Route::prefix('sitemap')->group(function () {
         //Route::get('make-site-map', [\App\Http\Controllers\SitemapController::class, 'MakeSiteMap'])->name('更新地图');

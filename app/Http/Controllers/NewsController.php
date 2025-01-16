@@ -117,7 +117,7 @@ class NewsController extends Controller
         if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = News::select(['title', 'upload_at', 'hits', 'url', 'tags', 'content', 'keywords', 'description', 'category_id', 'sort'])
+        $data = News::query()
             ->where(['id' => $id, 'status' => 1])
             ->first();
         if ($data) {
@@ -173,7 +173,7 @@ class NewsController extends Controller
             //获取相关报告
             $data['relevant_product'] = $this->getRelevantProduct($data['tags']);
             //获取相关新闻
-            if (checkSiteAccessData(['168report']) || checkSiteAccessData(['yhcn'])) {
+            if (checkSiteAccessData(['168report' , 'yhcn' , 'mrrs'])) {
                 //相关新闻
                 $data['relevant_news'] = $this->getRelevantNews($data['tags'], $id);
             }
@@ -365,6 +365,7 @@ class NewsController extends Controller
             'id',
             'url',
             'description',
+            'upload_at',
         ])
             ->where('status', 1)
             ->where('id', '<>', $id)
@@ -380,17 +381,12 @@ class NewsController extends Controller
 
     private function getRelevantNews($keyword, $id)
     {
-        $data = News::select([
-            'title',
-            'keywords',
-            'id',
-            'url',
-            'description',
-        ])
+        $data = News::query()
             ->where('status', 1)
             ->where('id', '<>', $id)
             ->where('upload_at', '<=', time())
-            ->whereIn('keywords', $keyword)
+            //->whereIn('keywords', $keyword)
+            ->whereIn('tags', $keyword)
             ->orderBy('upload_at', 'desc')
             ->limit(5)
             ->get()

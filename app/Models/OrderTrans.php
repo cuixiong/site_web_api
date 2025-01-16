@@ -253,6 +253,7 @@ class OrderTrans extends Base {
         $order->email = $inputParams['email'];
         $order->phone = $inputParams['phone'];
         $order->company = $inputParams['company'];
+        $order->country_id = !empty($inputParams['country_id']) ? $inputParams['country_id'] : 0;
         $order->province_id = !empty($inputParams['province_id']) ? $inputParams['province_id'] : 0;
         $order->city_id = !empty($inputParams['city_id']) ? $inputParams['city_id'] : 0;
         $order->address = !empty($inputParams['address']) ? $inputParams['address'] : '';
@@ -416,7 +417,7 @@ class OrderTrans extends Base {
         $exchange_rate = 1;
         $pay_coin_type = PayConst::COIN_TYPE_CNY;
         $payInfo = Pay::query()->where("code", $payCode)->first();
-        if(empty($payInfo )){
+        if (empty($payInfo)) {
             return [];
         }
         $tax_rate = $payInfo->pay_tax_rate ?? $tax_rate;
