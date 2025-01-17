@@ -263,7 +263,7 @@ class Controller extends BaseController {
                             'updated_at' => time(),
                         ];
                         (new ReqLogService())->addReqLog($data);
-                        http_response_code(403);
+                        http_response_code(429);
                         ReturnJson(false, '请稍后重试1');
                     }
                 }
