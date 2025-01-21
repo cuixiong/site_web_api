@@ -120,9 +120,9 @@ function checkSiteAccessData($siteNameLit) {
 
 function get_client_ip() {
     $header = request()->header();
-    $ip = $header['x-forwarded-for'] ?? '';
+    $ip = $header['client-ip'] ?? '';
     if(empty($ip )){
-        $ip = $header['client-ip'] ?? '';
+        $ip = $header['x-forwarded-for'] ?? '';
     }
     if(empty($ip )){
         $ip = request()->ip();
