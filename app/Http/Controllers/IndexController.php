@@ -620,7 +620,16 @@ class IndexController extends Controller {
                         $description = (new ProductDescription($year))
                             ->where('product_id', $firstProduct['id'])
                             ->value('description');
-                        $description = mb_substr($description, 0, 300, 'UTF-8');
+                        if(checkSiteAccessData(['tycn'])){
+                            //取描述第一段 ,  如果没有\n换行符就取一整段
+                            $strIndex = strpos($description, "\n");
+                            if ($strIndex !== false) {
+                                // 使用 substr() 函数获取第一个段落
+                                $description = substr($description, 0, $strIndex);
+                            }
+                        }else{
+                            $description = mb_substr($description, 0, 300, 'UTF-8');
+                        }
                         $firstProduct['description'] = $description;
                     }
                     $data[$index]['firstProduct'] = $firstProduct;
