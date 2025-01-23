@@ -209,7 +209,8 @@ class SendEmailController extends Controller
             $end_time = time() + 86400;
             $token = $user['email'] . '&' . $user['id'] . '&' . $end_time . '&' . $user['updated_at'];
             $user['token'] = encrypt($token);
-            $user['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
+            $domain = env('DOMAIN_URL', 'https://mmgcn.marketmonitorglobal.com.cn');
+            $user['domain'] = $domain;
             $scene = EmailScene::where('action', 'password')->select(
                 ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
             )->first();
@@ -219,7 +220,6 @@ class SendEmailController extends Controller
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $domain = 'http://' . $_SERVER['SERVER_NAME'];
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data = $user;
