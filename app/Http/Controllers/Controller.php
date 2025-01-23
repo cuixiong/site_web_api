@@ -33,7 +33,6 @@ class Controller extends BaseController {
         if ($route && in_array($route, $excludeRoute)) {
             return;
         }
-
         // 签名检查 (系统配置那一个)
         $checkRes = $this->checkWhiteIp();
         if (!$checkRes) {
@@ -286,7 +285,7 @@ class Controller extends BaseController {
 //            $securityCheckWhiteIps = $this->getSetValByKey('white_ip_security_check') ?? '';
 //            $checkRes = $this->isIpAllowed(request()->ip(), $securityCheckWhiteIps);
 //            if (!$checkRes) {
-                $this->securityCheck();
+            $this->securityCheck();
 //            }
         }
     }
@@ -355,16 +354,36 @@ class Controller extends BaseController {
             $prefix = env('APP_NAME').'_rate_limit:';
             $slidingWindowRateLimiter = new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime, $prefix);
             $slidingWindowRateLimiter->appendExpireTime = $append_expire_time;
-            $res = $slidingWindowRateLimiter->slideIsAllowedPlus(
-                $ipCacheKey
-            );
-            //$res = (new SlidingWindowRateLimiter($windowsTime, $reqLimit, $expireTime))->simpleIsAllowed($ipCacheKey);
+//            $res = $slidingWindowRateLimiter->slideIsAllowedPlus(
+//                $ipCacheKey
+//            );
+            $banInfoKey = $prefix.$ipCacheKey.":banInfo";
+            //没有封禁时间, 需要重新验证
+            $res = true;
+            if (!Redis::exist($banInfoKey)) {
+                $res = $slidingWindowRateLimiter->slideIsAllowed(
+                    $ipCacheKey
+                );
+            }
             if (!$res) {
-                $reqKey = $prefix.$ipCacheKey;
-                $banKey = $reqKey.":ban";
-                $ban_time = Redis::ttl($banKey);
-                $ban_cnt_key = $reqKey.":banCount";
-                $ban_cnt = Redis::get($ban_cnt_key);
+                $banStr = Redis::get($banInfoKey);
+                $banInfo = [];
+                if (!empty($banStr)) {
+                    $banInfo = @json_decode($banStr, true);
+                }
+                if (empty($banInfo['start_ban_time'])) {
+                    $banInfo['ban_cnt'] = 1;
+                    $banInfo['start_ban_time'] = time();
+                } else if ($banInfo['start_ban_time'] + 86400 <= time()) {
+                    //开始封禁时间大于1天的 ,  重置封禁次数
+                    $banInfo['ban_cnt'] = 1;
+                    $banInfo['start_ban_time'] = time();
+                } else {
+                    $banInfo['ban_cnt'] = $banInfo['ban_cnt'] + 1;
+                }
+                $ban_cnt = $banInfo['ban_cnt'];
+                $ban_time = $expireTime + ($ban_cnt - 1) * $append_expire_time;
+                Redis::SETEX($banInfoKey, $ban_time, json_encode($banInfo));
                 $header = request()->header();
                 $user_agent = $header['user-agent'] ?? [];
                 $data = [
@@ -411,10 +430,10 @@ class Controller extends BaseController {
         //ip转换地址
         $ipAddr = (new IPAddrService($ip))->getAddrStrByIp();
         $afterIp = explode(".", $ip);
-        if(!empty($afterIp) && is_array($afterIp)) {
+        if (!empty($afterIp) && is_array($afterIp)) {
             $ip_muti_second = $afterIp[0].".".$afterIp[1];
             $ip_muti_third = $afterIp[0].".".$afterIp[1].".".$afterIp[2];
-        }else{
+        } else {
             $ip_muti_second = '';
             $ip_muti_third = '';
         }
@@ -425,12 +444,11 @@ class Controller extends BaseController {
         //$contentLength = $_SERVER['CONTENT_LENGTH']; bytes
         //优点:可以获取 POST 请求的请求体大小。
         //缺点:只能获取 POST 请求的数据，无法统计整个页面的流量。
-        if(empty($_SERVER['CONTENT_LENGTH'] ) && $_SERVER['CONTENT_LENGTH'] <= 0){
+        if (empty($_SERVER['CONTENT_LENGTH']) && $_SERVER['CONTENT_LENGTH'] <= 0) {
             $addData['content_size'] = 0;
-        }else{
+        } else {
             $addData['content_size'] = $_SERVER['CONTENT_LENGTH'];
         }
-
         $addData['ip_addr'] = $ipAddr;
         $addData['route'] = $routeUril;
         $addData['ua_info'] = implode("\n", $ua_info);
