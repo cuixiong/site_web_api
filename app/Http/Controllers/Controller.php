@@ -38,12 +38,15 @@ class Controller extends BaseController {
         if (!$checkRes) {
             //签名检查
             $this->signCheck();
-            //请求日志记录
-            $this->accessLog();
-            //UA请求头封禁
-            $this->checkUaHeader();
-            //IP限流封禁
-            $this->ipRateLimit();
+            // TODO: cuizhixiong 2025/2/6 新增需求
+            if ($this->checkRoute()) {
+                //请求日志记录
+                $this->accessLog();
+                //UA请求头封禁
+                $this->checkUaHeader();
+                //IP限流封禁
+                $this->ipRateLimit();
+            }
         }
     }
 
@@ -240,16 +243,41 @@ class Controller extends BaseController {
                 );
                 $slidingWindowRateLimiter->appendExpireTime = $append_ua_expire_time;
                 foreach ($header['user-agent'] as $forUserAgent) {
-                    $reqKey = $forUserAgent.":".$routeUril;
+                    $reqKey = $cache_prefix_key.$forUserAgent.":".$routeUril;
+                    $banInfoKey = $reqKey.":banInfo";
                     //$reqKey = $forUserAgent;
-                    $res = $slidingWindowRateLimiter->slideIsAllowedPlus($reqKey);
+                    //$res = $slidingWindowRateLimiter->slideIsAllowedPlus($reqKey);
+                    //没有封禁时间, 需要重新验证
+                    if (!Redis::exist($banInfoKey)) {
+                        $res = $slidingWindowRateLimiter->slideIsAllowed(
+                            $reqKey
+                        );
+                    }else{
+                        //存在封禁信息直接插入禁止访问数据
+                        $res = false;
+                    }
+
                     if (!$res) {
                         //添加封禁日志
-                        $cacheKey = $cache_prefix_key.$reqKey;
-                        $banKey = $cacheKey.":ban";
-                        $ban_time = Redis::ttl($banKey);
-                        $ban_cnt_key = $cacheKey.":banCount";
-                        $ban_cnt = Redis::get($ban_cnt_key);
+                        $banStr = Redis::get($banInfoKey);
+                        $banInfo = [];
+                        if (!empty($banStr)) {
+                            $banInfo = @json_decode($banStr, true);
+                        }
+                        if (empty($banInfo['start_ban_time'])) {
+                            $banInfo['ban_cnt'] = 1;
+                            $banInfo['start_ban_time'] = time();
+                        } else if ($banInfo['start_ban_time'] + 86400 <= time()) {
+                            //开始封禁时间大于1天的 ,  重置封禁次数
+                            $banInfo['ban_cnt'] = 1;
+                            $banInfo['start_ban_time'] = time();
+                        } else {
+                            $banInfo['ban_cnt'] = $banInfo['ban_cnt'] + 1;
+                        }
+                        $ban_cnt = $banInfo['ban_cnt'];
+                        $ban_time = $ua_expire_time + ($ban_cnt - 1) * $append_ua_expire_time;
+                        Redis::SETEX($banInfoKey, $ban_time, json_encode($banInfo));
+
                         $header = request()->header();
                         $user_agent = $header['user-agent'] ?? [];
                         $data = [
@@ -359,11 +387,13 @@ class Controller extends BaseController {
 //            );
             $banInfoKey = $prefix.$ipCacheKey.":banInfo";
             //没有封禁时间, 需要重新验证
-            $res = true;
             if (!Redis::exist($banInfoKey)) {
                 $res = $slidingWindowRateLimiter->slideIsAllowed(
                     $ipCacheKey
                 );
+            }else{
+                //存在封禁信息直接插入禁止访问数据
+                $res = false;
             }
             if (!$res) {
                 $banStr = Redis::get($banInfoKey);
@@ -404,9 +434,8 @@ class Controller extends BaseController {
         }
     }
 
-    public function accessLog() {
-        $header = request()->header();
-        $ua_info = $header['user-agent'];
+    public function checkRoute() {
+        //新增需求,只记录/封禁 报告详情, 新闻详情
         $route = request()->route();
         $routeUril = '';
         if (!empty($route->uri)) {
@@ -416,15 +445,28 @@ class Controller extends BaseController {
         $url_view = $input['url'] ?? '';
         if ($routeUril == 'api/product/description') {
             $url_id = $input['product_id'] ?? '';
-            $routeUril = "/reports/{$url_id}/{$url_view}";
+
+            return "/reports/{$url_id}/{$url_view}";
         } elseif ($routeUril == 'api/news/view') {
             $url_id = $input['id'] ?? '';
-            $routeUril = "/news/{$url_id}/{$url_view}";
+
+            return "/news/{$url_id}/{$url_view}";
         } elseif ($routeUril == 'api/information/view') {
             $url_id = $input['id'] ?? '';
-            $routeUril = "/information/{$url_id}/{$url_view}";
+
+            return "/information/{$url_id}/{$url_view}";
         } else {
-            return true;
+            return false;
+        }
+    }
+
+    public function accessLog() {
+        $header = request()->header();
+        $ua_info = $header['user-agent'];
+        $route = request()->route();
+        $routeUril = '';
+        if (!empty($route->uri)) {
+            $routeUril = $route->uri;
         }
         $ip = get_client_ip();
         //ip转换地址
