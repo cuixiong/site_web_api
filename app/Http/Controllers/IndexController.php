@@ -75,7 +75,7 @@ class IndexController extends Controller {
             $data['hot_product_list'] = $this->getHotProductList($request);
         }
         //获取推荐报告
-        if (checkSiteAccessData(['tycn', 'mrrs'])) {
+        if (checkSiteAccessData(['lpicn'])) {
             $data['recommend_product_list'] = $this->getRecommendProductList($request);
             $data['recommend_product_list']['products'] = $this->recommendProductHandleByLpicn(
                 $data['recommend_product_list']['products']
