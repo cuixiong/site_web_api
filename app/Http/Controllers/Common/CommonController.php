@@ -142,7 +142,7 @@ class CommonController extends Controller {
      */
     private function getProductCagory($orderBySort = false)
     {
-        $field = ['id', 'name', 'link', 'icon', 'icon_hover'];
+        $field = ['id', 'name', 'link', 'icon', 'icon_hover' , 'show_home'];
         $query = ProductsCategory::select($field)
             ->where('status', 1);
 
@@ -792,4 +792,34 @@ class CommonController extends Controller {
         ];
         return $data;
     }
+
+    /**
+     *
+     *
+     * @return array
+     */
+    private function getCountryData() {
+        $app_name = env('APP_NAME');
+        $cacheKey = $app_name.'_country_cache_key';
+        $countryCacheData = Redis::get($cacheKey);
+        if (empty($countryCacheData)) {
+            $countryList = Country::query()->select(['id' , 'name' , 'acronym' , 'code'])->where('status' , 1)->orderBy('sort' , 'asc')->get()->toArray();
+            Redis::set($cacheKey, json_encode($countryList));
+            return $countryList;
+        } else {
+            $countryList = json_decode($countryCacheData, true);
+            return $countryList;
+        }
+    }
+
+    private function getChannelData() {
+        $channelList = Channel::query()->get()->toArray();
+        return $channelList;
+    }
+
+    private function getPositionList() {
+        $positionList = Position::query()->get()->toArray();
+        return $positionList;
+    }
+
 }
