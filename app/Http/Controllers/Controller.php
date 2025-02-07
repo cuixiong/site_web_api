@@ -245,53 +245,47 @@ class Controller extends BaseController {
                 foreach ($header['user-agent'] as $forUserAgent) {
                     $reqKey = $cache_prefix_key.$forUserAgent.":".$routeUril;
                     $banInfoKey = $reqKey.":banInfo";
+                    $banTimeKey = $reqKey.":banTime";
                     //$reqKey = $forUserAgent;
                     //$res = $slidingWindowRateLimiter->slideIsAllowedPlus($reqKey);
                     //没有封禁时间, 需要重新验证
-                    if (!Redis::exist($banInfoKey)) {
+                    if (!Redis::EXISTS($banTimeKey)) {
                         $res = $slidingWindowRateLimiter->slideIsAllowed(
                             $reqKey
                         );
-                    }else{
-                        //存在封禁信息直接插入禁止访问数据
-                        $res = false;
-                    }
-
-                    if (!$res) {
-                        //添加封禁日志
-                        $banStr = Redis::get($banInfoKey);
-                        $banInfo = [];
-                        if (!empty($banStr)) {
-                            $banInfo = @json_decode($banStr, true);
+                        if (!$res) { //触发封禁
+                            $banStr = Redis::get($banInfoKey);
+                            $banInfo = [];
+                            if (!empty($banStr)) {
+                                $banInfo = @json_decode($banStr, true);
+                            }
+                            if (empty($banInfo['start_ban_time'])) {
+                                $banInfo['ban_cnt'] = 1;
+                                $banInfo['start_ban_time'] = time();
+                            } else if ($banInfo['start_ban_time'] + 86400 <= time()) {
+                                //开始封禁时间大于1天的 ,  重置封禁次数
+                                $banInfo['ban_cnt'] = 1;
+                                $banInfo['start_ban_time'] = time();
+                            } else {
+                                $banInfo['ban_cnt'] = $banInfo['ban_cnt'] + 1;
+                            }
+                            if (!Redis::EXISTS($banTimeKey)) {
+                                $ban_cnt = $banInfo['ban_cnt'];
+                                $ban_time = ($ban_cnt - 1) * $append_ua_expire_time + $ua_expire_time;
+                                Redis::SETEX($banInfoKey, 86400, json_encode($banInfo));
+                                Redis::SETEX($banTimeKey, $ban_time, $ban_cnt);
+                                $this->addBanHeadlerLog($real_ip, $ban_time, $ban_cnt, $routeUril);
+                            }else{
+                                $ban_cnt = Redis::get($banTimeKey) ?? 1;
+                                $ban_time = Redis::TTL($banTimeKey);
+                                $this->addBanHeadlerLog($real_ip, $ban_time, $ban_cnt, $routeUril);
+                            }
                         }
-                        if (empty($banInfo['start_ban_time'])) {
-                            $banInfo['ban_cnt'] = 1;
-                            $banInfo['start_ban_time'] = time();
-                        } else if ($banInfo['start_ban_time'] + 86400 <= time()) {
-                            //开始封禁时间大于1天的 ,  重置封禁次数
-                            $banInfo['ban_cnt'] = 1;
-                            $banInfo['start_ban_time'] = time();
-                        } else {
-                            $banInfo['ban_cnt'] = $banInfo['ban_cnt'] + 1;
-                        }
-                        $ban_cnt = $banInfo['ban_cnt'];
-                        $ban_time = $ua_expire_time + ($ban_cnt - 1) * $append_ua_expire_time;
-                        Redis::SETEX($banInfoKey, $ban_time, json_encode($banInfo));
-
-                        $header = request()->header();
-                        $user_agent = $header['user-agent'] ?? [];
-                        $data = [
-                            'ip'         => $real_ip,
-                            'ua_info'    => implode("\n", $user_agent),
-                            'ban_time'   => $ban_time,
-                            'ban_cnt'    => $ban_cnt,
-                            'route'      => $routeUril,
-                            'created_at' => time(),
-                            'updated_at' => time(),
-                        ];
-                        (new ReqLogService())->addReqLog($data);
-                        http_response_code(429);
-                        ReturnJson(false, '请稍后重试1');
+                    } else {
+                        //在封禁之中
+                        $ban_cnt = Redis::get($banTimeKey) ?? 1;
+                        $ban_time = Redis::TTL($banTimeKey);
+                        $this->addBanHeadlerLog($real_ip, $ban_time, $ban_cnt, $routeUril);
                     }
                 }
             }
@@ -385,51 +379,46 @@ class Controller extends BaseController {
 //            $res = $slidingWindowRateLimiter->slideIsAllowedPlus(
 //                $ipCacheKey
 //            );
+            $banTimeKey = $prefix.$ipCacheKey.":banTime";
             $banInfoKey = $prefix.$ipCacheKey.":banInfo";
-            //没有封禁时间, 需要重新验证
-            if (!Redis::exist($banInfoKey)) {
+            if (!Redis::EXISTS($banTimeKey)) {
                 $res = $slidingWindowRateLimiter->slideIsAllowed(
                     $ipCacheKey
                 );
-            }else{
-                //存在封禁信息直接插入禁止访问数据
-                $res = false;
-            }
-            if (!$res) {
-                $banStr = Redis::get($banInfoKey);
-                $banInfo = [];
-                if (!empty($banStr)) {
-                    $banInfo = @json_decode($banStr, true);
+                if (!$res) { //触发封禁
+                    $banStr = Redis::get($banInfoKey);
+                    $banInfo = [];
+                    if (!empty($banStr)) {
+                        $banInfo = @json_decode($banStr, true);
+                    }
+                    if (empty($banInfo['start_ban_time'])) {
+                        $banInfo['ban_cnt'] = 1;
+                        $banInfo['start_ban_time'] = time();
+                    } else if ($banInfo['start_ban_time'] + 86400 <= time()) {
+                        //开始封禁时间大于1天的 ,  重置封禁次数
+                        $banInfo['ban_cnt'] = 1;
+                        $banInfo['start_ban_time'] = time();
+                    } else {
+                        $banInfo['ban_cnt'] = $banInfo['ban_cnt'] + 1;
+                    }
+                    if (!Redis::EXISTS($banTimeKey)) {
+                        $ban_cnt = $banInfo['ban_cnt'];
+                        $ban_time = ($ban_cnt - 1) * $append_expire_time + $expireTime;
+                        Redis::SETEX($banInfoKey, 86400, json_encode($banInfo));
+                        Redis::SETEX($banTimeKey, $ban_time, $ban_cnt);
+                        $this->addBanIpLog($real_ip, $ip, $ban_time, $ban_cnt, $routeUril);
+                    }else{
+                        //在封禁之中
+                        $ban_cnt = Redis::get($banTimeKey) ?? 1;
+                        $ban_time = Redis::TTL($banTimeKey);
+                        $this->addBanIpLog($real_ip, $ip, $ban_time, $ban_cnt, $routeUril);
+                    }
                 }
-                if (empty($banInfo['start_ban_time'])) {
-                    $banInfo['ban_cnt'] = 1;
-                    $banInfo['start_ban_time'] = time();
-                } else if ($banInfo['start_ban_time'] + 86400 <= time()) {
-                    //开始封禁时间大于1天的 ,  重置封禁次数
-                    $banInfo['ban_cnt'] = 1;
-                    $banInfo['start_ban_time'] = time();
-                } else {
-                    $banInfo['ban_cnt'] = $banInfo['ban_cnt'] + 1;
-                }
-                $ban_cnt = $banInfo['ban_cnt'];
-                $ban_time = $expireTime + ($ban_cnt - 1) * $append_expire_time;
-                Redis::SETEX($banInfoKey, $ban_time, json_encode($banInfo));
-                $header = request()->header();
-                $user_agent = $header['user-agent'] ?? [];
-                $data = [
-                    'ip'         => $real_ip,
-                    'muti_ip'    => $ip,
-                    'ua_header'  => implode("\n", $user_agent),
-                    'ban_time'   => $ban_time,
-                    'ban_cnt'    => $ban_cnt,
-                    'route'      => $routeUril,
-                    'created_at' => time(),
-                    'updated_at' => time(),
-                ];
-                //添加封禁日志
-                (new IpBanLogService())->addIpBanLog($data);
-                http_response_code(429);
-                ReturnJson(false, '请求频率过快~');
+            } else {
+                //在封禁之中
+                $ban_cnt = Redis::get($banTimeKey) ?? 1;
+                $ban_time = Redis::TTL($banTimeKey);
+                $this->addBanIpLog($real_ip, $ip, $ban_time, $ban_cnt, $routeUril);
             }
         }
     }
@@ -520,5 +509,59 @@ class Controller extends BaseController {
         $checkRes = $this->isIpAllowed($ip, $whiteIplist);
 
         return $checkRes;
+    }
+
+    /**
+     *
+     * @param mixed  $real_ip
+     * @param mixed  $ip
+     * @param mixed  $banTime
+     * @param mixed  $ban_cnt
+     * @param string $routeUril
+     *
+     */
+    private function addBanIpLog(mixed $real_ip, mixed $ip, string $banTime, mixed $ban_cnt, string $routeUril
+    ): void {
+        $header = request()->header();
+        $user_agent = $header['user-agent'] ?? [];
+        $data = [
+            'ip'         => $real_ip,
+            'muti_ip'    => $ip,
+            'ua_header'  => implode("\n", $user_agent),
+            'ban_time'   => $banTime,
+            'ban_cnt'    => $ban_cnt,
+            'route'      => $routeUril,
+            'created_at' => time(),
+            'updated_at' => time(),
+        ];
+        //添加封禁日志
+        (new IpBanLogService())->addIpBanLog($data);
+        http_response_code(429);
+        ReturnJson(false, '请求频率过快~');
+    }
+
+    /**
+     *
+     * @param mixed  $real_ip
+     * @param mixed  $ban_time
+     * @param mixed  $ban_cnt
+     * @param string $routeUril
+     *
+     */
+    private function addBanHeadlerLog(mixed $real_ip, mixed $ban_time, mixed $ban_cnt, string $routeUril): void {
+        $header = request()->header();
+        $user_agent = $header['user-agent'] ?? [];
+        $data = [
+            'ip'         => $real_ip,
+            'ua_info'    => implode("\n", $user_agent),
+            'ban_time'   => $ban_time,
+            'ban_cnt'    => $ban_cnt,
+            'route'      => $routeUril,
+            'created_at' => time(),
+            'updated_at' => time(),
+        ];
+        (new ReqLogService())->addReqLog($data);
+        http_response_code(429);
+        ReturnJson(false, '请稍后重试1');
     }
 }
