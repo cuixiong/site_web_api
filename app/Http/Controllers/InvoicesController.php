@@ -54,7 +54,7 @@ class InvoicesController extends Controller {
             if ($rs) {
                 ReturnJson(true, '获取成功', $rdata);
             } else {
-                ReturnJson(false, '获取失败');
+                ReturnJson(true, '获取成功', []);
             }
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());

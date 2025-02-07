@@ -230,8 +230,13 @@ class SendEmailController extends Controller
             $data['contactUsUrl'] = rtrim($domain, '/') . '/contact-us';
             $data['homeUrl'] = $domain;
             $data['backendUrl'] = $imgDomain;
-            $verifyUrl = $data['domain'] . '/signIn/resetPassword?verifyemail=do-reset-register=&email=' . $user['email']
-                . '&token=' . $user['token'];
+            if(checkSiteAccessData(['mrrs'])) {
+                $webRoute = '/forgettenPassword/reset';
+            }else{
+                $webRoute = '/signIn/resetPassword';
+            }
+            $verifyUrl = $data['domain'].''.$webRoute.'?verifyemail=do-reset-register=&email='.$user['email']
+                         .'&token='. $user['token'];
             $data['verifyUrl'] = $verifyUrl;
             $data['dateTime'] = date('Y-m-d', time());
             $data['userName'] = $user['username'];

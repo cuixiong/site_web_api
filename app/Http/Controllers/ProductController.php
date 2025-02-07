@@ -1286,7 +1286,8 @@ class ProductController extends Controller {
                 $query = $this->getSphinxQueryParms($input_params);
                 $query->groupBy('publisher_id')->setSelect(['publisher_id']);
                 $result = $query->execute();
-                $publisher_id_list = $result->fetchAssoc();
+                $publisher_id_list = $result->fetchAllAssoc();
+                $publisher_id_list = array_column($publisher_id_list, 'publisher_id');
             } else {
                 $field = ['publisher_id'];
                 $query = Products::where(['status' => 1])
