@@ -52,8 +52,8 @@ class ProductController extends Controller {
             if (!empty($input_params['date_id'])) {
                 $date_info = DateFilter::find($input_params['date_id']);
                 if (!empty($date_info)) {
-                    $input_params['published_date'][] = time() - 86400 * $date_info['date_end'];
                     $input_params['published_date'][] = time() - 86400 * $date_info['date_begin'];
+                    $input_params['published_date'][] = time() + 86400 * $date_info['date_end'];
                 }
             }
             if (!empty($category_id)) {

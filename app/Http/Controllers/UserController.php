@@ -133,6 +133,7 @@ class UserController extends Controller {
             'email'             => $user->email,// 邮箱
             'phone'             => $user->phone,// 手机号
             'area_id'           => [$user->province_id, $user->city_id],
+            'country_id'        => $user->area_id,
             'company'           => $user->company,// 公司
             'login_time'        => $user->login_time,// 最近登陆的时间
             'login_time_format' => date('Y-m-d H:i:s', $user->login_time),// 最近登陆的时间
@@ -328,14 +329,12 @@ class UserController extends Controller {
                 $data[$key]['value'] = $value['type'] == 1 ? round($value['value'], 0) : (float)$value['value'];
                 $data[$key]['day_begin'] = $value['time_begin'] ? date('Y.m.d', $value['time_begin']) : '';
                 $data[$key]['day_end'] = $value['time_end'] ? date('Y.m.d', $value['time_end']) : '';
-
                 $data[$key]['day_begin_year'] = date('Y', $value['time_begin']);
                 $data[$key]['day_begin_month'] = date('m', $value['time_begin']);
                 $data[$key]['day_begin_day'] = date('d', $value['time_begin']);
                 $data[$key]['day_end_year'] = date('Y', $value['time_end']);
                 $data[$key]['day_end_month'] = date('m', $value['time_end']);
                 $data[$key]['day_end_day'] = date('d', $value['time_end']);
-
                 $data[$key]['code'] = $value['code'];
                 $data[$key]['status'] = $couponStatus;
             }
@@ -368,6 +367,7 @@ class UserController extends Controller {
                 $user['province_id'],
                 $user['city_id']
             ];
+            $data['country_id'] = $user['area_id'];
             // $data['token'] = $user['token'];
             $data['login_time'] = !empty($user['login_time']) ? $user['login_time'] : '';
             $data['login_time_format'] = date('Y-m-d H:i:s', $user['login_time']);
