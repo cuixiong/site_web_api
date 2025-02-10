@@ -775,7 +775,19 @@ class ProductController extends Controller {
         $query = (new SphinxQL($conn))->select('*')
                                       ->from('products_rt');
         if (!empty($input_params['orderBy'])) {
-            $query = $query->orderBy($input_params['orderBy'], 'asc');
+            // $query = $query->orderBy($input_params['orderBy'], 'asc');
+            if($input_params['orderBy'] == 'time'){
+                $query = $query->orderBy('sort', 'asc')
+                               ->orderBy('published_date', 'asc')
+                               ->orderBy('id', 'desc');
+                
+            }elseif($input_params['orderBy'] == 'price'){
+                $query = $query->orderBy('sort', 'asc')
+                               ->orderBy('price', 'asc')
+                               ->orderBy('id', 'desc');
+            }else{
+                $query = $query->orderBy($input_params['orderBy'], 'asc');
+            }
         } else {
             $query = $query->orderBy('sort', 'asc')
                            ->orderBy('published_date', 'desc')
