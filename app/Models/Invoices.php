@@ -8,7 +8,7 @@ class Invoices extends Base {
     protected $fillable
         = [
             'company_name', 'company_address', 'tax_code', 'invoice_type', 'price', 'user_id', 'order_id', 'title',
-            'apply_status', 'phone', 'bank_name', 'bank_account'
+            'contact_person', 'contact_detail', 'status', 'apply_status', 'phone', 'bank_name', 'bank_account'
         ];
     const invoiceType
                                = [
