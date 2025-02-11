@@ -116,9 +116,7 @@ class SendEmailController extends Controller {
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
-            $scene = EmailScene::where('action', 'register')->select(
-                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
-            )->first();
+            $scene = $this->getScene('register');
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
@@ -166,9 +164,8 @@ class SendEmailController extends Controller {
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
-            $scene = EmailScene::where('action', 'registerSuccess')->select(
-                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
-            )->first();
+            $scene = $this->getScene('registerSuccess');
+
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
@@ -206,9 +203,7 @@ class SendEmailController extends Controller {
             $user['token'] = encrypt($token);
             $domain = env('DOMAIN_URL', 'https://mmgcn.marketmonitorglobal.com.cn');
             $user['domain'] = $domain;
-            $scene = EmailScene::where('action', 'password')->select(
-                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
-            )->first();
+            $scene = $this->getScene('password');
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
@@ -315,9 +310,7 @@ class SendEmailController extends Controller {
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
-            $scene = EmailScene::where('action', $code)->select(
-                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
-            )->first();
+            $scene = $this->getScene($code);
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.email_error'));
             }
@@ -406,9 +399,7 @@ class SendEmailController extends Controller {
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
-            $scene = EmailScene::where('action', 'productSample')->select(
-                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
-            )->first();
+            $scene = $this->getScene('productSample');
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             // 收件人额外加上分类邮箱
@@ -504,9 +495,7 @@ class SendEmailController extends Controller {
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
-            $scene = EmailScene::where('action', 'productSample')->select(
-                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
-            )->first();
+            $scene = $this->getScene('productSample');
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
@@ -600,9 +589,7 @@ class SendEmailController extends Controller {
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
-            $scene = EmailScene::where('action', 'contactUs')->select(
-                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
-            )->first();
+            $scene = $this->getScene('contactUs');
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
@@ -691,9 +678,7 @@ class SendEmailController extends Controller {
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
-            $scene = EmailScene::where('action', 'customized')->select(
-                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
-            )->first();
+            $scene = $this->getScene('customized');
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
@@ -863,18 +848,7 @@ class SendEmailController extends Controller {
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
-            $scene = EmailScene::where('action', 'placeOrder')->select(
-                [
-                    'id',
-                    'name',
-                    'title',
-                    'body',
-                    'email_sender_id',
-                    'email_recipient',
-                    'status',
-                    'alternate_email_id'
-                ]
-            )->first();
+            $scene = $this->getScene('placeOrder');
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
@@ -1038,18 +1012,7 @@ class SendEmailController extends Controller {
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
-            $scene = EmailScene::where('action', 'payment')->select(
-                [
-                    'id',
-                    'name',
-                    'title',
-                    'body',
-                    'email_sender_id',
-                    'email_recipient',
-                    'status',
-                    'alternate_email_id'
-                ]
-            )->first();
+            $scene = $this->getScene('payment');
             //邮件标题
             $scene->title = $scene->title.", 订单号是 ".$data['order_number'];
             // 收件人的数组
@@ -1160,6 +1123,15 @@ class SendEmailController extends Controller {
             $sendStatus = 0;
         } else {
             $sendStatus = 1;
+            if(!empty($data['id'] )) {
+                if (in_array($scene->action, ['payment', 'placeOrder'])) {
+                    //存入订单邮件发送记录
+                    Order::query()->where("id" , $data['id'])->update(['send_email_time' => time()]);
+                } elseif (in_array($scene->action, ['contactUs', 'productSample', 'customized'])) {
+                    //存入留言邮件发送记录
+                    ContactUs::query()->where("id" , $data['id'])->update(['send_email_time' => time()]);
+                }
+            }
         }
         $emailLog = [
             'status'        => $sendStatus,
@@ -1196,5 +1168,28 @@ class SendEmailController extends Controller {
         $domain = env('DOMAIN_URL', 'https://mmgcn.marketmonitorglobal.com.cn');
 
         return $domain."/reports/{$products->product_id}/{$products->url}";
+    }
+
+    /**
+     * $action code码
+     *
+     * @return mixed
+     */
+    private function getScene($action) {
+        $scene = EmailScene::where('action', $action)->select(
+            [
+                'id',
+                'name',
+                'title',
+                'action',
+                'body',
+                'email_sender_id',
+                'email_recipient',
+                'status',
+                'alternate_email_id'
+            ]
+        )->first();
+
+        return $scene;
     }
 }
