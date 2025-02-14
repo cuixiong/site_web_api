@@ -220,7 +220,7 @@ class SendEmailController extends Controller
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $domain = 'http://'.$_SERVER['SERVER_NAME'];
+            $domain = 'http://' . $_SERVER['SERVER_NAME'];
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data = $user;
@@ -230,13 +230,13 @@ class SendEmailController extends Controller
             $data['contactUsUrl'] = rtrim($domain, '/') . '/contact-us';
             $data['homeUrl'] = $domain;
             $data['backendUrl'] = $imgDomain;
-            if(checkSiteAccessData(['mrrs'])) {
+            if (checkSiteAccessData(['mrrs'])) {
                 $webRoute = '/forgettenPassword/reset';
-            }else{
+            } else {
                 $webRoute = '/signIn/resetPassword';
             }
-            $verifyUrl = $data['domain'].''.$webRoute.'?verifyemail=do-reset-register=&email='.$user['email']
-                         .'&token='. $user['token'];
+            $verifyUrl = $data['domain'] . '' . $webRoute . '?verifyemail=do-reset-register=&email=' . $user['email']
+                . '&token=' . $user['token'];
             $data['verifyUrl'] = $verifyUrl;
             $data['dateTime'] = date('Y-m-d', time());
             $data['userName'] = $user['username'];
@@ -373,7 +373,9 @@ class SendEmailController extends Controller
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
-                $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
+                if (!empty($productsInfo)) {
+                    $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
+                }
             }
             $data['country'] = Country::where('id', $data['country_id'])->value('name');
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
@@ -469,7 +471,9 @@ class SendEmailController extends Controller
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
-                $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
+                if (!empty($productsInfo)) {
+                    $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
+                }
             }
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
@@ -655,7 +659,9 @@ class SendEmailController extends Controller
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
-                $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
+                if (!empty($productsInfo)) {
+                    $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
+                }
             }
             $area = $this->getAreaName($data);
             // $imgDomain = env('IMAGE_URL');
