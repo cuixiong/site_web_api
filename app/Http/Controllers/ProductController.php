@@ -776,17 +776,24 @@ class ProductController extends Controller {
                                       ->from('products_rt');
         if (!empty($input_params['orderBy'])) {
             // $query = $query->orderBy($input_params['orderBy'], 'asc');
-            if($input_params['orderBy'] == 'time'){
-                $query = $query->orderBy('sort', 'asc')
-                               ->orderBy('published_date', 'asc')
-                               ->orderBy('id', 'desc');
-                
-            }elseif($input_params['orderBy'] == 'price'){
-                $query = $query->orderBy('sort', 'asc')
-                               ->orderBy('price', 'asc')
-                               ->orderBy('id', 'desc');
-            }else{
-                $query = $query->orderBy($input_params['orderBy'], 'asc');
+            if(checkSiteAccessData(['mrrs'])){
+                if($input_params['orderBy'] == 'price'){
+                    $query = $query->orderBy($input_params['orderBy'], 'asc');
+                }else{
+                    $query = $query->orderBy($input_params['orderBy'], 'desc');
+                }
+            }else {
+                if ($input_params['orderBy'] == 'time') {
+                    $query = $query->orderBy('sort', 'asc')
+                                   ->orderBy('published_date', 'asc')
+                                   ->orderBy('id', 'desc');
+                } elseif ($input_params['orderBy'] == 'price') {
+                    $query = $query->orderBy('sort', 'asc')
+                                   ->orderBy('price', 'asc')
+                                   ->orderBy('id', 'desc');
+                } else {
+                    $query = $query->orderBy($input_params['orderBy'], 'asc');
+                }
             }
         } else {
             $query = $query->orderBy('sort', 'asc')
@@ -1224,8 +1231,8 @@ class ProductController extends Controller {
             foreach ($date_filter as $key => $value) {
                 //多少天前时间戳
                 $begin_day_time = $timestamp - $value['date_begin'] * 86400;
-                $end_day_time = $timestamp - $value['date_begin'] * 86400;
-                if ($begin_day_time >= $min_published_date && $end_day_time <= $max_published_date) {
+                $end_day_time = $timestamp + $value['date_end'] * 86400;
+                if ($begin_day_time <= $min_published_date && $end_day_time >= $max_published_date) {
                     $new_data = [];
                     $new_data['date_id'] = $value['id'];
                     $new_data['date'] = $value['date_begin'].'~'.$value['date_end'].' Days';
