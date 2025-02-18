@@ -183,6 +183,9 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::post('apply-single-page', [\App\Http\Controllers\InvoicesController::class, 'applySinglePage'])->name(
             '申请发票(单页)'
         );
+        Route::post('apply-single-page-old', [\App\Http\Controllers\InvoicesController::class, 'oldApplySinglePage'])->name(
+            '申请发票(旧单页)'
+        );
     });
     // Cart控制器(购物车模块)
     Route::prefix('cart')->middleware(JwtMiddleware::class)->group(function () {

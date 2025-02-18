@@ -52,8 +52,9 @@ class ProductController extends Controller {
             if (!empty($input_params['date_id'])) {
                 $date_info = DateFilter::find($input_params['date_id']);
                 if (!empty($date_info)) {
+                    $input_params['published_date'][] = time() - 86400 * $date_info['date_end'];
+
                     $input_params['published_date'][] = time() - 86400 * $date_info['date_begin'];
-                    $input_params['published_date'][] = time() + 86400 * $date_info['date_end'];
                 }
             }
             if (!empty($category_id)) {
@@ -144,10 +145,20 @@ class ProductController extends Controller {
                             strtotime($value['published_date'])
                         ) : '';
                     }
+
                     $description = (new ProductDescription($suffix))->where('product_id', $value['id'])->value(
                         'description'
                     );
-                    $description = mb_substr($description, 0, 120, 'UTF-8');
+                    if(checkSiteAccessData(['mrrs'])) {
+                        $strIndex = strpos($description, "\n");
+                        if ($strIndex !== false) {
+                            // 使用 substr() 函数获取第一个段落
+                            $description = substr($description, 0, $strIndex);
+                        }
+                    }else{
+                        $description = mb_substr($description, 0, 120, 'UTF-8');
+                    }
+
                     $value['description'] = $description;
                     $value['category'] = $category ? [
                         'id'   => $category['id'],
@@ -1231,8 +1242,11 @@ class ProductController extends Controller {
             foreach ($date_filter as $key => $value) {
                 //多少天前时间戳
                 $begin_day_time = $timestamp - $value['date_begin'] * 86400;
-                $end_day_time = $timestamp + $value['date_end'] * 86400;
-                if ($begin_day_time <= $min_published_date && $end_day_time >= $max_published_date) {
+                $end_day_time = $timestamp - $value['date_end'] * 86400;
+                if(empty($value['date_end'] )){
+                    $end_day_time = 0;
+                }
+                if ($begin_day_time >= $min_published_date && $end_day_time <= $max_published_date) {
                     $new_data = [];
                     $new_data['date_id'] = $value['id'];
                     $new_data['date'] = $value['date_begin'].'~'.$value['date_end'].' Days';

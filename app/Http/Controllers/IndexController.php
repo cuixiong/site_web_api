@@ -205,8 +205,18 @@ class IndexController extends Controller {
             'product_id',
             $value['id']
         )->value('description');
+        if (checkSiteAccessData(['mrrs'])) {
+            //取描述第一段 ,  如果没有\n换行符就取一整段
+            $strIndex = strpos($description, "\n");
+            if ($strIndex !== false) {
+                // 使用 substr() 函数获取第一个段落
+                $description = substr($description, 0, $strIndex);
+            }
+        } else {
+            $description = mb_substr($description, 0, 100, 'UTF-8');
+        }
         $value->published_date = date('Y-m-d', strtotime($published_date));
-        $value->description = mb_substr($description, 0, 100, 'UTF-8');
+        $value->description = $description;
         $value->thumb = $value->getThumbImgAttribute();
     }
 
@@ -596,7 +606,7 @@ class IndexController extends Controller {
                     $categoryID = $category['id'];
                     // 查询报告数据
                     $productList = (clone $productQuery)->select($productSelect)->where('category_id', $categoryID)
-                                                        ->get()->toArray();;
+                                                        ->get()->toArray();
                     if (empty($productList)) {
                         $data[$index]['keywords'] = [];
                         $data[$index]['firstProduct'] = [];
@@ -620,14 +630,14 @@ class IndexController extends Controller {
                         $description = (new ProductDescription($year))
                             ->where('product_id', $firstProduct['id'])
                             ->value('description');
-                        if(checkSiteAccessData(['tycn'])){
+                        if (checkSiteAccessData(['tycn', 'mrrs'])) {
                             //取描述第一段 ,  如果没有\n换行符就取一整段
                             $strIndex = strpos($description, "\n");
                             if ($strIndex !== false) {
                                 // 使用 substr() 函数获取第一个段落
                                 $description = substr($description, 0, $strIndex);
                             }
-                        }else{
+                        } else {
                             $description = mb_substr($description, 0, 300, 'UTF-8');
                         }
                         $firstProduct['description'] = $description;

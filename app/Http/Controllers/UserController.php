@@ -20,6 +20,7 @@ class UserController extends Controller {
         $username = $request->name;
         $email = $request->email;
         $country_id = $request->country_id;
+        $address = $request->address;
         $province_id = $request->province_id;
         $city_id = $request->city_id;
         $phone = $request->phone;
@@ -40,7 +41,8 @@ class UserController extends Controller {
         $model = new User;
         $model->username = $username;
         $model->email = $email;
-        $model->country_id = $country_id;
+        $model->area_id = $country_id;
+        $model->address = $address;
         $model->province_id = $province_id;
         $model->city_id = $city_id;
         $model->phone = $phone;

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\InvoicesRequest;
 use App\Models\Invoices;
 use App\Models\Order;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class InvoicesController extends Controller {
@@ -141,6 +142,52 @@ class InvoicesController extends Controller {
                 'phone'           => $input['phone'],
                 'bank_name'       => $input['bank_name'],
                 'bank_account'    => $input['bank_account'],
+            ];
+            $rs = $model->create($addData);
+            if (!$rs) {
+                ReturnJson(false, '申请失败');
+            }
+            ReturnJson(true, '申请成功');
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function oldApplySinglePage(Request $request) {
+        try {
+            (new InvoicesRequest())->oldApplySinglePage($request);
+            $input = $request->all();
+            //获取当前登陆用户
+            $user = User::IsLogin();
+            if (empty($user)) {
+                ReturnJson(false, '请先登陆');
+            }
+            $order_info = Order::query()->where('order_number', $input['order_number'])
+                             ->where("user_id", $user->id)->first();
+            if (empty($order_info)) {
+                ReturnJson(false, '订单不存在');
+            }
+            $order_id = $order_info->id;
+            $price = $order_info->actually_paid ?? 0;
+            $model = new Invoices();
+            $invoice_id = $model->where("order_id" , $order_id)->where("user_id" , $user->id)->value("id");
+            if(!empty($invoice_id )){
+                ReturnJson(false, '该订单已经申请过');
+            }
+
+            $addData = [
+                'order_id'        => $order_id,
+                'user_id'         => $user->id,
+                'title'           => $input['title'] ?? '',
+                'company_name'    => $input['company_name'] ?? '',
+                'company_address' => $input['company_address'] ?? '',
+                'tax_code'        => $input['tax_code'] ?? '',
+                'invoice_type'    => $input['invoice_type'] ?? 1,
+                'price'           => $price,
+                'apply_status'    => 1,
+                'phone'           => $input['phone'] ?? '',
+                'bank_name'       => $input['bank_name'] ?? '',
+                'bank_account'    => $input['bank_account'] ?? '',
             ];
             $rs = $model->create($addData);
             if (!$rs) {
