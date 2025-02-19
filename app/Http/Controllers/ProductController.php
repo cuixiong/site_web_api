@@ -52,9 +52,17 @@ class ProductController extends Controller {
             if (!empty($input_params['date_id'])) {
                 $date_info = DateFilter::find($input_params['date_id']);
                 if (!empty($date_info)) {
-                    $input_params['published_date'][] = time() - 86400 * $date_info['date_end'];
+                    if(empty($date_info['date_end'] )){
+                        $input_params['published_date'][]  = 0;
+                    }else {
+                        $input_params['published_date'][] = time() - 86400 * $date_info['date_end'];
+                    }
 
-                    $input_params['published_date'][] = time() - 86400 * $date_info['date_begin'];
+                    if(empty($date_info['date_begin'] )){
+                        $input_params['published_date'][] = time();
+                    }else{
+                        $input_params['published_date'][] = time() - 86400 * $date_info['date_begin'];
+                    }
                 }
             }
             if (!empty($category_id)) {
@@ -357,6 +365,13 @@ class ProductController extends Controller {
                                           ->where(['p.id' => $product_id])
                                           ->where('p.status', 1)
                                           ->first()->toArray();
+
+            if(checkSiteAccessData(['mrrs'])) {
+                $product_desc['publisher'] = Publishers::query()->where("id", $product_desc['publisher_id'])->value(
+                    "name"
+                );
+            }
+
             //返回打折信息
             $time = time();
             //判断当前报告是否在优惠时间内

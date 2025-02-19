@@ -819,7 +819,7 @@ class SendEmailController extends Controller {
                 'homePage'               => $data['domain'],
                 'myAccountUrl'           => rtrim($data['domain'], '/').'/account/account-infor',
                 'contactUsUrl'           => rtrim($data['domain'], '/').'/contact-us',
-                'homeUrl'                => rtrim($data['domain'], '/').'/account/order',
+                'homeUrl'                => $data['domain'],
                 'backendUrl'             => $imgDomain,
                 'userName'               => $data['username'] ? $data['username'] : '',
                 'userEmail'              => $data['email'],
