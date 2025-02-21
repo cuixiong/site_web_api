@@ -167,6 +167,11 @@ class InvoicesController extends Controller {
             if (empty($order_info)) {
                 ReturnJson(false, '订单不存在');
             }
+
+            if (!in_array($order_info->is_pay, [Order::PAY_FINISH, Order::PAY_SUCCESS])) {
+                ReturnJson(false, '订单还未支付,不能申请');
+            }
+
             $order_id = $order_info->id;
             $price = $order_info->actually_paid ?? 0;
             $model = new Invoices();
