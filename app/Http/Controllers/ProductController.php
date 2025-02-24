@@ -39,6 +39,7 @@ class ProductController extends Controller {
             $category_id = $request->category_id ?? 0; // 分类ID
             $keyword = trim($request->keyword) ?? null; // 搜索关键词
             if (!empty($keyword)) {
+                $keyword = phpDecodeURIComponent($keyword);
                 //点击关键词一次, 需要增加一次点击次数
                 SearchRank::query()->where('name', $keyword)->increment('hits');
             }

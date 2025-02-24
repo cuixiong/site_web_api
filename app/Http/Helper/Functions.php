@@ -98,6 +98,26 @@ function isMobile() {
     return false;
 }
 
+function phpEncodeURIComponent($str) {
+    $revert = array('%21'=>'!', '%2A'=>'*', '%27'=>"'", '%28'=>'(', '%29'=>')', '%7E'=>'~');
+    return strtr(rawurlencode($str), $revert);
+}
+
+function phpDecodeURIComponent($encodedStr) {
+    // 将特殊字符转换回原始编码格式（反向操作）
+    $replacements = array(
+        '!' => '%21',
+        '*' => '%2A',
+        "'" => '%27',
+        '(' => '%28',
+        ')' => '%29',
+        '~' => '%7E'
+    );
+    // 替换特殊字符为编码后的形式
+    $strWithEncodedChars = strtr($encodedStr, $replacements);
+    return rawurldecode($strWithEncodedChars);
+}
+
 /**
  * 判断是否是微信访问
  *

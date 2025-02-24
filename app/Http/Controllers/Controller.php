@@ -111,9 +111,8 @@ class Controller extends BaseController {
         //计算签名
         $mk = $this->makeSource($params);
         $sourceSignStr = $mk.'&'.$secret;
-        $sourceSignStr = urlencode($sourceSignStr);
+        $sourceSignStr = phpEncodeURIComponent($sourceSignStr);
         $mySign = md5($sourceSignStr);
-
         //\Log::error('签名原串:'.$sourceSignStr.'-----------服务器签名:'.$mySign.'-----提交签名:'.$sign);
         return strtoupper($mySign) == strtoupper($sign);
     }
