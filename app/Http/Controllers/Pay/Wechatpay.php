@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pay;
 use App\Http\Controllers\Common\SendEmailController;
 use App\Models\CouponUser;
 use App\Models\Order;
+use App\Models\SystemValue;
 use App\Models\WechatTool;
 use App\Services\OrderService;
 use GuzzleHttp\Exception\RequestException;
@@ -293,6 +294,34 @@ class Wechatpay extends Pay
 
     public function notify()
     {
+
+        // 提取签名信息
+        $request = request();
+        $signature = $request->header('Wechatpay-Signature');
+        $timestamp = $request->header('Wechatpay-Timestamp');
+        $nonce = $request->header('Wechatpay-Nonce');
+        $serial = $request->header('Wechatpay-Serial');
+
+        // 获取微信支付平台证书
+        $platformCertificate = $this->getPlatformCertificate($serial);
+
+        // 构建待验证的消息
+        $input = $request->getContent();
+        $message = $timestamp . "\n" . $nonce . "\n" . $input . "\n";
+
+        // 进行签名验证
+        $verifyResult = openssl_verify($message, base64_decode($signature), $platformCertificate, OPENSSL_ALGO_SHA256);
+        if ($verifyResult !== 1) {
+            // 签名验证失败，记录日志并抛出异常
+            $logMessage = 'Signature verification failed';
+            $this->logMessage($input, $logMessage);
+            \Log::error('签名失败!  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+            throw new Exception($logMessage);
+        }else{
+            \Log::error('签名成功!  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+        }
+
+
         $input = file_get_contents("php://input");
         $input = json_decode($input, true);
         if (!is_array($input)) {
@@ -413,6 +442,33 @@ class Wechatpay extends Pay
 
         return ['code' => 'SUCCESS', 'message' => ''];
     }
+
+
+    private function getPlatformCertificate($serial)
+    {
+        $certDir = config_path('crt/wechatpay/certificate/');
+        $cert_path = $certDir.$serial.'.pem';
+        return file_get_contents($cert_path);
+    }
+
+    private function logMessage($input, $message)
+    {
+        $timestamp = time();
+        $dir = storage_path('log') . '/wechatpay/' . date('Y_m/', $timestamp);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $logName = 'signature_verify_error_' . $timestamp . '.log';
+        $logName = $dir . $logName;
+        $log = sprintf("%s", var_export([
+                                            '_TIME' => date('Y-m-d H:i:s', $timestamp),
+                                            '_IP' => request()->ip(),
+                                            '_DATA' => $input,
+                                            '_ERROR_MSG' => $message,
+                                        ], true)) . PHP_EOL;
+        file_put_contents($logName, $log, FILE_APPEND);
+    }
+
 
     public function getWechatPayMiddleware()
     {
