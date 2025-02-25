@@ -20,6 +20,10 @@ class UpdWXPayCertCommand extends Command {
     private $certDir              = ''; // 平台证书保存目录
 
     public function __construct() {
+        parent::__construct();
+    }
+
+    public function handle() {
         // 配置参数
         $this->mchid = env('WECHATPAY_MERCHANT_ID');
         $this->api_v3_key = env('WECHATPAY_APIV3_SECRET_KEY');
@@ -39,10 +43,7 @@ class UpdWXPayCertCommand extends Command {
             echo '请检查商户公钥路径是否正确'.PHP_EOL;
             die;
         }
-        parent::__construct();
-    }
 
-    public function handle() {
         $method = 'GET';
         $url = '/v3/certificates';  // 接口路径（不含域名）
         $timestamp = time();        // 当前时间戳（秒级）
