@@ -53,15 +53,14 @@ class ProductController extends Controller {
             if (!empty($input_params['date_id'])) {
                 $date_info = DateFilter::find($input_params['date_id']);
                 if (!empty($date_info)) {
-                    if(empty($date_info['date_end'] )){
-                        $input_params['published_date'][]  = 0;
-                    }else {
+                    if (empty($date_info['date_end'])) {
+                        $input_params['published_date'][] = 0;
+                    } else {
                         $input_params['published_date'][] = time() - 86400 * $date_info['date_end'];
                     }
-
-                    if(empty($date_info['date_begin'] )){
+                    if (empty($date_info['date_begin'])) {
                         $input_params['published_date'][] = time();
-                    }else{
+                    } else {
                         $input_params['published_date'][] = time() - 86400 * $date_info['date_begin'];
                     }
                 }
@@ -126,6 +125,7 @@ class ProductController extends Controller {
                         $productsData['discount_time_begin'] = null;
                         $productsData['discount_time_end'] = null;
                     }
+                    $value['thumb'] = $productsData['thumb'];
                     $value['discount'] = $productsData['discount'];
                     $value['discount_amount'] = $productsData['discount_amount'];
                     $value['discount_type'] = $productsData['discount_type'];
@@ -154,20 +154,18 @@ class ProductController extends Controller {
                             strtotime($value['published_date'])
                         ) : '';
                     }
-
                     $description = (new ProductDescription($suffix))->where('product_id', $value['id'])->value(
                         'description'
                     );
-                    if(checkSiteAccessData(['mrrs'])) {
+                    if (checkSiteAccessData(['mrrs'])) {
                         $strIndex = strpos($description, "\n");
                         if ($strIndex !== false) {
                             // 使用 substr() 函数获取第一个段落
                             $description = substr($description, 0, $strIndex);
                         }
-                    }else{
+                    } else {
                         $description = mb_substr($description, 0, 120, 'UTF-8');
                     }
-
                     $value['description'] = $description;
                     $value['category'] = $category ? [
                         'id'   => $category['id'],
@@ -366,13 +364,11 @@ class ProductController extends Controller {
                                           ->where(['p.id' => $product_id])
                                           ->where('p.status', 1)
                                           ->first()->toArray();
-
-            if(checkSiteAccessData(['mrrs'])) {
+            if (checkSiteAccessData(['mrrs'])) {
                 $product_desc['publisher'] = Publishers::query()->where("id", $product_desc['publisher_id'])->value(
                     "name"
                 );
             }
-
             //返回打折信息
             $time = time();
             //判断当前报告是否在优惠时间内
@@ -766,10 +762,14 @@ class ProductController extends Controller {
         }
         // 关键词
         if ($keyword) {
-            $query = $query->where(function ($query) use ($keyword) {
-                $query->where('name', 'like', '%'.$keyword.'%');
-                if (is_numeric($keyword)) {
-                    $query->orWhere('id', $keyword);
+            $keyWordArraySphinx = explode(" ", $keyword);
+            $query = $query->where(function ($query) use ($keyWordArraySphinx) {
+                foreach ($keyWordArraySphinx as $keyword) {
+                    if (is_numeric($keyword)) {
+                        $query->where('id', $keyword);
+                    }else{
+                        $query->where('name', 'like', '%'.$keyword.'%');
+                    }
                 }
             });
         }
@@ -803,13 +803,13 @@ class ProductController extends Controller {
                                       ->from('products_rt');
         if (!empty($input_params['orderBy'])) {
             // $query = $query->orderBy($input_params['orderBy'], 'asc');
-            if(checkSiteAccessData(['mrrs'])){
-                if($input_params['orderBy'] == 'price'){
+            if (checkSiteAccessData(['mrrs'])) {
+                if ($input_params['orderBy'] == 'price') {
                     $query = $query->orderBy($input_params['orderBy'], 'asc');
-                }else{
+                } else {
                     $query = $query->orderBy($input_params['orderBy'], 'desc');
                 }
-            }else {
+            } else {
                 if ($input_params['orderBy'] == 'time') {
                     $query = $query->orderBy('sort', 'asc')
                                    ->orderBy('published_date', 'asc')
@@ -824,6 +824,8 @@ class ProductController extends Controller {
             }
         } else {
             $query = $query->orderBy('sort', 'asc')
+                           ->orderBy('year', 'desc')
+                           ->orderBy('degree_keyword', 'asc')
                            ->orderBy('published_date', 'desc')
                            ->orderBy('id', 'desc');
         }
@@ -835,8 +837,14 @@ class ProductController extends Controller {
         }
         //精确搜索, 多字段匹配
         if (!empty($keyword)) {
-            $val = '"'.$keyword.'"';
-            $query->match(['name', 'english_name'], $val, true);
+//            $val = '"'.$keyword.'"';
+//            $query->match(['name', 'english_name'], $val, true);
+            $keyWordArraySphinx = explode(" ", $keyword);
+            if (count($keyWordArraySphinx) > 0) {
+                foreach ($keyWordArraySphinx as  $val) {
+                    $query->match(['name', 'english_name'], '"'.$val.'"', true);
+                }
+            }
         }
         //出版商
         if (!empty($input_params['publisher_id'])) {
@@ -1259,7 +1267,7 @@ class ProductController extends Controller {
                 //多少天前时间戳
                 $begin_day_time = $timestamp - $value['date_begin'] * 86400;
                 $end_day_time = $timestamp - $value['date_end'] * 86400;
-                if(empty($value['date_end'] )){
+                if (empty($value['date_end'])) {
                     $end_day_time = 0;
                 }
                 if ($begin_day_time >= $min_published_date && $end_day_time <= $max_published_date) {
