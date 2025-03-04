@@ -823,11 +823,18 @@ class ProductController extends Controller {
                 }
             }
         } else {
-            $query = $query->orderBy('sort', 'asc')
-                           ->orderBy('year', 'desc')
-                           ->orderBy('degree_keyword', 'asc')
-                           ->orderBy('published_date', 'desc')
-                           ->orderBy('id', 'desc');
+            if(!empty($keyword )){
+                $query = $query->orderBy('sort', 'asc')
+                               ->orderBy('year', 'desc')
+                               ->orderBy('degree_keyword', 'asc')
+                               ->orderBy('published_date', 'desc')
+                               ->orderBy('id', 'desc');
+            }else{
+                $query = $query->orderBy('sort', 'asc')
+                               ->orderBy('published_date', 'desc')
+                               ->orderBy('id', 'desc');
+            }
+
         }
         $query = $query->where('status', '=', 1);
         $query = $query->where("published_date", "<", time());
