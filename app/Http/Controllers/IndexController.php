@@ -57,7 +57,7 @@ class IndexController extends Controller {
                     $priceEdition[$forProduct['publisher_id']], $forProduct['price']
                 ) ?? [];
             }
-        } elseif (checkSiteAccessData(['lpicn'])) {
+        } elseif (checkSiteAccessData(['lpicn' , 'yhen'])) {
             $data['hot_product_list'] = $this->getHotProductList($request);
             // lpicn数据的图片不太一样
             $systemKey = 'hotReportDefaultImg';
@@ -82,7 +82,7 @@ class IndexController extends Controller {
             );
         } else {
             $data['recommend_product_list'] = $this->getRecommendProductList($request);
-            if (checkSiteAccessData(['tycn', 'mrrs'])) {
+            if (checkSiteAccessData(['tycn', 'mrrs' , 'yhen'])) {
                 if ($request->recommend_data_type == 2) {
                     $data['recommend_product_list'] = $this->handlerExtraPlusCateImg($data['recommend_product_list']);
                 } else {

@@ -19,6 +19,7 @@ use App\Models\News;
 use App\Models\Office;
 use App\Models\PlateValue;
 use App\Models\Position;
+use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\QuoteCategory;
 use App\Models\SearchRank;
@@ -65,7 +66,7 @@ class CommonController extends Controller {
         //权威引用
         $data['quote_list'] = $this->getQuoteList($request);
 
-        if(checkSiteAccessData(['mrrs'])){
+        if(checkSiteAccessData(['mrrs' , 'yhen'])){
             //国家数据
             $data['country_list'] = $this->getCountryData();
             //来源数据
@@ -73,8 +74,6 @@ class CommonController extends Controller {
             //职位下拉
             $data['position_list'] = $this->getPositionList();
         }
-
-
 
         // 总控字典部分
         // 计划购买时间 ,原为联系我们控制器Dictionary函数中代码，现复制至此处
@@ -108,6 +107,18 @@ class CommonController extends Controller {
             // 办公室
             $data['offices'] = $this->getofficeRegion($request);
         }
+
+        if (checkSiteAccessData(['yhen'])) {
+            $data['hot_product_list'] = Products::query()
+                ->where('status', 1)
+                ->where('show_hot', 1)
+                ->select(['id', 'thumb', 'name', 'url'])
+                ->orderBy('sort', 'ASC')
+                ->orderBy('published_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->limit(10)->get()->toArray();
+        }
+
 
         ReturnJson(true, '', $data);
     }
