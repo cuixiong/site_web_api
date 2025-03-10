@@ -29,6 +29,7 @@ class PlateController extends Controller
             'pc_image as img',
             'mb_image as img_mobile',
             'title',
+            'short_title',
             'icon',
             'content as description'
         ])
@@ -153,7 +154,7 @@ class PlateController extends Controller
                     }
                 }
             }
-            
+
             $alias = $category['alias'];
             //有相同的别名合并成数组
             if(isset($data[$alias]) && isset($data[$alias]['category'])){
@@ -166,7 +167,7 @@ class PlateController extends Controller
             }else{
                 $data[$alias] = $forData;
             }
-            
+
         }
         ReturnJson(true, '请求成功', $data);
     }

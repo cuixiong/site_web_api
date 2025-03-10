@@ -38,10 +38,8 @@ class CommonController extends Controller {
         $data['seo_info'] = $this->getSeoInfo($request);
         //友情链接
         $data['link_list'] = $this->getLinkList();
-        if(!checkSiteAccessData(['mrrs'])) {
-            //中国省市地区
-            $data['chian_region'] = $this->getChianRegionData();
-        }
+        //中国省市地区
+        $data['chian_region'] = $this->getChianRegionData();
         //获取热门关键词
         $data['hot_keywords'] = $this->getKeyWords();
         //产品标签
@@ -84,19 +82,19 @@ class CommonController extends Controller {
         $data['channel'] = DictionaryValue::GetDicOptions('Channel_Type');
         // 语言版本
         $data['language_version'] = MessageLanguageVersion::where('status', 1)
-                                                          ->select(['name', 'id'])
-                                                          ->orderBy('sort', 'ASC')
-                                                          ->get()
-                                                          ->toArray();
+            ->select(['name', 'id'])
+            ->orderBy('sort', 'ASC')
+            ->get()
+            ->toArray();
 
         //返回对应的分类数据
         if (checkSiteAccessData(['tycn'])) {
             $cate = ProductsCategory::query()
-                                    ->where("is_recommend", 1)
-                                    ->where("status", 1)
-                                    ->select(['id', 'name', 'seo_title', 'link', 'icon', 'icon_hover'])
-                                    ->orderBy('sort', 'ASC')
-                                    ->limit(20)->get()->toArray();
+                ->where("is_recommend", 1)
+                ->where("status", 1)
+                ->select(['id', 'name', 'seo_title', 'link', 'icon', 'icon_hover'])
+                ->orderBy('sort', 'ASC')
+                ->limit(20)->get()->toArray();
             $data['cate'] = $cate;
         }
 
@@ -112,13 +110,13 @@ class CommonController extends Controller {
 
         if (checkSiteAccessData(['yhen'])) {
             $data['hot_product_list'] = Products::query()
-                                                ->where('status', 1)
-                                                ->where('show_hot', 1)
-                                                ->select(['id', 'thumb', 'name', 'url'])
-                                                ->orderBy('sort', 'ASC')
-                                                ->orderBy('published_date', 'desc')
-                                                ->orderBy('id', 'desc')
-                                                ->limit(10)->get()->toArray();
+                ->where('status', 1)
+                ->where('show_hot', 1)
+                ->select(['id', 'thumb', 'name', 'url'])
+                ->orderBy('sort', 'ASC')
+                ->orderBy('published_date', 'desc')
+                ->orderBy('id', 'desc')
+                ->limit(10)->get()->toArray();
         }
 
 
@@ -133,13 +131,13 @@ class CommonController extends Controller {
         $pageSize = $request->quote_size ?? 4;
 
         $category = QuoteCategory::select(['id', 'name'])
-                                 ->where("status", 1)
-                                 ->orderBy('sort', 'asc')->get()->toArray() ?? [];
+            ->where("status", 1)
+            ->orderBy('sort', 'asc')->get()->toArray() ?? [];
         array_unshift($category, ['id' => '0', 'name' => '全部']);
         // 数据
         $model = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id'])
-                          ->where("status", 1)
-                          ->orderBy('sort', 'asc');
+            ->where("status", 1)
+            ->orderBy('sort', 'asc');
         if ($category_id) {
             $model = $model->where('category_id', $category_id);
         }
@@ -157,13 +155,13 @@ class CommonController extends Controller {
     {
         $field = ['id', 'name', 'link', 'icon', 'icon_hover' , 'show_home'];
         $query = ProductsCategory::select($field)
-                                 ->where('status', 1);
+            ->where('status', 1);
 
         if($orderBySort){
             $query = $query->orderBy('sort', 'asc');
         }
         $data = $query->get()
-                      ->toArray();
+            ->toArray();
         array_unshift($data, [
             'id'   => '0',
             'name' => '全部',
@@ -178,18 +176,18 @@ class CommonController extends Controller {
     public function getNewsList()
     {
         $data = News::select([
-                                 'id',
-                                 'title',
-                                 'url',
-                                 'category_id as type'
-                             ])
-                    ->where(['status' => 1])
-                    ->where('upload_at', '<=', time())
-                    ->orderBy('upload_at', 'desc')
-                    ->orderBy('id', 'desc')
-                    ->limit(8)
-                    ->get()
-                    ->toArray();
+            'id',
+            'title',
+            'url',
+            'category_id as type'
+        ])
+            ->where(['status' => 1])
+            ->where('upload_at', '<=', time())
+            ->orderBy('upload_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit(8)
+            ->get()
+            ->toArray();
 
         return $data;
     }
@@ -198,18 +196,18 @@ class CommonController extends Controller {
     {
         $siteInfoKey = 'site_info';
         $setId = System::select(['id'])
-                       ->where('status', 1)
-                       ->where('alias', $siteInfoKey)
-                       ->get()
-                       ->value('id');
+            ->where('status', 1)
+            ->where('alias', $siteInfoKey)
+            ->get()
+            ->value('id');
         $result = [];
         if ($setId) {
             $data = SystemValue::where('parent_id', $setId)
-                               ->where('status', 1)
-                               ->where('hidden', 1)
-                               ->select(['name', 'key', 'value'])
-                               ->get()
-                               ->toArray();
+                ->where('status', 1)
+                ->where('hidden', 1)
+                ->select(['name', 'key', 'value'])
+                ->get()
+                ->toArray();
             //图片后缀, 全部需要转换一遍
             $imgExtList = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg'];
             foreach ($data as $key => $value) {
@@ -243,15 +241,15 @@ class CommonController extends Controller {
     {
         $siteInfoKey = 'reports';
         $setId = System::select(['id'])
-                       ->where('status', 1)
-                       ->where('alias', $siteInfoKey)
-                       ->get()
-                       ->value('id');
+            ->where('status', 1)
+            ->where('alias', $siteInfoKey)
+            ->get()
+            ->value('id');
         $data = SystemValue::where('parent_id', $setId)
-                           ->where('hidden', 1)
-                           ->select(['key', 'value'])
-                           ->get()
-                           ->toArray();
+            ->where('hidden', 1)
+            ->select(['key', 'value'])
+            ->get()
+            ->toArray();
         if ($data) {
             $data = array_column($data, 'value', 'key');
         }
@@ -318,10 +316,10 @@ class CommonController extends Controller {
             ReturnJson(false, 'ID不允许为空');
         }
         $data = SystemValue::where('parent_id', $id)
-                           ->where('status', 1)
-                           ->select(['key', 'value'])
-                           ->get()
-                           ->toArray();
+            ->where('status', 1)
+            ->select(['key', 'value'])
+            ->get()
+            ->toArray();
         ReturnJson(true, '', $data);
     }
 
@@ -342,7 +340,7 @@ class CommonController extends Controller {
             ReturnJson(false, 'ID不允许为空');
         }
         $res = PlateValue::where('parent_id', $id)->where('status', 1)->select(['id', 'title', 'image as link'])->get()
-                         ->toArray();
+            ->toArray();
         foreach ($res as $key => $value) {
             # code...
         }
@@ -398,17 +396,17 @@ class CommonController extends Controller {
             ReturnJson(false, 'name is empty');
         }
         $setId = System::select(['id'])
-                       ->where('status', 1)
-                       ->where('alias', $name)
-                       ->get()
-                       ->value('id');
+            ->where('status', 1)
+            ->where('alias', $name)
+            ->get()
+            ->value('id');
         $result = [];
         if ($setId) {
             $data = SystemValue::where('parent_id', $setId)
-                               ->where('status', 1)
-                               ->select(['name', 'key', 'value'])
-                               ->get()
-                               ->toArray();
+                ->where('status', 1)
+                ->select(['name', 'key', 'value'])
+                ->get()
+                ->toArray();
             //图片后缀, 全部需要转换一遍
             $imgExtList = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg'];
             foreach ($data as $key => $value) {
@@ -434,10 +432,10 @@ class CommonController extends Controller {
         }
         $result = [];
         $data = SystemValue::where('key', $key)
-                           ->where('status', 1)
-                           ->select(['name', 'key', 'value'])
-                           ->get()
-                           ->toArray();
+            ->where('status', 1)
+            ->select(['name', 'key', 'value'])
+            ->get()
+            ->toArray();
         //图片后缀, 全部需要转换一遍
         $imgExtList = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg'];
         foreach ($data as $key => $value) {
@@ -525,10 +523,10 @@ class CommonController extends Controller {
     private function getLinkList()
     {
         $link = Link::where('status', 1)
-                    ->select(['name', 'link'])
-                    ->orderBy('sort', 'ASC')
-                    ->get()
-                    ->toArray();
+            ->select(['name', 'link'])
+            ->orderBy('sort', 'ASC')
+            ->get()
+            ->toArray();
 
         return $link;
     }
@@ -551,7 +549,7 @@ class CommonController extends Controller {
                     "id"   => $province["id"],
                     "name" => $province["name"],
                     'sons' => City::select(['id', 'name'])->where(['type' => 2, 'pid' => $province['id']])->get()
-                                  ->toArray(),
+                        ->toArray(),
                 ];
             }
             Redis::set($cacheKey, json_encode($data));
@@ -617,10 +615,10 @@ class CommonController extends Controller {
     private function getWebSiteLan()
     {
         $data = LanguageWebsite::where('status', 1)
-                               ->select(['name', 'url'])
-                               ->orderBy('sort', 'ASC')
-                               ->get()
-                               ->toArray();
+            ->select(['name', 'url'])
+            ->orderBy('sort', 'ASC')
+            ->get()
+            ->toArray();
 
         return $data;
     }
@@ -635,18 +633,18 @@ class CommonController extends Controller {
 
         $siteInfoKey = 'site_lan';
         $setId = System::select(['id'])
-                       ->where('status', 1)
-                       ->where('alias', $siteInfoKey)
-                       ->get()
-                       ->value('id');
+            ->where('status', 1)
+            ->where('alias', $siteInfoKey)
+            ->get()
+            ->value('id');
         $result = [];
         if ($setId) {
             $result = SystemValue::where('parent_id', $setId)
-                                 ->where('status', 1)
-                                 ->where('hidden', 1)
-                                 ->select(['name', 'value as url'])
-                                 ->get()
-                                 ->toArray();
+                ->where('status', 1)
+                ->where('hidden', 1)
+                ->select(['name', 'value as url'])
+                ->get()
+                ->toArray();
         }
 
         return $result;
@@ -660,22 +658,22 @@ class CommonController extends Controller {
     private function getTopMenus()
     {
         $menus = Menu::where('status', 1)
-                     ->whereIn('type', [1, 3])
-                     ->select(
-                         [
-                             'id',
-                             'link',
-                             'name',
-                             'banner_title',
-                             'banner_short_title',
-                             'parent_id',
-                             'seo_title',
-                             'seo_keyword',
-                             'seo_description'
-                         ]
-                     )
-                     ->orderBy('sort', 'ASC')
-                     ->get()->toArray();
+            ->whereIn('type', [1, 3])
+            ->select(
+                [
+                    'id',
+                    'link',
+                    'name',
+                    'banner_title',
+                    'banner_short_title',
+                    'parent_id',
+                    'seo_title',
+                    'seo_keyword',
+                    'seo_description'
+                ]
+            )
+            ->orderBy('sort', 'ASC')
+            ->get()->toArray();
         // 这里只处理两层，等需要多层再用递归
         $result = [];
         foreach ($menus as $key => $value) {
@@ -723,32 +721,32 @@ class CommonController extends Controller {
     private function getButtonMenus()
     {
         $frontMenus = Menu::select([
-                                       'id',
-                                       'name',
-                                       'link',
-                                   ])
-                          ->where('parent_id', 0)
-                          ->whereIn('type', [2, 3])
-                          ->where('status', 1)
-                          ->orderBy('type', 'DESC')
-                          ->orderBy('sort', 'ASC')
-                          ->get()
-                          ->toArray();
+            'id',
+            'name',
+            'link',
+        ])
+            ->where('parent_id', 0)
+            ->whereIn('type', [2, 3])
+            ->where('status', 1)
+            ->orderBy('type', 'DESC')
+            ->orderBy('sort', 'ASC')
+            ->get()
+            ->toArray();
         foreach ($frontMenus as $key => $frontMenu) {
             $sonMenus = Menu::select([
-                                         'id',
-                                         'name',
-                                         'link',
-                                         'seo_title',
-                                         'seo_keyword',
-                                         'seo_description'
-                                     ])
-                            ->where('parent_id', $frontMenu['id'])
-                            ->whereIn('type', [2, 3])
-                            ->where('status', 1)
-                            ->orderBy('sort', 'ASC')
-                            ->get()
-                            ->toArray();
+                'id',
+                'name',
+                'link',
+                'seo_title',
+                'seo_keyword',
+                'seo_description'
+            ])
+                ->where('parent_id', $frontMenu['id'])
+                ->whereIn('type', [2, 3])
+                ->where('status', 1)
+                ->orderBy('sort', 'ASC')
+                ->get()
+                ->toArray();
             $frontMenus[$key]['menus'] = $sonMenus;
         }
 
@@ -760,9 +758,9 @@ class CommonController extends Controller {
     public function getofficeRegion(Request $request)
     {
         $list = Office::where('status', 1)
-                      ->orderBy('sort', 'asc')
-                      ->orderBy('id', 'desc')
-                      ->get();
+            ->orderBy('sort', 'asc')
+            ->orderBy('id', 'desc')
+            ->get();
         foreach ($list as &$value) {
             $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
             $value['national_flag'] = Common::cutoffSiteUploadPathPrefix($value['national_flag']);
@@ -784,10 +782,10 @@ class CommonController extends Controller {
         $count = (clone $query)->count();
         $list = $query->orderBy('id', 'desc')
             //->orderBy('sort', 'desc')
-                      ->offset(($page - 1) * $pageSize)
-                      ->limit($pageSize)
-                      ->get()
-                      ->toArray();
+            ->offset(($page - 1) * $pageSize)
+            ->limit($pageSize)
+            ->get()
+            ->toArray();
 
         if ($list) {
             foreach ($list as $key => $item) {
