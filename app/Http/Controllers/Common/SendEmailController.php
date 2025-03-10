@@ -165,7 +165,6 @@ class SendEmailController extends Controller {
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene('registerSuccess');
-
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
@@ -359,8 +358,10 @@ class SendEmailController extends Controller {
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
-                if (!empty($productsInfo)){
-                    $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
+                if (!empty($productsInfo)) {
+                    $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value(
+                        'email'
+                    );
                 }
             }
             $data['country'] = Country::where('id', $data['country_id'])->value('name');
@@ -457,8 +458,10 @@ class SendEmailController extends Controller {
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
-                if (!empty($productsInfo)){
-                    $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
+                if (!empty($productsInfo)) {
+                    $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value(
+                        'email'
+                    );
                 }
             }
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
@@ -647,8 +650,10 @@ class SendEmailController extends Controller {
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
-                if (!empty($productsInfo)){
-                    $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value('email');
+                if (!empty($productsInfo)) {
+                    $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value(
+                        'email'
+                    );
                 }
             }
             $area = $this->getAreaName($data);
@@ -865,8 +870,16 @@ class SendEmailController extends Controller {
                 $scene->email_sender_id
             );
             //$scene->title = $scene->title.":  {$productsName}";
-            $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
-            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
+            $siteName = request()->header('Site');
+            if (empty($siteName)) {
+                $siteName = env('APP_NAME');
+            }
+            if (in_array($siteName, ['mrrs', 'yhen', 'qyen'])) {
+                $scene->title = $scene->title.", order number is: {$data['order_number']}";
+            } else {
+                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
+            }
+            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail , true);
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             foreach ($emails as $email) {
@@ -1019,8 +1032,17 @@ class SendEmailController extends Controller {
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene('payment');
-            //邮件标题
-            $scene->title = $scene->title.", 订单号是 ".$data['order_number'];
+            // 邮件标题
+            $siteName = request()->header('Site');
+            if (empty($siteName)) {
+                $siteName = env('APP_NAME');
+            }
+            if (in_array($siteName, ['mrrs', 'yhen', 'qyen'])) {
+                $scene->title = $scene->title.", order number is: {$data['order_number']}";
+            } else {
+                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
+            }
+
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             if (empty($scene)) {
@@ -1129,13 +1151,13 @@ class SendEmailController extends Controller {
             $sendStatus = 0;
         } else {
             $sendStatus = 1;
-            if(!empty($data['id'] )) {
+            if (!empty($data['id'])) {
                 if (in_array($scene->action, ['payment', 'placeOrder'])) {
                     //存入订单邮件发送记录
-                    Order::query()->where("id" , $data['id'])->update(['send_email_time' => time()]);
+                    Order::query()->where("id", $data['id'])->update(['send_email_time' => time()]);
                 } elseif (in_array($scene->action, ['contactUs', 'productSample', 'customized'])) {
                     //存入留言邮件发送记录
-                    ContactUs::query()->where("id" , $data['id'])->update(['send_email_time' => time()]);
+                    ContactUs::query()->where("id", $data['id'])->update(['send_email_time' => time()]);
                 }
             }
         }
