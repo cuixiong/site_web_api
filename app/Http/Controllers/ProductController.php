@@ -1251,8 +1251,12 @@ class ProductController extends Controller {
         }
         //精确搜索, 多字段匹配
         if (!empty($keyword)) {
-            $val = '"'.$keyword.'"';
-            $query->match(['name', 'english_name'], $val, true);
+            $keyWordArraySphinx = explode(" ", $keyword);
+            if (count($keyWordArraySphinx) > 0) {
+                foreach ($keyWordArraySphinx as  $val) {
+                    $query->match(['name', 'english_name'], '"'.$val.'"', true);
+                }
+            }
         }
         $query->groupBy('category_id')->setSelect('category_id');
         $result = $query->execute();
