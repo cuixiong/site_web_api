@@ -264,6 +264,18 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
             '相关报告列表'
         );
     });
+    // caseShare 案例分享
+    Route::prefix('case-share')->group(function () {
+        Route::get('list', [\App\Http\Controllers\CaseShareController::class, 'list'])->name('案列分享列表');
+    });
+
+    // question 问答接口
+    Route::prefix('question')->group(function () {
+        Route::get('list', [\App\Http\Controllers\QuestionsController::class, 'list'])->name('问答接口列表');
+        Route::get('detail', [\App\Http\Controllers\QuestionsController::class, 'detail'])->name('问答接口详情');
+        Route::post('answer', [\App\Http\Controllers\QuestionsController::class, 'answer'])->name('回答问题');
+    });
+
     // publisher 控制器
     Route::prefix('publisher')->group(function () {
         Route::get('alphabetic-search', [\App\Http\Controllers\PublisherController::class, 'alphabeticSearch'])->name('新闻列表');
