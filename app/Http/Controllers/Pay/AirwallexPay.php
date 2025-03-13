@@ -63,18 +63,25 @@ class AirwallexPay extends Pay {
             $out_trade_no = $reqData['data']['object']['merchant_order_id'];
             $status = $reqData['data']['object']['status'];
             if($status != 'SUCCEEDED'){
-                //不是成功状态, 修改订单状态为失败, 且跳过
-                $order = Order::where('order_number', $out_trade_no)->first();
-                if (!$order) {
-                    \Log::error('返回结果数据:$out_trade_no'.$out_trade_no.' . 订单不存在 文件路径:'.__CLASS__.'  行号:'.__LINE__);
-                    return false;
-                }
-                if ($order['is_pay'] == Order::PAY_UNPAID) {
-                    //未支付状态改为支付失败状态
-                    $order->is_pay = Order::PAY_FAILED;
-                    $order->updated_at = time();
-                    $order->save();
-                    return false;
+                if($status != 'REQUIRES_PAYMENT_METHOD') {
+                    //不是成功状态, 修改订单状态为失败, 且跳过
+                    $order = Order::where('order_number', $out_trade_no)->first();
+                    if (!$order) {
+                        \Log::error(
+                            '返回结果数据:$out_trade_no'.$out_trade_no.' . 订单不存在 文件路径:'.__CLASS__.'  行号:'
+                            .__LINE__
+                        );
+
+                        return false;
+                    }
+                    if ($order['is_pay'] == Order::PAY_UNPAID) {
+                        //未支付状态改为支付失败状态
+                        $order->is_pay = Order::PAY_FAILED;
+                        $order->updated_at = time();
+                        $order->save();
+
+                        return false;
+                    }
                 }
                 return false;
             }

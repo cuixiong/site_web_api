@@ -83,6 +83,7 @@ class ProductPdf extends Base
                 'product.category_id',
                 'product.published_date',
                 'product.pages',
+                'product.thumb',
                 'product.tables',
                 'product.price',
                 'product.discount',
@@ -91,7 +92,7 @@ class ProductPdf extends Base
                 'product.publisher_id',
                 'product.english_name',
                 'category.name as category_name',
-                'category.thumb',
+                'category.thumb as category_thumb',
             ])
             ->leftJoin('product_category as category', 'product.category_id', '=', 'category.id');
         if ($productId !== null) {
@@ -123,7 +124,11 @@ class ProductPdf extends Base
         // 支付方式/交付方式 文本
         $payMethod = SystemValue::where(['key' => 'PayMethod', 'status' => 1])->value('value');
 
-        $productThumb = !empty($product['thumb']) ? $product['thumb'] : $defaultImg;
+        if(!empty($product['thumb'])){
+            $productThumb = $product['thumb'];
+        }else{
+            $productThumb = $product['category_thumb'] ?: $defaultImg;
+        }
         $productThumb = env('IMAGE_URL') . Common::cutoffSiteUploadPathPrefix($productThumb);
 
         $product_id = $product['id'] ?? '';
