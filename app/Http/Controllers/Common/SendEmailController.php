@@ -824,6 +824,7 @@ class SendEmailController extends Controller {
                 'homePage'               => $data['domain'],
                 'myAccountUrl'           => rtrim($data['domain'], '/').'/account/account-infor',
                 'contactUsUrl'           => rtrim($data['domain'], '/').'/contact-us',
+                'orderListUrl'           => rtrim($data['domain'], '/').'/account/order',
                 'homeUrl'                => $data['domain'],
                 'backendUrl'             => $imgDomain,
                 'userName'               => $data['username'] ? $data['username'] : '',
@@ -880,7 +881,7 @@ class SendEmailController extends Controller {
             } else {
                 $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
             }
-            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail , true);
+            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             foreach ($emails as $email) {
@@ -998,6 +999,7 @@ class SendEmailController extends Controller {
                 'homePage'               => $data['domain'],
                 'myAccountUrl'           => rtrim($data['domain'], '/').'/account/account-infor',
                 'contactUsUrl'           => rtrim($data['domain'], '/').'/contact-us',
+                'orderListUrl'           => rtrim($data['domain'], '/').'/account/order',
                 'homeUrl'                => $data['domain'],
                 'backendUrl'             => $imgDomain,
                 'userName'               => $data['username'] ?: '',
