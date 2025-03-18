@@ -118,7 +118,9 @@ class SitemapController extends Controller
         $locs = [];
         foreach ($news as $new) {
             if (!empty($new['url'])) {
-                $locs[] = '/news' . '/' . $new['id'] . '/' . $new['url'];
+                $new['url'] = str_replace('&', '-', $new['url']); // & 字符报错
+                // urlencode
+                $locs[] = '/news' . '/' . $new['id'] . '/' .$new['url'];
             } else {
                 $new['title'] = str_replace(' ', '-', $new['title']); // 把关键词里的空格转换成中划线“-”，
                 $new['title'] = strtolower($new['title']);            // 再转化成小写，就是我们要的url（自定义链接）
