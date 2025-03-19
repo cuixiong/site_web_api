@@ -17,13 +17,12 @@ use App\Models\Common;
 use App\Models\ProductDescription;
 use App\Models\Products;
 use App\Models\ProductsCategory;
-use App\Models\Questions;
 use App\Models\SystemValue;
 
 class CaseShareController extends Controller {
     public function list() {
         try {
-            $case_share_list = Questions::query()->where('status', 1)
+            $case_share_list = CaseShare::query()->where('status', 1)
                                         ->orderBy('sort', 'asc')
                                         ->orderBy('id', 'desc')
                                         ->limit(6)
