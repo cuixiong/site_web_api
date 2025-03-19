@@ -28,6 +28,11 @@ class CaseShareController extends Controller {
                                         ->limit(6)
                                         ->get()->toArray();
             foreach ($case_share_list as $key => &$value) {
+                if(!empty($value['path'] )){
+                    $value['path'] = json_decode($value['path'] , true);
+                }else{
+                    $value['path'] = [];
+                }
                 $value['relevant'] = $this->getRelevantByProduct($value['product_id']);
             }
         } catch (\Exception $e) {

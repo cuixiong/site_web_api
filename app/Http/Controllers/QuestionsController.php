@@ -28,9 +28,20 @@ class QuestionsController extends Controller {
         try {
             $page = $request->page ?? 1;
             $pageSize = $request->pageSize ?? 10;
-            $query = Questions::query()->where('status', 1)
-                              ->orderBy('sort', 'asc')
-                              ->orderBy('id', 'desc');
+            $type = $request->type ?? 'all';  //unanswered
+            if ($type == 'unanswered') {
+                $question_id = Answers::query()->where('status', 1)
+                       ->groupBy('question_id')
+                       ->pluck('question_id')->toArray();
+                $query = Questions::query()->where('status', 1)
+                                  ->where('answer_count', 0)
+                                  ->orderBy('sort', 'asc')
+                                  ->orderBy('id', 'desc');
+            } else {
+                $query = Questions::query()->where('status', 1)
+                                  ->orderBy('sort', 'asc')
+                                  ->orderBy('id', 'desc');
+            }
             $count = $query->count();
             $question_list = $query->offset(($page - 1) * $pageSize)
                                    ->limit($pageSize)
@@ -77,6 +88,12 @@ class QuestionsController extends Controller {
                                      ->orderBy('id', 'desc')
                                      ->get()->toArray();
             $data['team_list'] = $this->getTeamMemList($request);
+
+
+            $keywords = $question_info['keywords'];
+            $keyword_list = explode(',',$keywords);
+            $data['relevant'] = $this->getRelevantByProduct($keyword_list , 8);
+
             ReturnJson(true, 'ok', $data);
         } catch (\Exception $e) {
             \Log::error('未知错误:'.$e->getMessage().'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
@@ -84,58 +101,15 @@ class QuestionsController extends Controller {
         }
     }
 
-    public function answer(Request $request) {
-        try {
-            $input = $request->input();
-            $content = $input['content'] ?? '';
-            //判断问题是否存在
-            $id = $input['question_id'] ?? 0;
-            if (empty($id) || empty($content)) {
-                ReturnJson(false, '参数错误');
-            }
-            $question_info = Questions::query()->where('status', 1)
-                                      ->where('id', $id)->first();
-            if (empty($question_info)) {
-                ReturnJson(false, '问题不存在!');
-            }
-            //判断是否登陆
-            if (empty(User::IsLogin())) {
-                ReturnJson(false, '请先登录!');
-            }
-            $user = User::IsLogin();
-            $data = [
-                'question_id' => $id,
-                'user_id'     => $user->id,
-                'content'     => $content,
-                'sort'        => 100,
-                'status'      => 1,
-                'answer_at'   => time()
-            ];
-            $answer_id = Answers::query()->insertGetId($data);
-            ReturnJson(false, '回答成功');
-        } catch (\Exception $e) {
-            \Log::error('未知错误:'.$e->getMessage().'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
-            ReturnJson(false, '未知错误');
-        }
-    }
-
-    public function getTeamMemList(Request $request) {
-        //分析师关注榜
-        return TeamMember::query()->where("status", 1)
-                         ->where("attention_level", ">", 0)
-                         ->orderBy('attention_level', 'desc')
-                         ->limit(6)
-                         ->get()->toArray();
-    }
 
     /**
      *
-     * @param mixed   $product_id
+     * @param mixed   $keyword_list
      * @param integer $relevant_products_size
      *
      * @return array
      */
-    private function getRelevantByProduct(mixed $product_id, $relevant_products_size = 4) {
+    private function getRelevantByProduct($keyword_list, $relevant_products_size = 4) {
         $select = [
             'id',
             'name',
@@ -148,10 +122,9 @@ class QuestionsController extends Controller {
             'thumb',
             'category_id',
         ];
-        $keywords = Products::query()->where('id', $product_id)->value('keywords');
-        $products = (new ProductController())->GetRelevantProductResult(
-            $product_id,
-            $keywords,
+        $products =  (new ProductController())->GetRelevantProductResult(
+            -1,
+            $keyword_list,
             1,
             $relevant_products_size,
             'keywords',
@@ -208,4 +181,49 @@ class QuestionsController extends Controller {
 
         return $data;
     }
+
+    public function answer(Request $request) {
+        try {
+            $input = $request->input();
+            $content = $input['content'] ?? '';
+            //判断问题是否存在
+            $id = $input['question_id'] ?? 0;
+            if (empty($id) || empty($content)) {
+                ReturnJson(false, '参数错误');
+            }
+            $question_info = Questions::query()->where('status', 1)
+                                      ->where('id', $id)->first();
+            if (empty($question_info)) {
+                ReturnJson(false, '问题不存在!');
+            }
+            //判断是否登陆
+            if (empty(User::IsLogin())) {
+                ReturnJson(false, '请先登录!');
+            }
+            $user = User::IsLogin();
+            $data = [
+                'question_id' => $id,
+                'user_id'     => $user->id,
+                'content'     => $content,
+                'sort'        => 100,
+                'status'      => 1,
+                'answer_at'   => time()
+            ];
+            $answer_id = Answers::query()->insertGetId($data);
+            ReturnJson(true, '回答成功');
+        } catch (\Exception $e) {
+            \Log::error('未知错误:'.$e->getMessage().'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+            ReturnJson(false, '未知错误');
+        }
+    }
+
+    public function getTeamMemList(Request $request) {
+        //分析师关注榜
+        return TeamMember::query()->where("status", 1)
+                         ->where("attention_level", ">", 0)
+                         ->orderBy('attention_level', 'desc')
+                         ->limit(6)
+                         ->get()->toArray();
+    }
+
 }

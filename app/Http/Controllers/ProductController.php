@@ -12,6 +12,7 @@ use App\Services\IPAddrService;
 use App\Services\SenWordsService;
 use App\Services\SphinxService;
 use Foolz\SphinxQL\Drivers\Mysqli\Connection;
+use Foolz\SphinxQL\Expression;
 use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -157,7 +158,7 @@ class ProductController extends Controller {
                     $description = (new ProductDescription($suffix))->where('product_id', $value['id'])->value(
                         'description'
                     );
-                    if (checkSiteAccessData(['mrrs'])) {
+                    if (checkSiteAccessData(['mrrs' , 'yhen'])) {
                         $strIndex = strpos($description, "\n");
                         if ($strIndex !== false) {
                             // 使用 substr() 函数获取第一个段落
@@ -911,8 +912,13 @@ class ProductController extends Controller {
         $query = $query->where('id', '<>', intval($id));
         // 精确查询
         if (!empty($keyword)) {
-            $val = addslashes($keyword);
-            $query->where($searchField, '=', $val);
+            if(is_array($keyword)){
+                //$query->where($searchField, '测试 机器人' , true);
+                $query->where($searchField, 'in' , $keyword);
+            }else {
+                $val = addslashes($keyword);
+                $query->where($searchField, '=', $val);
+            }
         }
         //查询结果分页
         $offset = ($page - 1) * $pageSize;
@@ -924,7 +930,9 @@ class ProductController extends Controller {
         // 因为有些字段sphinx没有，所以sphinx查出id后再去mysql查询
         $query->setSelect('id');
         $result = $query->execute();
+        \Log::error('返回结果数据:'.$query->getCompiled().'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
         $productsIds = $result->fetchAllAssoc();
+
         if (!empty($productsIds) && count($productsIds) > 0) {
             $productsIds = array_column($productsIds, 'id');
             $products = Products::select($selectField)

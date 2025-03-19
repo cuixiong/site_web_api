@@ -205,7 +205,7 @@ class IndexController extends Controller {
             'product_id',
             $value['id']
         )->value('description');
-        if (checkSiteAccessData(['mrrs'])) {
+        if (checkSiteAccessData(['mrrs' ,'yhen'])) {
             //取描述第一段 ,  如果没有\n换行符就取一整段
             $strIndex = strpos($description, "\n");
             if ($strIndex !== false) {
@@ -630,7 +630,7 @@ class IndexController extends Controller {
                         $description = (new ProductDescription($year))
                             ->where('product_id', $firstProduct['id'])
                             ->value('description');
-                        if (checkSiteAccessData(['tycn', 'mrrs'])) {
+                        if (checkSiteAccessData(['tycn', 'mrrs' , 'yhen'])) {
                             //取描述第一段 ,  如果没有\n换行符就取一整段
                             $strIndex = strpos($description, "\n");
                             if ($strIndex !== false) {
