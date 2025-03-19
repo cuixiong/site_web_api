@@ -930,7 +930,6 @@ class ProductController extends Controller {
         // 因为有些字段sphinx没有，所以sphinx查出id后再去mysql查询
         $query->setSelect('id');
         $result = $query->execute();
-        \Log::error('返回结果数据:'.$query->getCompiled().'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
         $productsIds = $result->fetchAllAssoc();
 
         if (!empty($productsIds) && count($productsIds) > 0) {
