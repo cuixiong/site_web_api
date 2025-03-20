@@ -18,6 +18,16 @@ class Order extends Base {
             self::PAY_FINISH  => '已完成',
             self::PAY_FAILED  => '支付失败',
         ];
+
+    const PAY_STATUS_TYPE_EN
+        = [
+            self::PAY_UNPAID  => 'PAY_UNPAID',
+            self::PAY_SUCCESS => 'PAY_SUCCESS',
+            self::PAY_CANCEL  => 'PAY_CANCEL',
+            self::PAY_FINISH  => 'PAY_FINISH',
+            self::PAY_FAILED  => 'PAY_FAILED',
+        ];
+
     protected $table       = 'orders';
     protected $appends     = ['is_pay_text', 'create_date', 'is_invoice', 'order_product'];
     protected $addressInfo = [];
@@ -47,7 +57,11 @@ class Order extends Base {
     }
 
     public function getIsPayTextAttribute() {
-        return self::PAY_STATUS_TYPE[$this->attributes['is_pay']] ?? '';
+        if(checkSiteAccessData(['mrrs' , 'yhen'])){
+            return self::PAY_STATUS_TYPE_EN[$this->attributes['is_pay']] ?? '';
+        }else {
+            return self::PAY_STATUS_TYPE[$this->attributes['is_pay']] ?? '';
+        }
     }
 
     public function getCreateDateAttribute() {

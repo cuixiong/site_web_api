@@ -30,13 +30,14 @@ class QuestionsController extends Controller {
             $pageSize = $request->pageSize ?? 10;
             $type = $request->type ?? 'all';  //unanswered
             if ($type == 'unanswered') {
-                $question_id = Answers::query()->where('status', 1)
-                       ->groupBy('question_id')
-                       ->pluck('question_id')->toArray();
-                $query = Questions::query()->where('status', 1)
-                                  ->where('answer_count', 0)
-                                  ->orderBy('sort', 'asc')
-                                  ->orderBy('id', 'desc');
+                $query = Questions::query()->leftJoin('answers', 'questions.id', '=', 'answers.question_id')
+                         ->whereNull('answers.id')
+                         ->where("questions.status" , 1)
+                         ->select('questions.*')
+                         ->orderBy('sort', 'asc')
+                         ->orderBy('id', 'desc');
+
+
             } else {
                 $query = Questions::query()->where('status', 1)
                                   ->orderBy('sort', 'asc')

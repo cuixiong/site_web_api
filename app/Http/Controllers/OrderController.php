@@ -326,7 +326,7 @@ class OrderController extends Controller {
         foreach ($orderGoods as $forOrderGoods) {
             $sum_quantity += $forOrderGoods['goods_number'];
         }
-        $order_status = Order::PAY_STATUS_TYPE[$order['is_pay']] ?? '';
+        $order_status = $order['is_pay_text']; //Order::PAY_STATUS_TYPE[$order['is_pay']] ?? '';
         $data = [
             'order'  => [
                 'order_amount'           => $order['order_amount'], // 订单总额
