@@ -820,6 +820,11 @@ class SendEmailController extends Controller {
             } elseif (isset($data['created_at']) && !empty($data['created_at']) && is_string($data['created_at'])) {
                 $orderCreatedTime = $data['created_at'];
             }
+            if (checkSiteAccessData(['mrrs', 'yhen'])) {
+                $orderStatusText = 'PAY_UNPAID';
+            } else {
+                $orderStatusText = '未付款';
+            }
             $data2 = [
                 'homePage'               => $data['domain'],
                 'myAccountUrl'           => rtrim($data['domain'], '/').'/account/account-infor',
@@ -832,7 +837,7 @@ class SendEmailController extends Controller {
                 'userCompany'            => $data['company'],
                 'userAddress'            => $addres,
                 'userPhone'              => $data['phone'] ? $data['phone'] : '',
-                'orderStatus'            => '未付款',
+                'orderStatus'            => $orderStatusText,
                 'paymentMethod'          => $PayName,
                 'orderAmount'            => $data['order_amount'],
                 'preferentialAmount'     => $data['coupon_amount'],
@@ -995,6 +1000,11 @@ class SendEmailController extends Controller {
             } else {
                 $pay_coin_symbol = PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '';
             }
+            if (checkSiteAccessData(['mrrs', 'yhen'])) {
+                $orderStatusText = 'PAY_SUCCESS';
+            } else {
+                $orderStatusText = '已付款';
+            }
             $data2 = [
                 'homePage'               => $data['domain'],
                 'myAccountUrl'           => rtrim($data['domain'], '/').'/account/account-infor',
@@ -1007,7 +1017,7 @@ class SendEmailController extends Controller {
                 'userCompany'            => $data['company'],
                 'userAddress'            => $addres,
                 'userPhone'              => $data['phone'] ?: '',
-                'orderStatus'            => '已付款',
+                'orderStatus'            => $orderStatusText,
                 'paymentMethod'          => $PayName,
                 'orderAmount'            => $data['order_amount'],
                 'preferentialAmount'     => $data['coupon_amount'],
@@ -1045,7 +1055,6 @@ class SendEmailController extends Controller {
             } else {
                 $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
             }
-
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             if (empty($scene)) {
