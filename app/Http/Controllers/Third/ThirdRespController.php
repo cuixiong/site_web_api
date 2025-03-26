@@ -44,6 +44,11 @@ class ThirdRespController extends BaseThirdController {
         if (empty($code) || empty($testEmail)) {
             ReturnJson(false, '参数错误');
         }
+
+        $AppName = env('APP_NAME');
+        request()->headers->set('Site', $AppName); // 设置请求头
+
+
         $sendEmailController = new SendEmailController();
         $sendEmailController->testEmail = $testEmail;
         $res = true;
