@@ -113,6 +113,7 @@ class Controller extends BaseController {
         $sourceSignStr = $mk.'&'.$secret;
         $sourceSignStr = phpEncodeURIComponent($sourceSignStr);
         $mySign = md5($sourceSignStr);
+
         //\Log::error('签名原串:'.$sourceSignStr.'-----------服务器签名:'.$mySign.'-----提交签名:'.$sign);
         return strtoupper($mySign) == strtoupper($sign);
     }
@@ -274,7 +275,7 @@ class Controller extends BaseController {
                                 Redis::SETEX($banInfoKey, 86400, json_encode($banInfo));
                                 Redis::SETEX($banTimeKey, $ban_time, $ban_cnt);
                                 $this->addBanHeadlerLog($real_ip, $ban_time, $ban_cnt, $routeUril);
-                            }else{
+                            } else {
                                 $ban_cnt = Redis::get($banTimeKey) ?? 1;
                                 $ban_time = Redis::TTL($banTimeKey);
                                 $this->addBanHeadlerLog($real_ip, $ban_time, $ban_cnt, $routeUril);
@@ -406,7 +407,7 @@ class Controller extends BaseController {
                         Redis::SETEX($banInfoKey, 86400, json_encode($banInfo));
                         Redis::SETEX($banTimeKey, $ban_time, $ban_cnt);
                         $this->addBanIpLog($real_ip, $ip, $ban_time, $ban_cnt, $routeUril);
-                    }else{
+                    } else {
                         //在封禁之中
                         $ban_cnt = Redis::get($banTimeKey) ?? 1;
                         $ban_time = Redis::TTL($banTimeKey);
@@ -479,6 +480,22 @@ class Controller extends BaseController {
         } else {
             $addData['content_size'] = $_SERVER['CONTENT_LENGTH'];
         }
+        $input = request()->input();
+        if ($routeUril == 'api/product/description') {
+            $service_id = $input['product_id'] ?? '';
+            $service_type = 1;
+        } elseif ($routeUril == 'api/news/view') {
+            $service_id = $input['id'] ?? '';
+            $service_type = 2;
+        } elseif ($routeUril == 'api/information/view') {
+            $service_id = $input['id'] ?? '';
+            $service_type = 3;
+        } else {
+            $service_id = 0;
+            $service_type = 0;
+        }
+        $addData['type'] = $service_type;
+        $addData['service_id'] = $service_id;
         $addData['ip_addr'] = $ipAddr;
         $addData['route'] = $routeUril;
         $addData['ua_info'] = implode("\n", $ua_info);

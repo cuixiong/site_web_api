@@ -10,7 +10,7 @@ class AccessLog extends Base {
     // 设置允许入库字段,数组形式
     protected $fillable
         = [
-            'id', 'ip', 'ip_muti_second', 'ip_muti_third', 'content_size', 'ip_addr', 'route', 'ua_info', 'referer', 'log_time', 'log_date', 'sort', 'status'
+            'id', 'ip', 'ip_muti_second', 'ip_muti_third', 'content_size', 'ip_addr', 'route', 'ua_info', 'referer', 'log_time', 'log_date', 'sort', 'status' , 'service_id' , 'type'
         ];
 
 //    public function __construct($log_date = '') {
