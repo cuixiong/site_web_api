@@ -820,7 +820,12 @@ class SendEmailController extends Controller {
             } elseif (isset($data['created_at']) && !empty($data['created_at']) && is_string($data['created_at'])) {
                 $orderCreatedTime = $data['created_at'];
             }
-            if (checkSiteAccessData(['mrrs', 'yhen'])) {
+            $siteName = request()->header('Site');
+            if(empty($siteName )){
+                $AppName = env('APP_NAME');
+                request()->headers->set('Site', $AppName); // 设置请求头
+            }
+            if (checkSiteAccessData(['mrrs', 'yhen' ,'qyen'])) {
                 $orderStatusText = 'PAY_UNPAID';
             } else {
                 $orderStatusText = '未付款';
@@ -1000,7 +1005,13 @@ class SendEmailController extends Controller {
             } else {
                 $pay_coin_symbol = PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '';
             }
-            if (checkSiteAccessData(['mrrs', 'yhen'])) {
+
+            $siteName = request()->header('Site');
+            if(empty($siteName )){
+                $AppName = env('APP_NAME');
+                request()->headers->set('Site', $AppName); // 设置请求头
+            }
+            if (checkSiteAccessData(['mrrs', 'yhen' , 'qyen'])) {
                 $orderStatusText = 'PAY_SUCCESS';
             } else {
                 $orderStatusText = '已付款';
