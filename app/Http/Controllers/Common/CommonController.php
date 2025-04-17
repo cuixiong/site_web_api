@@ -25,6 +25,7 @@ use App\Models\QuoteCategory;
 use App\Models\SearchRank;
 use App\Models\System;
 use App\Models\SystemValue;
+use App\Models\TeamMember;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 
@@ -117,6 +118,13 @@ class CommonController extends Controller {
                 ->orderBy('published_date', 'desc')
                 ->orderBy('id', 'desc')
                 ->limit(10)->get()->toArray();
+        }
+
+        if (checkSiteAccessData(['qyen'])) {
+            //显示报告侧栏的分析师
+            $data['team_member_list'] = TeamMember::query()->where("status" , 1)
+                ->where("show_product" , 1)
+                ->get()->toArray();
         }
 
 
@@ -642,7 +650,7 @@ class CommonController extends Controller {
             $result = SystemValue::where('parent_id', $setId)
                 ->where('status', 1)
                 ->where('hidden', 1)
-                ->select(['name', 'value as url'])
+                ->select(['name', 'value as url' , 'back_value'])
                 ->get()
                 ->toArray();
         }
@@ -777,7 +785,7 @@ class CommonController extends Controller {
         $pageSize = $request->comment_size ?? 4;
         $page = $request->comment_page ?? 1;
 
-        $query = Comment::select(['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at'])->where('status', 1);
+        $query = Comment::query()->where('status', 1);
 
         $count = (clone $query)->count();
         $list = $query->orderBy('id', 'desc')

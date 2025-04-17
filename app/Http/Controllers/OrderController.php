@@ -75,14 +75,12 @@ class OrderController extends Controller {
                     'email'     => $email,
                     'day_begin' => date('Y.m.d', $coupon->time_begin),
                     'day_end'   => date('Y.m.d', $coupon->time_end),
-
-                    'day_begin_year' => date('Y', $coupon->time_begin),
+                    'day_begin_year'  => date('Y', $coupon->time_begin),
                     'day_begin_month' => date('m', $coupon->time_begin),
-                    'day_begin_day' => date('d', $coupon->time_begin),
-                    'day_end_year'   => date('Y', $coupon->time_end),
+                    'day_begin_day'   => date('d', $coupon->time_begin),
+                    'day_end_year'    => date('Y', $coupon->time_end),
                     'day_end_month'   => date('m', $coupon->time_end),
-                    'day_end_day'   => date('d', $coupon->time_end),
-
+                    'day_end_day'     => date('d', $coupon->time_end),
                 ];
                 $model = new User();
                 $modelCouponUser = new CouponUser();
@@ -312,13 +310,14 @@ class OrderController extends Controller {
         $province = City::where('id', $order['province_id'])->value('name');
         $city = City::where('id', $order['city_id'])->value('name');
         $_user = [
-            'name'     => $order['username'] ?? '',
-            'email'    => $order['email'] ?? '',
-            'phone'    => $order['phone'] ?? '',
-            'company'  => $order['company'] ?? '',
-            'province' => $province,
-            'city_id'  => $city,
-            'address'  => $order['address'],
+            'name'       => $order['username'] ?? '',
+            'email'      => $order['email'] ?? '',
+            'phone'      => $order['phone'] ?? '',
+            'country_id' => $order['country_id'] ?? 0,
+            'company'    => $order['company'] ?? '',
+            'province'   => $province,
+            'city_id'    => $city,
+            'address'    => $order['address'],
         ];
         // }
         //$discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);
@@ -358,7 +357,6 @@ class OrderController extends Controller {
         if (empty($code) || empty($state)) {
             throw new \Exception('invalid param');
         }
-
         // 从邮件链接跳转支付的，如果取消支付，则跳回首页
         if (strpos($referer, '/order/wechat-order') !== false || empty($referer)) {
             $referer = env('APP_URL');
@@ -460,10 +458,11 @@ class OrderController extends Controller {
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $fields = ['id', 'created_at', 'order_number', 'order_amount', 'actually_paid', 'is_pay' , 'pay_coin_type', 'pay_code'];
+            $fields = ['id', 'created_at', 'order_number', 'order_amount', 'actually_paid', 'is_pay', 'pay_coin_type',
+                       'pay_code'];
             $model->select($fields);
             $rs = $model->get()->toArray();
-            foreach ($rs as &$v){
+            foreach ($rs as &$v) {
                 $v['pay_coin_symbol'] = PayConst::$coinTypeSymbol[$v['pay_coin_type']] ?? '';
             }
             $rdata = [];

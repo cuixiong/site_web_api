@@ -245,8 +245,13 @@ class UserController extends Controller {
      */
     public function ExistsEmail(Request $request) {
         $email = $request->email;// 邮箱
-        $res = User::where('email', $email)->count();
-        if ($res > 0) {
+        $user = User::where('email', $email)->first();
+        if (!empty($user)) {
+            if (checkSiteAccessData(['qyen'])) {
+                if ($user->check_email != 1) {
+                    ReturnJson(false, 'Email has not been activated yet');
+                }
+            }
             ReturnJson(true, '该邮箱已注册过，可直接登录');
         } else {
             ReturnJson(false, '该邮箱可以注册');

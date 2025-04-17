@@ -57,7 +57,7 @@ class Order extends Base {
     }
 
     public function getIsPayTextAttribute() {
-        if(checkSiteAccessData(['mrrs' , 'yhen'])){
+        if(checkSiteAccessData(['mrrs' , 'yhen' , 'qyen'])){
             return self::PAY_STATUS_TYPE_EN[$this->attributes['is_pay']] ?? '';
         }else {
             return self::PAY_STATUS_TYPE[$this->attributes['is_pay']] ?? '';
