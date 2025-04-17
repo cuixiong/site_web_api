@@ -193,9 +193,13 @@ class SitemapController extends Controller
         //     ->where(['key' => 'urlCount'])
         //     ->andWhere(['status' => 1])
         //     ->indexBy('key')->scalar()) ?? 0;
-
         if (empty($number)) {
             $number = 1000;
+        }
+        $APP_NAME = env('APP_NAME' , '');
+        if($APP_NAME == 'qyen'){
+            // TODO: cuizhixiong 2025/4/17 需求硬性要求
+            $number = 24000;
         }
         $categories = ProductsCategory::select(['id', 'link'])->get()->toArray();
         foreach ($categories as $key => $category) {
