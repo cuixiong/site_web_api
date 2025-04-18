@@ -210,7 +210,8 @@ class NewsController extends Controller {
         if (!empty($keyword)) {
             $keyword = explode(',', $keyword);
         }
-        $data = $this->getRelevantProduct($keyword);
+        //$data = $this->getRelevantProduct($keyword);
+        $data = $this->getNewRelevantByProduct($keyword);
         ReturnJson(true, 'success', $data);
     }
 

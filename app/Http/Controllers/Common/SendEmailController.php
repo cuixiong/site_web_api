@@ -794,8 +794,8 @@ class SendEmailController extends Controller {
                     continue;
                 }
                 //拼接产品名称
-                if (!empty($products->name)) {
-                    $productsName .= $products->name." ";
+                if (!empty($products->name) && empty($productsName )) {
+                    $productsName = $products->name;//." ";
                 }
                 $goods_data = $products->toArray();
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
@@ -912,21 +912,22 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            //$scene->title = $scene->title.":  {$productsName}";
+            $scene->title = $scene->title.": {$productsName}";
             $siteName = request()->header('Site');
             if (empty($siteName)) {
                 $siteName = env('APP_NAME');
             }
-            if (in_array($siteName, ['mrrs', 'yhen', 'qyen'])) {
-                $scene->title = $scene->title.", order number is: {$data['order_number']}";
-            } else {
-                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
-            }
-            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail, true);
+//            if (in_array($siteName, ['mrrs', 'yhen', 'qyen'])) {
+//                $scene->title = $scene->title.", order number is: {$data['order_number']}";
+//            } else {
+//                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
+//            }
+
+            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             foreach ($emails as $email) {
-                $this->handlerSendEmail($scene, $email, $data, $senderEmail, true);
+                $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
 
             return true;
@@ -984,8 +985,8 @@ class SendEmailController extends Controller {
                     continue;
                 }
                 //拼接产品名称
-                if (!empty($products->name)) {
-                    $productsName .= $products->name." ";
+                if (!empty($products->name) && empty($productsName )) {
+                    $productsName = $products->name;//." ";
                 }
                 $goods_data = $products->toArray();
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
@@ -1093,11 +1094,13 @@ class SendEmailController extends Controller {
             if (empty($siteName)) {
                 $siteName = env('APP_NAME');
             }
-            if (in_array($siteName, ['mrrs', 'yhen', 'qyen'])) {
-                $scene->title = $scene->title.", order number is: {$data['order_number']}";
-            } else {
-                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
-            }
+
+            $scene->title = $scene->title.": {$productsName}";
+//            if (in_array($siteName, ['mrrs', 'yhen', 'qyen'])) {
+//                $scene->title = $scene->title.", order number is: {$data['order_number']}";
+//            } else {
+//                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
+//            }
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             if (empty($scene)) {
@@ -1109,9 +1112,9 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail, true);
+            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
-                $this->handlerSendEmail($scene, $email, $data, $senderEmail, true);
+                $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
 
             return true;
