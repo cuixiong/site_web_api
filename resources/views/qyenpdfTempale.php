@@ -271,8 +271,7 @@
             white-space: pre-wrap;
             text-align: justify;
           "
-        >
-          <?= $description ?>
+        ><?= $description ?>
       </pre>
         <?php } ?>
 
