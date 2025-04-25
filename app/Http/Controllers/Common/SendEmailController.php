@@ -1038,6 +1038,14 @@ class SendEmailController extends Controller {
                 $pay_coin_symbol = PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '';
             }
             $siteName = request()->header('Site');
+            // 订单创建时间
+            $orderCreatedTime = '';
+            if (isset($data['created_at']) && !empty($data['created_at']) && is_int($data['created_at'])) {
+                $orderCreatedTime = date('Y-m-d H:i:s', $data['created_at']);
+            } elseif (isset($data['created_at']) && !empty($data['created_at']) && is_string($data['created_at'])) {
+                $orderCreatedTime = $data['created_at'];
+            }
+
             if (empty($siteName)) {
                 $AppName = env('APP_NAME');
                 request()->headers->set('Site', $AppName); // 设置请求头
@@ -1073,6 +1081,8 @@ class SendEmailController extends Controller {
                 'goods'                  => $goods_data_list,
                 'userId'                 => $data['user_id'],
                 'dateTime'               => date('Y-m-d H:i:s', time()),
+                'orderTime'              => $orderCreatedTime,
+                'sumGoodsCnt'            => $sum_goods_cnt,
                 'content'                => $Order['remarks'],
             ];
             $data['country'] = Country::where('id', $Order['country_id'])->value('name');

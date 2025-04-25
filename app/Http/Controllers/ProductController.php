@@ -594,6 +594,7 @@ class ProductController extends Controller {
                         return ' ' . trim($item);
                     }, $description['companies_mentioned']);
                     $product_desc['companies_mentioned'] = implode(',', $description['companies_mentioned']);
+                    $product_desc['companies_mentioned'] = explode(',', $product_desc['companies_mentioned']);
                 }
 
             }
