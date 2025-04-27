@@ -593,8 +593,8 @@ class ProductController extends Controller {
                     $description['companies_mentioned'] = array_map(function ($item) {
                         return ' ' . trim($item);
                     }, $description['companies_mentioned']);
-                    $product_desc['companies_mentioned'] = implode(',', $description['companies_mentioned']);
-                    $product_desc['companies_mentioned'] = explode(',', $product_desc['companies_mentioned']);
+                    $product_desc['companies_mentioned'] = implode(',@,', $description['companies_mentioned']);
+                    $product_desc['companies_mentioned'] = explode(',@,', $product_desc['companies_mentioned']);
                 }
 
             }
