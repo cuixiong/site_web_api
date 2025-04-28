@@ -7,6 +7,7 @@ use App\Models\Plate;
 use App\Models\PlateValue;
 use App\Models\Publishers;
 use App\Models\SearchRank;
+use App\Models\System;
 use App\Models\ViewProductsLog;
 use App\Services\IPAddrService;
 use App\Services\SenWordsService;
@@ -130,6 +131,7 @@ class ProductController extends Controller {
                         $productsData['discount_time_begin'] = null;
                         $productsData['discount_time_end'] = null;
                     }
+                    $value['pages'] = $productsData['pages'];
                     $value['thumb'] = $productsData['thumb'];
                     $value['discount'] = $productsData['discount'];
                     $value['discount_amount'] = $productsData['discount_amount'];
@@ -162,7 +164,7 @@ class ProductController extends Controller {
                     $description = (new ProductDescription($suffix))->where('product_id', $value['id'])->value(
                         'description'
                     );
-                    if (checkSiteAccessData(['mrrs' , 'yhen'])) {
+                    if (checkSiteAccessData(['mrrs', 'yhen' , 'qyen'])) {
                         $strIndex = strpos($description, "\n");
                         if ($strIndex !== false) {
                             // 使用 substr() 函数获取第一个段落
@@ -184,7 +186,7 @@ class ProductController extends Controller {
                     $products[] = $value;
                 }
             }
-            if (checkSiteAccessData(['tycn'])) {
+            if (checkSiteAccessData(['tycn', 'qyen'])) {
                 $productCagoryId = $this->GetProductCateList($keyword, 0);
                 $productCagory = $this->getProductCagory($productCagoryId);
             } else {
@@ -347,6 +349,13 @@ class ProductController extends Controller {
                 'cate.product_tag',
                 'p.pages',
                 'p.tables',
+                'p.year',
+                'p.future_scale',
+                'p.current_scale',
+                'p.last_scale',
+                'p.cagr',
+                'p.classification',
+                'p.application',
                 'p.url',
                 'p.category_id',
                 'p.keywords',
@@ -523,6 +532,76 @@ class ProductController extends Controller {
                 $product_id,
                 $relevant_products_size
             );
+            if (checkSiteAccessData(['qyen'])) {
+                $product_desc['future_year'] = $product_desc['year'] + 6;
+                $product_desc['current_year'] = $product_desc['year'] + 0;
+                $product_desc['old_year'] = $product_desc['year'] - 1;
+                $product_desc['line_description'] = 'CAGR ' . $product_desc['current_year'] . '-' . $product_desc['future_year'] . ':' . $product_desc['cagr'];   //箭头描述
+
+                $product_desc_other_set_list = SystemValue::query()->where("alias", 'product_desc_other_set')->get()
+                                                          ->keyBy('key')->toArray();
+                $descriptionSetting = $product_desc_other_set_list['region']['value'];
+                $product_desc['region'] = $descriptionSetting ? explode(
+                    "\n", str_replace("\r\n", "\n", $descriptionSetting)
+                ) : [];
+                $product_desc['units'] = $product_desc_other_set_list['units']['value'];
+                $product_desc['coverage'] = $product_desc_other_set_list['coverage']['value'];
+                $product_desc['charts_title'] = $product_desc['keywords'] . ' ' . ($product_desc_other_set_list['charts_title']['value'] ?? '').'(US$)';
+                $product_desc['charts_logo'] = $product_desc_other_set_list['bottomLogo']['value'] ?? '';
+
+                $product_desc['classification'] = $product_desc['classification'] ? explode(
+                    "\n", str_replace(
+                            "", '',
+                            str_replace("\t", '', trim(str_replace("\r\n", "\n", $product_desc['classification']), "\n"))
+                        )
+                ) : [];
+                $product_desc['classification'] = array_filter($product_desc['classification'], function ($value) {
+                    return $value !== "";
+                });
+                $product_desc['application'] = $product_desc['application'] ? explode(
+                    "\n", str_replace(
+                            "", '', str_replace("\t", '', trim(str_replace("\r\n", "\n", $product_desc['application']), "\n"))
+                        )
+                ) : [];
+                $product_desc['application'] = array_filter($product_desc['application'], function ($value) {
+                    return $value !== "";
+                });
+
+                //详情
+                $product_desc['seo_description'] = $this->strDescription($description['description']);
+                // 文本、样式替换
+                $descriptionText = $description['description'];
+                $descriptionText = str_replace('Highlights', '', $descriptionText);
+                $descriptionText = str_replace('Market Segmentation', "<span style=\"font-weight: bold;font-size:16px;\">Market Segmentation</span>", $descriptionText);
+                $descriptionText = str_replace('Chapter Outline', "<span style=\"font-weight: bold;padding-bottom: 10px;padding-top: 10px;display: inline-block;font-size: 16px;\">Chapter Outline</span>", $descriptionText);
+
+                $descriptionText = str_replace('Why This Report?', "<span style=\"font-weight: 700;padding-bottom: 20px;padding-top: 20px;display: inline-block;font-size: 16px;\">Why This Report?</span>", $descriptionText);
+
+                $descriptionText = trim($descriptionText);
+                $product_desc['description'] = $this->spiltDescription($descriptionText);
+                $product_desc['table_of_content'] = $this->titleToDeep($description['table_of_content']);
+
+                // 文本、样式替换
+                $tablesAndFiguresText = $description['tables_and_figures'];
+                $tablesAndFiguresText = str_replace('List of Figures', "<span style=\"font-weight: bold;font-size:16px;\">List of Figures</span>", $tablesAndFiguresText);
+                $tablesAndFiguresText = str_replace('鈥', "", $tablesAndFiguresText);
+                $tablesAndFiguresText = trim($tablesAndFiguresText);
+                $product_desc['tables_and_figures'] = $tablesAndFiguresText;
+
+                $description['companies_mentioned'] = str_replace("\t", '', str_replace("", '', str_replace("\r\n", "\n", $description['companies_mentioned'])));
+                if ($description['companies_mentioned']) {
+                    $description['companies_mentioned'] = explode("\n", $description['companies_mentioned']);
+                    $description['companies_mentioned'] = array_filter($description['companies_mentioned'], function ($value) {
+                        return $value !== "";
+                    });
+                    $description['companies_mentioned'] = array_map(function ($item) {
+                        return ' ' . trim($item);
+                    }, $description['companies_mentioned']);
+                    $product_desc['companies_mentioned'] = implode(',@,', $description['companies_mentioned']);
+                    $product_desc['companies_mentioned'] = explode(',@,', $product_desc['companies_mentioned']);
+                }
+
+            }
             //产品标签 结束
             ReturnJson(true, '', $product_desc);
         } else {
@@ -577,6 +656,41 @@ class ProductController extends Controller {
                     ->toArray();
         ReturnJson(true, '获取成功', $data);
     }
+
+
+    /**
+     * 商品摘要添加换行符
+     * @param  description 摘要
+     * @return  result 处理后的表格目录(含标题、摘要),以及一级目录数组
+     */
+    public function setNewDescriptionLinebreak($description)
+    {
+        $result = [];
+        if (!empty($description)) {
+            $description = trim($description, "\r\n");
+            $description = trim($description, "\n");
+            $description = trim($description, "\r");
+            $descriptionArray = explode("\n", $description);
+            foreach ($descriptionArray as $index => $row) {
+                //清除多余换行
+                $row = trim($row, "\n");
+                $row = trim($row, "\r");
+                $row = trim($row, "\r\n");
+                //判断是否换行
+                if (!empty($row) && strpos($row, ' ') === 0 && ($index + 1) != count($descriptionArray) && strpos($descriptionArray[$index + 1], ' ') !== 0) {
+                    $result[$index] = $row . "\n";
+                } elseif (!empty($row) && strrpos($row, '.') === (strlen($row) - 1) && strpos($row, ' ') !== 0 && strpos($row, 'Chapter') !== 0 && ($index + 1) != count($descriptionArray) && strpos($descriptionArray[$index + 1], 'Chapter') !== 0) {
+                    $result[$index] = $row . "\n";
+                } elseif ($row == "\n" || $row == "\r" || $row == "\r\n") {
+                    // $descriptionArray[$index] = ""; //清除多余换行
+                } elseif (!empty($row)) {
+                    $result[$index] = $row;
+                }
+            }
+        }
+        return implode("\n", $result);
+    }
+
 
     /**
      * 商品摘要添加换行符
@@ -772,7 +886,7 @@ class ProductController extends Controller {
                 foreach ($keyWordArraySphinx as $keyword) {
                     if (is_numeric($keyword)) {
                         $query->where('id', $keyword);
-                    }else{
+                    } else {
                         $query->where('name', 'like', '%'.$keyword.'%');
                     }
                 }
@@ -828,18 +942,17 @@ class ProductController extends Controller {
                 }
             }
         } else {
-            if(!empty($keyword )){
+            if (!empty($keyword)) {
                 $query = $query->orderBy('sort', 'asc')
                                ->orderBy('year', 'desc')
                                ->orderBy('degree_keyword', 'asc')
                                ->orderBy('published_date', 'desc')
                                ->orderBy('id', 'desc');
-            }else{
+            } else {
                 $query = $query->orderBy('sort', 'asc')
                                ->orderBy('published_date', 'desc')
                                ->orderBy('id', 'desc');
             }
-
         }
         $query = $query->where('status', '=', 1);
         $query = $query->where("published_date", "<", time());
@@ -853,7 +966,7 @@ class ProductController extends Controller {
 //            $query->match(['name', 'english_name'], $val, true);
             $keyWordArraySphinx = explode(" ", $keyword);
             if (count($keyWordArraySphinx) > 0) {
-                foreach ($keyWordArraySphinx as  $val) {
+                foreach ($keyWordArraySphinx as $val) {
                     $query->match(['name', 'english_name'], '"'.$val.'"', true);
                 }
             }
@@ -916,10 +1029,10 @@ class ProductController extends Controller {
         $query = $query->where('id', '<>', intval($id));
         // 精确查询
         if (!empty($keyword)) {
-            if(is_array($keyword)){
+            if (is_array($keyword)) {
                 //$query->where($searchField, '测试 机器人' , true);
-                $query->where($searchField, 'in' , $keyword);
-            }else {
+                $query->where($searchField, 'in', $keyword);
+            } else {
                 $val = addslashes($keyword);
                 $query->where($searchField, '=', $val);
             }
@@ -935,7 +1048,6 @@ class ProductController extends Controller {
         $query->setSelect('id');
         $result = $query->execute();
         $productsIds = $result->fetchAllAssoc();
-
         if (!empty($productsIds) && count($productsIds) > 0) {
             $productsIds = array_column($productsIds, 'id');
             $products = Products::select($selectField)
@@ -969,7 +1081,7 @@ class ProductController extends Controller {
      */
     private function getProductById(Connection|bool $conn, $category_id, $keyword, $input_params = []): array {
         //无关键词 或者关键词不是数字时，不返回数据
-        if (empty($keyword) || is_numeric($keyword)) {
+        if (empty($keyword) || !is_numeric($keyword)) {
             return [];
         }
         $query = (new SphinxQL($conn))->select('*')
@@ -1116,6 +1228,12 @@ class ProductController extends Controller {
             'keywords',
             'url',
             'price',
+            'pages',
+            'discount_type',
+            'discount',
+            'discount_amount',
+            'discount_time_begin',
+            'discount_time_end',
             'publisher_id',
             'published_date',
             'thumb',
@@ -1159,6 +1277,13 @@ class ProductController extends Controller {
                     $tempThumb = !empty($defaultImg) ? $defaultImg : '';
                 }
                 $data[$index]['thumb'] = $tempThumb;
+                $data[$index]['price'] = $product['price'];
+                $data[$index]['pages'] = $product['pages'];
+                $data[$index]['discount_type'] = $product['discount_type'];
+                $data[$index]['discount'] = $product['discount'];
+                $data[$index]['discount_amount'] = $product['discount_amount'];
+                $data[$index]['discount_time_begin'] = $product['discount_time_begin'];
+                $data[$index]['discount_time_end'] = $product['discount_time_end'];
                 $data[$index]['name'] = $product['name'];
                 $data[$index]['keywords'] = $product['keywords'];
                 $data[$index]['english_name'] = $product['english_name'];
@@ -1262,10 +1387,14 @@ class ProductController extends Controller {
         }
         //精确搜索, 多字段匹配
         if (!empty($keyword)) {
-            $keyWordArraySphinx = explode(" ", $keyword);
-            if (count($keyWordArraySphinx) > 0) {
-                foreach ($keyWordArraySphinx as  $val) {
-                    $query->match(['name', 'english_name'], '"'.$val.'"', true);
+            if (is_numeric($keyword)) {
+                $query->where('id', intval($keyword));
+            } else {
+                $keyWordArraySphinx = explode(" ", $keyword);
+                if (count($keyWordArraySphinx) > 0) {
+                    foreach ($keyWordArraySphinx as $val) {
+                        $query->match(['name', 'english_name'], '"'.$val.'"', true);
+                    }
                 }
             }
         }
@@ -1448,4 +1577,97 @@ class ProductController extends Controller {
 
         return $query;
     }
+
+
+    /**
+     *seo_description 截取
+     */
+    public function strDescription($description)
+    {
+        $spilt_array = explode("\n", $description);
+        if (empty($spilt_array) || count($spilt_array) <= 0) {
+            return $description;
+        }
+        $i = 0;
+        if (stripos($spilt_array[$i], 'Highlights') !== false) {
+            $i = $i + 1;
+        }
+        $result = $spilt_array[$i];
+        if (strlen($result) < 20 && !empty($spilt_array[$i + 1])) {
+            $i = $i + 1;
+            $result .= $spilt_array[$i];
+        }
+        return $result;
+    }
+
+    /**
+     * 将摘要描述拆成多部份,并添加换行符
+     * @param  description 摘要
+     */
+    /**
+     * 将摘要描述拆成多部份,并添加换行符
+     * @param  description 摘要
+     */
+    public function spiltDescription($description)
+    {
+        $result = [];
+        if (!empty($description)) {
+            $description = trim($description, "\r\n");
+            $description = trim($description, "\n");
+            $description = trim($description, "\r");
+            $descriptionArray = explode("\n", $description);
+
+            // // 使用正则表达式去除"Market Segmentation"和"Chapter Outline"之间的内容
+            // $pattern = '/Market Segmentation(.*?)Chapter Outline/s';
+            // preg_match($pattern, $description, $matches);
+            //分割三部分，需求是第二段下面要插入年度趋势图，然后“Market Segmentation”之后和“Chapter Outline”之前要替换成表格
+            $descriptionArrayPart['top'] = [];
+            $descriptionArrayPart['bottom'] = [];
+            $descriptionArrayPart['part1'] = [];
+            $descriptionArrayPart['part2'] = [];
+            $startIndex = true;
+            $endIndex = false;
+            foreach ($descriptionArray as $index => $row) {
+                $row = trim($row, "\n");
+                $row = trim($row, "\r");
+                $row = trim($row, "\r\n");
+                if ($index <= 1) {
+                    $descriptionArrayPart['top'][] = str_replace(chr(194) . chr(160), ' ', $row);
+                } else {
+                    $descriptionArrayPart['bottom'][] = $row;
+                    if (strpos($row, 'Company Profiles') !== false || strpos($row, 'By Company') !== false) {
+                        $startIndex = false;
+                        continue; //这一句不记录
+                    }
+                    if (strpos($row, 'Chapter Outline') !== false || strpos($row, 'Core Chapters') !== false) {
+                        $endIndex = true;
+                    }
+                    if ($startIndex) {
+                        $descriptionArrayPart['part1'][] = $row;
+                    }
+                    if ($endIndex) {
+                        $descriptionArrayPart['part2'][] = $row;
+                    }
+                }
+            }
+            // return !$startIndex && $endIndex;
+            if (!$startIndex || $endIndex) {
+                if (($startIndex) || count($descriptionArrayPart['part1']) == 0 || count($descriptionArrayPart['part2']) == 0) {
+                    unset($descriptionArrayPart['part1']);
+                    unset($descriptionArrayPart['part2']);
+                } else {
+                    unset($descriptionArrayPart['bottom']);
+                }
+                foreach ($descriptionArrayPart as $key => $part) {
+                    $result[] = $this->setNewDescriptionLinebreak(implode("\n", $part));
+                }
+            } else {
+                $result[] = $this->setNewDescriptionLinebreak($description);
+            }
+        }
+        return $result;
+    }
+
+
+
 }

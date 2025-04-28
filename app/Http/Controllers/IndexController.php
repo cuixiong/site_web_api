@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Common;
+use App\Models\Country;
 use App\Models\Information;
 use App\Models\Languages;
 use App\Models\News;
@@ -102,7 +103,7 @@ class IndexController extends Controller {
         }
         // 客户评价
         $data['comment'] = $this->getCustomersComment($request);
-        if (checkSiteAccessData(['yhcn'])) {
+        if (checkSiteAccessData(['yhcn' , 'qyen'])) {
             // 权威引用 默认有分页
             $data['quote_list'] = $this->getQuoteList($request);
             // 资质认证 默认有分页
@@ -171,12 +172,24 @@ class IndexController extends Controller {
     // 办公室
     public function office(Request $request) {
         $list = Office::where('status', 1)
-                      ->orderBy('sort', 'desc')
+                      ->orderBy('sort', 'asc')
                       ->orderBy('id', 'desc')
-                      ->get();
+                      ->get()->toArray();
         foreach ($list as &$value) {
+            $value['country_name'] = Country::query()->where('id', $value['country_id'])->value('name');
             $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
             $value['national_flag'] = Common::cutoffSiteUploadPathPrefix($value['national_flag']);
+            //time_zone_copy
+            if(!empty($value['time_zone'] )){
+                $tz = new \DateTimeZone($value['time_zone']);
+                // 当前时间的DateTime对象
+                $now = new \DateTime('now', $tz);
+                $value['time_zone_copy'] = $now->format('h:i a');
+            }else{
+                $now = new \DateTime('now');
+                $value['time_zone_copy'] = $now->format('h:i a');
+            }
+
         }
         ReturnJson(true, '', $list);
     }
@@ -555,7 +568,10 @@ class IndexController extends Controller {
         $count = 0;
         $data = [];
         // 报告基本查询
-        $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',];
+        //$productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',];
+        $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',
+                          'publisher_id', 'discount_type', 'discount', 'discount_amount', 'discount_time_begin',
+                          'discount_time_end'];
         $productCountQuery = Products::where("status", 1)
                                      ->where('show_recommend', 1)
                                      ->where("published_date", "<=", time());
@@ -909,7 +925,7 @@ class IndexController extends Controller {
                                  ->orderBy('sort', 'asc')->get()->toArray() ?? [];
         array_unshift($category, ['id' => '0', 'name' => '全部']);
         // 数据
-        $query = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id'])->where("status", 1);
+        $query = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id' , 'type'])->where("status", 1);
         if ($category_id) {
             $query = $query->where('category_id', $category_id);
         }

@@ -25,14 +25,28 @@ class ThirdRespController extends BaseThirdController {
 
     public function sendEmail() {
         $inputParams = request()->input();
+        \Log::error('返回结果数据:'.json_encode([$inputParams]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
         $code = $inputParams['code'];
         $res = false;
+        $id = $inputParams['id'];
         if ($code == 'placeOrder') {
             $orderId = $inputParams['id'];
             $res = (new SendEmailController())->placeOrder($orderId);
         } elseif ($code == 'paySuccess') {
             $orderId = $inputParams['id'];
             $res = (new SendEmailController())->payment($orderId);
+        } elseif ($code == 'contactUs') {
+            //联系我们
+            $res = (new SendEmailController())->contactUs($id);
+        } elseif ($code == 'productSample') {
+            //留言
+            $res = (new SendEmailController())->productSample($id);
+        } elseif ($code == 'sampleRequest') {
+            //申请样本
+            $res = (new SendEmailController())->productSample($id);
+        } elseif ($code == 'customized') {
+            //定制报告
+            $res = (new SendEmailController())->customized($id);
         }
         ReturnJson($res);
     }
@@ -44,6 +58,8 @@ class ThirdRespController extends BaseThirdController {
         if (empty($code) || empty($testEmail)) {
             ReturnJson(false, '参数错误');
         }
+        $AppName = env('APP_NAME');
+        request()->headers->set('Site', $AppName); // 设置请求头
         $sendEmailController = new SendEmailController();
         $sendEmailController->testEmail = $testEmail;
         $res = true;
@@ -105,17 +121,15 @@ class ThirdRespController extends BaseThirdController {
             //清除UA封禁
             $cache_prefix_key = env('APP_NAME').'_rate_ua_limit:';
         }
-
-        if(empty($cache_prefix_key )){
+        if (empty($cache_prefix_key)) {
             ReturnJson(false, '请求失败');
         }
-
-        $reqKey = $cache_prefix_key . $key;
+        $reqKey = $cache_prefix_key.$key;
         //清除缓存
         // 删除多个键
         $keysToDelete = Redis::keys($reqKey."*");
         //\Log::error('$keysToDelete:'.json_encode([$keysToDelete]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
-        if(!empty($keysToDelete )) {
+        if (!empty($keysToDelete)) {
             Redis::del($keysToDelete);
         }
         ReturnJson(true, '请求成功');

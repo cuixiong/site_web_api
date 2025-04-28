@@ -6,6 +6,7 @@ use App\Const\PayConst;
 use App\Jobs\HandlerEmailJob;
 use App\Models\Country;
 use App\Models\EmailLog;
+use App\Models\Office;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -113,6 +114,8 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
+            //兼容qyen邮件字段
+            $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
@@ -161,6 +164,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
+            $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
@@ -233,6 +237,7 @@ class SendEmailController extends Controller {
                                    ->pluck('value', 'key')
                                    ->toArray();
             $data = array_merge($data, $siteInfo);
+            $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $this->handlerSendEmail($scene, $user['email'], $data, $senderEmail);
@@ -306,6 +311,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
+            $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
@@ -399,6 +405,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
+            $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
@@ -443,6 +450,7 @@ class SendEmailController extends Controller {
             $productsName = '';
             $productLink = '';
             $categoryEmail = '';
+            $categoryName = '';
             if (isset($data['product_id']) && !empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
                                         ->select(
@@ -459,9 +467,11 @@ class SendEmailController extends Controller {
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
                 if (!empty($productsInfo)) {
-                    $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value(
-                        'email'
-                    );
+                    $categoryInfo = ProductsCategory::query()->where('id', $productsInfo['category_id'])->first();
+                    if(!empty($categoryInfo )){
+                        $categoryEmail = $categoryInfo->email ?? '';
+                        $categoryName = $categoryInfo->name ?? '';
+                    }
                 }
             }
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
@@ -499,6 +509,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
+            $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
@@ -510,7 +521,13 @@ class SendEmailController extends Controller {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
             //邮件标题
-            $scene->title = $scene->title.":  {$productsName}";
+            if(!empty($categoryName )){
+                $scene->title = $categoryName."-". $scene->title;
+            }
+            if(!empty($productsName )){
+                $scene->title = $scene->title.":  {$productsName}";
+            }
+
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             // 收件人额外加上分类邮箱
@@ -593,6 +610,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
+            $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
@@ -631,6 +649,7 @@ class SendEmailController extends Controller {
             $productsName = '';
             $productLink = '';
             $categoryEmail = '';
+            $categoryName = '';
             $country = '';
             if (!empty($data['country_id'])) {
                 $country = Country::where('id', $data['country_id'])->value('name');
@@ -651,9 +670,11 @@ class SendEmailController extends Controller {
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
                 if (!empty($productsInfo)) {
-                    $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value(
-                        'email'
-                    );
+                    $categoryInfo = ProductsCategory::query()->where('id', $productsInfo['category_id'])->first();
+                    if(!empty($categoryInfo )){
+                        $categoryEmail = $categoryInfo->email ?? '';
+                        $categoryName = $categoryInfo->name ?? '';
+                    }
                 }
             }
             $area = $this->getAreaName($data);
@@ -686,6 +707,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
+            $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
@@ -697,7 +719,13 @@ class SendEmailController extends Controller {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
             //邮件标题
-            $scene->title = $scene->title.":  {$productsName}";
+            if(!empty($categoryName )){
+                $scene->title = $categoryName."-". $scene->title;
+            }
+            if(!empty($productsName )){
+                $scene->title = $scene->title.":  {$productsName}";
+            }
+
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             // 收件人额外加上分类邮箱
@@ -760,14 +788,14 @@ class SendEmailController extends Controller {
                     $language = '';
                 }
                 $products = Products::select(
-                    ['url', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
+                    ['url', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id', 'pages']
                 )->where('id', $OrderGoods['goods_id'])->first();
                 if (empty($products)) {
                     continue;
                 }
                 //拼接产品名称
-                if (!empty($products->name)) {
-                    $productsName .= $products->name." ";
+                if (!empty($products->name) && empty($productsName )) {
+                    $productsName = $products->name;//." ";
                 }
                 $goods_data = $products->toArray();
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
@@ -820,6 +848,16 @@ class SendEmailController extends Controller {
             } elseif (isset($data['created_at']) && !empty($data['created_at']) && is_string($data['created_at'])) {
                 $orderCreatedTime = $data['created_at'];
             }
+            $siteName = request()->header('Site');
+            if (empty($siteName)) {
+                $AppName = env('APP_NAME');
+                request()->headers->set('Site', $AppName); // 设置请求头
+            }
+            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen'])) {
+                $orderStatusText = 'PAY_UNPAID';
+            } else {
+                $orderStatusText = '未付款';
+            }
             $data2 = [
                 'homePage'               => $data['domain'],
                 'myAccountUrl'           => rtrim($data['domain'], '/').'/account/account-infor',
@@ -832,7 +870,7 @@ class SendEmailController extends Controller {
                 'userCompany'            => $data['company'],
                 'userAddress'            => $addres,
                 'userPhone'              => $data['phone'] ? $data['phone'] : '',
-                'orderStatus'            => '未付款',
+                'orderStatus'            => $orderStatusText,
                 'paymentMethod'          => $PayName,
                 'orderAmount'            => $data['order_amount'],
                 'preferentialAmount'     => $data['coupon_amount'],
@@ -849,7 +887,9 @@ class SendEmailController extends Controller {
                 'dateTime'               => date('Y-m-d H:i:s', time()),
                 'orderTime'              => $orderCreatedTime,
                 'sumGoodsCnt'            => $sum_goods_cnt,
+                'content'                => $Order['remarks'],
             ];
+            $data['country'] = Country::where('id', $Order['country_id'])->value('name');
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
                                    ->pluck('value', 'key')
                                    ->toArray();
@@ -858,6 +898,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
+            $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
@@ -871,16 +912,17 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            //$scene->title = $scene->title.":  {$productsName}";
+            $scene->title = $scene->title.": {$productsName}";
             $siteName = request()->header('Site');
             if (empty($siteName)) {
                 $siteName = env('APP_NAME');
             }
-            if (in_array($siteName, ['mrrs', 'yhen', 'qyen'])) {
-                $scene->title = $scene->title.", order number is: {$data['order_number']}";
-            } else {
-                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
-            }
+//            if (in_array($siteName, ['mrrs', 'yhen', 'qyen'])) {
+//                $scene->title = $scene->title.", order number is: {$data['order_number']}";
+//            } else {
+//                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
+//            }
+
             $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
@@ -937,14 +979,14 @@ class SendEmailController extends Controller {
                     $language = '';
                 }
                 $products = Products::select(
-                    ['url', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
+                    ['url', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id', 'pages']
                 )->where('id', $OrderGoods['goods_id'])->first();
                 if (empty($products)) {
                     continue;
                 }
                 //拼接产品名称
-                if (!empty($products->name)) {
-                    $productsName .= $products->name." ";
+                if (!empty($products->name) && empty($productsName )) {
+                    $productsName = $products->name;//." ";
                 }
                 $goods_data = $products->toArray();
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
@@ -995,6 +1037,24 @@ class SendEmailController extends Controller {
             } else {
                 $pay_coin_symbol = PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '';
             }
+            $siteName = request()->header('Site');
+            // 订单创建时间
+            $orderCreatedTime = '';
+            if (isset($data['created_at']) && !empty($data['created_at']) && is_int($data['created_at'])) {
+                $orderCreatedTime = date('Y-m-d H:i:s', $data['created_at']);
+            } elseif (isset($data['created_at']) && !empty($data['created_at']) && is_string($data['created_at'])) {
+                $orderCreatedTime = $data['created_at'];
+            }
+
+            if (empty($siteName)) {
+                $AppName = env('APP_NAME');
+                request()->headers->set('Site', $AppName); // 设置请求头
+            }
+            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen'])) {
+                $orderStatusText = 'PAY_SUCCESS';
+            } else {
+                $orderStatusText = '已付款';
+            }
             $data2 = [
                 'homePage'               => $data['domain'],
                 'myAccountUrl'           => rtrim($data['domain'], '/').'/account/account-infor',
@@ -1007,7 +1067,7 @@ class SendEmailController extends Controller {
                 'userCompany'            => $data['company'],
                 'userAddress'            => $addres,
                 'userPhone'              => $data['phone'] ?: '',
-                'orderStatus'            => '已付款',
+                'orderStatus'            => $orderStatusText,
                 'paymentMethod'          => $PayName,
                 'orderAmount'            => $data['order_amount'],
                 'preferentialAmount'     => $data['coupon_amount'],
@@ -1021,8 +1081,11 @@ class SendEmailController extends Controller {
                 'goods'                  => $goods_data_list,
                 'userId'                 => $data['user_id'],
                 'dateTime'               => date('Y-m-d H:i:s', time()),
+                'orderTime'              => $orderCreatedTime,
                 'sumGoodsCnt'            => $sum_goods_cnt,
+                'content'                => $Order['remarks'],
             ];
+            $data['country'] = Country::where('id', $Order['country_id'])->value('name');
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
                                    ->pluck('value', 'key')
                                    ->toArray();
@@ -1031,6 +1094,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
+            $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
@@ -1040,12 +1104,13 @@ class SendEmailController extends Controller {
             if (empty($siteName)) {
                 $siteName = env('APP_NAME');
             }
-            if (in_array($siteName, ['mrrs', 'yhen', 'qyen'])) {
-                $scene->title = $scene->title.", order number is: {$data['order_number']}";
-            } else {
-                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
-            }
 
+            $scene->title = $scene->title.": {$productsName}";
+//            if (in_array($siteName, ['mrrs', 'yhen', 'qyen'])) {
+//                $scene->title = $scene->title.", order number is: {$data['order_number']}";
+//            } else {
+//                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
+//            }
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             if (empty($scene)) {
@@ -1222,5 +1287,83 @@ class SendEmailController extends Controller {
         )->first();
 
         return $scene;
+    }
+
+    public function officeData($data) {
+        if (!checkSiteAccessData(['qyen'])) {
+            //return $data;
+        }
+        $country_id_list = Office::query()
+                                 ->where('status', 1)
+                                 ->orderBy('sort', 'asc')
+                                 ->pluck('country_id')
+                                 ->toArray();
+        if (!empty($country_id_list)) {
+            $globalBranch = Country::query()->whereIn('id', $country_id_list)->pluck('name')->toArray();
+        }
+        $globalBranch = !empty($globalBranch) ? implode(", ", $globalBranch) : '';
+        //英文办公室
+        $office_english_obj = Office::query()->where(['language_alias' => 'English', 'status' => 1])->first();
+        $office_english = [];
+        $office_english['abbreviation'] = '';
+        $office_english['address'] = '';
+        $office_english['city'] = '';
+        if (!empty($office_english_obj)) {
+            $office_english['abbreviation'] = $office_english_obj->abbreviation ?? '';
+            $office_english['address'] = $office_english_obj->address ?? '';
+            $office_english['city'] = $office_english_obj->city ?? '';
+            $office_english['phone'] = $office_english_obj->phone ?? '';
+            if (strpos($office_english['phone'], ',') > 0) {
+                $temp_spilt = explode(',', $office_english['phone']);
+                $temp_spilt = array_map(function ($item) {
+                    return trim($item);
+                }, $temp_spilt);
+                $office_english_phone = implode(' /', $temp_spilt);
+            } else {
+                $office_english_phone = $office_english['phone'];
+            }
+        }
+        //中文办公室
+        $office_chinese = Office::query()->where(['language_alias' => 'Chinese', 'status' => 1])->value('phone');
+        if (strpos($office_chinese, ',') > 0) {
+            $temp_spilt = explode(',', $office_chinese);
+            $temp_spilt = array_map(function ($item) {
+                return trim($item);
+            }, $temp_spilt);
+            $office_chinese_phone = implode(' /', $temp_spilt);
+        } else {
+            $office_chinese_phone = $office_chinese;
+        }
+        //日本办公室
+        $office_japanese = Office::query()->where(['language_alias' => 'Japanese', 'status' => 1])->value('phone');
+        if (strpos($office_japanese, ',') > 0) {
+            $temp_spilt = explode(',', $office_japanese);
+            $temp_spilt = array_map(function ($item) {
+                return trim($item);
+            }, $temp_spilt);
+            $office_japanese_phone = implode(' /', $temp_spilt);
+        } else {
+            $office_japanese_phone = $office_japanese;
+        }
+        //韩文办公室
+        $office_korean = Office::query()->where(['language_alias' => 'Korean', 'status' => 1])->value('phone');
+        if (strpos($office_korean, ',') > 0) {
+            $temp_spilt = explode(',', $office_korean);
+            $temp_spilt = array_map(function ($item) {
+                return trim($item);
+            }, $temp_spilt);
+            $office_korean_phone = implode(' /', $temp_spilt);
+        } else {
+            $office_korean_phone = $office_korean;
+        }
+        $data['office_english_name'] = ($office_english['abbreviation'] ?? '').'('.($office_english['city'] ?? '').')';
+        $data['office_english_address'] = $office_english['address'] ?? '';
+        $data['office_english_phone'] = $office_english_phone ?? '';
+        $data['office_chinese_phone'] = $office_chinese_phone ?? '';
+        $data['office_japanese_phone'] = $office_japanese_phone ?? '';
+        $data['office_korean_phone'] = $office_korean_phone ?? '';
+        $data['globalBranch'] = $globalBranch;
+
+        return $data;
     }
 }

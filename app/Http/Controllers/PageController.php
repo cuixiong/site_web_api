@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Common\SendEmailController;
 use App\Http\Controllers\Controller;
 use App\Models\Authority;
+use App\Models\City;
 use App\Models\Comment;
 use App\Models\Common;
 use App\Models\ContactUs;
@@ -13,6 +14,7 @@ use App\Models\FaqCategory;
 use App\Models\History;
 use App\Models\Languages;
 use App\Models\Menu;
+use App\Models\News;
 use App\Models\Page;
 use App\Models\Partner;
 use App\Models\PriceEditionValues;
@@ -45,6 +47,11 @@ class PageController extends Controller {
             $year = bcsub(date('Y'), 2022); // 两个任意精度数字的减法
             $content = str_replace('%s', bcadd(15, $year), $content);
         }
+
+        if (strpos($content, "{{%c}}") !== false) {
+            $content = str_replace('{{%c}}', intval(date('Y')) - 2007, $content);
+        }
+
         if ($link == 'about') { // 其中的单页【公司简介】（link值是about）比较特殊：后台此单页富文本编辑器的内容要返回a和b两部分给前端，a和b中间嵌入其它内容。
             $divisionArray = explode('<div id="division"></div>', $content);
             $special = [
@@ -75,7 +82,9 @@ class PageController extends Controller {
             $category_id = $category[0];
         }
         // 数据
-        $model = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id'])->orderBy('sort', 'asc')
+        $model = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id', 'type'])->orderBy(
+            'sort', 'asc'
+        )
                           ->orderBy('id', 'desc');
         if ($category_id) {
             $model = $model->where('category_id', $category_id);
@@ -108,8 +117,11 @@ class PageController extends Controller {
         }
         $data = Authority::select(
             ['name as title', 'body as content', 'description', 'id', 'keyword', 'name', 'created_at as time',
-             'big_image as img']
+             'big_image as img', 'hits', 'real_hits', 'category_id', 'type']
         )->where('id', $id)->first();
+        //增加点击次数
+        Authority::where(['id' => $id])->increment('real_hits');
+        Authority::where(['id' => $id])->increment('hits');
         $data['time'] = date("Y-m-d", $data['time']);
         // 新闻/权威引用等如果内容带有链接，则该链接在移动端无法正常换行，因此后端在此协助处理
         $data['content'] = str_replace(
@@ -384,17 +396,36 @@ class PageController extends Controller {
      * 团队成员
      */
     public function TeamMember(Request $request) {
-        $data = TeamMember::select([
-                                       'name',
-                                       'position as post',
-                                       'image as img',
-                                       'custom as sketch',
-                                       'describe'
-                                   ])
-                          ->where('status', 1)
-                          ->orderBy('sort', 'asc')
-                          ->get()
-                          ->toArray();
+        if (checkSiteAccessData(['qyen'])) {
+            $leaders = TeamMember::query()
+                                 ->where('status', 1)
+                                 ->where('region_name', '<>', '')
+                                 ->orderBy('sort', 'asc')
+                                 ->get()
+                                 ->toArray();
+            ###############################################
+            $admins = TeamMember::query()
+                                ->where('status', 1)
+                                ->where('region_name', '')
+                                ->orderBy('sort', 'asc')
+                                ->get()
+                                ->toArray();
+            $data['leaders'] = $leaders;
+            $data['admins'] = $admins;
+            ReturnJson(true, '', $data);
+        } else {
+            $data = TeamMember::select([
+                                           'name',
+                                           'position as post',
+                                           'image as img',
+                                           'custom as sketch',
+                                           'describe'
+                                       ])
+                              ->where('status', 1)
+                              ->orderBy('sort', 'asc')
+                              ->get()
+                              ->toArray();
+        }
         ReturnJson(true, '', $data);
     }
 
@@ -489,8 +520,9 @@ class PageController extends Controller {
                     )->get()->toArray();
                     $problemList = array_reduce($problemList, function ($carry, $item) {
                         $carry[$item['category_id']][] = $item;
+
                         return $carry;
-                    }, []);
+                    },                          []);
                     foreach ($facateGoryList as &$facateGory) {
                         $facateGory['faqs'] = $problemList[$facateGory['id']];
                     }
@@ -515,7 +547,9 @@ class PageController extends Controller {
         $page = $params['page'] ?? 1;
         $pageSize = $params['pageSize'] ?? 16;
         $query = Comment::where('status', 1)
-                        ->select(['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at'])
+                        ->select(
+                            ['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at', 'country']
+                        )
                         ->where('status', 1);
         $count = $query->count();
         $list = $query->offset(($page - 1) * $pageSize)->limit($pageSize)->orderBy('id', 'desc')->get()->toArray();
@@ -541,7 +575,9 @@ class PageController extends Controller {
         if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = Comment::select(['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at'])
+        $data = Comment::select(
+            ['id', 'image', 'title', 'company', 'post as author', 'content', 'comment_at', 'country']
+        )
                        ->where('status', 1)
                        ->where('id', $id)
                        ->first();
