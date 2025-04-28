@@ -254,7 +254,7 @@ class Products extends Base
     /**
      * 通过价格和getPriceEdition的价格版本进行计算价格
      */
-    public static function countPriceEditionPrice($priceEditions, $price)
+    public static function countPriceEditionPrice($priceEditions, $price, $currencyData = [])
     {
         foreach ($priceEditions as $index1 => $priceEditionItem) {
             $priceEditionValues = $priceEditionItem['data'];
@@ -264,6 +264,13 @@ class Products extends Base
                     $price
                 ) . ";");
                 unset($priceEditions[$index1]['data'][$index2]['rules']);
+                // 给每个版本添加多种货币的价格
+                if($currencyData && count($currencyData)){
+                    foreach ($currencyData as $currencyItem) {
+                        $currencyKey = strtolower($currencyItem['code']).'_price';
+                        $priceEditions[$index1]['data'][$index2][$currencyKey] = $priceEditions[$index1]['data'][$index2]['price'] * $currencyItem['exchange_rate'];
+                    }
+                }
             }
         }
         return $priceEditions;

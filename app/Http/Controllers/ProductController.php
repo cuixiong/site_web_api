@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Helper\XunSearch;
 use App\Models\Common;
+use App\Models\CurrencyConfig;
 use App\Models\Languages;
 use App\Models\News;
 use App\Models\PriceEditions;
@@ -106,6 +107,9 @@ class ProductController extends Controller {
                 // 提取这些报告的出版商id，统一查出涉及的价格版本
                 $publisherIdArray = array_unique(array_column($productsDataArray, 'publisher_id'));
                 $priceEdition = Products::getPriceEdition($publisherIdArray, $languages);
+                // 需要额外查询多种货币的价格（日文）
+                $currencyData =CurrencyConfig::query()->select(['id','code','is_first','exchange_rate','tax_rate'])->get()?->toArray()??[];
+                
                 // 价格版本缓存
                 foreach ($result as $key => $value) {
                     //报告数据
@@ -174,7 +178,7 @@ class ProductController extends Controller {
                         'link' => $category['link'],
                     ] : [];
                     $publisher_id = $productsData['publisher_id'];
-                    $value['prices'] = Products::countPriceEditionPrice($priceEdition[$publisher_id], $value['price'],)
+                    $value['prices'] = Products::countPriceEditionPrice($priceEdition[$publisher_id], $value['price'],$currencyData)
                                        ??
                                        [];
                     $products[] = $value;
