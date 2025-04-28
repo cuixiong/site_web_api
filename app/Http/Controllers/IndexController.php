@@ -186,6 +186,7 @@ class IndexController extends Controller {
                 $now = new \DateTime('now', $tz);
                 $value['time_zone_copy'] = $now->format('h:i a');
             }else{
+                $now = new \DateTime('now');
                 $value['time_zone_copy'] = $now->format('h:i a');
             }
 
