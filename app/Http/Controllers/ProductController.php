@@ -481,7 +481,10 @@ class ProductController extends Controller {
                 )->first();
                 $product_desc['payMethod'] = $payMethod ?? '';
             }
-            $product_desc['prices'] = Products::CountPrice($product_desc['price'], $product_desc['publisher_id']);
+
+            // 需要额外查询多种货币的价格（日文）
+            $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])->get()?->toArray() ?? [];
+            $product_desc['prices'] = Products::CountPrice($product_desc['price'], $product_desc['publisher_id'], $currencyData);
             $product_desc['description'] = $product_desc['description'];
             $product_desc['seo_description'] = is_array($product_desc['description'])
                                                && count(
