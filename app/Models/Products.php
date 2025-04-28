@@ -136,7 +136,8 @@ class Products extends Base
         $publisherId,
         $languages = null,
         $priceEditionsValue = null,
-        $priceEditionsPid = null
+        $priceEditionsPid = null,
+        $currencyData = []
     ) {
         // eval感觉不太安全
         // $evaluator = new \Matex\Evaluator();
@@ -166,6 +167,13 @@ class Products extends Base
                         ) . ";");
 
                         // $prices[$index]['data'][$keyPriceEdition]['price'] = $evaluator->execute(sprintf($priceEdition['rules'], $price));
+                        // 给每个版本添加多种货币的价格
+                        if($currencyData && count($currencyData)){
+                            foreach ($currencyData as $currencyItem) {
+                                $currencyKey = strtolower($currencyItem['code']).'_price';
+                                $prices[$index]['data'][$keyPriceEdition][$currencyKey] = $prices[$index]['data'][$keyPriceEdition]['price'] * $currencyItem['exchange_rate'];
+                            }
+                        }
                     }
                 }
             }
