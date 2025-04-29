@@ -180,9 +180,18 @@ class ProductController extends Controller {
                         'link' => $category['link'],
                     ] : [];
                     $publisher_id = $productsData['publisher_id'];
-                    $value['prices'] = Products::countPriceEditionPrice($priceEdition[$publisher_id], $value['price'],$currencyData)
-                                       ??
-                                       [];
+                    $value['prices'] = Products::countPriceEditionPrice($priceEdition[$publisher_id], $value['price'],$currencyData)??[];
+                    
+                    if ($currencyData && count($currencyData) > 0) {
+
+                        // 默认版本的多种货币的价格
+                        if ($currencyData && count($currencyData)) {
+                            foreach ($currencyData as $currencyItem) {
+                                $currencyKey = strtolower($currencyItem['code']) . '_price';
+                                $value[$currencyKey] = $value['price'] * $currencyItem['exchange_rate'];
+                            }
+                        }
+                    }
                     $products[] = $value;
                 }
             }
@@ -480,11 +489,29 @@ class ProductController extends Controller {
                     ['key' => 'PayMethod', 'status' => 1]
                 )->first();
                 $product_desc['payMethod'] = $payMethod ?? '';
+                // 报告语言文本
+                $reportLanguage = SystemValue::select(['name as key', 'value'])->where(
+                    ['key' => 'ReportLanguage', 'status' => 1]
+                )->first();
+                $product_desc['reportLanguage'] = $reportLanguage ?? '';
             }
 
             // 需要额外查询多种货币的价格（日文）
             $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])->get()?->toArray() ?? [];
             $product_desc['prices'] = Products::CountPrice($product_desc['price'], $product_desc['publisher_id'], null, null, null, $currencyData);
+            if ($currencyData && count($currencyData) > 0) {
+
+                // 默认版本的多种货币的价格
+                if ($currencyData && count($currencyData)) {
+                    foreach ($currencyData as $currencyItem) {
+                        $currencyKey = strtolower($currencyItem['code']) . '_price';
+                        $product_desc[$currencyKey] = $product_desc['price'] * $currencyItem['exchange_rate'];
+                        $currencyRateKey = strtolower($currencyItem['code']) . '_rate';
+                        $product_desc[$currencyRateKey] = $currencyItem['exchange_rate'];
+                    }
+                }
+            }
+
             $product_desc['description'] = $product_desc['description'];
             $product_desc['seo_description'] = is_array($product_desc['description'])
                                                && count(
