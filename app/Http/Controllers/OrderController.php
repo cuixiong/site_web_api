@@ -174,6 +174,15 @@ class OrderController extends Controller {
             //Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
             //拉起支付
             // $pay = PayFactory::create($order->pay_type);
+            if($order->pay_code == PayConst::PAY_TYPE_BANK) {
+                // 银行转账不需要在线支付
+                $returnData = [
+                    'order_id' => $order->id,
+                    'pay_type_name' => ModelsPay::query()->select(['name'])->where(['code' => $order->pay_code])->value('name'),
+                ];
+                ReturnJson(true, 'success', $returnData);
+            }
+
             $pay = PayFactory::create($order->pay_code);
             $isMobile = isMobile() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
             $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
@@ -215,6 +224,10 @@ class OrderController extends Controller {
 //            ReturnJson(false, '未知错误');
 //        } else {
         // $pay = PayFactory::create($order->pay_type);
+        if($order->pay_code == PayConst::PAY_TYPE_BANK) {
+            // 银行转账不需要在线支付
+            ReturnJson(false, '銀行振込はオンライン決済に対応していません。');
+        }
         $pay = PayFactory::create($order->pay_code);
         $isMobile = isMobile() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
         $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);

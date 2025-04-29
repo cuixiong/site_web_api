@@ -18,6 +18,7 @@ class PayConst {
     const PAY_TYPE_FIRSTDATAPAY = 'FIRSTDATA';
     const PAY_TYPE_PAYPAL       = 'PAYPAL';
     const PAY_TYPE_AIRWALLEXPAY = 'AIRWALLEX';
+    const PAY_TYPE_BANK         = 'BANK'; // 银行转账，不涉及在线支付
     //货币类型
     const COIN_TYPE_USD = 'USD';
     const COIN_TYPE_CNY = 'CNY';
