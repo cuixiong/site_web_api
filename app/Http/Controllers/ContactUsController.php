@@ -44,6 +44,7 @@ class ContactUsController extends Controller {
         $model->phone = $params['phone'] ?? '';
         $model->content = $params['content'] ?? '';
         $model->product_id = $product_id;
+        $model->price_edition = $params['price_edition'] ?? 0;
         $model->language_version = $params['language'] ?? 0;
         $model->address = $params['address'] ?? '';
         $model->channel = $params['channel'] ?? 0;

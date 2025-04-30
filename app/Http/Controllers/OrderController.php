@@ -328,6 +328,7 @@ class OrderController extends Controller {
             'phone'      => $order['phone'] ?? '',
             'country_id' => $order['country_id'] ?? 0,
             'company'    => $order['company'] ?? '',
+            'department' => $order['department'] ?? '',
             'province'   => $province,
             'city_id'    => $city,
             'address'    => $order['address'],
@@ -688,6 +689,7 @@ class OrderController extends Controller {
         $username = $request->username;
         $phone = $request->phone;
         $company = $request->company;
+        $department = isset($request->department) && !empty($request->department) ? $request->department: ''; // 日语需要部门
         $province_id = $request->province_id ?? 0;
         $address = $request->address ?? '';
         $city_id = $request->city_id ?? 0;
@@ -698,6 +700,7 @@ class OrderController extends Controller {
             $user->email = $email;
             $user->phone = $phone;
             $user->company = $company;
+            $user->department = $department;
             $user->province_id = $province_id;
             $user->area_id = $city_id;
             $user->address = $address;
@@ -713,6 +716,7 @@ class OrderController extends Controller {
             $user->email = $email;
             $user->phone = $phone;
             $user->company = $company;
+            $user->department = $department;
             $user->province_id = $province_id;
             $user->city_id = $city_id;
             $user->address = $address;
