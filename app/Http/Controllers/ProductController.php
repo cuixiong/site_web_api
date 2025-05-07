@@ -505,7 +505,12 @@ class ProductController extends Controller {
                     $separator = ''; // 分隔符
                     // echo '<pre>';print_r($keyword_suffixs);exit;
                     foreach ($keyword_suffixs as $keyword_suffix) {
-                        $seo_keyword .= $separator.$product_desc['keywords'].$keyword_suffix;
+                        if(checkSiteAccessData(['qyen' , 'mrrs'])){
+                            $seo_keyword .= $separator.$product_desc['keywords']." ".$keyword_suffix;
+                        }else{
+                            $seo_keyword .= $separator.$product_desc['keywords'].$keyword_suffix;
+                        }
+
                         $separator = '，';
                     }
                 }
