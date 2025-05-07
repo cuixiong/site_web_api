@@ -86,13 +86,14 @@ class OrderTrans extends Base {
         }
         DB::beginTransaction();
         $timestamp = time();
-        $orderAmountSingle = Products::getPrice($priceEdition, $goods); // 订单金额
-        $actuallyPaidSingle = Products::getPriceBy($orderAmountSingle, $goods, $timestamp);
-        $orderAmount = bcmul($quantity, $orderAmountSingle, 2);
-        $caclueData = $this->calueTaxRate($payCode, $orderAmount);
+        $orderAmountSingle = Products::getPrice($priceEdition, $goods); // 单价
+        $actuallyPaidSingle = Products::getPriceBy($orderAmountSingle, $goods, $timestamp); // 单价实付
+        $orderAmount = bcmul($quantity, $orderAmountSingle, 2); // 总原价
+        $caclueData = $this->calueTaxRate($payCode, $orderAmount); // 换算的数据
         if (empty($coupon_id)) {
             //原价打完折, 乘汇率 = 优惠价 .   然后原价*汇率  -  优惠价 = 实付金额
             $discountPrice = Products::getPriceBy($orderAmount, $goods, $timestamp);
+            $actually_paid_all = $discountPrice;    // 实付价
             $actually_paid_all = bcmul($discountPrice, $caclueData['exchange_rate'], 2);
             $caclueData['coupon_amount'] = bcsub($caclueData['exchange_amount'], $actually_paid_all, 2);
         } else {

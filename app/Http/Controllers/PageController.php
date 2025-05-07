@@ -507,7 +507,7 @@ class PageController extends Controller {
      */
     public function Faqs() {
         try {
-            if (checkSiteAccessData(['mrrs'])) {
+            if (checkSiteAccessData(['mrrs','lpijp'])) {
                 $facateGoryList = FaqCategory::query()->where('status', 1)->orderBy('sort', 'asc')->select(
                     ['id', 'name']
                 )
