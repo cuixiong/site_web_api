@@ -771,6 +771,7 @@ class SendEmailController extends Controller {
             }
             $exchange_coupon_amount = bcmul($data['coupon_amount'], $exchange_rate, 2);
             $exchange_order_amount = bcmul($data['order_amount'], $exchange_rate, 2);
+            $exchange_order_actually_paid = bcmul($data['actually_paid'], $exchange_rate, 2);
 
             $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
             $languageList = Languages::GetListById();
@@ -902,6 +903,7 @@ class SendEmailController extends Controller {
                 'orderActuallyPaid'      => $data['actually_paid'],
                 'exchange_order_amount'  => $exchange_order_amount,
                 'exchange_coupon_amount' => $exchange_coupon_amount,
+                'exchange_order_actually_paid' => $exchange_order_actually_paid,
                 'pay_coin_symbol'        => $pay_coin_symbol, // 支付符号,
                 'orderNumber'            => $data['order_number'],
                 'paymentLink'            => $data['domain'] . '/api/order/pay?order_id=' . $data['id'],
@@ -992,11 +994,14 @@ class SendEmailController extends Controller {
             }
             $exchange_coupon_amount = bcmul($data['coupon_amount'], $exchange_rate, 2);
             $exchange_order_amount = bcmul($data['order_amount'], $exchange_rate, 2);
+            $exchange_order_actually_paid = bcmul($data['actually_paid'], $exchange_rate, 2);
             $orderGoodsList = OrderGoods::where('order_id', $Order['id'])->get()->toArray();
             $languageList = Languages::GetListById();
             $goods_data_list = [];
             $productsName = "";
             $sum_goods_cnt = 0;
+            $sum_goods_original_price_all = 0; // 小计原价,不含税
+            $sum_goods_present_price_all = 0; // 小计现价,不含税
             // 默认图片
             // 若报告图片为空，则使用系统设置的默认报告高清图
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
@@ -1038,6 +1043,28 @@ class SendEmailController extends Controller {
                     $OrderGoods['goods_number'],
                     2
                 );
+                
+                $goods_data['goods_number'] = $OrderGoods['goods_number'];
+                $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
+                $goods_data['sum_original_price'] = bcmul(
+                    $goods_data['goods_original_price'], $goods_data['goods_number'], 2
+                );
+
+                
+                $goods_data['goods_number'] = $OrderGoods['goods_number'];
+                // 单个商品原价
+                $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
+                // 多个同商品原价
+                $goods_data['sum_original_price'] = bcmul($goods_data['goods_original_price'], $goods_data['goods_number'], 2);
+
+                // 多个同商品的汇率转换
+                $goods_data['exchange_sum_original_price'] = bcmul($goods_data['sum_original_price'], $exchange_rate, 2);
+                $goods_data['exchange_sum_present_price'] = bcmul($goods_data['goods_sum_price'], $exchange_rate, 2);
+
+                // 商品累加小计
+                $sum_goods_original_price_all += $goods_data['sum_original_price'];
+                $sum_goods_present_price_all += $goods_data['goods_sum_price'];
+
                 // 分类信息
                 $category = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $products['category_id'])
                                             ->first();
@@ -1055,13 +1082,20 @@ class SendEmailController extends Controller {
                 $goods_data['thumb'] = rtrim($imgDomain, '/').$tempThumb;
                 // $goods_data['thumb'] = rtrim($imgDomain, '/') . $products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
-                $goods_data['goods_number'] = $OrderGoods['goods_number'];
-                $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
-                $goods_data['sum_original_price'] = bcmul(
-                    $goods_data['goods_original_price'], $goods_data['goods_number'], 2
-                );
                 $goods_data_list[] = $goods_data;
             }
+            
+            // 小计汇率转换
+            $exchange_sum_original_price_all = bcmul($sum_goods_original_price_all, $exchange_rate, 2);
+            $exchange_sum_present_price_all = bcmul($sum_goods_present_price_all, $exchange_rate, 2);
+            // 税费计算
+            $original_tax = bcmul($sum_goods_original_price_all, $tax_rate, 2);
+            $present_tax = bcmul($sum_goods_present_price_all, $tax_rate, 2);
+            
+            // 税费汇率转换
+            $exchange_original_tax = bcmul($original_tax, $exchange_rate, 2);
+            $exchange_present_tax = bcmul($present_tax, $exchange_rate, 2);
+
             $cityName = City::where('id', $data['city_id'])->value('name');
             $provinceName = City::where('id', $data['province_id'])->value('name');
             $addres = $provinceName.' '.$cityName.' '.$data['address'];
@@ -1108,6 +1142,7 @@ class SendEmailController extends Controller {
                 'pay_coin_symbol'        => $pay_coin_symbol, // 支付符号,
                 'exchange_order_amount'  => $exchange_order_amount,
                 'exchange_coupon_amount' => $exchange_coupon_amount,
+                'exchange_order_actually_paid' => $exchange_order_actually_paid,
                 'orderNumber'            => $data['order_number'],
                 'paymentLink'            => $data['domain'].'/api/order/pay?order_id='.$data['id'],
                 'orderDetails'           => $data['domain'].'/account?orderdetails='.$data['id'],
@@ -1116,6 +1151,14 @@ class SendEmailController extends Controller {
                 'dateTime'               => date('Y-m-d H:i:s', time()),
                 'orderTime'              => $orderCreatedTime,
                 'sumGoodsCnt'            => $sum_goods_cnt,
+                'sum_goods_original_price_all'      => $sum_goods_original_price_all,
+                'sum_goods_present_price_all'       => $sum_goods_present_price_all,
+                'exchange_sum_original_price_all'   => $exchange_sum_original_price_all,
+                'exchange_sum_present_price_all'    => $exchange_sum_present_price_all,
+                'original_tax'           => $original_tax,
+                'present_tax'            => $present_tax,
+                'exchange_original_tax'  => $exchange_original_tax,
+                'exchange_present_tax'   => $exchange_present_tax,
                 'content'                => $Order['remarks'],
             ];
             $data['country'] = Country::where('id', $Order['country_id'])->value('name');
