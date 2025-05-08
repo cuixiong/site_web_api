@@ -892,6 +892,7 @@ class SendEmailController extends Controller {
                 'userName'               => $data['username'] ? $data['username'] : '',
                 'userEmail'              => $data['email'],
                 'userCompany'            => $data['company'],
+                'userDepartment'         => $data['department'],
                 'userAddress'            => $addres,
                 'userPhone'              => $data['phone'] ? $data['phone'] : '',
                 'orderStatus'            => $orderStatusText,
