@@ -883,6 +883,10 @@ class SendEmailController extends Controller {
             } else {
                 $orderStatusText = '未付款';
             }
+            $is_bank = false; // 是否线下转账，否则在邮件上没有跳转支付的链接
+            if($Order->pay_code == PayConst::PAY_TYPE_BANK){
+                $is_bank = true;
+            }
             $data2 = [
                 'homePage'               => $data['domain'],
                 'myAccountUrl'           => rtrim($data['domain'], '/') . '/account/account-infor',
@@ -923,6 +927,7 @@ class SendEmailController extends Controller {
                 'exchange_original_tax'  => $exchange_original_tax,
                 'exchange_present_tax'   => $exchange_present_tax,
                 'content'                => $Order['remarks'],
+                'is_bank'                => $is_bank,
             ];
             $data['country'] = Country::where('id', $Order['country_id'])->value('name');
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
