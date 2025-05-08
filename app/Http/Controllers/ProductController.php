@@ -432,14 +432,14 @@ class ProductController extends Controller {
             //报告详情数据处理
             $suffix = date('Y', strtotime($product_desc['published_date']));
             $description = (new ProductDescription($suffix))->select([
-                                                                         'description',
-                                                                         'description_en',
-                                                                         'table_of_content',
-                                                                         'table_of_content_en',
-                                                                         'tables_and_figures',
-                                                                         'tables_and_figures_en',
-                                                                         'companies_mentioned',
-                                                                     ])->where('product_id', $product_id)->first();
+                'description',
+                'description_en',
+                'table_of_content',
+                'table_of_content_en',
+                'tables_and_figures',
+                'tables_and_figures_en',
+                'companies_mentioned',
+            ])->where('product_id', $product_id)->first();
             if ($description === null) {
                 $description = [];
                 $description['description'] = '';
@@ -450,6 +450,15 @@ class ProductController extends Controller {
                 $description['tables_and_figures_en'] = '';
                 $description['table_of_content_en'] = '';
             }
+
+            // lpijp网站动态生成日文详情
+            if(checkSiteAccessData(['lpijp'])){
+                
+
+            }
+            
+
+            
             $desc = [];
             if (!empty($product_desc) && !empty($description)) {
                 $description['description'] = str_replace(['<pre>', '</pre>'], '', $description['description']);

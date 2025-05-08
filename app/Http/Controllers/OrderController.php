@@ -13,6 +13,7 @@ use App\Models\City;
 use App\Models\Common;
 use App\Models\Coupon;
 use App\Models\CouponUser;
+use App\Models\CurrencyConfig;
 use App\Models\Order;
 use App\Models\OrderGoods;
 use App\Models\OrderStatus;
@@ -273,11 +274,12 @@ class OrderController extends Controller {
     /**
      * 订单明细
      */
-    public function Details(Request $request) {
+    public function Details(Request $request)
+    {
         $orderId = $request->order_id;
         $order = Order::query()
-                      ->where(['id' => $orderId])
-                      ->first();
+            ->where(['id' => $orderId])
+            ->first();
         if (!$order) {
             ReturnJson(false, '订单不存在');
         }
@@ -291,6 +293,10 @@ class OrderController extends Controller {
             // 未付款
             ReturnJson(true, '', ['is_pay' => $orderStatus, 'order_number' => $orderNumber]);
         }
+        
+            // 需要额外查询多种货币的价格（日文）
+            $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])->get()?->toArray() ?? [];
+
         $payInfo = \App\Models\Pay::query()->where('code', $order['pay_code'])->first();
         $exchange_rate = 1;
         if (!empty($payInfo)) {
@@ -300,21 +306,21 @@ class OrderController extends Controller {
             }
         }
         $orderGoods = OrderGoods::from('order_goods')->select([
-                                                                  'product.name',
-                                                                  'language.name as language',
-                                                                  'edition.name as edition',
-                                                                  'order_goods.goods_number',
-                                                                  'order_goods.goods_original_price',
-                                                                  'order_goods.goods_present_price',
-                                                                  'order_goods.goods_id as product_id',
-                                                                  'product.url',
-                                                                  // 'order_goods.price_edition',
-                                                              ])
-                                ->leftJoin('product_routine as product', 'product.id', 'order_goods.goods_id')
-                                ->leftJoin('price_edition_values as edition', 'edition.id', 'order_goods.price_edition')
-                                ->leftJoin('languages as language', 'language.id', 'edition.language_id')
-                                ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
-                                ->get()->toArray();
+            'product.name',
+            'language.name as language',
+            'edition.name as edition',
+            'order_goods.goods_number',
+            'order_goods.goods_original_price',
+            'order_goods.goods_present_price',
+            'order_goods.goods_id as product_id',
+            'product.url',
+            // 'order_goods.price_edition',
+        ])
+            ->leftJoin('product_routine as product', 'product.id', 'order_goods.goods_id')
+            ->leftJoin('price_edition_values as edition', 'edition.id', 'order_goods.price_edition')
+            ->leftJoin('languages as language', 'language.id', 'edition.language_id')
+            ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
+            ->get()->toArray();
         // if (!empty($order['user_id'])) {
         //     $user = User::select(['username', 'email', 'phone', 'company', 'province_id', 'city_id', 'address'])->where(
         //         'id',
@@ -336,8 +342,19 @@ class OrderController extends Controller {
         // }
         //$discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);
         $sum_quantity = 0;
-        foreach ($orderGoods as $forOrderGoods) {
+        foreach ($orderGoods as $key => $forOrderGoods) {
             $sum_quantity += $forOrderGoods['goods_number'];
+
+            if ($currencyData && count($currencyData)) {
+                foreach ($currencyData as $currencyItem) {
+                    $currencyKeyOriginalPrice = strtolower($currencyItem['code']) . '_original_price';
+                    $orderGoods[$key][$currencyKeyOriginalPrice] = $forOrderGoods['goods_original_price'] * $currencyItem['exchange_rate'];
+                    $currencyKeyPresentPrice = strtolower($currencyItem['code']) . '_present_price';
+                    $orderGoods[$key][$currencyKeyPresentPrice] = $forOrderGoods['goods_present_price'] * $currencyItem['exchange_rate'];
+                    $currencyRateKey = strtolower($currencyItem['code']) . '_rate';
+                    $orderGoods[$key][$currencyRateKey] = $currencyItem['exchange_rate'];
+                }
+            }
         }
         $order_status = $order['is_pay_text']; //Order::PAY_STATUS_TYPE[$order['is_pay']] ?? '';
         $data = [
@@ -361,6 +378,19 @@ class OrderController extends Controller {
             'user'   => $_user,           // 用户的初始账户信息
             'is_pay' => $orderStatus,
         ];
+        
+        if ($currencyData && count($currencyData)) {
+            foreach ($currencyData as $currencyItem) {
+                $currencyKeyOrderAmount = strtolower($currencyItem['code']) . '_order_amount';
+                $data['order'][$currencyKeyOrderAmount] = $order['order_amount'] * $currencyItem['exchange_rate'];
+                $currencyKeyTax = strtolower($currencyItem['code']) . '_tax_rate';
+                $data['order'][$currencyKeyTax] = $data['order'][$currencyKeyOrderAmount] * $currencyItem['tax_rate'];
+                $currencyKeyActuallyPaid = strtolower($currencyItem['code']) . '_actually_paid';
+                $data['order'][$currencyKeyActuallyPaid] = $order['actually_paid'] * $currencyItem['exchange_rate'];
+                $currencyRateKey = strtolower($currencyItem['code']) . '_rate';
+                $data['order'][$currencyRateKey] = $currencyItem['exchange_rate'];
+            }
+        }
         ReturnJson(true, '', $data);
     }
 
