@@ -748,7 +748,8 @@ class SendEmailController extends Controller {
     }
 
     // 下单后未付款
-    public function placeOrder($orderId) {
+    public function placeOrder($orderId)
+    {
         try {
             $Order = Order::where('id', $orderId)->first();
             $data = $Order ? $Order->toArray() : [];
@@ -770,11 +771,14 @@ class SendEmailController extends Controller {
             }
             $exchange_coupon_amount = bcmul($data['coupon_amount'], $exchange_rate, 2);
             $exchange_order_amount = bcmul($data['order_amount'], $exchange_rate, 2);
+
             $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
             $languageList = Languages::GetListById();
             $goods_data_list = [];
             $productsName = "";
             $sum_goods_cnt = 0;
+            $sum_goods_original_price_all = 0; // 小计原价,不含税
+            $sum_goods_present_price_all = 0; // 小计现价,不含税
             // 默认图片
             // 若报告图片为空，则使用系统设置的默认报告高清图
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
@@ -794,8 +798,8 @@ class SendEmailController extends Controller {
                     continue;
                 }
                 //拼接产品名称
-                if (!empty($products->name) && empty($productsName )) {
-                    $productsName = $products->name;//." ";
+                if (!empty($products->name) && empty($productsName)) {
+                    $productsName = $products->name; //." ";
                 }
                 $goods_data = $products->toArray();
                 $goods_data['goods_number'] = $OrderGoods['goods_number'] ?: 0;
@@ -803,16 +807,28 @@ class SendEmailController extends Controller {
                 $goods_data['language'] = $language;
                 $goods_data['price_edition'] = isset($priceEdition['name']) && !empty($priceEdition['name'])
                     ? $priceEdition['name'] : '';
+                // 单个商品现价
                 $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
-                $goods_data['goods_sum_price'] = bcmul(
-                    $OrderGoods['goods_present_price'],
-                    $OrderGoods['goods_number'],
-                    2
-                );
+                // 多个同商品现价
+                $goods_data['goods_sum_price'] = bcmul($OrderGoods['goods_present_price'], $OrderGoods['goods_number'], 2);
                 //$goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
+
+                $goods_data['goods_number'] = $OrderGoods['goods_number'];
+                // 单个商品原价
+                $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
+                // 多个同商品原价
+                $goods_data['sum_original_price'] = bcmul($goods_data['goods_original_price'], $goods_data['goods_number'], 2);
+
+                // 多个同商品的汇率转换
+                $goods_data['exchange_sum_original_price'] = bcmul($goods_data['sum_original_price'], $exchange_rate, 2);
+                $goods_data['exchange_sum_present_price'] = bcmul($goods_data['goods_sum_price'], $exchange_rate, 2);
+
+                // 商品累加小计
+                $sum_goods_original_price_all += $goods_data['sum_original_price'];
+                $sum_goods_present_price_all += $goods_data['goods_sum_price'];
+
                 // 分类信息
-                $category = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $products['category_id'])
-                                            ->first();
+                $category = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $products['category_id'])->first();
                 $goods_data['category_name'] = $category['name'] ?? '';
                 $goods_data['category_thumb'] = $category['thumb'] ?? '';
                 $tempThumb = '';
@@ -824,18 +840,24 @@ class SendEmailController extends Controller {
                     // 如果报告图片、分类图片为空，使用系统默认图片
                     $tempThumb = !empty($defaultImg) ? $defaultImg : '';
                 }
-                $goods_data['thumb'] = rtrim($imgDomain, '/').$tempThumb;
+                $goods_data['thumb'] = rtrim($imgDomain, '/') . $tempThumb;
                 // $goods_data['thumb'] = rtrim($imgDomain, '/') . $products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
-                $goods_data['goods_number'] = $OrderGoods['goods_number'];
-                $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
-                $goods_data['sum_original_price'] = bcmul(
-                    $goods_data['goods_original_price'], $goods_data['goods_number'], 2
-                );
                 $goods_data_list[] = $goods_data;
             }
+            // 小计汇率转换
+            $exchange_sum_original_price_all = bcmul($sum_goods_original_price_all, $exchange_rate, 2);
+            $exchange_sum_present_price_all = bcmul($sum_goods_present_price_all, $exchange_rate, 2);
+            // 税费计算
+            $original_tax = bcmul($sum_goods_original_price_all, $tax_rate, 2);
+            $present_tax = bcmul($sum_goods_present_price_all, $tax_rate, 2);
+            
+            // 税费汇率转换
+            $exchange_original_tax = bcmul($original_tax, $exchange_rate, 2);
+            $exchange_present_tax = bcmul($present_tax, $exchange_rate, 2);
+
             $areaInfo = $this->getAreaName($data);
-            $addres = $areaInfo.' '.$data['address'];
+            $addres = $areaInfo . ' ' . $data['address'];
             if ($data['pay_coin_type'] == PayConst::COIN_TYPE_USD) {
                 $pay_coin_symbol = PayConst::COIN_TYPE_USD;
             } else {
@@ -855,14 +877,16 @@ class SendEmailController extends Controller {
             }
             if (checkSiteAccessData(['mrrs', 'yhen', 'qyen'])) {
                 $orderStatusText = 'PAY_UNPAID';
+            } elseif (checkSiteAccessData(['lpijp'])) {
+                $orderStatusText = '支払い待ち';
             } else {
                 $orderStatusText = '未付款';
             }
             $data2 = [
                 'homePage'               => $data['domain'],
-                'myAccountUrl'           => rtrim($data['domain'], '/').'/account/account-infor',
-                'contactUsUrl'           => rtrim($data['domain'], '/').'/contact-us',
-                'orderListUrl'           => rtrim($data['domain'], '/').'/account/order',
+                'myAccountUrl'           => rtrim($data['domain'], '/') . '/account/account-infor',
+                'contactUsUrl'           => rtrim($data['domain'], '/') . '/contact-us',
+                'orderListUrl'           => rtrim($data['domain'], '/') . '/account/order',
                 'homeUrl'                => $data['domain'],
                 'backendUrl'             => $imgDomain,
                 'userName'               => $data['username'] ? $data['username'] : '',
@@ -879,20 +903,28 @@ class SendEmailController extends Controller {
                 'exchange_coupon_amount' => $exchange_coupon_amount,
                 'pay_coin_symbol'        => $pay_coin_symbol, // 支付符号,
                 'orderNumber'            => $data['order_number'],
-                'paymentLink'            => $data['domain'].'/api/order/pay?order_id='.$data['id'],
+                'paymentLink'            => $data['domain'] . '/api/order/pay?order_id=' . $data['id'],
                 //'orderDetails'           => $data['domain'].'/account?orderdetails='.$data['id'],
-                'orderDetails'           => $data['domain'].'/account/order?orderdetails='.$data['id'],
+                'orderDetails'           => $data['domain'] . '/account/order?orderdetails=' . $data['id'],
                 'goods'                  => $goods_data_list,
                 'userId'                 => $data['user_id'],
                 'dateTime'               => date('Y-m-d H:i:s', time()),
                 'orderTime'              => $orderCreatedTime,
                 'sumGoodsCnt'            => $sum_goods_cnt,
+                'sum_goods_original_price_all'      => $sum_goods_original_price_all,
+                'sum_goods_present_price_all'       => $sum_goods_present_price_all,
+                'exchange_sum_original_price_all'   => $exchange_sum_original_price_all,
+                'exchange_sum_present_price_all'    => $exchange_sum_present_price_all,
+                'original_tax'           => $original_tax,
+                'present_tax'            => $present_tax,
+                'exchange_original_tax'  => $exchange_original_tax,
+                'exchange_present_tax'   => $exchange_present_tax,
                 'content'                => $Order['remarks'],
             ];
             $data['country'] = Country::where('id', $Order['country_id'])->value('name');
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
-                                   ->pluck('value', 'key')
-                                   ->toArray();
+                ->pluck('value', 'key')
+                ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
@@ -900,7 +932,7 @@ class SendEmailController extends Controller {
             }
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
-                                                                                             .$data['siteEmail'] : '';
+                . $data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene('placeOrder');
             if (empty($scene)) {
@@ -912,16 +944,16 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $scene->title = $scene->title.": {$productsName}";
+            $scene->title = $scene->title . ": {$productsName}";
             $siteName = request()->header('Site');
             if (empty($siteName)) {
                 $siteName = env('APP_NAME');
             }
-//            if (in_array($siteName, ['mrrs', 'yhen', 'qyen'])) {
-//                $scene->title = $scene->title.", order number is: {$data['order_number']}";
-//            } else {
-//                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
-//            }
+            //            if (in_array($siteName, ['mrrs', 'yhen', 'qyen'])) {
+            //                $scene->title = $scene->title.", order number is: {$data['order_number']}";
+            //            } else {
+            //                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
+            //            }
 
             $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             // 收件人的数组
