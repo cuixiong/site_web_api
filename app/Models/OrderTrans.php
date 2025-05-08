@@ -254,6 +254,7 @@ class OrderTrans extends Base {
         $order->email = $inputParams['email'];
         $order->phone = $inputParams['phone'];
         $order->company = $inputParams['company'];
+        $order->department = !empty($inputParams['department']) ? $inputParams['department'] : '';
         $order->country_id = !empty($inputParams['country_id']) ? $inputParams['country_id'] : 0;
         $order->province_id = !empty($inputParams['province_id']) ? $inputParams['province_id'] : 0;
         $order->city_id = !empty($inputParams['city_id']) ? $inputParams['city_id'] : 0;

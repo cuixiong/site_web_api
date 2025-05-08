@@ -116,6 +116,7 @@ class Order extends Base {
             'company'  => $this->attributes['company'] ?? '',
             'phone'    => $this->attributes['phone'] ?? '',
             'email'    => $this->attributes['email'] ?? '',
+            'department'  => $this->attributes['department'] ?? '',
             'address'  => $this->attributes['address'] ?? '',
             'country'  => !empty($country) ? $country : '',
             'province' => !empty($province) ? $province : '',
