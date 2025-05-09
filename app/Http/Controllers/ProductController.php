@@ -29,6 +29,8 @@ use App\Models\ProductPdf;
 use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\SystemValue;
+use App\Models\Template;
+use App\Models\TemplateCategory;
 use Illuminate\Support\Facades\Redis;
 use IP2Location\Database;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -453,8 +455,7 @@ class ProductController extends Controller {
 
             // lpijp网站动态生成日文详情
             if(checkSiteAccessData(['lpijp'])){
-                
-
+                $description['description'] = $this->getDescriptionByTemplate($product_desc,$description);
             }
             
 
@@ -1707,6 +1708,48 @@ class ProductController extends Controller {
         return $result;
     }
 
+    // 通过模板获取报告描述
+    private function getDescriptionByTemplate($product, $desc)
+    {
+        $description_en = $desc['description_en'];
+        $templateCategory = TemplateCategory::query()->select(['id', 'keywords'])->where(['status' => 1])->orderBy(['order' => SORT_ASC, 'id' => SORT_DESC])->get()->toArray();
+        $defaultTemplateCategory = 0;
+        // 获取该条数据所属模板分类
+        foreach ($templateCategory as $templateCategoryItem) {
+            if (empty($templateCategoryItem['keywords'])) {
+                if ($defaultTemplateCategory == 0) {
+                    $defaultTemplateCategory = $templateCategoryItem['id'];
+                }
+                continue;
+            }
+            $templateCategorykeywords = explode(',', $templateCategoryItem['keywords']);
+            //只需满足任意关键词
+            $flag = false;
+            foreach ($templateCategorykeywords as $categorykeyword) {
+                if (strpos($description_en, $categorykeyword) !== false) {
+                    $flag = true;
+                    break;
+                }
+            }
+            if ($flag) {
+                $defaultTemplateCategory = $templateCategoryItem['id'];
+                break;
+            }
+        }
 
+        $description = '';
+        $template = Template::query()->select(['content'])
+            ->where(['status' => 0])
+            ->where(['type' => 1])
+            ->whereRaw("FIND_IN_SET(?, category_id) > 0", [$defaultTemplateCategory])
+            ->orderBy(['order' => SORT_DESC, 'id' => SORT_DESC])
+            ->limit(1)
+            ->get()
+            ->toArray();
+
+        $description = Template::templateWirteData($template, $product, $desc);
+
+        return $description;
+    }
 
 }
