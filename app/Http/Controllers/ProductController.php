@@ -1712,7 +1712,7 @@ class ProductController extends Controller {
     private function getDescriptionByTemplate($product, $desc)
     {
         $description_en = $desc['description_en'];
-        $templateCategory = TemplateCategory::query()->select(['id', 'keywords'])->where(['status' => 1])->orderBy(['order' => SORT_ASC, 'id' => SORT_DESC])->get()->toArray();
+        $templateCategory = TemplateCategory::query()->select(['id', 'keywords'])->where(['status' => 1])->orderBy('sort', 'desc')->orderBy('id', 'desc')->get()->toArray();
         $defaultTemplateCategory = 0;
         // 获取该条数据所属模板分类
         foreach ($templateCategory as $templateCategoryItem) {
