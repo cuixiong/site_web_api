@@ -101,7 +101,7 @@ class Template extends Base {
         $tempContent = self::writeTempWord($tempContent, '{{application_str}}', $tempApplication);
         // 处理模板变量  {{link}}
         $tempContent = self::writeTempWord($tempContent, '{{link}}', $productArrData['url']);
-        // $tempContent = self::handlerMuchLine($tempContent);
+        $tempContent = self::handlerMuchLine($tempContent);
 
         return $tempContent;
     }
