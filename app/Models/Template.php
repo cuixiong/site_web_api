@@ -21,7 +21,7 @@ class Template extends Base {
     public static function templateWirteData($template, $product, $desc) {
         list($productArrData, $pdArrData) = self::handlerData($product, $desc);
         // TODO List 处理所有模板变量
-        $tempContent = $template['content'];
+        $tempContent = $template['content']??'';
         //过滤模版标签的换行
         $tempContent = preg_replace('/(<\/[a-zA-Z][a-zA-Z0-9]*>)\r?\n/', '$1', $tempContent);
         // 处理模板变量   {{year}}
@@ -56,14 +56,14 @@ class Template extends Base {
             $tempContent, '{{link_tag_left}}', "<a href='{$prourl}' target='_blank'>"
         );
         $tempContent = self::writeTempWord($tempContent, '{{link_tag_right}}', "</a>");
-        //特殊站点独有标签
-        $scopeText = self::handlerSpecialLabels('{{scope}}', $desc['description_en']);
-        $tempContent = self::writeTempWord($tempContent, '{{scope}}', $scopeText);
-        $keyFeaturesText = self::handlerSpecialLabels('{{key_features}}', $desc['description_en']);
-        $tempContent = self::writeTempWord($tempContent, '{{key_features}}', $keyFeaturesText);
+        // //特殊站点独有标签
+        // $scopeText = self::handlerSpecialLabels('{{scope}}', $desc['description_en']);
+        // $tempContent = self::writeTempWord($tempContent, '{{scope}}', $scopeText);
+        // $keyFeaturesText = self::handlerSpecialLabels('{{key_features}}', $desc['description_en']);
+        // $tempContent = self::writeTempWord($tempContent, '{{key_features}}', $keyFeaturesText);
         //处理相关报告标签
-        $productId = $product->id;
-        $tempContent = self::handlerRelatedReport($tempContent, $product);
+        $productId = $product['id'];
+        // $tempContent = self::handlerRelatedReport($tempContent, $product);
         // 处理模板变量  {{id}}
         $tempContent = self::writeTempWord($tempContent, '{{id}}', $productId);
         // 处理模板变量  {{title_en}}
@@ -101,7 +101,7 @@ class Template extends Base {
         $tempContent = self::writeTempWord($tempContent, '{{application_str}}', $tempApplication);
         // 处理模板变量  {{link}}
         $tempContent = self::writeTempWord($tempContent, '{{link}}', $productArrData['url']);
-        $tempContent = self::handlerMuchLine($tempContent);
+        // $tempContent = self::handlerMuchLine($tempContent);
 
         return $tempContent;
     }
@@ -198,12 +198,12 @@ class Template extends Base {
             $strIndex = strpos($replaceWords, "\n");
             if ($strIndex !== false) {
                 // 使用 substr() 函数获取第一个段落
-                $pdArrData['description'] = substr($replaceWords, 0, $strIndex);
+                $pdArrData['description_en'] = substr($replaceWords, 0, $strIndex);
             } else {
-                $pdArrData['description'] = $desc['description'];
+                $pdArrData['description_en'] = $desc['description_en'];
             }
         } else {
-            $pdArrData['description'] = '';
+            $pdArrData['description_en'] = '';
         }
         //目录
         if (isset($desc['table_of_content'])) {
@@ -298,13 +298,43 @@ EOF;
     }
     private static function handlerUrl($product) {
         $domain = env('DOMAIN_URL');
-        if (!empty($product->url)) {
-            $url = $domain."/reports/{$product->id}/$product->url";
+        if (!empty($product['url'])) {
+            $url = $domain.'/reports/'.$product['id'].'/'.$product['url'];
         } else {
-            $url = $domain."/reports/{$product->id}";
+            $url = $domain.'/reports/'.$product['id'];
         }
 
         return $url;
+    }
+
+    /**
+     * 添加换行符
+     *
+     * @param $sorceStr
+     *
+     * @return string
+     */
+    private static function addChangeLineStr($sorceStr) {
+        return $sorceStr." <br/>";
+    }
+    
+
+    /**
+     *  处理换行符(处理为1行)
+     */
+    private static function handlerLineSymbol($lineStr) {
+        return str_replace("\n", "、 ", $lineStr);
+    }
+
+    /**
+     * 处理多行
+     *
+     * @param $sourceStr
+     *
+     * @return array|string|string[]
+     */
+    private static function handlerMuchLine($sourceStr) {
+        return str_replace("\n", "<br/>", $sourceStr);
     }
 
 }

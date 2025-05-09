@@ -379,6 +379,11 @@ class ProductController extends Controller {
                 'p.publisher_id',
                 'p.hits',
                 'p.downloads',
+                'p.keywords_cn',
+                'p.keywords_en',
+                'p.keywords_jp',
+                'p.keywords_kr',
+                'p.keywords_de',
             ];
             $product_desc = (new Products)->from('product_routine as p')->select($fieldList)->leftJoin(
                 'product_category as cate',
@@ -1712,17 +1717,17 @@ class ProductController extends Controller {
     private function getDescriptionByTemplate($product, $desc)
     {
         $description_en = $desc['description_en'];
-        $templateCategory = TemplateCategory::query()->select(['id', 'keywords'])->where(['status' => 1])->orderBy('sort', 'desc')->orderBy('id', 'desc')->get()->toArray();
+        $templateCategory = TemplateCategory::query()->select(['id', 'match_words'])->where(['status' => 1])->orderBy('sort', 'desc')->orderBy('id', 'desc')->get()->toArray();
         $defaultTemplateCategory = 0;
         // 获取该条数据所属模板分类
         foreach ($templateCategory as $templateCategoryItem) {
-            if (empty($templateCategoryItem['keywords'])) {
+            if (empty($templateCategoryItem['match_words'])) {
                 if ($defaultTemplateCategory == 0) {
                     $defaultTemplateCategory = $templateCategoryItem['id'];
                 }
                 continue;
             }
-            $templateCategorykeywords = explode(',', $templateCategoryItem['keywords']);
+            $templateCategorykeywords = explode(',', $templateCategoryItem['match_words']);
             //只需满足任意关键词
             $flag = false;
             foreach ($templateCategorykeywords as $categorykeyword) {
@@ -1738,13 +1743,15 @@ class ProductController extends Controller {
         }
 
         $description = '';
-        $template = Template::query()->select(['content'])
-            ->where(['status' => 0])
-            ->where(['type' => 1])
-            ->whereRaw("FIND_IN_SET(?, category_id) > 0", [$defaultTemplateCategory])
-            ->orderBy(['order' => SORT_DESC, 'id' => SORT_DESC])
+        $template = Template::from('template as t')->select(['t.content'])
+            ->leftJoin('template_cate_mapping as tcm', 't.id', 'tcm.temp_id')
+            ->where(['t.status' => 0])
+            ->where(['t.type' => 1])
+            ->whereRaw("FIND_IN_SET(?, cate_id) > 0", [$defaultTemplateCategory])
+            ->orderBy('t.sort', 'desc')
+            ->orderBy('t.id', 'desc')
             ->limit(1)
-            ->get()
+            ->first()
             ->toArray();
 
         $description = Template::templateWirteData($template, $product, $desc);
