@@ -255,23 +255,24 @@ class SendEmailController extends Controller {
      * @param string code 对应发邮场景的code
      *
      */
-    public function sendMessageEmail($id, $code) {
+    public function sendMessageEmail($id, $code)
+    {
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
             // $data['country'] = Country::where('id',$data['country_id'])->value('name');
             if (!empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
-                                        ->select(
-                                            [
-                                                'url',
-                                                'thumb',
-                                                'name',
-                                                'id as product_id',
-                                                'published_date',
-                                                'category_id'
-                                            ]
-                                        )->first();
+                    ->select(
+                        [
+                            'url',
+                            'thumb',
+                            'name',
+                            'id as product_id',
+                            'published_date',
+                            'category_id'
+                        ]
+                    )->first();
                 $productsName = $productsInfo->name ?? '';
                 $productLink = $this->getProductUrl($productsInfo);
             } else {
@@ -289,23 +290,23 @@ class SendEmailController extends Controller {
             }
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
-            $token = $data['email'].'&'.$data['id'];
+            $token = $data['email'] . '&' . $data['id'];
             $data['token'] = base64_encode($token);
-            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
             $addressDetail = $data['address'] ?? '';
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
                 'homePage'     => $data['domain'],
-                'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
-                'contactUsUrl' => rtrim($data['domain'], '/').'/contact-us',
+                'myAccountUrl' => rtrim($data['domain'], '/') . '/account/account-infor',
+                'contactUsUrl' => rtrim($data['domain'], '/') . '/contact-us',
                 'homeUrl'      => $data['domain'],
                 'userName'     => $data['name'] ? $data['name'] : '',
                 'email'        => $data['email'],
                 'company'      => $data['company'],
-                'department'   => $data['department']??'',
-                'address'      => $addressDetail,
-                'area'         => $data['province'].$data['city']." ".$addressDetail,
+                'department'   => $data['department'] ?? '',
+                'messageAddress'      => $addressDetail,    // 地址与下方$siteInfo的address做区分
+                'area'         => $data['province'] . $data['city'] . " " . $addressDetail,
                 'phone'        => $data['phone'] ? $data['phone'] : '',
                 'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
                 'content'      => $data['content'],
@@ -317,8 +318,8 @@ class SendEmailController extends Controller {
                 'priceEdition' => $priceEdition,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
-                                   ->pluck('value', 'key')
-                                   ->toArray();
+                ->pluck('value', 'key')
+                ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
@@ -326,7 +327,7 @@ class SendEmailController extends Controller {
             }
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
-                                                                                             .$data['siteEmail'] : '';
+                . $data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene($code);
             if (empty($scene)) {
@@ -336,7 +337,7 @@ class SendEmailController extends Controller {
                 ReturnJson(false, trans()->get('lang.email_error'));
             }
             //邮件标题
-            $scene->title = $scene->title.(!empty($productsName) ? (':'.$productsName) : '');
+            $scene->title = $scene->title . (!empty($productsName) ? (':' . $productsName) : '');
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
@@ -513,7 +514,7 @@ class SendEmailController extends Controller {
                 'email'        => $data['email'],
                 'company'      => $data['company'],
                 'department'   => $data['department']??'',
-                'address'      => $addressDetail,
+                'messageAddress'      => $addressDetail,
                 'area'         => $data['province'] . $data['city'] . " " . $addressDetail,
                 'phone'        => $data['phone'] ? $data['phone'] : '',
                 'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
@@ -627,7 +628,7 @@ class SendEmailController extends Controller {
                 'email'        => $data['email'],
                 'company'      => $data['company'],
                 'department'   => $data['department']??'',
-                'address'      => $addressDetail,
+                'messageAddress'      => $addressDetail,
                 'area'         => $area . " " . $addressDetail,
                 'phone'        => $data['phone'] ?: '',
                 'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
@@ -738,7 +739,7 @@ class SendEmailController extends Controller {
                 'email'        => $data['email'],
                 'company'      => $data['company'],
                 'department'   => $data['department']??'',
-                'address'      => $addressDetail,
+                'messageAddress'      => $addressDetail,
                 'area'         => $area . " " . $addressDetail,
                 'phone'        => $data['phone'] ?: '',
                 'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
