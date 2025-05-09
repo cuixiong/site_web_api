@@ -825,6 +825,7 @@ class SendEmailController extends Controller {
             $exchange_coupon_amount = bcmul($data['coupon_amount'], $exchange_rate, 2);
             $exchange_order_amount = bcmul($data['order_amount'], $exchange_rate, 2);
             $exchange_order_actually_paid = bcmul($data['actually_paid'], $exchange_rate, 2);
+            $exchange_order_tax = bcmul($exchange_order_actually_paid, $tax_rate, 2);
 
             $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
             $languageList = Languages::GetListById();
@@ -961,6 +962,7 @@ class SendEmailController extends Controller {
                 'exchange_order_amount'  => $exchange_order_amount,
                 'exchange_coupon_amount' => $exchange_coupon_amount,
                 'exchange_order_actually_paid' => $exchange_order_actually_paid,
+                'exchange_order_tax'     => $exchange_order_tax,
                 'pay_coin_symbol'        => $pay_coin_symbol, // 支付符号,
                 'orderNumber'            => $data['order_number'],
                 'paymentLink'            => $data['domain'] . '/api/order/pay?order_id=' . $data['id'],
@@ -1053,6 +1055,7 @@ class SendEmailController extends Controller {
             $exchange_coupon_amount = bcmul($data['coupon_amount'], $exchange_rate, 2);
             $exchange_order_amount = bcmul($data['order_amount'], $exchange_rate, 2);
             $exchange_order_actually_paid = bcmul($data['actually_paid'], $exchange_rate, 2);
+            $exchange_order_tax = bcmul($exchange_order_actually_paid, $tax_rate, 2);
             $orderGoodsList = OrderGoods::where('order_id', $Order['id'])->get()->toArray();
             $languageList = Languages::GetListById();
             $goods_data_list = [];
@@ -1201,6 +1204,7 @@ class SendEmailController extends Controller {
                 'exchange_order_amount'  => $exchange_order_amount,
                 'exchange_coupon_amount' => $exchange_coupon_amount,
                 'exchange_order_actually_paid' => $exchange_order_actually_paid,
+                'exchange_order_tax'     => $exchange_order_tax,
                 'orderNumber'            => $data['order_number'],
                 'paymentLink'            => $data['domain'].'/api/order/pay?order_id='.$data['id'],
                 'orderDetails'           => $data['domain'].'/account?orderdetails='.$data['id'],
