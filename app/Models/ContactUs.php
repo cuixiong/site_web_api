@@ -23,6 +23,7 @@ class ContactUs extends Base
         'channel_name',
         'price_edition',
         'language_version',
-        'address'
+        'address',
+        'department',
     ];
 }

@@ -22,6 +22,7 @@ use App\Models\Languages;
 use App\Models\Order;
 use App\Models\OrderGoods;
 use App\Models\Pay;
+use App\Models\PriceEditions;
 use App\Models\PriceEditionValues;
 use App\Models\Products;
 use App\Models\ProductsCategory;
@@ -277,6 +278,15 @@ class SendEmailController extends Controller {
                 $productsName = !empty($data['product_name']) ? $data['product_name'] : '';
                 $productLink = '';
             }
+            $priceEdition = '';
+            if (!empty($data['price_edition'])) {
+                $priceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where('id', $data['price_edition'])->first();
+                if ($priceEditionRecord) {
+                    $priceEditionData = $priceEditionRecord->toArray();
+                    $languageName = Languages::where('id', $priceEditionData['language_id'])->value('name');
+                    $priceEdition =  (!empty($languageName) ? $languageName : '') . ' ' . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
+                }
+            }
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
             $token = $data['email'].'&'.$data['id'];
@@ -293,6 +303,8 @@ class SendEmailController extends Controller {
                 'userName'     => $data['name'] ? $data['name'] : '',
                 'email'        => $data['email'],
                 'company'      => $data['company'],
+                'department'   => $data['department']??'',
+                'address'      => $addressDetail,
                 'area'         => $data['province'].$data['city']." ".$addressDetail,
                 'phone'        => $data['phone'] ? $data['phone'] : '',
                 'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
@@ -302,6 +314,7 @@ class SendEmailController extends Controller {
                 'backendUrl'   => $imgDomain,
                 'link'         => $productLink,
                 'productsName' => $productsName,
+                'priceEdition' => $priceEdition,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
                                    ->pluck('value', 'key')
@@ -438,7 +451,8 @@ class SendEmailController extends Controller {
     }
 
     // 申请样本
-    public function productSample($id) {
+    public function productSample($id)
+    {
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
@@ -447,28 +461,37 @@ class SendEmailController extends Controller {
             if (!empty($data['country_id'])) {
                 $country = Country::where('id', $data['country_id'])->value('name');
             }
+            $priceEdition = '';
+            if (!empty($data['price_edition'])) {
+                $priceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where('id', $data['price_edition'])->first();
+                if ($priceEditionRecord) {
+                    $priceEditionData = $priceEditionRecord->toArray();
+                    $languageName = Languages::where('id', $priceEditionData['language_id'])->value('name');
+                    $priceEdition =  (!empty($languageName) ? $languageName : '') . ' ' . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
+                }
+            }
             $productsName = '';
             $productLink = '';
             $categoryEmail = '';
             $categoryName = '';
             if (isset($data['product_id']) && !empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
-                                        ->select(
-                                            [
-                                                'url',
-                                                'thumb',
-                                                'name',
-                                                'id as product_id',
-                                                'published_date',
-                                                'category_id'
-                                            ]
-                                        )->first();
+                    ->select(
+                        [
+                            'url',
+                            'thumb',
+                            'name',
+                            'id as product_id',
+                            'published_date',
+                            'category_id'
+                        ]
+                    )->first();
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
                 if (!empty($productsInfo)) {
                     $categoryInfo = ProductsCategory::query()->where('id', $productsInfo['category_id'])->first();
-                    if(!empty($categoryInfo )){
+                    if (!empty($categoryInfo)) {
                         $categoryEmail = $categoryInfo->email ?? '';
                         $categoryName = $categoryInfo->name ?? '';
                     }
@@ -476,20 +499,22 @@ class SendEmailController extends Controller {
             }
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
-            $token = $data['email'].'&'.$data['id'];
+            $token = $data['email'] . '&' . $data['id'];
             $data['token'] = base64_encode($token);
-            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
                 'homePage'     => $data['domain'],
-                'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
-                'contactUsUrl' => rtrim($data['domain'], '/').'/contact-us',
+                'myAccountUrl' => rtrim($data['domain'], '/') . '/account/account-infor',
+                'contactUsUrl' => rtrim($data['domain'], '/') . '/contact-us',
                 'homeUrl'      => $data['domain'],
                 'userName'     => $data['name'] ? $data['name'] : '',
                 'email'        => $data['email'],
                 'company'      => $data['company'],
-                'area'         => $data['province'].$data['city']." ".$addressDetail,
+                'department'   => $data['department']??'',
+                'address'      => $addressDetail,
+                'area'         => $data['province'] . $data['city'] . " " . $addressDetail,
                 'phone'        => $data['phone'] ? $data['phone'] : '',
                 'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
                 'content'      => $data['content'],
@@ -500,10 +525,11 @@ class SendEmailController extends Controller {
                 'url'          => $productLink,
                 'country'      => $country,
                 'language'     => $ContactUs['language_version'] ?? '',
+                'priceEdition' => $priceEdition,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
-                                   ->pluck('value', 'key')
-                                   ->toArray();
+                ->pluck('value', 'key')
+                ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
@@ -511,7 +537,7 @@ class SendEmailController extends Controller {
             }
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
-                                                                                             .$data['siteEmail'] : '';
+                . $data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene('productSample');
             if (empty($scene)) {
@@ -521,11 +547,11 @@ class SendEmailController extends Controller {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
             //邮件标题
-            if(!empty($categoryName )){
-                $scene->title = $categoryName."-". $scene->title;
+            if (!empty($categoryName)) {
+                $scene->title = $categoryName . "-" . $scene->title;
             }
-            if(!empty($productsName )){
-                $scene->title = $scene->title.":  {$productsName}";
+            if (!empty($productsName)) {
+                $scene->title = $scene->title . ":  {$productsName}";
             }
 
             // 收件人的数组
@@ -550,7 +576,8 @@ class SendEmailController extends Controller {
     }
 
     // 联系我们
-    public function contactUs($id) {
+    public function contactUs($id)
+    {
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
@@ -560,37 +587,48 @@ class SendEmailController extends Controller {
             if (!empty($data['country_id'])) {
                 $country = Country::where('id', $data['country_id'])->value('name');
             }
+            $priceEdition = '';
+            if (!empty($data['price_edition'])) {
+                $priceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where('id', $data['price_edition'])->first();
+                if ($priceEditionRecord) {
+                    $priceEditionData = $priceEditionRecord->toArray();
+                    $languageName = Languages::where('id', $priceEditionData['language_id'])->value('name');
+                    $priceEdition =  (!empty($languageName) ? $languageName : '') . ' ' . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
+                }
+            }
             if (isset($data['product_id']) && !empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
-                                        ->select(
-                                            [
-                                                'url',
-                                                'thumb',
-                                                'name',
-                                                'id as product_id',
-                                                'published_date',
-                                                'category_id'
-                                            ]
-                                        )->first();
+                    ->select(
+                        [
+                            'url',
+                            'thumb',
+                            'name',
+                            'id as product_id',
+                            'published_date',
+                            'category_id'
+                        ]
+                    )->first();
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
             }
-            $token = $data['email'].'&'.$data['id'];
+            $token = $data['email'] . '&' . $data['id'];
             $data['token'] = base64_encode($token);
-            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
             $area = $this->getAreaName($data);
             $addressDetail = $data['address'] ?? '';
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
                 'homePage'     => $data['domain'],
-                'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
-                'contactUsUrl' => rtrim($data['domain'], '/').'/contact-us',
+                'myAccountUrl' => rtrim($data['domain'], '/') . '/account/account-infor',
+                'contactUsUrl' => rtrim($data['domain'], '/') . '/contact-us',
                 'homeUrl'      => $data['domain'],
                 'userName'     => $data['name'] ? $data['name'] : '',
                 'email'        => $data['email'],
                 'company'      => $data['company'],
-                'area'         => $area." ".$addressDetail,
+                'department'   => $data['department']??'',
+                'address'      => $addressDetail,
+                'area'         => $area . " " . $addressDetail,
                 'phone'        => $data['phone'] ?: '',
                 'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
                 //'content' => $data['remarks'],
@@ -601,10 +639,11 @@ class SendEmailController extends Controller {
                 'link'         => $productLink,
                 'productsName' => $productsName,
                 'country'      => $country,
+                'priceEdition' => $priceEdition,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
-                                   ->pluck('value', 'key')
-                                   ->toArray();
+                ->pluck('value', 'key')
+                ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
@@ -612,7 +651,7 @@ class SendEmailController extends Controller {
             }
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
-                                                                                             .$data['siteEmail'] : '';
+                . $data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene('contactUs');
             if (empty($scene)) {
@@ -638,13 +677,14 @@ class SendEmailController extends Controller {
     }
 
     // 定制报告
-    public function customized($id) {
+    public function customized($id)
+    {
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
-            $token = $data['email'].'&'.$data['id'];
+            $token = $data['email'] . '&' . $data['id'];
             $data['token'] = base64_encode($token);
-            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
             $addressDetail = $data['address'] ?? '';
             $productsName = '';
             $productLink = '';
@@ -654,24 +694,33 @@ class SendEmailController extends Controller {
             if (!empty($data['country_id'])) {
                 $country = Country::where('id', $data['country_id'])->value('name');
             }
+            $priceEdition = '';
+            if (!empty($data['price_edition'])) {
+                $priceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where('id', $data['price_edition'])->first();
+                if ($priceEditionRecord) {
+                    $priceEditionData = $priceEditionRecord->toArray();
+                    $languageName = Languages::where('id', $priceEditionData['language_id'])->value('name');
+                    $priceEdition =  (!empty($languageName) ? $languageName : '') . ' ' . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
+                }
+            }
             if (isset($data['product_id']) && !empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
-                                        ->select(
-                                            [
-                                                'url',
-                                                'thumb',
-                                                'name',
-                                                'id as product_id',
-                                                'published_date',
-                                                'category_id'
-                                            ]
-                                        )->first();
+                    ->select(
+                        [
+                            'url',
+                            'thumb',
+                            'name',
+                            'id as product_id',
+                            'published_date',
+                            'category_id'
+                        ]
+                    )->first();
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
                 if (!empty($productsInfo)) {
                     $categoryInfo = ProductsCategory::query()->where('id', $productsInfo['category_id'])->first();
-                    if(!empty($categoryInfo )){
+                    if (!empty($categoryInfo)) {
                         $categoryEmail = $categoryInfo->email ?? '';
                         $categoryName = $categoryInfo->name ?? '';
                     }
@@ -682,13 +731,15 @@ class SendEmailController extends Controller {
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
                 'homePage'     => $data['domain'],
-                'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
-                'contactUsUrl' => rtrim($data['domain'], '/').'/contact-us',
+                'myAccountUrl' => rtrim($data['domain'], '/') . '/account/account-infor',
+                'contactUsUrl' => rtrim($data['domain'], '/') . '/contact-us',
                 'homeUrl'      => $data['domain'],
                 'userName'     => $data['name'] ?: '',
                 'email'        => $data['email'],
                 'company'      => $data['company'],
-                'area'         => $area." ".$addressDetail,
+                'department'   => $data['department']??'',
+                'address'      => $addressDetail,
+                'area'         => $area . " " . $addressDetail,
                 'phone'        => $data['phone'] ?: '',
                 'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
                 'content'      => $data['content'],
@@ -698,10 +749,11 @@ class SendEmailController extends Controller {
                 'dateTime'     => date('Y-m-d'),
                 'language'     => $ContactUs['language_version'] ?? '',
                 'country'      => $country,
+                'priceEdition' => $priceEdition,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
-                                   ->pluck('value', 'key')
-                                   ->toArray();
+                ->pluck('value', 'key')
+                ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
@@ -709,7 +761,7 @@ class SendEmailController extends Controller {
             }
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
-                                                                                             .$data['siteEmail'] : '';
+                . $data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene('customized');
             if (empty($scene)) {
@@ -719,11 +771,11 @@ class SendEmailController extends Controller {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
             //邮件标题
-            if(!empty($categoryName )){
-                $scene->title = $categoryName."-". $scene->title;
+            if (!empty($categoryName)) {
+                $scene->title = $categoryName . "-" . $scene->title;
             }
-            if(!empty($productsName )){
-                $scene->title = $scene->title.":  {$productsName}";
+            if (!empty($productsName)) {
+                $scene->title = $scene->title . ":  {$productsName}";
             }
 
             // 收件人的数组
@@ -897,7 +949,7 @@ class SendEmailController extends Controller {
                 'userName'               => $data['username'] ? $data['username'] : '',
                 'userEmail'              => $data['email'],
                 'userCompany'            => $data['company'],
-                'userDepartment'         => $data['department'],
+                'userDepartment'         => $data['department']??'',
                 'userAddress'            => $addres,
                 'userPhone'              => $data['phone'] ? $data['phone'] : '',
                 'orderStatus'            => $orderStatusText,
