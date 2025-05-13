@@ -11,6 +11,8 @@ use App\Models\ProductsCategory;
 use App\Models\Common;
 use App\Models\ProductDescription;
 use App\Models\SystemValue;
+use App\Services\SphinxService;
+use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -164,7 +166,6 @@ class NewsController extends Controller {
             //获取相关报告
             //$data['relevant_product'] = $this->getRelevantProduct($data['tags']);
             $data['relevant_product'] = $this->getNewRelevantByProduct($data['tags'] , 6);
-
             //获取相关新闻
             if (checkSiteAccessData(['168report', 'yhcn', 'mrrs'])) {
                 //相关新闻
@@ -512,7 +513,7 @@ class NewsController extends Controller {
      * @return array
      */
     private function getNewRelevantByProduct($keyword_list, $relevant_products_size = 4) {
-        $result = (new ProductController())->GetRelevantProductResult(
+        $result = $this->GetRelevantProductResult(
             -1,
             $keyword_list,
             1,
@@ -630,4 +631,112 @@ class NewsController extends Controller {
 
         return $data;
     }
+
+
+    /**
+     * 返回相关产品数据-重定向/相关报告
+     */
+    public function GetRelevantProductResult(
+        $id,
+        $keyword,
+        $page = 1,
+        $pageSize = 1,
+        $searchField = 'url',
+        $selectField = '*',
+        $order = []
+    ) {
+        try {
+            $hidden = SystemValue::where('key', 'sphinx')->value('hidden');
+            if ($hidden == 1) {
+                return $this->SearchRelevantForSphinx(
+                    $id,
+                    $keyword,
+                    $page,
+                    $pageSize,
+                    $searchField,
+                    $selectField,
+                    $order
+                );
+            } else {
+                return $this->SearchRelevantForMysql($id, $keyword, $page, $pageSize, $searchField, $selectField);
+            }
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+            \Log::error('应用端查询失败,异常信息为:'.json_encode([$e->getMessage()]));
+            ReturnJson(false, '请求失败,请稍后再试');
+        }
+    }
+
+
+
+
+    public function SearchRelevantForSphinx($id, $keyword, $page, $pageSize, $searchField, $selectField, $order = []) {
+        if (empty($id) || empty($keyword)) {
+            return [];
+        }
+        $sphinxSrevice = new SphinxService();
+        $conn = $sphinxSrevice->getConnection();
+        //报告昵称,英文昵称匹配查询
+        $query = (new SphinxQL($conn))->select('id')
+                                      ->from('products_rt');
+        if (empty($order)) {
+            $query = $query->orderBy('sort', 'asc')
+                           ->orderBy('published_date', 'desc')
+                           ->orderBy('id', 'desc');
+        } else {
+            foreach ($order as $key => $value) {
+                $query = $query->orderBy($key, $value);
+            }
+        }
+        $query = $query->where('status', '=', 1);
+        $query = $query->where("published_date", "<=", time());
+        // 排除本报告
+        $query = $query->where('id', '<>', intval($id));
+        // 精确查询
+        if (!empty($keyword)) {
+            if (is_array($keyword)) {
+                //$query->where($searchField, '测试 机器人' , true);
+                $query->where($searchField, 'in', $keyword);
+            } else {
+                $val = addslashes($keyword);
+                $query->where($searchField, '=', $val);
+            }
+        }
+        //查询结果分页
+        $offset = ($page - 1) * $pageSize;
+        $query->limit($offset, $pageSize);
+        // $query->option('max_matches', $offset + $pageSize);
+        // $query->setSelect($selectField);
+        // $result = $query->execute();
+        // $products = $result->fetchAllAssoc();
+        // 因为有些字段sphinx没有，所以sphinx查出id后再去mysql查询
+        $query->setSelect('id');
+        $result = $query->execute();
+        $productsIds = $result->fetchAllAssoc();
+        if (!empty($productsIds) && count($productsIds) > 0) {
+            $productsIds = array_column($productsIds, 'id');
+            $products = Products::select($selectField)
+                                ->whereIn("id", $productsIds)
+                                ->get()->toArray();
+        }
+
+        //
+        return $products ?? [];
+    }
+
+
+    public function SearchRelevantForMysql($id, $keyword, $page, $pageSize, $searchField, $selectField) {
+        $products = Products::select($selectField)
+                            ->where([$searchField => $keyword, 'status' => 1])
+                            ->where("id", "<>", $id)
+                            ->limit($pageSize, ($page - 1) * $pageSize)
+                            ->orderBy('published_date', 'desc')
+                            ->orderBy('id', 'desc')
+                            ->get()->toArray();
+
+        return $products;
+    }
+
+
+
 }
