@@ -49,6 +49,7 @@ class ContactUsController extends Controller {
         $model->address = $params['address'] ?? '';
         $model->channel = $params['channel'] ?? 0;
         $model->channel_name = $params['channel_name'] ?? '';
+        $model->department = $params['department'] ?? '';
         if ($model->save()) {
             // 根据code发送对应场景
             $sceneCode = $params['code'] ?? '';
