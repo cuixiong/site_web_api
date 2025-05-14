@@ -851,23 +851,30 @@ class ProductController extends Controller {
     /**
      * 筛选条件
      */
-    public function Filters(Request $request) {
+    public function Filters(Request $request)
+    {
         $industry_id = $request->industry_id;
         $model = new ProductsCategory();
         if (!empty($industry_id)) {
             $model = $model->where('industry_id', $industry_id);
         }
         $data = ProductsCategory::select([
-                                             'id',
-                                             'name',
-                                             'link',
-                                         ])
-                                ->where('status', 1)
-                                ->get()
-                                ->toArray();
+            'id',
+            'name',
+            'link',
+        ])
+            ->where('status', 1)
+            ->get()
+            ->toArray();
+
+        $allText = '全部';
+        if (checkSiteAccessData(['lpijp'])) {
+            $allText = '全レポート';
+        } else {
+        }
         array_unshift($data, [
             'id'   => '0',
-            'name' => '全部',
+            'name' => $allText,
             'link' => '',
         ]);
         ReturnJson(true, '', $data);
@@ -1239,18 +1246,24 @@ class ProductController extends Controller {
      *
      * @return mixed
      */
-    private function getProductCagory($idList) {
+    private function getProductCagory($idList)
+    {
         $field = ['id', 'name', 'link'];
         $data = ProductsCategory::select($field)
-                                ->when(!empty($idList), function ($query) use ($idList) {
-                                    $query->whereIn('id', $idList);
-                                })
-                                ->where('status', 1)
-                                ->get()
-                                ->toArray();
+            ->when(!empty($idList), function ($query) use ($idList) {
+                $query->whereIn('id', $idList);
+            })
+            ->where('status', 1)
+            ->get()
+            ->toArray();
+        $allText = '全部';
+        if (checkSiteAccessData(['lpijp'])) {
+            $allText = '全レポート';
+        } else {
+        }
         array_unshift($data, [
             'id'   => '0',
-            'name' => '全部',
+            'name' => $allText,
             'link' => '',
         ]);
 
