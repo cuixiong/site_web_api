@@ -800,6 +800,7 @@ class IndexController extends Controller {
                       ->get()
                       ->toArray();
         if ($list) {
+            $defaultImg = SystemValue::where('key', 'default_news_thumb')->value('value');
             foreach ($list as $key => $item) {
                 $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
                 $list[$key]['month_day'] = date('Y-m', $item['upload_at']);
@@ -807,6 +808,10 @@ class IndexController extends Controller {
                 $list[$key]['month'] = date('m', $item['upload_at']);
                 $list[$key]['day'] = date('d', $item['upload_at']);
                 $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
+                if (empty($item['thumb'])) {
+                    // 若报告图片为空，则使用系统设置的默认报告高清图
+                    $list[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
+                }
                 $list[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
                 $keywords = explode(',', $list[$key]['keywords'] ?? '');
                 $list[$key]['keywords'] = count($keywords) > 0 ? $keywords[0] : '';
