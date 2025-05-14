@@ -808,11 +808,11 @@ class IndexController extends Controller {
                 $list[$key]['month'] = date('m', $item['upload_at']);
                 $list[$key]['day'] = date('d', $item['upload_at']);
                 $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
-                if (empty($item['thumb'])) {
+                $list[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
+                if (empty($list[$key]['thumb'])) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $list[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                 }
-                $list[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
                 $keywords = explode(',', $list[$key]['keywords'] ?? '');
                 $list[$key]['keywords'] = count($keywords) > 0 ? $keywords[0] : '';
             }
