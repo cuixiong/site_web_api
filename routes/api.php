@@ -301,6 +301,10 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::post('clear-ban', [\App\Http\Controllers\Third\ThirdRespController::class, 'clearBan'])->name(
             '清除封禁'
         );
+        
+        Route::post('get-product-data', [\App\Http\Controllers\Third\ThirdRespController::class, 'getProductData'])->name(
+            '测试同步'
+        );
     });
     Route::get('get/client-ip', [\App\Http\Controllers\PublicController::class, 'getClientIp'])->name('获取客户端IP');
     Route::get('xunsearch/clean', [\App\Http\Controllers\XunSearchTestController::class, 'clean'])->name(

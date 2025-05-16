@@ -134,4 +134,50 @@ class ThirdRespController extends BaseThirdController {
         }
         ReturnJson(true, '请求成功');
     }
+
+    public function getProductData(Request $request)
+    {
+        try {
+            $params = $request->all();
+            $startTimestamp = $params['startTimestamp'];
+            $baseQuery = \App\Models\Products::query()
+                ->where(function ($query) use ($startTimestamp) {
+                    $query->where('created_at', '>', $startTimestamp)->orWhere('updated_at', '>', $startTimestamp);
+                })
+                ->where(function ($query) {
+
+                    $query->whereNotNull('keywords_jp')->where('keywords_jp', '<>', '');
+                });
+
+            // 一次取1000条数据
+            $productData = $baseQuery->limit(1000)->get()->toArray();
+            $productNameArray = [];
+            if ($productData) {
+                foreach ($productData as $key => $item) {
+
+                    $suffix = date('Y', $item['published_date']);
+                    $productDescription = (new \App\Models\ProductDescription($suffix))
+                        ->select([
+                            'description',
+                            'table_of_content',
+                            'companies_mentioned',
+                            'definition',
+                            'overview'
+                        ])
+                        ->where('product_id', $item['id'])
+                        ->first();
+                    $productData[$key] = array_merge($item, $productDescription ?? []);
+                    $productNameArray[] = $item['name'];
+                }
+            } else {
+
+                ReturnJson(false, '没有数据');
+            }
+
+            ReturnJson(true, '', $productData);
+            //code...
+        } catch (\Throwable $th) {
+            ReturnJson(false, $th->getMessage());
+        }
+    }
 }
