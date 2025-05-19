@@ -117,8 +117,11 @@ class PageController extends Controller {
         }
         $data = Authority::select(
             ['name as title', 'body as content', 'description', 'id', 'keyword', 'name', 'created_at as time',
-             'big_image as img', 'hits', 'real_hits', 'category_id', 'type']
+             'big_image as img', 'hits', 'real_hits', 'category_id', 'type' , 'status']
         )->where('id', $id)->first();
+        if(empty($data) || $data->status == 0){
+            ReturnJson(true, 'data is empty');
+        }
         //增加点击次数
         Authority::where(['id' => $id])->increment('real_hits');
         Authority::where(['id' => $id])->increment('hits');

@@ -40,18 +40,30 @@ class PlateController extends Controller
         foreach ($categoryList as &$category) {
             $forData = [];
             $forData['category'] = $category;
-            $forData['items'] = PlateValue::where('status', 1)
-                ->where('parent_id', $category['id'])
-                ->select([
-                    'id',
-                    'title',
-                    'short_title',
-                    'link',
-                    'alias',
-                    'image',
-                    'icon',
-                    'content',
-                ])->get()->toArray();
+            $items = PlateValue::where('status', 1)
+                      ->where('parent_id', $category['id'])
+                      ->select([
+                                   'id',
+                                   'title',
+                                   'short_title',
+                                   'link',
+                                   'alias',
+                                   'image',
+                                   'icon',
+                                   'content',
+                               ])->get()->toArray();
+            foreach ($items as &$foritem){
+                if (strpos($foritem['content'], "{{%c}}") !== false) {
+                    $foritem['content'] = str_replace('{{%c}}', intval(date('Y')) - 2007, $foritem['content']);
+                }
+                if (strpos($foritem['title'], "{{%c}}") !== false) {
+                    $foritem['title'] = str_replace('{{%c}}', intval(date('Y')) - 2007, $foritem['title']);
+                }
+                if (strpos($foritem['short_title'], "{{%c}}") !== false) {
+                    $foritem['short_title'] = str_replace('{{%c}}', intval(date('Y')) - 2007, $foritem['short_title']);
+                }
+            }
+            $forData['items'] = $items;
             $alias = $category['alias'];
             $data[$alias] = $forData;
         }
