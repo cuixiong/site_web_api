@@ -780,8 +780,11 @@ class ProductController extends Controller {
                     $result[] = "<br />";
                 } elseif ($row == "\n" || $row == "\r" || $row == "\r\n") {
                     // $descriptionArray[$index] = ""; //清除多余换行
+                    
                 } elseif (!empty($row)) {
                     $result[] = $row;
+                }else{
+                    $result[] = "<br />";
                 }
             }
         }
