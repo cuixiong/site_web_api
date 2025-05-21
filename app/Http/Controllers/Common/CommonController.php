@@ -11,6 +11,7 @@ use App\Models\Comment;
 use App\Models\Common;
 use App\Models\Country;
 use App\Models\DictionaryValue;
+use App\Models\Languages;
 use App\Models\LanguageWebsite;
 use App\Models\Link;
 use App\Models\Menu;
@@ -19,6 +20,8 @@ use App\Models\News;
 use App\Models\Office;
 use App\Models\PlateValue;
 use App\Models\Position;
+use App\Models\PriceEditions;
+use App\Models\PriceEditionValues;
 use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\QuoteCategory;
@@ -82,11 +85,20 @@ class CommonController extends Controller {
         // 获知渠道,原为联系我们控制器Dictionary函数中代码，现复制至此处
         $data['channel'] = DictionaryValue::GetDicOptions('Channel_Type');
         // 语言版本
-        $data['language_version'] = MessageLanguageVersion::where('status', 1)
-            ->select(['name', 'id'])
-            ->orderBy('sort', 'ASC')
-            ->get()
-            ->toArray();
+        // $data['language_version'] = MessageLanguageVersion::where('status', 1)
+        //     ->select(['name', 'id'])
+        //     ->orderBy('sort', 'ASC')
+        //     ->get()
+        //     ->toArray();
+
+        // 语言版本查询价格版本中涉及的语言
+        if(checkSiteAccessData(['168report'])){
+            // 因为168有多个出版商，所以需要添加索引加快查询速度，不过只查询一个报告的出版商也能满足效果
+            $data['language_version'] = $this->getLanguageVersion(true);
+        }else{
+            // 只查询一个报告的出版商
+            $data['language_version'] = $this->getLanguageVersion();
+        }
 
         //返回对应的分类数据
         if (checkSiteAccessData(['tycn'])) {
@@ -841,4 +853,35 @@ class CommonController extends Controller {
         return $positionList;
     }
 
+    private function getLanguageVersion($isMultitude = false)
+    {
+        $publisher = [];
+        if ($isMultitude) {
+            $publisher = Products::select('publisher_id')
+                ->distinct()
+                ->pluck('publisher_id')?->toArray() ?? [];
+        } else {
+            $publisherId = Products::select('publisher_id')
+                ->where('publisher_id', '>', 0)
+                ->value('publisher_id');
+            $publisher[] = $publisherId;
+        }
+        // 根据出版商查询价格版本的所有语言
+        $priceEditionData = PriceEditions::query()->select(['id', 'publisher_id'])->where("is_deleted", 1)->where("status", 1)->get()->toArray();
+        $editionIdList = [];
+        foreach ($publisher as $publisherId) {
+            foreach ($priceEditionData as $key => $priceEditionItem) {
+                $priceEditionItem['publisher_id'] = explode(',', $priceEditionItem['publisher_id']);
+                if (in_array($publisherId, $priceEditionItem['publisher_id'])) {
+                    $editionIdList[] = $priceEditionItem['id'];
+                }
+            }
+        }
+        $editionIdList = array_unique($editionIdList);
+
+        $languageIds = PriceEditionValues::query()->distinct()->select('language_id')->where("is_deleted", 1)->whereIn('edition_id', $editionIdList)->pluck('language_id')?->toArray() ?? [];
+
+        $data = Languages::query()->select(['id', 'name'])->whereIn('id', $languageIds)->orderBy('sort', 'ASC')->get()?->toArray() ?? [];
+        return $data;
+    }
 }
