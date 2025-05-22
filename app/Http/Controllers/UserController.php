@@ -381,7 +381,7 @@ class UserController extends Controller {
             // 返回区号
             $data['phone_code'] = '';
             if ($data['country_id']) {
-                $phoneCode = Country::query()->select('code')->where('country_id', $data['country_id'])->value('code');
+                $phoneCode = Country::query()->select('code')->where('id', $data['country_id'])->value('code');
                 $data['phone_code'] = !empty($phoneCode) ? $phoneCode : '';
             }
             // $data['token'] = $user['token'];
