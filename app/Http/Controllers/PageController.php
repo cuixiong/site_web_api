@@ -407,9 +407,11 @@ class PageController extends Controller {
                                  ->get()
                                  ->toArray();
             ###############################################
+            $have_region_id_list = array_column($leaders, 'id');
             $admins = TeamMember::query()
                                 ->where('status', 1)
-                                ->where('region_name', '')
+                                //->where('region_name', '')
+                                ->whereNotIn('id', $have_region_id_list)
                                 ->orderBy('sort', 'asc')
                                 ->get()
                                 ->toArray();
