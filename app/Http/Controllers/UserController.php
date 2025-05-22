@@ -375,7 +375,6 @@ class UserController extends Controller {
                 $user['province_id'],
                 $user['city_id']
             ];
-            $data['area_id'] = $data['area']; // 永贵要求与login函数的area_id对应，标记一下，看会不会影响其它网站
 
             $data['country_id'] = $user['area_id'];
 
