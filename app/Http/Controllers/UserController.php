@@ -8,6 +8,7 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Country;
 use App\Models\CouponUser;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -374,7 +375,16 @@ class UserController extends Controller {
                 $user['province_id'],
                 $user['city_id']
             ];
+            $data['area_id'] = $data['area']; // 永贵要求与login函数的area_id对应，标记一下，看会不会影响其它网站
+
             $data['country_id'] = $user['area_id'];
+
+            // 返回区号
+            $data['phone_code'] = '';
+            if ($data['country_id']) {
+                $phoneCode = Country::query()->select('code')->where('country_id', $data['country_id'])->value('code');
+                $data['phone_code'] = !empty($phoneCode) ? $phoneCode : '';
+            }
             // $data['token'] = $user['token'];
             $data['login_time'] = !empty($user['login_time']) ? $user['login_time'] : '';
             $data['login_time_format'] = date('Y-m-d H:i:s', $user['login_time']);
