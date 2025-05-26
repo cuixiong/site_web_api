@@ -574,6 +574,12 @@ class NewsController extends Controller {
                 $data[$key]['english_name'] = $value['english_name'];
                 // $data[$key]['description'] = $value['description_seo'];
                 $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
+                
+                $data[$key]['year'] = $value['published_date'] ? date('Y', strtotime($value['published_date'])) : '';
+                $data[$key]['month'] = $value['published_date'] ? date('m', strtotime($value['published_date'])) : '';
+                $data[$key]['month_en'] = $value['published_date'] ? date('M', strtotime($value['published_date'])) : '';
+                $data[$key]['day'] = $value['published_date'] ? date('d', strtotime($value['published_date'])) : '';
+
                 $data[$key]['discount_type'] = $value['discount_type'];
                 $data[$key]['discount_value'] = $value['discount_amount'];
                 $data[$key]['discount_amount'] = $value['discount_amount']; // 兼容
