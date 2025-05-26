@@ -72,7 +72,14 @@ class IndexController extends Controller {
                     }
                 }
             }
-        } else {
+        } elseif (checkSiteAccessData(['lpien'])) {
+            $data['hot_product_list'] = $this->getHotProductList($request);
+            $systemKey = 'hotReportDefaultImg';
+            $hotReportDefaultImg = SystemValue::where('key', $systemKey)->where('hidden', 1)->select(['value'])->get()->value('value');
+            foreach ($data['hot_product_list']['products'] as $key => $item) {
+                $data['hot_product_list']['products'][$key]['thumb'] = $hotReportDefaultImg;
+            }
+        }else {
             $data['hot_product_list'] = $this->getHotProductList($request);
         }
         //获取推荐报告
