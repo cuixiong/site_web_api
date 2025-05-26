@@ -422,14 +422,14 @@ class OrderTrans extends Base
         } else {
             //使用优惠券后的优惠金额
             $caclueData['coupon_amount'] = $this->couponPrice($orderAmountAll, $coupon_id);
-            $actually_paid_all = bcsub($orderAmountAll, $caclueData['coupon_amount'], 2);
+            $actuallyPaidAll = bcsub($orderAmountAll, $caclueData['coupon_amount'], 2);
         }
-        if ($orderAmountAll <= 0 || $actually_paid_all <= 0) {
+        if ($orderAmountAll <= 0 || $actuallyPaidAll <= 0) {
             $this->errno = ApiCode::ORDER_AMOUNT_ERROR;
 
             return null;
         }
-        $caclueData['actually_paid_all'] = $actually_paid_all;
+        $caclueData['actually_paid_all'] = $actuallyPaidAll;
         //计算税率
         $caclueData['tax_amount'] = bcmul($caclueData['actually_paid_all'], $caclueData['tax_rate'], 2);
         $caclueData['actually_paid_all'] = bcadd($caclueData['actually_paid_all'], $caclueData['tax_amount'], 2);
