@@ -806,6 +806,7 @@ class IndexController extends Controller {
                 $list[$key]['month_day'] = date('Y-m', $item['upload_at']);
                 $list[$key]['year'] = date('Y', $item['upload_at']);
                 $list[$key]['month'] = date('m', $item['upload_at']);
+                $list[$key]['month_en'] = date('M', $item['upload_at']);
                 $list[$key]['day'] = date('d', $item['upload_at']);
                 $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
                 $list[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);
