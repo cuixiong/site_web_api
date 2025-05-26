@@ -531,6 +531,11 @@ class IndexController extends Controller {
                 $this->handlerNewProductList($value);
                 $newProductList[$key]['category_name'] = isset($categoryNames[$value->category_id])
                     ? $categoryNames[$value->category_id] : '';
+                
+                $newProductList[$key]['year'] = $newProductList[$key]['published_date'] ? date('Y', strtotime($newProductList[$key]['published_date'])) : '';
+                $newProductList[$key]['month'] = $newProductList[$key]['published_date'] ? date('m', strtotime($newProductList[$key]['published_date'])) : '';
+                $newProductList[$key]['month_en'] = $newProductList[$key]['published_date'] ? date('M', strtotime($newProductList[$key]['published_date'])) : '';
+                $newProductList[$key]['day'] = $newProductList[$key]['published_date'] ? date('d', strtotime($newProductList[$key]['published_date'])) : '';
                 if (empty($value->thumb)) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
@@ -687,6 +692,12 @@ class IndexController extends Controller {
                 $this->handlerNewProductList($value);
                 $newProductList[$key]['category_name'] = isset($categoryNames[$value->category_id])
                     ? $categoryNames[$value->category_id] : '';
+                    
+                $newProductList[$key]['year'] = $newProductList[$key]['published_date'] ? date('Y', strtotime($newProductList[$key]['published_date'])) : '';
+                $newProductList[$key]['month'] = $newProductList[$key]['published_date'] ? date('m', strtotime($newProductList[$key]['published_date'])) : '';
+                $newProductList[$key]['month_en'] = $newProductList[$key]['published_date'] ? date('M', strtotime($newProductList[$key]['published_date'])) : '';
+                $newProductList[$key]['day'] = $newProductList[$key]['published_date'] ? date('d', strtotime($newProductList[$key]['published_date'])) : '';
+
                 if (empty($value->thumb)) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
