@@ -1018,7 +1018,7 @@ class SendEmailController extends Controller {
                 $AppName = env('APP_NAME');
                 request()->headers->set('Site', $AppName); // 设置请求头
             }
-            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen'])) {
+            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'lpien'])) {
                 $orderStatusText = 'PAY_UNPAID';
             } elseif (checkSiteAccessData(['lpijp'])) {
                 $orderStatusText = '支払い待ち';
@@ -1275,7 +1275,7 @@ class SendEmailController extends Controller {
                 $AppName = env('APP_NAME');
                 request()->headers->set('Site', $AppName); // 设置请求头
             }
-            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen'])) {
+            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'lpien'])) {
                 $orderStatusText = 'PAY_SUCCESS';
             } else {
                 $orderStatusText = '已付款';
