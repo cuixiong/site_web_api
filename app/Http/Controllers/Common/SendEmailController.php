@@ -288,6 +288,11 @@ class SendEmailController extends Controller {
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
+            $addressDetail = $data['address'] ?? '';
+            $country = '';
+            if (!empty($data['country_id'])) {
+                $country = Country::where('id', $data['country_id'])->value('name');
+            }
             // $data['country'] = Country::where('id',$data['country_id'])->value('name');
             if (!empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
@@ -344,6 +349,7 @@ class SendEmailController extends Controller {
                 'link'         => $productLink,
                 'productsName' => $productsName,
                 'priceEdition' => $priceEdition,
+                'country'      => $country,
             ];
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
                 ->pluck('value', 'key')
