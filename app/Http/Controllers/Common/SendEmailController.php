@@ -117,8 +117,9 @@ class SendEmailController extends Controller {
             }
             
             // 多个电话
-            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
             if($sitePhones){
+                $sitePhones = $sitePhones->toArray();
                 $data['sitePhones'] = [];
                 foreach ($sitePhones as $key => $sitePhoneItem) {
                     $data['sitePhones'][] = $sitePhoneItem;
@@ -175,8 +176,9 @@ class SendEmailController extends Controller {
                 }
             }
             // 多个电话
-            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
             if($sitePhones){
+                $sitePhones = $sitePhones->toArray();
                 $data['sitePhones'] = [];
                 foreach ($sitePhones as $key => $sitePhoneItem) {
                     $data['sitePhones'][] = $sitePhoneItem;
@@ -256,8 +258,9 @@ class SendEmailController extends Controller {
                                    ->toArray();
             $data = array_merge($data, $siteInfo);
             // 多个电话
-            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
             if($sitePhones){
+                $sitePhones = $sitePhones->toArray();
                 $data['sitePhones'] = [];
                 foreach ($sitePhones as $key => $sitePhoneItem) {
                     $data['sitePhones'][] = $sitePhoneItem;
@@ -351,8 +354,9 @@ class SendEmailController extends Controller {
                 }
             }
             // 多个电话
-            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
             if($sitePhones){
+                $sitePhones = $sitePhones->toArray();
                 $data['sitePhones'] = [];
                 foreach ($sitePhones as $key => $sitePhoneItem) {
                     $data['sitePhones'][] = $sitePhoneItem;
@@ -453,8 +457,9 @@ class SendEmailController extends Controller {
                 }
             }
             // 多个电话
-            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
             if($sitePhones){
+                $sitePhones = $sitePhones->toArray();
                 $data['sitePhones'] = [];
                 foreach ($sitePhones as $key => $sitePhoneItem) {
                     $data['sitePhones'][] = $sitePhoneItem;
@@ -578,8 +583,9 @@ class SendEmailController extends Controller {
                 }
             }
             // 多个电话
-            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
             if($sitePhones){
+                $sitePhones = $sitePhones->toArray();
                 $data['sitePhones'] = [];
                 foreach ($sitePhones as $key => $sitePhoneItem) {
                     $data['sitePhones'][] = $sitePhoneItem;
@@ -621,6 +627,7 @@ class SendEmailController extends Controller {
 
             return true;
         } catch (\Exception $e) {
+            \Log::error('邮件:'.$e->getMessage());
             ReturnJson(false, $e->getMessage());
         }
     }
@@ -700,8 +707,9 @@ class SendEmailController extends Controller {
                 }
             }
             // 多个电话
-            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
             if($sitePhones){
+                $sitePhones = $sitePhones->toArray();
                 $data['sitePhones'] = [];
                 foreach ($sitePhones as $key => $sitePhoneItem) {
                     $data['sitePhones'][] = $sitePhoneItem;
@@ -818,8 +826,9 @@ class SendEmailController extends Controller {
                 }
             }
             // 多个电话
-            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
             if($sitePhones){
+                $sitePhones = $sitePhones->toArray();
                 $data['sitePhones'] = [];
                 foreach ($sitePhones as $key => $sitePhoneItem) {
                     $data['sitePhones'][] = $sitePhoneItem;
@@ -1059,8 +1068,9 @@ class SendEmailController extends Controller {
                 }
             }
             // 多个电话
-            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
             if($sitePhones){
+                $sitePhones = $sitePhones->toArray();
                 $data['sitePhones'] = [];
                 foreach ($sitePhones as $key => $sitePhoneItem) {
                     $data['sitePhones'][] = $sitePhoneItem;
@@ -1306,8 +1316,9 @@ class SendEmailController extends Controller {
                 }
             }
             // 多个电话
-            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
             if($sitePhones){
+                $sitePhones = $sitePhones->toArray();
                 $data['sitePhones'] = [];
                 foreach ($sitePhones as $key => $sitePhoneItem) {
                     $data['sitePhones'][] = $sitePhoneItem;
