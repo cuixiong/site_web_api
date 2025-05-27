@@ -392,26 +392,32 @@ class SendEmailController extends Controller {
     }
 
     // 留言
-    public function Message($id) {
+    public function Message($id)
+    {
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
+            $addressDetail = $data['address'] ?? '';
+            $country = '';
+            if (!empty($data['country_id'])) {
+                $country = Country::where('id', $data['country_id'])->value('name');
+            }
             //$result['country'] = DictionaryValue::GetDicOptions('Country');
             $productsName = '';
             $productLink = '';
             $categoryEmail = '';
             if (isset($data['product_id']) && !empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
-                                        ->select(
-                                            [
-                                                'url',
-                                                'thumb',
-                                                'name',
-                                                'id as product_id',
-                                                'published_date',
-                                                'category_id'
-                                            ]
-                                        )->first();
+                    ->select(
+                        [
+                            'url',
+                            'thumb',
+                            'name',
+                            'id as product_id',
+                            'published_date',
+                            'category_id'
+                        ]
+                    )->first();
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
@@ -424,20 +430,21 @@ class SendEmailController extends Controller {
             $data['country'] = Country::where('id', $data['country_id'])->value('name');
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
-            $token = $data['email'].'&'.$data['id'];
+            $token = $data['email'] . '&' . $data['id'];
             $data['token'] = base64_encode($token);
-            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
                 'homePage'     => $data['domain'],
-                'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
-                'contactUsUrl' => rtrim($data['domain'], '/').'/contact-us',
+                'myAccountUrl' => rtrim($data['domain'], '/') . '/account/account-infor',
+                'contactUsUrl' => rtrim($data['domain'], '/') . '/contact-us',
                 'homeUrl'      => $data['domain'],
                 'userName'     => $data['name'] ? $data['name'] : '',
                 'email'        => $data['email'],
                 'company'      => $data['company'],
-                'area'         => $data['province'].$data['city'],
+                'messageAddress'      => $addressDetail,
+                'area'         => $data['province'] . $data['city'],
                 'phone'        => $data['phone'] ? $data['phone'] : '',
                 'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
                 'content'      => $data['content'],
@@ -446,11 +453,12 @@ class SendEmailController extends Controller {
                 'productsName' => $productsName,
                 'dateTime'     => date('Y-m-d'),
                 'url'          => $productLink,
+                'country'      => $country,
                 'language'     => $ContactUs['language_version'] ?? '',
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
-                                   ->pluck('value', 'key')
-                                   ->toArray();
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address'])
+                ->pluck('value', 'key')
+                ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
@@ -458,7 +466,7 @@ class SendEmailController extends Controller {
             }
             // 多个电话
             $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
-            if($sitePhones){
+            if ($sitePhones) {
                 $sitePhones = $sitePhones->toArray();
                 $data['sitePhones'] = [];
                 foreach ($sitePhones as $key => $sitePhoneItem) {
@@ -467,7 +475,7 @@ class SendEmailController extends Controller {
             }
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
-                                                                                             .$data['siteEmail'] : '';
+                . $data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene('productSample');
             // 收件人的数组
