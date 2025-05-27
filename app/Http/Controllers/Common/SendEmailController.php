@@ -107,12 +107,21 @@ class SendEmailController extends Controller {
                 'area'         => City::where('id', $data['city_id'])->value('name'),
                 'dateTime'     => date('Y-m-d', time()),
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
                                    ->pluck('value', 'key')
                                    ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
+                }
+            }
+            
+            // 多个电话
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            if($sitePhones){
+                $data['sitePhones'] = [];
+                foreach ($sitePhones as $key => $sitePhoneItem) {
+                    $data['sitePhones'][] = $sitePhoneItem;
                 }
             }
             //兼容qyen邮件字段
@@ -158,11 +167,19 @@ class SendEmailController extends Controller {
                 'area'         => City::where('id', $data['area_id'])->value('name'),
                 'dateTime'     => date('Y-m-d', time()),
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail','company_address'])->pluck('value', 'key')
                                    ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
+                }
+            }
+            // 多个电话
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            if($sitePhones){
+                $data['sitePhones'] = [];
+                foreach ($sitePhones as $key => $sitePhoneItem) {
+                    $data['sitePhones'][] = $sitePhoneItem;
                 }
             }
             $data = $this->officeData($data);
@@ -234,10 +251,18 @@ class SendEmailController extends Controller {
             $data['verifyUrl'] = $verifyUrl;
             $data['dateTime'] = date('Y-m-d', time());
             $data['userName'] = $user['username'];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
                                    ->pluck('value', 'key')
                                    ->toArray();
             $data = array_merge($data, $siteInfo);
+            // 多个电话
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            if($sitePhones){
+                $data['sitePhones'] = [];
+                foreach ($sitePhones as $key => $sitePhoneItem) {
+                    $data['sitePhones'][] = $sitePhoneItem;
+                }
+            }
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                                                                                              .$data['siteEmail'] : '';
@@ -317,12 +342,20 @@ class SendEmailController extends Controller {
                 'productsName' => $productsName,
                 'priceEdition' => $priceEdition,
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
                 ->pluck('value', 'key')
                 ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
+                }
+            }
+            // 多个电话
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            if($sitePhones){
+                $data['sitePhones'] = [];
+                foreach ($sitePhones as $key => $sitePhoneItem) {
+                    $data['sitePhones'][] = $sitePhoneItem;
                 }
             }
             $data = $this->officeData($data);
@@ -411,12 +444,20 @@ class SendEmailController extends Controller {
                 'url'          => $productLink,
                 'language'     => $ContactUs['language_version'] ?? '',
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
                                    ->pluck('value', 'key')
                                    ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
+                }
+            }
+            // 多个电话
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            if($sitePhones){
+                $data['sitePhones'] = [];
+                foreach ($sitePhones as $key => $sitePhoneItem) {
+                    $data['sitePhones'][] = $sitePhoneItem;
                 }
             }
             $data = $this->officeData($data);
@@ -528,12 +569,20 @@ class SendEmailController extends Controller {
                 'language'     => $ContactUs['language_version'] ?? '',
                 'priceEdition' => $priceEdition,
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
                 ->pluck('value', 'key')
                 ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
+                }
+            }
+            // 多个电话
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            if($sitePhones){
+                $data['sitePhones'] = [];
+                foreach ($sitePhones as $key => $sitePhoneItem) {
+                    $data['sitePhones'][] = $sitePhoneItem;
                 }
             }
             $data = $this->officeData($data);
@@ -642,12 +691,20 @@ class SendEmailController extends Controller {
                 'country'      => $country,
                 'priceEdition' => $priceEdition,
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
                 ->pluck('value', 'key')
                 ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
+                }
+            }
+            // 多个电话
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            if($sitePhones){
+                $data['sitePhones'] = [];
+                foreach ($sitePhones as $key => $sitePhoneItem) {
+                    $data['sitePhones'][] = $sitePhoneItem;
                 }
             }
             $data = $this->officeData($data);
@@ -752,12 +809,20 @@ class SendEmailController extends Controller {
                 'country'      => $country,
                 'priceEdition' => $priceEdition,
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
                 ->pluck('value', 'key')
                 ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
+                }
+            }
+            // 多个电话
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            if($sitePhones){
+                $data['sitePhones'] = [];
+                foreach ($sitePhones as $key => $sitePhoneItem) {
+                    $data['sitePhones'][] = $sitePhoneItem;
                 }
             }
             $data = $this->officeData($data);
@@ -985,12 +1050,20 @@ class SendEmailController extends Controller {
                 'is_bank'                => $is_bank,
             ];
             $data['country'] = Country::where('id', $Order['country_id'])->value('name');
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
                 ->pluck('value', 'key')
                 ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
+                }
+            }
+            // 多个电话
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            if($sitePhones){
+                $data['sitePhones'] = [];
+                foreach ($sitePhones as $key => $sitePhoneItem) {
+                    $data['sitePhones'][] = $sitePhoneItem;
                 }
             }
             $data = $this->officeData($data);
@@ -1224,12 +1297,20 @@ class SendEmailController extends Controller {
                 'content'                => $Order['remarks'],
             ];
             $data['country'] = Country::where('id', $Order['country_id'])->value('name');
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address'])
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
                                    ->pluck('value', 'key')
                                    ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
+                }
+            }
+            // 多个电话
+            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value')->toArray();
+            if($sitePhones){
+                $data['sitePhones'] = [];
+                foreach ($sitePhones as $key => $sitePhoneItem) {
+                    $data['sitePhones'][] = $sitePhoneItem;
                 }
             }
             $data = $this->officeData($data);
