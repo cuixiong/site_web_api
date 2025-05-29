@@ -174,7 +174,7 @@ class NewsController extends Controller {
             //$data['relevant_product'] = $this->getRelevantProduct($data['tags']);
             $data['relevant_product'] = $this->getNewRelevantByProduct($data['tags'] , 6);
             //获取相关新闻
-            if (checkSiteAccessData(['168report', 'yhcn', 'mrrs'])) {
+            if (checkSiteAccessData(['168report', 'yhcn', 'mrrs' , 'mmgen'])) {
                 //相关新闻
                 $data['relevant_news'] = $this->getRelevantNews($data['tags'], $id);
             }
@@ -574,7 +574,7 @@ class NewsController extends Controller {
                 $data[$key]['english_name'] = $value['english_name'];
                 // $data[$key]['description'] = $value['description_seo'];
                 $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
-                
+
                 $data[$key]['year'] = $value['published_date'] ? date('Y', strtotime($value['published_date'])) : '';
                 $data[$key]['month'] = $value['published_date'] ? date('m', strtotime($value['published_date'])) : '';
                 $data[$key]['month_en'] = $value['published_date'] ? date('M', strtotime($value['published_date'])) : '';

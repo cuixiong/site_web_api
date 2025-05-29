@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Redis;
 class DictionaryValue extends Base {
     // 获取某一个code字典的全部选项
     public static function GetDicOptions($code) {
-        if (checkSiteAccessData(['mrrs', 'yhen', 'qyen'])) {
+        if (checkSiteAccessData(['mrrs', 'yhen', 'qyen' ,'mmgen'])) {
             $field_list = ['english_name as label', 'value'];
         } else {
             $field_list = ['name as label', 'value'];

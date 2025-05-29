@@ -516,8 +516,7 @@ class IndexController extends Controller {
         }
         if ($dataType == 0 || $dataType == 1) {
             //返回分类名
-            $categoryNames = ProductsCategory::query()->select(['id', 'name'])->get()->toArray();
-            $categoryNames = array_column($categoryNames, 'name', 'id');
+            $categoryList = ProductsCategory::query()->select(['id', 'name','icon_hover'])->get()->keyBy('id')->toArray();
             // gir用的两张默认图...
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
             $newProductList = $productQuery->select($productSelect)->get();
@@ -529,9 +528,17 @@ class IndexController extends Controller {
             }
             foreach ($newProductList as $key => $value) {
                 $this->handlerNewProductList($value);
-                $newProductList[$key]['category_name'] = isset($categoryNames[$value->category_id])
-                    ? $categoryNames[$value->category_id] : '';
-                
+                $category_name = '';
+                if(!empty($categoryList[$value->category_id]['name'] )){
+                    $category_name = $categoryList[$value->category_id]['name'];
+                }
+                $icon_hover = '';
+                if(!empty($categoryList[$value->category_id]['icon_hover'] )){
+                    $icon_hover = $categoryList[$value->category_id]['icon_hover'];
+                }
+                $newProductList[$key]['category_name'] = $category_name;
+                $newProductList[$key]['icon_hover'] = $icon_hover;
+
                 $newProductList[$key]['year'] = $newProductList[$key]['published_date'] ? date('Y', strtotime($newProductList[$key]['published_date'])) : '';
                 $newProductList[$key]['month'] = $newProductList[$key]['published_date'] ? date('m', strtotime($newProductList[$key]['published_date'])) : '';
                 $newProductList[$key]['month_en'] = $newProductList[$key]['published_date'] ? date('M', strtotime($newProductList[$key]['published_date'])) : '';
@@ -658,7 +665,7 @@ class IndexController extends Controller {
                         $description = (new ProductDescription($year))
                             ->where('product_id', $firstProduct['id'])
                             ->value('description');
-                        if (checkSiteAccessData(['tycn', 'mrrs' , 'yhen'])) {
+                        if (checkSiteAccessData(['tycn', 'mrrs' , 'yhen' , 'mmgen'])) {
                             //取描述第一段 ,  如果没有\n换行符就取一整段
                             $strIndex = strpos($description, "\n");
                             if ($strIndex !== false) {
@@ -692,7 +699,7 @@ class IndexController extends Controller {
                 $this->handlerNewProductList($value);
                 $newProductList[$key]['category_name'] = isset($categoryNames[$value->category_id])
                     ? $categoryNames[$value->category_id] : '';
-                    
+
                 $newProductList[$key]['year'] = $newProductList[$key]['published_date'] ? date('Y', strtotime($newProductList[$key]['published_date'])) : '';
                 $newProductList[$key]['month'] = $newProductList[$key]['published_date'] ? date('m', strtotime($newProductList[$key]['published_date'])) : '';
                 $newProductList[$key]['month_en'] = $newProductList[$key]['published_date'] ? date('M', strtotime($newProductList[$key]['published_date'])) : '';
