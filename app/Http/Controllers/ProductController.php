@@ -892,6 +892,8 @@ class ProductController extends Controller {
         $allText = '全部';
         if (checkSiteAccessData(['lpijp'])) {
             $allText = '全レポート';
+        } elseif (checkSiteAccessData(['lpien'])) {
+            $allText = 'All';
         } else {
         }
         array_unshift($data, [
@@ -1281,6 +1283,8 @@ class ProductController extends Controller {
         $allText = '全部';
         if (checkSiteAccessData(['lpijp'])) {
             $allText = '全レポート';
+        } elseif (checkSiteAccessData(['lpien'])) {
+            $allText = 'All';
         } else {
         }
         array_unshift($data, [
