@@ -70,7 +70,7 @@ class CommonController extends Controller {
         //权威引用
         $data['quote_list'] = $this->getQuoteList($request);
 
-        if(checkSiteAccessData(['mrrs' , 'yhen' ,'qyen'])){
+        if(checkSiteAccessData(['mrrs' , 'yhen' ,'qyen','lpien'])){
             //国家数据
             $data['country_list'] = $this->getCountryData();
             //来源数据

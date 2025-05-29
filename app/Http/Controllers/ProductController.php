@@ -163,6 +163,10 @@ class ProductController extends Controller {
                             strtotime($value['published_date'])
                         ) : '';
                     }
+                    $value['year'] = date('Y', strtotime($value['published_date']));
+                    $value['month'] = date('m', strtotime($value['published_date']));
+                    $value['month_en'] = date('M', strtotime($value['published_date']));
+                    $value['day'] = date('d', strtotime($value['published_date']));
                     $description = (new ProductDescription($suffix))->where('product_id', $value['id'])->value(
                         'description'
                     );
@@ -399,7 +403,13 @@ class ProductController extends Controller {
                     "name"
                 );
             }
+
+            $product_desc['year'] = date('Y', strtotime($product_desc['published_date']));
+            $product_desc['month'] = date('m', strtotime($product_desc['published_date']));
+            $product_desc['month_en'] = date('M', strtotime($product_desc['published_date']));
+            $product_desc['day'] = date('d', strtotime($product_desc['published_date']));
             //返回打折信息
+
             $time = time();
             //判断当前报告是否在优惠时间内
             if ($product_desc['discount_time_begin'] <= $time && $product_desc['discount_time_end'] >= $time) {
@@ -995,7 +1005,7 @@ class ProductController extends Controller {
             } else {
                 if ($input_params['orderBy'] == 'time') {
                     $query = $query->orderBy('sort', 'asc')
-                                   ->orderBy('published_date', 'asc')
+                                   ->orderBy('published_date', 'desc')
                                    ->orderBy('id', 'desc');
                 } elseif ($input_params['orderBy'] == 'price') {
                     $query = $query->orderBy('sort', 'asc')

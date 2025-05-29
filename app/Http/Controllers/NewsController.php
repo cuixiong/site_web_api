@@ -81,6 +81,7 @@ class NewsController extends Controller {
                 $news[$key]['month_day'] = $value['release_at'] ? date('m-d', $value['release_at']) : '';
                 $news[$key]['year'] = $value['release_at'] ? date('Y', $value['release_at']) : '';
                 $news[$key]['month'] = $value['release_at'] ? date('m', $value['release_at']) : '';
+                $news[$key]['month_en'] = $value['release_at'] ? date('M', $value['release_at']) : '';
                 $news[$key]['day'] = $value['release_at'] ? date('d', $value['release_at']) : '';
                 $news[$key]['category'] = ProductsCategory::select(['id', 'name', 'link'])->where(
                     'id',
@@ -133,6 +134,12 @@ class NewsController extends Controller {
             News::where(['id' => $id])->increment('hits');
             $data['tags'] = $data['tags'] ? explode(',', $data['tags']) : [];
             $data['upload_at_format'] = $data['upload_at'] ? date('Y-m-d', $data['upload_at']) : '';
+
+            $data['year'] = $data['upload_at'] ? date('Y', $data['upload_at']) : '';
+            $data['month'] = $data['upload_at'] ? date('m', $data['upload_at']) : '';
+            $data['month_en'] = $data['upload_at'] ? date('M', $data['upload_at']) : '';
+            $data['day'] = $data['upload_at'] ? date('d', $data['upload_at']) : '';
+
             // list($prevId, $nextId) = $this->getNextPrevId($request, $id); // 暂时注释看看效果
             list($prevId, $nextId) = $this->getNextPrevId2($request, $id, $data['upload_at'], $data['sort']);
             //查询上一篇
@@ -567,6 +574,12 @@ class NewsController extends Controller {
                 $data[$key]['english_name'] = $value['english_name'];
                 // $data[$key]['description'] = $value['description_seo'];
                 $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
+                
+                $data[$key]['year'] = $value['published_date'] ? date('Y', strtotime($value['published_date'])) : '';
+                $data[$key]['month'] = $value['published_date'] ? date('m', strtotime($value['published_date'])) : '';
+                $data[$key]['month_en'] = $value['published_date'] ? date('M', strtotime($value['published_date'])) : '';
+                $data[$key]['day'] = $value['published_date'] ? date('d', strtotime($value['published_date'])) : '';
+
                 $data[$key]['discount_type'] = $value['discount_type'];
                 $data[$key]['discount_value'] = $value['discount_amount'];
                 $data[$key]['discount_amount'] = $value['discount_amount']; // 兼容

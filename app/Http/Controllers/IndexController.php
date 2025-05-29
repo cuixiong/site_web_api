@@ -72,7 +72,14 @@ class IndexController extends Controller {
                     }
                 }
             }
-        } else {
+        } elseif (checkSiteAccessData(['lpien'])) {
+            $data['hot_product_list'] = $this->getHotProductList($request);
+            $systemKey = 'hotReportDefaultImg';
+            $hotReportDefaultImg = SystemValue::where('key', $systemKey)->where('hidden', 1)->select(['value'])->get()->value('value');
+            foreach ($data['hot_product_list']['products'] as $key => $item) {
+                $data['hot_product_list']['products'][$key]['thumb'] = $hotReportDefaultImg;
+            }
+        }else {
             $data['hot_product_list'] = $this->getHotProductList($request);
         }
         //获取推荐报告
@@ -425,7 +432,7 @@ class IndexController extends Controller {
         $data = [];
         // 报告基本查询
         $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',
-                          'publisher_id', 'discount_type', 'discount', 'discount_amount', 'discount_time_begin',
+                          'publisher_id', 'pages','discount_type', 'discount', 'discount_amount', 'discount_time_begin',
                           'discount_time_end'];
         $productCountQuery = Products::where("status", 1)
                                      ->where('show_hot', 1)
@@ -524,6 +531,11 @@ class IndexController extends Controller {
                 $this->handlerNewProductList($value);
                 $newProductList[$key]['category_name'] = isset($categoryNames[$value->category_id])
                     ? $categoryNames[$value->category_id] : '';
+                
+                $newProductList[$key]['year'] = $newProductList[$key]['published_date'] ? date('Y', strtotime($newProductList[$key]['published_date'])) : '';
+                $newProductList[$key]['month'] = $newProductList[$key]['published_date'] ? date('m', strtotime($newProductList[$key]['published_date'])) : '';
+                $newProductList[$key]['month_en'] = $newProductList[$key]['published_date'] ? date('M', strtotime($newProductList[$key]['published_date'])) : '';
+                $newProductList[$key]['day'] = $newProductList[$key]['published_date'] ? date('d', strtotime($newProductList[$key]['published_date'])) : '';
                 if (empty($value->thumb)) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
@@ -570,7 +582,7 @@ class IndexController extends Controller {
         // 报告基本查询
         //$productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',];
         $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',
-                          'publisher_id', 'discount_type', 'discount', 'discount_amount', 'discount_time_begin',
+                          'publisher_id', 'pages', 'discount_type', 'discount', 'discount_amount', 'discount_time_begin',
                           'discount_time_end'];
         $productCountQuery = Products::where("status", 1)
                                      ->where('show_recommend', 1)
@@ -680,6 +692,12 @@ class IndexController extends Controller {
                 $this->handlerNewProductList($value);
                 $newProductList[$key]['category_name'] = isset($categoryNames[$value->category_id])
                     ? $categoryNames[$value->category_id] : '';
+                    
+                $newProductList[$key]['year'] = $newProductList[$key]['published_date'] ? date('Y', strtotime($newProductList[$key]['published_date'])) : '';
+                $newProductList[$key]['month'] = $newProductList[$key]['published_date'] ? date('m', strtotime($newProductList[$key]['published_date'])) : '';
+                $newProductList[$key]['month_en'] = $newProductList[$key]['published_date'] ? date('M', strtotime($newProductList[$key]['published_date'])) : '';
+                $newProductList[$key]['day'] = $newProductList[$key]['published_date'] ? date('d', strtotime($newProductList[$key]['published_date'])) : '';
+
                 if (empty($value->thumb)) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
@@ -806,6 +824,7 @@ class IndexController extends Controller {
                 $list[$key]['month_day'] = date('Y-m', $item['upload_at']);
                 $list[$key]['year'] = date('Y', $item['upload_at']);
                 $list[$key]['month'] = date('m', $item['upload_at']);
+                $list[$key]['month_en'] = date('M', $item['upload_at']);
                 $list[$key]['day'] = date('d', $item['upload_at']);
                 $list[$key]['upload_at_format'] = date('Y-m-d', $item['upload_at']);
                 $list[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($item['thumb']);

@@ -47,6 +47,9 @@ class ThirdRespController extends BaseThirdController {
         } elseif ($code == 'customized') {
             //定制报告
             $res = (new SendEmailController())->customized($id);
+        }else {
+            //其它
+            $res = (new SendEmailController)->sendMessageEmail($id);
         }
         ReturnJson($res);
     }
