@@ -164,7 +164,7 @@ class ThirdRespController extends BaseThirdController {
                 $lastbaseQuery->where(function ($query) use ($startTimestamp) {
                     $query->Where('updated_at', $startTimestamp); // 等于
                 })
-                ->where('>', 'id', $startProductId);
+                ->where('id','>', $startProductId);
                 $lastproductData = $lastbaseQuery->get()->toArray();
                 if(!$lastproductData){
                     $lastproductData = [];
