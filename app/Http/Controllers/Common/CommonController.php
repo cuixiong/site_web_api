@@ -70,7 +70,7 @@ class CommonController extends Controller {
         //权威引用
         $data['quote_list'] = $this->getQuoteList($request);
 
-        if(checkSiteAccessData(['mrrs' , 'yhen' ,'qyen','lpien'])){
+        if(checkSiteAccessData(['mrrs' , 'yhen' ,'qyen', 'mmgen', 'lpien'])){
             //国家数据
             $data['country_list'] = $this->getCountryData();
             //来源数据
@@ -111,7 +111,7 @@ class CommonController extends Controller {
             $data['cate'] = $cate;
         }
 
-        if (checkSiteAccessData(['yhcn'])) {
+        if (checkSiteAccessData(['yhcn' , 'mmgen'])) {
             // 客户评价
             $data['comment'] = $this->getCustomersComment($request);
             // 办公室
@@ -313,7 +313,12 @@ class CommonController extends Controller {
         // $result['seo_keyword'] = $result['seo_keyword'] ? $result['seo_keyword'] : Setting::find()->select(['value'])->where(['alias' => 'seoKeyword'])->scalar();
         // $result['seo_description'] = $result['seo_description'] ? $result['seo_description'] : Setting::find()->select(['value'])->where(['alias' => 'seoDescription'])->scalar();
         $data = $result ? $result : [];
-        ReturnJson(true, '', $data);
+        if(empty($data )){
+            ReturnJson(10001, '', []);
+        }else{
+            ReturnJson(true, '', $data);
+        }
+
     }
 
     /**
