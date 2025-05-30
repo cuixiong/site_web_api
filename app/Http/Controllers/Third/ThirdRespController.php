@@ -15,6 +15,7 @@ namespace App\Http\Controllers\Third;
 use App\Http\Controllers\Common\SendEmailController;
 use App\Models\ContactUs;
 use App\Models\Order;
+use App\Models\ProductsCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 
@@ -142,45 +143,73 @@ class ThirdRespController extends BaseThirdController {
     {
         try {
             $params = $request->all();
-            $startTimestamp = $params['startTimestamp'];
-            $baseQuery = \App\Models\Products::query()
-                ->where(function ($query) use ($startTimestamp) {
-                    $query->where('created_at', '>', $startTimestamp)->orWhere('updated_at', '>', $startTimestamp);
+            $startTimestamp = $params['startTimestamp']?? 0;
+            $num = $params['num'] ?? 100;
+            $startProductId = $params['startProductId']??null;
+
+            // 行业数据
+            $categoryData = ProductsCategory::select(['id','link'])->get()->toArray();
+            $categoryData = array_column($categoryData, 'link', 'id');
+
+
+            $baseQuery = \App\Models\Products::query()->orderBy('updated_at', 'asc')->orderBy('id', 'asc');
+            // $baseQuery->where(function ($query) {
+            //     $query->whereNotNull('keywords_jp')->where('keywords_jp', '<>', '');
+            // });
+
+            // 使用时间戳并且使用固定数量可能导致获取不完整，因此加入标记的报告id多查询一次
+            $lastproductData = [];
+            if (!empty($startProductId)) {
+                $lastbaseQuery = clone($baseQuery);
+                $lastbaseQuery->where(function ($query) use ($startTimestamp) {
+                    $query->Where('updated_at', $startTimestamp); // 等于
                 })
-                ->where(function ($query) {
+                ->where('>', 'id', $startProductId);
+                $lastproductData = $lastbaseQuery->get()->toArray();
+                if(!$lastproductData){
+                    $lastproductData = [];
+                }
+                // if($num - count($lastproductData)>0){
+                //     $num = $num - count($lastproductData);
+                // }else{
+                //     $num = 0;
+                // }
+            }
 
-                    $query->whereNotNull('keywords_jp')->where('keywords_jp', '<>', '');
-                });
 
-            // 一次取1000条数据
-            $productData = $baseQuery->limit(1000)->get()->toArray();
+            $baseQuery->where(function ($query) use ($startTimestamp) {
+                $query->Where('updated_at', '>', $startTimestamp); // 大于
+            });
+            $productData = $baseQuery->limit($num)->get()->toArray() ?? [];
+            $productData = array_merge($lastproductData, $productData);
+
             $productNameArray = [];
             if ($productData) {
-                foreach ($productData as $key => $item) {
+                foreach ($productData as $key => $product) {
 
-                    $suffix = date('Y', $item['published_date']);
+                    $suffix = date('Y', strtotime($product['published_date']));
                     $productDescription = (new \App\Models\ProductDescription($suffix))
                         ->select([
                             'description',
                             'table_of_content',
+                            'tables_and_figures',
                             'companies_mentioned',
                             'definition',
                             'overview'
                         ])
-                        ->where('product_id', $item['id'])
-                        ->first();
-                    $productData[$key] = array_merge($item, $productDescription ?? []);
-                    $productNameArray[] = $item['name'];
+                        ->where('product_id', $product['id'])
+                        ->first()->toArray();
+                    $productData[$key] = array_merge($product, $productDescription ?? []);
+                    $productNameArray[] = $product['name'];
+                    $productData[$key]['category_link'] = $categoryData[$product['category_id']] ?? 0;
                 }
-            } else {
+            } 
+            return ['code' => 200, 'data' => $productData];
 
-                ReturnJson(false, '没有数据');
-            }
-
-            ReturnJson(true, '', $productData);
+            // ReturnJson(true, '', $productData);
             //code...
         } catch (\Throwable $th) {
-            ReturnJson(false, $th->getMessage());
+            return ['code' => 500, 'msg' => $th->getMessage()];
         }
     }
 }
