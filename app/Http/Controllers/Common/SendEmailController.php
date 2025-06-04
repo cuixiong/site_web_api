@@ -1467,7 +1467,7 @@ class SendEmailController extends Controller {
                 if (in_array($scene->action, ['payment', 'placeOrder'])) {
                     //存入订单邮件发送记录
                     Order::query()->where("id", $data['id'])->update(['send_email_time' => time()]);
-                } elseif (in_array($scene->action, ['contactUs', 'productSample', 'customized'])) {
+                } elseif (in_array($scene->action, ['contactUs', 'productSample', 'customized', 'becomeReseller'])) {
                     //存入留言邮件发送记录
                     ContactUs::query()->where("id", $data['id'])->update(['send_email_time' => time()]);
                 }
