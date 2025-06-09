@@ -665,7 +665,7 @@ class IndexController extends Controller {
                         $description = (new ProductDescription($year))
                             ->where('product_id', $firstProduct['id'])
                             ->value('description');
-                        if (checkSiteAccessData(['tycn', 'mrrs' , 'yhen' , 'mmgen'])) {
+                        if (checkSiteAccessData(['tycn', 'mrrs' , 'yhen' , 'mmgen' ,'giren'])) {
                             //取描述第一段 ,  如果没有\n换行符就取一整段
                             $strIndex = strpos($description, "\n");
                             if ($strIndex !== false) {

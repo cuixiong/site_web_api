@@ -115,7 +115,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            
+
             // 多个电话
             $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
             if($sitePhones){
@@ -994,7 +994,7 @@ class SendEmailController extends Controller {
             // 税费计算
             $original_tax = bcmul($sum_goods_original_price_all, $tax_rate, 2);
             $present_tax = bcmul($sum_goods_present_price_all, $tax_rate, 2);
-            
+
             // 税费汇率转换
             $exchange_original_tax = bcmul($original_tax, $exchange_rate, 2);
             $exchange_present_tax = bcmul($present_tax, $exchange_rate, 2);
@@ -1018,7 +1018,7 @@ class SendEmailController extends Controller {
                 $AppName = env('APP_NAME');
                 request()->headers->set('Site', $AppName); // 设置请求头
             }
-            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien'])) {
+            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien' , 'giren'])) {
                 $orderStatusText = 'PAY_UNPAID';
             } elseif (checkSiteAccessData(['lpijp'])) {
                 $orderStatusText = '支払い待ち';
@@ -1201,14 +1201,14 @@ class SendEmailController extends Controller {
                     $OrderGoods['goods_number'],
                     2
                 );
-                
+
                 $goods_data['goods_number'] = $OrderGoods['goods_number'];
                 $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
                 $goods_data['sum_original_price'] = bcmul(
                     $goods_data['goods_original_price'], $goods_data['goods_number'], 2
                 );
 
-                
+
                 $goods_data['goods_number'] = $OrderGoods['goods_number'];
                 // 单个商品原价
                 $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
@@ -1242,14 +1242,14 @@ class SendEmailController extends Controller {
                 $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;
             }
-            
+
             // 小计汇率转换
             $exchange_sum_original_price_all = bcmul($sum_goods_original_price_all, $exchange_rate, 2);
             $exchange_sum_present_price_all = bcmul($sum_goods_present_price_all, $exchange_rate, 2);
             // 税费计算
             $original_tax = bcmul($sum_goods_original_price_all, $tax_rate, 2);
             $present_tax = bcmul($sum_goods_present_price_all, $tax_rate, 2);
-            
+
             // 税费汇率转换
             $exchange_original_tax = bcmul($original_tax, $exchange_rate, 2);
             $exchange_present_tax = bcmul($present_tax, $exchange_rate, 2);
@@ -1275,7 +1275,7 @@ class SendEmailController extends Controller {
                 $AppName = env('APP_NAME');
                 request()->headers->set('Site', $AppName); // 设置请求头
             }
-            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien'])) {
+            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien' ,'giren'])) {
                 $orderStatusText = 'PAY_SUCCESS';
             } else {
                 $orderStatusText = '已付款';
