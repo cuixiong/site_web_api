@@ -170,7 +170,7 @@ class ProductController extends Controller {
                     $description = (new ProductDescription($suffix))->where('product_id', $value['id'])->value(
                         'description'
                     );
-                    if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen'])) {
+                    if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen' ,'giren'])) {
                         $strIndex = strpos($description, "\n");
                         if ($strIndex !== false) {
                             // 使用 substr() 函数获取第一个段落

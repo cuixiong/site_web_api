@@ -247,7 +247,7 @@ class SitemapController extends Controller {
         if ($APP_NAME == 'qyen') {
             // TODO: cuizhixiong 2025/4/17 需求硬性要求
             $number = 24000;
-        }elseif(in_array($APP_NAME, ['mrrs', 'yhen' , 'mmgen'])){
+        }elseif(in_array($APP_NAME, ['mrrs', 'yhen' , 'mmgen' ,'giren'])){
             $number = 10000;
         }
         $code = 'reports';
