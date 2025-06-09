@@ -112,6 +112,7 @@ class OrderTrans extends Base
             // 本身打折与优惠券不能同时使用, 因此使用商品原价
             $actually_paid_all = $orderAmount;    // 实付价
             $caclueData['coupon_amount'] = $this->couponPrice($actually_paid_all, $coupon_id);
+            $actually_paid_all = bcsub($actually_paid_all, $caclueData['coupon_amount'], 2);
             $caclueData['exchange_coupon_amount'] = bcmul($caclueData['coupon_amount'], $caclueData['exchange_rate'], 2);
         }
         if ($actually_paid_all <= 0) {
