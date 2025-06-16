@@ -398,7 +398,7 @@ class SendEmailController extends Controller {
     }
 
     // 留言
-    public function Message($id)
+    public function Message($id, $code = 'productSample')
     {
         try {
             $ContactUs = ContactUs::find($id);
@@ -483,7 +483,7 @@ class SendEmailController extends Controller {
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                 . $data['siteEmail'] : '';
             $data = array_merge($data2, $data);
-            $scene = $this->getScene('productSample');
+            $scene = $this->getScene($code);
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             // 收件人额外加上分类邮箱

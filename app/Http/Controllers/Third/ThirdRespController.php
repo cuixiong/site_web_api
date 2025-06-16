@@ -94,6 +94,10 @@ class ThirdRespController extends BaseThirdController {
             //已下单
             $orderId = Order::query()->orderBy('id', 'asc')->value('id');
             $res = ($sendEmailController)->payment($orderId);
+        }else {
+            // 其它
+            $id = ContactUs::query()->orderBy('id', 'asc')->value("id");
+            $res = ($sendEmailController)->Message($id, $code);
         }
         ReturnJson($res);
     }
