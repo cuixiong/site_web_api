@@ -109,8 +109,9 @@ class NewsController extends Controller {
      * 行业新闻详情
      */
     public function View(Request $request) {
-        $id = $request->id;
-        $url = $request->url;
+        $input = $request->input();
+        $id = $input['id'] ?? '';
+        $url = $input['url'] ?? '';
         if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }

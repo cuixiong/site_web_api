@@ -93,12 +93,13 @@ class InformationController extends Controller {
      * 热门资讯详情
      */
     public function View(Request $request) {
-        $id = $request->id;
-        $url = $request->url;
+        $input = $request->input();
+        $id = $input['id'] ?? '';
+        $url = $input['url'] ?? '';
         if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = Information::select(['title', 'upload_at', 'hits', 'tags', 'content', 'keywords', 'description' , 'category_id'])
+        $data = Information::select(['title', 'upload_at', 'url', 'hits', 'tags', 'content', 'keywords', 'description' , 'category_id'])
                            ->where(['id' => $id, 'status' => 1])
                            ->first();
         if ($data) {
