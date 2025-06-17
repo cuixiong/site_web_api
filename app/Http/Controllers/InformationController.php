@@ -106,6 +106,10 @@ class InformationController extends Controller {
                 ReturnJson(false, '新闻未发布，请稍后查看！');
             }
 
+            if($data->url != $url){
+                ReturnJson(2, '参数错误2');
+            }
+
             $category = ProductsCategory::select(['id', 'name', 'link'])->where(
                 'id', $data['category_id']
             )->first();

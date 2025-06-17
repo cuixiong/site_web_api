@@ -347,9 +347,9 @@ class ProductController extends Controller {
         )->first();
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
         if (!empty($product) && $product->published_date->timestamp < time()) {
-//            if($url != $product->url){
-//                ReturnJson(2, '参数错误！', []);
-//            }
+            if($url != $product->url){
+                ReturnJson(2, '参数错误！', []);
+            }
             // 浏览数+1
             Products::where(['id' => $product_id])->increment('hits');
             //增加详情的浏览记录
