@@ -201,7 +201,7 @@ class ProductController extends Controller {
                     $products[] = $value;
                 }
             }
-            if (checkSiteAccessData(['tycn', 'qyen'])) {
+            if (checkSiteAccessData(['tycn', 'qyen' , 'giren'])) {
                 $productCagoryId = $this->GetProductCateList($keyword, 0);
                 $productCagory = $this->getProductCagory($productCagoryId);
             } else {
@@ -343,10 +343,13 @@ class ProductController extends Controller {
             ReturnJson(false, '产品ID不允许为空！', []);
         }
         $product = Products::where(['id' => $product_id, 'status' => 1])->select(
-            ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date']
+            ['id', 'thumb', 'url', 'name', 'keywords', 'category_id', 'published_date']
         )->first();
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
         if (!empty($product) && $product->published_date->timestamp < time()) {
+//            if($url != $product->url){
+//                ReturnJson(2, '参数错误！', []);
+//            }
             // 浏览数+1
             Products::where(['id' => $product_id])->increment('hits');
             //增加详情的浏览记录
@@ -388,6 +391,9 @@ class ProductController extends Controller {
                 'p.keywords_jp',
                 'p.keywords_kr',
                 'p.keywords_de',
+                'p.product_class',
+                'p.segment',
+                'p.division',
             ];
             $product_desc = (new Products)->from('product_routine as p')->select($fieldList)->leftJoin(
                 'product_category as cate',
@@ -630,6 +636,37 @@ class ProductController extends Controller {
                 $product_desc['application'] = array_filter($product_desc['application'], function ($value) {
                     return $value !== "";
                 });
+
+
+                //三个新字段
+                $product_desc['product_class'] = $product_desc['product_class'] ? explode(
+                    "\n", str_replace(
+                            "", '',
+                            str_replace("\t", '', trim(str_replace("\r\n", "\n", $product_desc['product_class']), "\n"))
+                        )
+                ) : [];
+                $product_desc['product_class'] = array_filter($product_desc['product_class'], function ($value) {
+                    return $value !== "";
+                });
+                $product_desc['segment'] = $product_desc['segment'] ? explode(
+                    "\n", str_replace(
+                            "", '',
+                            str_replace("\t", '', trim(str_replace("\r\n", "\n", $product_desc['segment']), "\n"))
+                        )
+                ) : [];
+                $product_desc['segment'] = array_filter($product_desc['segment'], function ($value) {
+                    return $value !== "";
+                });
+                $product_desc['division'] = $product_desc['division'] ? explode(
+                    "\n", str_replace(
+                            "", '',
+                            str_replace("\t", '', trim(str_replace("\r\n", "\n", $product_desc['division']), "\n"))
+                        )
+                ) : [];
+                $product_desc['division'] = array_filter($product_desc['division'], function ($value) {
+                    return $value !== "";
+                });
+
                 //详情
                 $product_desc['seo_description'] = $this->strDescription($description['description']);
                 // 文本、样式替换
@@ -1821,4 +1858,60 @@ class ProductController extends Controller {
 
         return $description;
     }
+
+    public function simpleDescription(Request $request) {
+        $product_id = $request->product_id;
+        if (empty($product_id)) {
+            ReturnJson(false, '产品ID不允许为空！', []);
+        }
+
+        $product = Products::where(['id' => $product_id, 'status' => 1])->first();
+        if (!empty($product) && $product->published_date->timestamp < time()) {
+            $time = time();
+            //判断当前报告是否在优惠时间内
+            if ($product['discount_time_begin'] <= $time && $product['discount_time_end'] >= $time) {
+                $product['discount_status'] = 1;
+            } else {
+                $product['discount_status'] = 0;
+                // 过期需返回正常的折扣
+                $product['discount_amount'] = 0;
+                $product['discount'] = 100;
+                $product['discount_time_begin'] = null;
+                $product['discount_time_end'] = null;
+            }
+
+            $product['thumb'] = $product->getThumbImgAttribute();
+            if (empty($product['thumb'])) {
+                // 若报告图片为空，则使用系统设置的默认报告高清图
+                $defaultImg = SystemValue::where('key', 'default_report_high_img')->value('value');
+                $product['thumb'] = !empty($defaultImg) ? $defaultImg : '';
+            }
+
+            // 需要额外查询多种货币的价格（日文）
+            $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])
+                                          ->get()?->toArray() ?? [];
+            $product['prices'] = Products::CountPrice(
+                $product['price'], $product['publisher_id'], null, null, null, $currencyData
+            );
+            if ($currencyData && count($currencyData) > 0) {
+                // 默认版本的多种货币的价格
+                if ($currencyData && count($currencyData)) {
+                    foreach ($currencyData as $currencyItem) {
+                        $currencyKey = strtolower($currencyItem['code']).'_price';
+                        $product[$currencyKey] = $product['price'] * $currencyItem['exchange_rate'];
+                        $currencyRateKey = strtolower($currencyItem['code']).'_rate';
+                        $product[$currencyRateKey] = $currencyItem['exchange_rate'];
+                    }
+                }
+            }
+            $product['category'] = ProductsCategory::query()->where("id" , $product['category_id'])->value("name");
+
+
+            ReturnJson(true, '', $product);
+        }else{
+            ReturnJson(false, '产品不存在或未发布！', []);
+        }
+
+    }
+
 }

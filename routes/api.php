@@ -89,6 +89,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::prefix('product')->group(function () {
         Route::get('list', [\App\Http\Controllers\ProductController::class, 'List'])->name('报告列表');
         Route::any('description', [\App\Http\Controllers\ProductController::class, 'Description'])->name('报告详情');
+        Route::any('simple-description', [\App\Http\Controllers\ProductController::class, 'simpleDescription'])->name('报告简单详情');
         Route::get('view-log', [\App\Http\Controllers\ProductController::class, 'viewProductLog'])->name(
             '详情浏览记录'
         );
@@ -301,7 +302,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::post('clear-ban', [\App\Http\Controllers\Third\ThirdRespController::class, 'clearBan'])->name(
             '清除封禁'
         );
-        
+
         Route::post('get-product-data', [\App\Http\Controllers\Third\ThirdRespController::class, 'getProductData'])->name(
             '测试同步'
         );
