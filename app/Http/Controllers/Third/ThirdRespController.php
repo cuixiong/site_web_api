@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ThirdRespController.php UTF-8
  * 第三方接收方接口
@@ -19,14 +20,17 @@ use App\Models\ProductsCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 
-class ThirdRespController extends BaseThirdController {
-    public function __construct() {
+class ThirdRespController extends BaseThirdController
+{
+    public function __construct()
+    {
         parent::__construct();
     }
 
-    public function sendEmail() {
+    public function sendEmail()
+    {
         $inputParams = request()->input();
-        \Log::error('返回结果数据:'.json_encode([$inputParams]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+        \Log::error('返回结果数据:' . json_encode([$inputParams]) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
         $code = $inputParams['code'];
         $res = false;
         $id = $inputParams['id'];
@@ -48,14 +52,15 @@ class ThirdRespController extends BaseThirdController {
         } elseif ($code == 'customized') {
             //定制报告
             $res = (new SendEmailController())->customized($id);
-        }else {
+        } else {
             //其它
             $res = (new SendEmailController)->sendMessageEmail($id);
         }
         ReturnJson($res);
     }
 
-    public function testSendEmail() {
+    public function testSendEmail()
+    {
         $inputParams = request()->input();
         $code = $inputParams['action'];
         $testEmail = $inputParams['testEmail'];
@@ -94,7 +99,7 @@ class ThirdRespController extends BaseThirdController {
             //已下单
             $orderId = Order::query()->orderBy('id', 'asc')->value('id');
             $res = ($sendEmailController)->payment($orderId);
-        }else {
+        } else {
             // 其它
             $id = ContactUs::query()->orderBy('id', 'asc')->value("id");
             $res = ($sendEmailController)->Message($id, $code);
@@ -102,7 +107,8 @@ class ThirdRespController extends BaseThirdController {
         ReturnJson($res);
     }
 
-    public function syncRedisVal() {
+    public function syncRedisVal()
+    {
         $inputParams = request()->input();
         $key = $inputParams['key'];
         $val = $inputParams['val'];
@@ -118,24 +124,25 @@ class ThirdRespController extends BaseThirdController {
         ReturnJson(true, '请求成功');
     }
 
-    public function clearBan() {
+    public function clearBan()
+    {
         $inputParams = request()->input();
         $type = $inputParams['type'];
         $key = $inputParams['key'];
         if ($type == 1) {
             //清除IP封禁
-            $cache_prefix_key = env('APP_NAME').'_rate_limit:';
+            $cache_prefix_key = env('APP_NAME') . '_rate_limit:';
         } elseif ($type == 2) {
             //清除UA封禁
-            $cache_prefix_key = env('APP_NAME').'_rate_ua_limit:';
+            $cache_prefix_key = env('APP_NAME') . '_rate_ua_limit:';
         }
         if (empty($cache_prefix_key)) {
             ReturnJson(false, '请求失败');
         }
-        $reqKey = $cache_prefix_key.$key;
+        $reqKey = $cache_prefix_key . $key;
         //清除缓存
         // 删除多个键
-        $keysToDelete = Redis::keys($reqKey."*");
+        $keysToDelete = Redis::keys($reqKey . "*");
         //\Log::error('$keysToDelete:'.json_encode([$keysToDelete]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
         if (!empty($keysToDelete)) {
             Redis::del($keysToDelete);
@@ -147,12 +154,12 @@ class ThirdRespController extends BaseThirdController {
     {
         try {
             $params = $request->all();
-            $startTimestamp = $params['startTimestamp']?? 0;
+            $startTimestamp = $params['startTimestamp'] ?? 0;
             $num = $params['num'] ?? 100;
-            $startProductId = $params['startProductId']??null;
+            $startProductId = $params['startProductId'] ?? null;
 
             // 行业数据
-            $categoryData = ProductsCategory::select(['id','link'])->get()->toArray();
+            $categoryData = ProductsCategory::select(['id', 'link'])->get()?->toArray() ?? [];
             $categoryData = array_column($categoryData, 'link', 'id');
 
 
@@ -164,13 +171,13 @@ class ThirdRespController extends BaseThirdController {
             // 使用时间戳并且使用固定数量可能导致获取不完整，因此加入标记的报告id多查询一次
             $lastproductData = [];
             if (!empty($startProductId)) {
-                $lastbaseQuery = clone($baseQuery);
+                $lastbaseQuery = clone ($baseQuery);
                 $lastbaseQuery->where(function ($query) use ($startTimestamp) {
                     $query->Where('updated_at', $startTimestamp); // 等于
                 })
-                ->where('id','>', $startProductId);
-                $lastproductData = $lastbaseQuery->get()->toArray();
-                if(!$lastproductData){
+                    ->where('id', '>', $startProductId);
+                $lastproductData = $lastbaseQuery->get()?->toArray() ?? [];
+                if (!$lastproductData) {
                     $lastproductData = [];
                 }
                 // if($num - count($lastproductData)>0){
@@ -184,7 +191,7 @@ class ThirdRespController extends BaseThirdController {
             $baseQuery->where(function ($query) use ($startTimestamp) {
                 $query->Where('updated_at', '>', $startTimestamp); // 大于
             });
-            $productData = $baseQuery->limit($num)->get()->toArray() ?? [];
+            $productData = $baseQuery->limit($num)->get()?->toArray() ?? [];
             $productData = array_merge($lastproductData, $productData);
 
             $productNameArray = [];
@@ -202,12 +209,12 @@ class ThirdRespController extends BaseThirdController {
                             'overview'
                         ])
                         ->where('product_id', $product['id'])
-                        ->first()->toArray();
+                        ->first()?->toArray() ?? [];
                     $productData[$key] = array_merge($product, $productDescription ?? []);
                     $productNameArray[] = $product['name'];
                     $productData[$key]['category_link'] = $categoryData[$product['category_id']] ?? 0;
                 }
-            } 
+            }
             return ['code' => 200, 'data' => $productData];
 
             // ReturnJson(true, '', $productData);
