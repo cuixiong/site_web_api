@@ -11,6 +11,7 @@ use App\Http\Controllers\Pay\Wechatpay;
 use App\Http\Requests\OrderRequest;
 use App\Models\City;
 use App\Models\Common;
+use App\Models\Country;
 use App\Models\Coupon;
 use App\Models\CouponUser;
 use App\Models\CurrencyConfig;
@@ -70,12 +71,12 @@ class OrderController extends Controller {
                     ReturnJson(false, '这张优惠券已被你使用过了');
                 }
                 $data = [
-                    'id'        => $coupon->id,
-                    'type'      => $coupon->type,
-                    'value'     => $coupon->value,
-                    'email'     => $email,
-                    'day_begin' => date('Y.m.d', $coupon->time_begin),
-                    'day_end'   => date('Y.m.d', $coupon->time_end),
+                    'id'              => $coupon->id,
+                    'type'            => $coupon->type,
+                    'value'           => $coupon->value,
+                    'email'           => $email,
+                    'day_begin'       => date('Y.m.d', $coupon->time_begin),
+                    'day_end'         => date('Y.m.d', $coupon->time_end),
                     'day_begin_year'  => date('Y', $coupon->time_begin),
                     'day_begin_month' => date('m', $coupon->time_begin),
                     'day_begin_day'   => date('d', $coupon->time_begin),
@@ -175,15 +176,16 @@ class OrderController extends Controller {
             //Cache::store('file')->put('$tempOrderId', [$order->id, $order->order_number], 600); // 十分钟过期
             //拉起支付
             // $pay = PayFactory::create($order->pay_type);
-            if($order->pay_code == PayConst::PAY_TYPE_BANK) {
+            if ($order->pay_code == PayConst::PAY_TYPE_BANK) {
                 // 银行转账不需要在线支付
                 $returnData = [
-                    'order_id' => $order->id,
-                    'pay_type_name' => ModelsPay::query()->select(['name'])->where(['code' => $order->pay_code])->value('name'),
+                    'order_id'      => $order->id,
+                    'pay_type_name' => ModelsPay::query()->select(['name'])->where(['code' => $order->pay_code])->value(
+                        'name'
+                    ),
                 ];
                 ReturnJson(true, 'success', $returnData);
             }
-
             $pay = PayFactory::create($order->pay_code);
             $isMobile = isMobile() ? Pay::OPTION_ENABLE : Pay::OPTION_DISENABLE;
             $pay->setOption(Pay::KEY_IS_MOBILE, $isMobile);
@@ -225,7 +227,7 @@ class OrderController extends Controller {
 //            ReturnJson(false, '未知错误');
 //        } else {
         // $pay = PayFactory::create($order->pay_type);
-        if($order->pay_code == PayConst::PAY_TYPE_BANK) {
+        if ($order->pay_code == PayConst::PAY_TYPE_BANK) {
             // 银行转账不需要在线支付
             ReturnJson(false, '銀行振込はオンライン決済に対応していません。');
         }
@@ -274,12 +276,11 @@ class OrderController extends Controller {
     /**
      * 订单明细
      */
-    public function Details(Request $request)
-    {
+    public function Details(Request $request) {
         $orderId = $request->order_id;
         $order = Order::query()
-            ->where(['id' => $orderId])
-            ->first();
+                      ->where(['id' => $orderId])
+                      ->first();
         if (!$order) {
             ReturnJson(false, '订单不存在');
         }
@@ -293,10 +294,9 @@ class OrderController extends Controller {
             // 未付款
             ReturnJson(true, '', ['is_pay' => $orderStatus, 'order_number' => $orderNumber]);
         }
-        
-            // 需要额外查询多种货币的价格（日文）
-            $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])->get()?->toArray() ?? [];
-
+        // 需要额外查询多种货币的价格（日文）
+        $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])->get()
+                                      ?->toArray() ?? [];
         $payInfo = \App\Models\Pay::query()->where('code', $order['pay_code'])->first();
         $exchange_rate = 1;
         if (!empty($payInfo)) {
@@ -306,21 +306,21 @@ class OrderController extends Controller {
             }
         }
         $orderGoods = OrderGoods::from('order_goods')->select([
-            'product.name',
-            'language.name as language',
-            'edition.name as edition',
-            'order_goods.goods_number',
-            'order_goods.goods_original_price',
-            'order_goods.goods_present_price',
-            'order_goods.goods_id as product_id',
-            'product.url',
-            // 'order_goods.price_edition',
-        ])
-            ->leftJoin('product_routine as product', 'product.id', 'order_goods.goods_id')
-            ->leftJoin('price_edition_values as edition', 'edition.id', 'order_goods.price_edition')
-            ->leftJoin('languages as language', 'language.id', 'edition.language_id')
-            ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
-            ->get()->toArray();
+                                                                  'product.name',
+                                                                  'language.name as language',
+                                                                  'edition.name as edition',
+                                                                  'order_goods.goods_number',
+                                                                  'order_goods.goods_original_price',
+                                                                  'order_goods.goods_present_price',
+                                                                  'order_goods.goods_id as product_id',
+                                                                  'product.url',
+                                                                  // 'order_goods.price_edition',
+                                                              ])
+                                ->leftJoin('product_routine as product', 'product.id', 'order_goods.goods_id')
+                                ->leftJoin('price_edition_values as edition', 'edition.id', 'order_goods.price_edition')
+                                ->leftJoin('languages as language', 'language.id', 'edition.language_id')
+                                ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
+                                ->get()->toArray();
         // if (!empty($order['user_id'])) {
         //     $user = User::select(['username', 'email', 'phone', 'company', 'province_id', 'city_id', 'address'])->where(
         //         'id',
@@ -328,30 +328,33 @@ class OrderController extends Controller {
         //     )->first();
         $province = City::where('id', $order['province_id'])->value('name');
         $city = City::where('id', $order['city_id'])->value('name');
+        $country_name = Country::where('id', $order['country_id'])->value('name');
         $_user = [
-            'name'       => $order['username'] ?? '',
-            'email'      => $order['email'] ?? '',
-            'phone'      => $order['phone'] ?? '',
-            'country_id' => $order['country_id'] ?? 0,
-            'company'    => $order['company'] ?? '',
-            'department' => $order['department'] ?? '',
-            'province'   => $province,
-            'city_id'    => $city,
-            'address'    => $order['address'],
+            'name'         => $order['username'] ?? '',
+            'email'        => $order['email'] ?? '',
+            'phone'        => $order['phone'] ?? '',
+            'country_id'   => $order['country_id'] ?? 0,
+            'country_name' => $country_name ?? '',
+            'company'      => $order['company'] ?? '',
+            'department'   => $order['department'] ?? '',
+            'province'     => $province,
+            'city_id'      => $city,
+            'address'      => $order['address'],
         ];
         // }
         //$discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);
         $sum_quantity = 0;
         foreach ($orderGoods as $key => $forOrderGoods) {
             $sum_quantity += $forOrderGoods['goods_number'];
-
             if ($currencyData && count($currencyData)) {
                 foreach ($currencyData as $currencyItem) {
-                    $currencyKeyOriginalPrice = strtolower($currencyItem['code']) . '_original_price';
-                    $orderGoods[$key][$currencyKeyOriginalPrice] = $forOrderGoods['goods_original_price'] * $currencyItem['exchange_rate'];
-                    $currencyKeyPresentPrice = strtolower($currencyItem['code']) . '_present_price';
-                    $orderGoods[$key][$currencyKeyPresentPrice] = $forOrderGoods['goods_present_price'] * $currencyItem['exchange_rate'];
-                    $currencyRateKey = strtolower($currencyItem['code']) . '_rate';
+                    $currencyKeyOriginalPrice = strtolower($currencyItem['code']).'_original_price';
+                    $orderGoods[$key][$currencyKeyOriginalPrice] = $forOrderGoods['goods_original_price']
+                                                                   * $currencyItem['exchange_rate'];
+                    $currencyKeyPresentPrice = strtolower($currencyItem['code']).'_present_price';
+                    $orderGoods[$key][$currencyKeyPresentPrice] = $forOrderGoods['goods_present_price']
+                                                                  * $currencyItem['exchange_rate'];
+                    $currencyRateKey = strtolower($currencyItem['code']).'_rate';
                     $orderGoods[$key][$currencyRateKey] = $currencyItem['exchange_rate'];
                 }
             }
@@ -378,16 +381,15 @@ class OrderController extends Controller {
             'user'   => $_user,           // 用户的初始账户信息
             'is_pay' => $orderStatus,
         ];
-        
         if ($currencyData && count($currencyData)) {
             foreach ($currencyData as $currencyItem) {
-                $currencyKeyOrderAmount = strtolower($currencyItem['code']) . '_order_amount';
+                $currencyKeyOrderAmount = strtolower($currencyItem['code']).'_order_amount';
                 $data['order'][$currencyKeyOrderAmount] = $order['order_amount'] * $currencyItem['exchange_rate'];
-                $currencyKeyTax = strtolower($currencyItem['code']) . '_tax_rate';
+                $currencyKeyTax = strtolower($currencyItem['code']).'_tax_rate';
                 $data['order'][$currencyKeyTax] = $data['order'][$currencyKeyOrderAmount] * $currencyItem['tax_rate'];
-                $currencyKeyActuallyPaid = strtolower($currencyItem['code']) . '_actually_paid';
+                $currencyKeyActuallyPaid = strtolower($currencyItem['code']).'_actually_paid';
                 $data['order'][$currencyKeyActuallyPaid] = $order['actually_paid'] * $currencyItem['exchange_rate'];
-                $currencyRateKey = strtolower($currencyItem['code']) . '_rate';
+                $currencyRateKey = strtolower($currencyItem['code']).'_rate';
                 $data['order'][$currencyRateKey] = $currencyItem['exchange_rate'];
             }
         }
@@ -719,7 +721,7 @@ class OrderController extends Controller {
         $username = $request->username;
         $phone = $request->phone;
         $company = $request->company;
-        $department = isset($request->department) && !empty($request->department) ? $request->department: ''; // 日语需要部门
+        $department = isset($request->department) && !empty($request->department) ? $request->department : ''; // 日语需要部门
         $province_id = $request->province_id ?? 0;
         $address = $request->address ?? '';
         $city_id = $request->city_id ?? 0;
