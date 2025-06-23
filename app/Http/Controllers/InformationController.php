@@ -93,17 +93,22 @@ class InformationController extends Controller {
      * 热门资讯详情
      */
     public function View(Request $request) {
-        $id = $request->id;
-        $url = $request->url;
+        $input = $request->input();
+        $id = $input['id'] ?? '';
+        $url = $input['url'] ?? '';
         if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = Information::select(['title', 'upload_at', 'hits', 'tags', 'content', 'keywords', 'description' , 'category_id'])
+        $data = Information::select(['title', 'upload_at', 'url', 'hits', 'tags', 'content', 'keywords', 'description' , 'category_id'])
                            ->where(['id' => $id, 'status' => 1])
                            ->first();
         if ($data) {
             if(!empty($data->upload_at ) && $data->upload_at > time()){
                 ReturnJson(false, '新闻未发布，请稍后查看！');
+            }
+
+            if($data->url != $url){
+                ReturnJson(2, '参数错误2');
             }
 
             $category = ProductsCategory::select(['id', 'name', 'link'])->where(

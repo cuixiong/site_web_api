@@ -109,8 +109,9 @@ class NewsController extends Controller {
      * 行业新闻详情
      */
     public function View(Request $request) {
-        $id = $request->id;
-        $url = $request->url;
+        $input = $request->input();
+        $id = $input['id'] ?? '';
+        $url = $input['url'] ?? '';
         if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }
@@ -121,6 +122,11 @@ class NewsController extends Controller {
             if (!empty($data->upload_at) && $data->upload_at > time()) {
                 ReturnJson(false, '新闻未发布，请稍后查看！');
             }
+
+            if($data->url != $url){
+                ReturnJson(2, '参数错误2');
+            }
+
             $category = ProductsCategory::select(['id', 'name', 'link'])->where(
                 'id',
                 $data['category_id']
