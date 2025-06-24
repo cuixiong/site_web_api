@@ -247,9 +247,9 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::any('notify/airwallex', [\App\Http\Controllers\Pay\Notify::class, 'airwallexNotify'])->name(
         'airwallex支付回调'
     );
-    // MGO Payment 支付回调
-    Route::any('notify/mgo-payment', [\App\Http\Controllers\Pay\Notify::class, 'MgoPaymentNotify'])->name(
-        'MGO Payment 支付回调'
+    // GMO Payment 支付回调
+    Route::any('notify/gmo-payment', [\App\Http\Controllers\Pay\Notify::class, 'GmoPaymentNotify'])->name(
+        'GMO Payment 支付回调'
     );
     // News控制器
     Route::prefix('news')->group(function () {

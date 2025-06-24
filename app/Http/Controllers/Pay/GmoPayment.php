@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Pay;
 
 use App\Models\Pay as Payment;
 
-class MgoPayment extends Pay
+class GmoPayment extends Pay
 {
     public $shopId   = '';  // shop店铺id，不是site站点id
     public $shopPwd  = '';  // shop密码
@@ -13,10 +13,10 @@ class MgoPayment extends Pay
 
     public function __construct()
     {
-        $this->shopId = env('mgo_shop_id');
-        $this->shopPwd = env('mgo_shop_password');
-        $this->configId = env('mgo_pay_template_name');
-        $this->gatewayUrl = env('mgo_gateway_url');
+        $this->shopId = env('gmo_shop_id');
+        $this->shopPwd = env('gmo_shop_password');
+        $this->configId = env('gmo_pay_template_name');
+        $this->gatewayUrl = env('gmo_gateway_url');
     }
 
     public function createFormdata($order)
