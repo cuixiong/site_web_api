@@ -1,21 +1,8 @@
 <?php
 
-/**
- * AirwallexPay.php UTF-8
- * 云上支付逻辑
- *
- * @date    : 2024/10/24 15:20 下午
- *
- * @license 这不是一个自由软件，未经授权不许任何使用和传播。
- * @author  : cuizhixiong <cuizhixiong@qyresearch.com>
- * @version : 1.0
- */
-
 namespace App\Http\Controllers\Pay;
 
-
-use App\Models\Order;
-use App\Models\Pay;
+use App\Models\Pay as Payment;
 
 class MgoPayment extends Pay
 {
@@ -39,8 +26,8 @@ class MgoPayment extends Pay
     public function do($order, $options = [])
     {
 
-        // 日元支付获取汇率
-        $paymentModel = Pay::query()->where("code", $order->pay_code)->first();
+        // 日元支付获取汇率 Pay类名与父类冲突
+        $paymentModel = Payment::query()->where("code", $order->pay_code)->first();
         $rate = $paymentModel->pay_exchange_rate;
         // $tax = $paymentModel->pay_tax_rate;
 
@@ -103,8 +90,7 @@ class MgoPayment extends Pay
     public function notify()
     {
         try {
-            $payload = @file_get_contents('php://input');
-            $reqData = json_decode($payload, true);
+            $reqData = $_POST;
             \Log::error('返回结果数据$reqData:' . json_encode([$reqData]) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
 
             // 校验
