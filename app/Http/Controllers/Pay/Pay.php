@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pay;
 
 use App\Http\Controllers\Common\SendEmailController;
 use App\Models\Order;
+use App\Models\Pay as ModelsPay;
 use App\Services\OrderService;
 
 abstract class Pay implements PayInterface {
@@ -193,8 +194,16 @@ abstract class Pay implements PayInterface {
 
             return false;
         }
+        
+        // 日元支付获取汇率
+        $rate = 1;
+        $paymentModel = ModelsPay::query()->where("code", $order['pay_code'])->first();
+        if($paymentModel && !empty($paymentModel->pay_exchange_rate)){
+            $rate = $paymentModel->pay_exchange_rate;
+        }
+
         // 检查支付的金额是否相符
-        if ($order['actually_paid'] != $total_amount) { // 网站付款时的币种的订单总金额
+        if ($order['actually_paid'] * $rate != $total_amount) { // 网站付款时的币种的订单总金额
             $paymentMsg .= 'fail amount is wrong'.PHP_EOL;
             file_put_contents($logName, $paymentMsg, FILE_APPEND);
 

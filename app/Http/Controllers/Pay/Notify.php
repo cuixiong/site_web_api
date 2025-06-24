@@ -141,5 +141,17 @@ class Notify extends Controller {
             header('HTTP/1.1 403');die('check error');
         }
     }
+    
+
+    public function MgoPaymentNotify(Request $request) {
+        \Log::error('返回请求头数据:'.json_encode([$request->header()]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+        \Log::error('返回结果数据:'.json_encode($request->input()).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+        $res = (new MgoPayment())->notify();
+        if($res){
+            return 'ok';
+        }else{
+            header('HTTP/1.1 403');die('check error');
+        }
+    }
 
 }

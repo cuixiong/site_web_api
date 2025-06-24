@@ -59,6 +59,9 @@ class PayFactory extends Controller
             case PayConst::PAY_TYPE_AIRWALLEXPAY;
                 $pay = new AirwallexPay();
                 break;
+            case PayConst::PAY_TYPE_MGO_PAYMENT;
+                $pay = new MgoPayment();
+                break;
         }
 
         return $pay;
