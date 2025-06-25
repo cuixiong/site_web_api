@@ -508,6 +508,7 @@ class CommonController extends Controller {
         }
         $result = Menu::select(
             [
+                'id',
                 'name',
                 'banner_pc',
                 'banner_mobile',
@@ -564,6 +565,7 @@ class CommonController extends Controller {
             )
                 ->where(['parent_id' => $result['id']])
                 ->where(['type' => 4])
+                ->where(['status' => 1])
                 ->orderBy('sort', 'ASC')
                 ->get();
             if ($slideshowFirst && $slideshow) {

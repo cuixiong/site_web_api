@@ -577,6 +577,7 @@ class NewsController extends Controller {
                 }
                 $data[$key]['name'] = $value['name'];
                 $data[$key]['keyword'] = $value['keywords'];
+                $data[$key]['pages'] = $value['pages'];
                 $data[$key]['english_name'] = $value['english_name'];
                 // $data[$key]['description'] = $value['description_seo'];
                 $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
