@@ -792,6 +792,7 @@ class CommonController extends Controller {
             ->orderBy('sort', 'ASC')
             ->get()
             ->toArray();
+            
         foreach ($frontMenus as $key => $frontMenu) {
             $sonMenus = Menu::select([
                 'id',
@@ -808,6 +809,22 @@ class CommonController extends Controller {
                 ->get()
                 ->toArray();
             $frontMenus[$key]['menus'] = $sonMenus;
+        }
+        
+        if (checkSiteAccessData(['qycojp'])) {
+            // qy.co.jp 要求数据分两部分，分有子菜单和无子菜单两个数组
+            $newFrontMenus = [
+                'has_son' =>[],
+                'not_has_son' => [],
+            ];
+            foreach ($frontMenus as $key => $frontMenu) {
+                if($frontMenus[$key]['menus'] && count($frontMenus[$key]['menus'])>0){
+                    $newFrontMenus['has_son'][] = $frontMenu;
+                }else{
+                    $newFrontMenus['not_has_son'][] = $frontMenu;
+                }
+            }
+            return $newFrontMenus;
         }
 
         return $frontMenus;
