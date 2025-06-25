@@ -537,6 +537,39 @@ class CommonController extends Controller {
         $result['banner_pc'] = Common::cutoffSiteUploadPathPrefix($result['banner_pc']);
         $result['banner_mobile'] = Common::cutoffSiteUploadPathPrefix($result['banner_mobile']);
 
+
+        // 首页存在轮播图，设定type = 4
+        if (checkSiteAccessData(['qycn', 'qycojp',])) {
+            $slideshowFirst = [[
+                'name' => $result['name'],
+                'banner_pc' => $result['banner_pc'],
+                'banner_1280' => $result['banner_1280'],
+                'banner_mobile' => $result['banner_mobile'],
+                'banner_title' => $result['banner_title'],
+                'banner_short_title' => $result['banner_short_title'],
+                'banner_content' => $result['banner_content'],
+            ]];
+            // 查询是否有轮播图
+            $slideshow = Menu::select(
+                [
+                    'name',
+                    'banner_pc',
+                    'banner_1280',
+                    'banner_mobile',
+                    'banner_title',
+                    'banner_short_title',
+                    'banner_content',
+                    'redirect_url',
+                ]
+            )
+                ->where(['parent_id' => $result['id']])
+                ->where(['type' => 4])
+                ->orderBy('sort', 'ASC')
+                ->get();
+            if ($slideshowFirst && $slideshow) {
+                $result['slideshow'] = array_values(array_merge($slideshowFirst, $slideshow->toArray()));
+            }
+        }
         return $result;
     }
 
