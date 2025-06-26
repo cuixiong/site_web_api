@@ -17,9 +17,10 @@ class OrderGoods extends Base {
             'name'           => '',
             'thumb'          => '',
             'published_date' => '',
+            'url'            => '',
         ];
         $products = Products::query()->where('id', $this->attributes['goods_id'])
-                            ->select('id', 'name', 'thumb', 'category_id', 'published_date')
+                            ->select('id', 'name', 'thumb', 'category_id', 'published_date', 'url')
                             ->first();
         if (!empty($products)) {
             $thumb_img = $products->thumb_img;
@@ -29,7 +30,8 @@ class OrderGoods extends Base {
                 'name'           => $data['name'],
                 'thumb'          => $thumb_img,
                 'published_date' => $data['published_date'],
-                'category_id'  => $data['category_id'],
+                'category_id'    => $data['category_id'],
+                'url'            => $data['url'],
             ];
 
             return $rdata;
