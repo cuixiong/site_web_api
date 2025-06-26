@@ -10,6 +10,7 @@ class GmoPayment extends Pay
     public $shopPwd  = '';  // shop密码
     public $configId  = ''; // 配置模板id
     public $gatewayUrl = '';    // 网关地址
+    public $queryUrl = '';    // 回调查询地址
 
     public function __construct()
     {
@@ -17,6 +18,7 @@ class GmoPayment extends Pay
         $this->shopPwd = env('gmo_shop_password');
         $this->configId = env('gmo_pay_template_name');
         $this->gatewayUrl = env('gmo_gateway_url');
+        $this->queryUrl = env('gmo_query_url');
     }
 
     public function createFormdata($order)
@@ -93,9 +95,6 @@ class GmoPayment extends Pay
             $reqData = $_POST;
             \Log::error('返回结果数据$reqData:' . json_encode([$reqData]) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
 
-            // 校验
-            // 没得校验
-            // 校验结束
 
             //获取单号
             $out_trade_no = $reqData['OrderID'];
@@ -105,7 +104,23 @@ class GmoPayment extends Pay
                 return false;
             }
 
-            $trade_no = $reqData['Amount'];
+            // 校验 查询订单接口
+            $searchParams = [
+                'ShopID' => $this->shopId,
+                'ShopPass' => $this->shopPwd,
+                'OrderID' => $out_trade_no,
+            ];
+            // \Log::error('回调查询1:' . $this->queryUrl.'/payment/SearchTrade.idPass' .json_encode($searchParams). '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
+            $response = $this->curl('GET', $this->queryUrl.'/payment/SearchTrade.idPass', [], $searchParams);
+            // \Log::error('回调查询2:' . json_encode([$response]) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
+            if (strpos($response,'Status=CAPTURE')===false) {
+                \Log::error('回调查询:' . json_encode([$response]) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
+                return false;
+            }
+
+            // 校验结束
+
+            $trade_no = $reqData['TranID'];
             $total_amount = $reqData['Amount'] + $reqData['Tax'];;
             $gmt_payment = strtotime($reqData['TranDate']);
             $dir = storage_path('log') . '/mgo-payment/' . date('Y_m/', time());
@@ -130,5 +145,36 @@ class GmoPayment extends Pay
         }
 
         return false;
+    }
+    
+    protected function curl($method, $url, $headers = [], $params = []) {
+        $headers = array_merge(['Content-Type' => 'application/json'], $headers);
+        $curlHeaders = [];
+        foreach ($headers as $key => $header) {
+            if ('Authorization' === $key) {
+                $curlHeaders[] = "$key: Bearer ".$header;
+            } else {
+                $curlHeaders[] = "$key: ".$header;
+            }
+        }
+        $curl = curl_init();
+        switch ($method) {
+            case "POST":
+                curl_setopt($curl, CURLOPT_POST, 1);
+                $params = json_encode($params);
+                curl_setopt($curl, CURLOPT_POSTFIELDS, $params);
+                break;
+            case "GET":
+                if (count($params) > 0) {
+                    $url = $url.'?'.http_build_query($params);
+                }
+                break;
+        }
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $curlHeaders);
+        $result = curl_exec($curl);
+
+        return $result;
     }
 }

@@ -111,7 +111,7 @@ class CommonController extends Controller {
             $data['cate'] = $cate;
         }
 
-        if (checkSiteAccessData(['yhcn' , 'mmgen'])) {
+        if (checkSiteAccessData(['yhcn' , 'mmgen', 'qycojp'])) {
             // 客户评价
             $data['comment'] = $this->getCustomersComment($request);
             // 办公室
