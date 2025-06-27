@@ -1406,7 +1406,6 @@ class SendEmailController extends Controller {
                 return true;
             }
         }
-        $isQueue = true;
         if (!$isQueue) {
             //让队列执行, 需要放入队列
             $app_name = env('APP_NAME');
