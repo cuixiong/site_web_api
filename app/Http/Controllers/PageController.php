@@ -47,11 +47,9 @@ class PageController extends Controller {
             $year = bcsub(date('Y'), 2022); // 两个任意精度数字的减法
             $content = str_replace('%s', bcadd(15, $year), $content);
         }
-
         if (strpos($content, "{{%c}}") !== false) {
             $content = str_replace('{{%c}}', intval(date('Y')) - 2007, $content);
         }
-
         if ($link == 'about') { // 其中的单页【公司简介】（link值是about）比较特殊：后台此单页富文本编辑器的内容要返回a和b两部分给前端，a和b中间嵌入其它内容。
             $divisionArray = explode('<div id="division"></div>', $content);
             $special = [
@@ -117,9 +115,9 @@ class PageController extends Controller {
         }
         $data = Authority::select(
             ['name as title', 'body as content', 'description', 'id', 'keyword', 'name', 'created_at as time',
-             'big_image as img', 'hits', 'real_hits', 'category_id', 'type' , 'status']
+             'big_image as img', 'hits', 'real_hits', 'category_id', 'type', 'status']
         )->where('id', $id)->first();
-        if(empty($data) || $data->status == 0){
+        if (empty($data) || $data->status == 0) {
             ReturnJson(true, 'data is empty');
         }
         //增加点击次数
@@ -410,7 +408,7 @@ class PageController extends Controller {
             $have_region_id_list = array_column($leaders, 'id');
             $admins = TeamMember::query()
                                 ->where('status', 1)
-                                //->where('region_name', '')
+                //->where('region_name', '')
                                 ->whereNotIn('id', $have_region_id_list)
                                 ->orderBy('sort', 'asc')
                                 ->get()
@@ -418,6 +416,21 @@ class PageController extends Controller {
             $data['leaders'] = $leaders;
             $data['admins'] = $admins;
             ReturnJson(true, '', $data);
+        } elseif (checkSiteAccessData(['giren'])) {
+            $data['top'] = TeamMember::query()
+                                     ->where('status', 1)
+                                     ->where("show_product", 1)
+                                     ->orderBy('sort', 'asc')
+                                     ->get()->toArray();
+            $data['other'] = TeamMember::query()
+                                       ->where('status', 1)
+                                       ->where("show_product", 0)
+                                       ->orderBy('sort', 'asc')
+                                       ->get()->toArray();
+            $data['list'] = TeamMember::query()
+                                      ->where('status', 1)
+                                      ->orderBy('sort', 'asc')
+                                      ->get()->toArray();
         } else {
             $data = TeamMember::select([
                                            'name',
@@ -512,7 +525,7 @@ class PageController extends Controller {
      */
     public function Faqs() {
         try {
-            if (checkSiteAccessData(['mrrs','lpijp'])) {
+            if (checkSiteAccessData(['mrrs', 'lpijp', 'giren'])) {
                 $facateGoryList = FaqCategory::query()->where('status', 1)->orderBy('sort', 'asc')->select(
                     ['id', 'name']
                 )

@@ -608,7 +608,21 @@ class NewsController extends Controller {
                 $data[$key]['description'] = (new ProductDescription(
                     date('Y', strtotime($value['published_date']))
                 ))->where('product_id', $value['id'])->value('description');
-                $data[$key]['description'] = mb_substr($data[$key]['description'], 0, 100, 'UTF-8');
+                //$data[$key]['description'] = mb_substr($data[$key]['description'], 0, 100, 'UTF-8');
+                if(checkSiteAccessData(['mrrs' , 'yhen' ,'qyen', 'mmgen', 'lpien', 'giren'])) {
+                    //取描述第一段 ,  如果没有\n换行符就取一整段
+                    $strIndex = strpos($data[$key]['description'], "\n");
+                    if ($strIndex !== false) {
+                        // 使用 substr() 函数获取第一个段落
+                        $data[$key]['description'] = substr($data[$key]['description'], 0, $strIndex);
+                    }else{
+                        $data[$key]['description'] = mb_substr($data[$key]['description'], 0, 100, 'UTF-8');
+                    }
+                }else{
+                    $data[$key]['description'] = mb_substr($data[$key]['description'], 0, 100, 'UTF-8');
+                }
+
+
                 // 这里的代码可以复用 开始
                 $prices = [];
                 // 计算报告价格

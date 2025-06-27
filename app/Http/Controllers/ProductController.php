@@ -170,7 +170,7 @@ class ProductController extends Controller {
                     $description = (new ProductDescription($suffix))->where('product_id', $value['id'])->value(
                         'description'
                     );
-                    if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen' ,'giren'])) {
+                    if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'giren'])) {
                         $strIndex = strpos($description, "\n");
                         if ($strIndex !== false) {
                             // 使用 substr() 函数获取第一个段落
@@ -201,7 +201,7 @@ class ProductController extends Controller {
                     $products[] = $value;
                 }
             }
-            if (checkSiteAccessData(['tycn', 'qyen' , 'giren'])) {
+            if (checkSiteAccessData(['tycn', 'qyen', 'giren'])) {
                 $productCagoryId = $this->GetProductCateList($keyword, 0);
                 $productCagory = $this->getProductCagory($productCagoryId);
             } else {
@@ -347,7 +347,7 @@ class ProductController extends Controller {
         )->first();
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
         if (!empty($product) && $product->published_date->timestamp < time()) {
-            if($url != $product->url){
+            if ($url != $product->url) {
                 ReturnJson(2, '参数错误！', []);
             }
             // 浏览数+1
@@ -409,13 +409,11 @@ class ProductController extends Controller {
                     "name"
                 );
             }
-
             $product_desc['year'] = date('Y', strtotime($product_desc['published_date']));
             $product_desc['month'] = date('m', strtotime($product_desc['published_date']));
             $product_desc['month_en'] = date('M', strtotime($product_desc['published_date']));
             $product_desc['day'] = date('d', strtotime($product_desc['published_date']));
             //返回打折信息
-
             $time = time();
             //判断当前报告是否在优惠时间内
             if ($product_desc['discount_time_begin'] <= $time && $product_desc['discount_time_end'] >= $time) {
@@ -636,8 +634,6 @@ class ProductController extends Controller {
                 $product_desc['application'] = array_filter($product_desc['application'], function ($value) {
                     return $value !== "";
                 });
-
-
                 //三个新字段
                 $product_desc['product_class'] = $product_desc['product_class'] ? explode(
                     "\n", str_replace(
@@ -666,7 +662,6 @@ class ProductController extends Controller {
                 $product_desc['division'] = array_filter($product_desc['division'], function ($value) {
                     return $value !== "";
                 });
-
                 //详情
                 $product_desc['seo_description'] = $this->strDescription($description['description']);
                 // 文本、样式替换
@@ -700,8 +695,8 @@ class ProductController extends Controller {
                 $product_desc['tables_and_figures'] = $tablesAndFiguresText;
                 $description['companies_mentioned'] = str_replace(
                     "\t", '', str_replace(
-                    "", '', str_replace("\r\n", "\n", $description['companies_mentioned'])
-                )
+                            "", '', str_replace("\r\n", "\n", $description['companies_mentioned'])
+                        )
                 );
                 if ($description['companies_mentioned']) {
                     $description['companies_mentioned'] = explode("\n", $description['companies_mentioned']);
@@ -1436,7 +1431,20 @@ class ProductController extends Controller {
                 $data[$index]['description'] = (new ProductDescription($suffix))->where('product_id', $product['id'])
                                                                                 ->value('description');
                 $data[$index]['description'] = $data[$index]['description'] ? $data[$index]['description'] : '';
-                $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
+
+                if(checkSiteAccessData(['mrrs' , 'yhen' ,'qyen', 'mmgen', 'lpien', 'giren'])) {
+                    //取描述第一段 ,  如果没有\n换行符就取一整段
+                    $strIndex = strpos($data[$index]['description'], "\n");
+                    if ($strIndex !== false) {
+                        // 使用 substr() 函数获取第一个段落
+                        $data[$index]['description'] = substr($data[$index]['description'], 0, $strIndex);
+                    } else {
+                        $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
+                    }
+                }else{
+                    $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
+                }
+
                 $data[$index]['id'] = $product['id'];
                 $data[$index]['url'] = $product['url'];
                 $data[$index]['category_name'] = $product['category_name'];
@@ -1864,7 +1872,6 @@ class ProductController extends Controller {
         if (empty($product_id)) {
             ReturnJson(false, '产品ID不允许为空！', []);
         }
-
         $product = Products::where(['id' => $product_id, 'status' => 1])->first();
         if (!empty($product) && $product->published_date->timestamp < time()) {
             $time = time();
@@ -1879,14 +1886,12 @@ class ProductController extends Controller {
                 $product['discount_time_begin'] = null;
                 $product['discount_time_end'] = null;
             }
-
             $product['thumb'] = $product->getThumbImgAttribute();
             if (empty($product['thumb'])) {
                 // 若报告图片为空，则使用系统设置的默认报告高清图
                 $defaultImg = SystemValue::where('key', 'default_report_high_img')->value('value');
                 $product['thumb'] = !empty($defaultImg) ? $defaultImg : '';
             }
-
             // 需要额外查询多种货币的价格（日文）
             $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])
                                           ->get()?->toArray() ?? [];
@@ -1904,14 +1909,10 @@ class ProductController extends Controller {
                     }
                 }
             }
-            $product['category'] = ProductsCategory::query()->where("id" , $product['category_id'])->value("name");
-
-
+            $product['category'] = ProductsCategory::query()->where("id", $product['category_id'])->value("name");
             ReturnJson(true, '', $product);
-        }else{
+        } else {
             ReturnJson(false, '产品不存在或未发布！', []);
         }
-
     }
-
 }
