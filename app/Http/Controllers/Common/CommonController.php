@@ -10,6 +10,7 @@ use App\Models\City;
 use App\Models\Comment;
 use App\Models\Common;
 use App\Models\Country;
+use App\Models\CurrencyConfig;
 use App\Models\DictionaryValue;
 use App\Models\Languages;
 use App\Models\LanguageWebsite;
@@ -139,6 +140,35 @@ class CommonController extends Controller {
                 ->get()->toArray();
         }
 
+        // qycojp 多处需要显示汇率
+        if (checkSiteAccessData(['qycojp'])) {
+            $data['rate'] = [];
+            $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])
+                                          ->get()?->toArray() ?? [];
+            if ($currencyData && count($currencyData) > 0) {
+                // 默认版本的多种货币的价格
+                if ($currencyData && count($currencyData)) {
+                    foreach ($currencyData as $currencyItem) {
+                        $currencyRateKey = strtolower($currencyItem['code']).'_rate';
+                        $data['rate'][$currencyRateKey] = $currencyItem['exchange_rate'];
+                    }
+                }
+            }
+        }
+        // 留言咨询种类
+        if (checkSiteAccessData(['qycojp'])) {
+            
+            $messageConsultTypeKey = 'message_consult_type';
+            $messageConsultTypeSetId = System::select(['id'])
+                ->where('status', 1)
+                ->where('alias', $messageConsultTypeKey)
+                ->get()
+                ->value('id');
+            $data['message_consult_type'] = SystemValue::where('parent_id', $messageConsultTypeSetId)
+                ->where('hidden', 1)
+                ->select(['name', 'value'])
+                ->get()?->toArray()??[];
+        }
 
         ReturnJson(true, '', $data);
     }

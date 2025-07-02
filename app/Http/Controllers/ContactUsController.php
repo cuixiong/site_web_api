@@ -21,14 +21,45 @@ class ContactUsController extends Controller {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             ReturnJson(false, '邮箱格式不正确');
         }
-        $product_id = $params['product_id'] ?? 0;
+
+        $productId = $params['product_id'];
+        $otherProductIds = []; // 新加变量防止影响其它站点
+        // 多样本申请,传递的product_id是数组
+        if(is_array($productId)){
+            if(count($productId) > 0){
+                $otherProductIds = $productId;
+                unset($otherProductIds[0]);
+                $otherProductIds = array_values($otherProductIds);
+            }
+            $productId = isset($productId[0]) && !empty($productId[0]) ? $productId[0] : 0;
+        }else{
+            $productId = isset($productId) && !empty($productId) ? $productId : 0;
+        }
+
+        $priceEdition = $params['price_edition'];
+        $otherPriceEdition = [];
+        // 多样本申请,传递的 price_edition 是数组
+        if(is_array($priceEdition)){
+            if(count($priceEdition) > 0){
+                $otherPriceEdition = $priceEdition;
+                unset($otherPriceEdition[0]);
+                $otherPriceEdition = array_values($otherPriceEdition);
+            }
+            $priceEdition = isset($priceEdition[0]) && !empty($priceEdition[0]) ? $priceEdition[0] : 0;
+        }else{
+            $priceEdition = isset($priceEdition) && !empty($priceEdition) ? $priceEdition : 0;
+        }
+
         $appName = env('APP_NAME', '');
-        currentLimit($request, 60, $appName, $email.$product_id);
+        currentLimit($request, 60, $appName, $email . $productId);
+
         $sceneCode = $params['code'] ?? '';
         $category_id = MessageCategory::where('code', $sceneCode)->value('id');
+
+
         $model = new ContactUs();
         $model->name = $params['name'] ?? '';
-        $model->product_name = !empty($params['product_name']) ? $params['product_name']: '';
+        $model->product_name = !empty($params['product_name']) ? $params['product_name'] : '';
         $model->email = $email;
         $model->company = $params['company'] ?? '';
         if (!empty($params['buy_time'])) {
@@ -43,29 +74,47 @@ class ContactUsController extends Controller {
         $model->category_id = $category_id ?? 0;
         $model->phone = $params['phone'] ?? '';
         $model->content = $params['content'] ?? '';
-        $model->product_id = $product_id;
-        $model->price_edition = $params['price_edition'] ?? 0;
         $model->language_version = $params['language'] ?? 0;
         $model->address = $params['address'] ?? '';
         $model->channel = $params['channel'] ?? 0;
         $model->channel_name = $params['channel_name'] ?? '';
         $model->department = $params['department'] ?? '';
-        if ($model->save()) {
-            // 根据code发送对应场景
-            $sceneCode = $params['code'] ?? '';
-            if ($sceneCode == 'productSample') {
-                (new SendEmailController)->productSample($model->id);
-            } elseif ($sceneCode == 'customized') {
-                (new SendEmailController)->customized($model->id);
-            } elseif ($sceneCode == 'contactUs') {
-                (new SendEmailController)->contactUs($model->id);
-            } else {
-                (new SendEmailController)->sendMessageEmail($model->id, $sceneCode);
-            }
-            ReturnJson(true, '', $model);
-        } else {
+        $model->consult_type = $params['consult_type'] ?? 0;
+
+        $copyModel = clone $model;
+
+        $model->product_id = $productId;
+        $model->price_edition = $priceEdition;
+        if (!$model->save()) {
             ReturnJson(false, $model->getModelError());
         }
+        // 
+        $saveIds = [];
+        if(count($otherProductIds)>0){
+            foreach ($otherProductIds as $key => $otherProductId) {
+                $tempModel = clone $copyModel;
+                $tempModel->product_id = $otherProductId;
+                $tempModel->price_edition = $otherPriceEdition[$key] ?? 0;
+                if (!$tempModel->save()) {
+                    ReturnJson(false, $tempModel->getModelError());
+                }else{
+                    $saveIds[] = $tempModel->id;
+                }
+            }
+        }
+
+        // 根据code发送对应场景
+        $sceneCode = $params['code'] ?? '';
+        if ($sceneCode == 'productSample') {
+            (new SendEmailController)->productSample($model->id);
+        } elseif ($sceneCode == 'customized') {
+            (new SendEmailController)->customized($model->id);
+        } elseif ($sceneCode == 'contactUs') {
+            (new SendEmailController)->contactUs($model->id);
+        } else {
+            (new SendEmailController)->sendMessageEmail($model->id, $sceneCode, $saveIds);
+        }
+        ReturnJson(true, '', $model);
     }
 
     // 联系我们模块字典

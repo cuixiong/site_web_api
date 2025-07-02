@@ -135,6 +135,7 @@ class ProductController extends Controller {
                     }
                     $value['pages'] = $productsData['pages'];
                     $value['thumb'] = $productsData['thumb'];
+                    $value['tables'] = $productsData['tables'];
                     $value['discount'] = $productsData['discount'];
                     $value['discount_amount'] = $productsData['discount_amount'];
                     $value['discount_type'] = $productsData['discount_type'];
@@ -599,6 +600,35 @@ class ProductController extends Controller {
                 $product_id,
                 $relevant_products_size
             );
+            
+            if (checkSiteAccessData(['qycojp'])) {
+                $descriptionText = trim($description['description']);
+                $product_desc['description_array'] = $this->spiltDescription_cojp($descriptionText);
+                $descriptionEnText = trim($description['description_en']);
+                $product_desc['description_en_array'] = $this->spiltDescription_cojp($descriptionEnText);
+                
+                //该报告是否是最新年份、如果不是，查询是否有最新年份的报告id
+                $product_desc['isLatestYear'] = true;
+                $product_desc['latestYearID'] = '';
+                $published_date_copy = strtotime($product_desc['published_date']);
+                $currentYearTimestamp = strtotime(date('Y', time()) . '-01-01'); //今年初的时间戳
+                if ($product_desc['keywords'] && $published_date_copy < $currentYearTimestamp) {
+                    $product_desc['latestYearID'] = Products::query()->select(['id'])
+                        ->where('published_date', '>=',  $currentYearTimestamp)
+                        ->where('keywords' ,$product_desc['keywords'])
+                        ->where('id', '<>' , $product_desc['id'])
+                        ->value('id');
+                    if (!empty($product_desc['latestYearID'])) {
+                        $product_desc['isLatestYear'] = false;
+                    } else {
+                        $product_desc['isLatestYear'] = false;
+                        $product_desc['latestYearID'] = '';
+                    }
+                } else {
+                    $product_desc['isLatestYear'] = true;
+                }
+            }
+
             if (checkSiteAccessData(['qyen'])) {
                 $product_desc['future_year'] = $product_desc['year'] + 6;
                 $product_desc['current_year'] = $product_desc['year'] + 0;
@@ -1914,4 +1944,29 @@ class ProductController extends Controller {
 
     }
 
+    public function spiltDescription_cojp($description) {
+        $result = [];
+        if (!empty($description)) {
+            $description = trim($description, "\r\n");
+            $description = trim($description, "\n");
+            $description = trim($description, "\r");
+            $descriptionArray = explode("\n", $description);
+            $result['top'] = [];
+            $result['bottom'] = [];
+
+            foreach ($descriptionArray as $index => $row) {
+                $row = trim($row, "\n");
+                $row = trim($row, "\r");
+                $row = trim($row, "\r\n");
+                if ($index <= 1) {
+                    $result['top'][] = str_replace(chr(194).chr(160), ' ', $row);
+                } else {
+                    $result['bottom'][] = $row;
+                }
+            }
+        }
+
+        return $result;
+    }
+    
 }
