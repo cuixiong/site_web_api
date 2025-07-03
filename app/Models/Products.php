@@ -7,8 +7,7 @@ use App\Services\SphinxService;
 use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Support\Facades\Redis;
 
-class Products extends Base
-{
+class Products extends Base {
     protected $table = 'product_routine';
 
     /**
@@ -16,46 +15,43 @@ class Products extends Base
      *
      * @return mixed
      */
-    public function getThumbImgAttribute()
-    {
+    public function getThumbImgAttribute() {
         if (!empty($this->attributes['thumb'])) {
             return Common::cutoffSiteUploadPathPrefix($this->attributes['thumb']);
         } elseif ($this->attributes['category_id']) {
             $value = ProductsCategory::where('id', $this->attributes['category_id'])->value('thumb');
             if (!empty($value)) {
                 return Common::cutoffSiteUploadPathPrefix($value);
-            } else {
-                return '';
             }
-        } else {
-            return '';
         }
+        // 若报告图片为空，则使用系统设置的默认报告高清图
+        $defaultImg = SystemValue::where('key', 'default_report_high_img')->value('value');
+
+        return !empty($defaultImg) ? $defaultImg : '';
     }
 
     /**
      * 获取缩略图
+     *
      * @param $product
      *
      * @return array|mixed|string|string[]
      */
-    public static function getThumbImgUrl($product)
-    {
+    public static function getThumbImgUrl($product) {
         if (!empty($product['thumb'])) {
             return Common::cutoffSiteUploadPathPrefix($product['thumb']);
         } elseif ($product['category_id']) {
             $value = ProductsCategory::where('id', $product['category_id'])->value('thumb');
             if (!empty($value)) {
                 return Common::cutoffSiteUploadPathPrefix($value);
-            } else {
-                return '';
             }
-        } else {
-            return '';
         }
+        // 若报告图片为空，则使用系统设置的默认报告高清图
+        $defaultImg = SystemValue::where('key', 'default_report_high_img')->value('value');
+        return !empty($defaultImg) ? $defaultImg : '';
     }
 
-    public function getCategotyTextAttribute()
-    {
+    public function getCategotyTextAttribute() {
         $name = '';
         if (!empty($this->attributes['category_id'])) {
             $name = ProductsCategory::where('id', $this->attributes['category_id'])->value('name');
@@ -64,8 +60,7 @@ class Products extends Base
         return $name;
     }
 
-    public function getProShortDescAttribute()
-    {
+    public function getProShortDescAttribute() {
         $description = (new ProductDescription(
             date('Y', $this->attributes['published_date'])
         ))->where('product_id', $this->attributes['id'])->value('description');
@@ -76,8 +71,7 @@ class Products extends Base
         return '';
     }
 
-    public function getPublishedDataAttributes($value)
-    {
+    public function getPublishedDataAttributes($value) {
         return date('Y-m-d', $value);
     }
 
@@ -87,13 +81,12 @@ class Products extends Base
      *
      * @return int
      */
-    public static function getPrice($priceEdition, $goods)
-    {
+    public static function getPrice($priceEdition, $goods) {
         $priceEdition = PriceEditionValues::find($priceEdition);
         $price = 0;
         if (!empty($priceEdition)) {
             $priceRule = $priceEdition['rules'];
-            $price = eval("return " . sprintf($priceRule, $goods['price']) . ";");
+            $price = eval("return ".sprintf($priceRule, $goods['price']).";");
         }
         //        $priceRule = Redis::hget(PriceEditionValues::RedisKey, $priceEdition);
         //        $priceRule = json_decode($priceRule, true);
@@ -105,8 +98,7 @@ class Products extends Base
     /**
      * 获取订单里的每个商品的原价格（不带折扣或带折扣）
      */
-    public static function getPriceBy($price, $goods, $timestamp = null)
-    {
+    public static function getPriceBy($price, $goods, $timestamp = null) {
         if ($timestamp !== null) {
             $timestamp = time();
         }
@@ -161,17 +153,20 @@ class Products extends Base
                         $prices[$index]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
                         $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
                         $prices[$index]['data'][$keyPriceEdition]['sort'] = $priceEdition['sort'];
-                        $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
-                            $priceEdition['rules'],
-                            $price
-                        ) . ";");
-
+                        $prices[$index]['data'][$keyPriceEdition]['price'] = eval(
+                            "return ".sprintf(
+                                $priceEdition['rules'],
+                                $price
+                            ).";"
+                        );
                         // $prices[$index]['data'][$keyPriceEdition]['price'] = $evaluator->execute(sprintf($priceEdition['rules'], $price));
                         // 给每个版本添加多种货币的价格
-                        if($currencyData && count($currencyData)){
+                        if ($currencyData && count($currencyData)) {
                             foreach ($currencyData as $currencyItem) {
                                 $currencyKey = strtolower($currencyItem['code']).'_price';
-                                $prices[$index]['data'][$keyPriceEdition][$currencyKey] = $prices[$index]['data'][$keyPriceEdition]['price'] * $currencyItem['exchange_rate'];
+                                $prices[$index]['data'][$keyPriceEdition][$currencyKey]
+                                    = $prices[$index]['data'][$keyPriceEdition]['price']
+                                      * $currencyItem['exchange_rate'];
                             }
                         }
                     }
@@ -184,9 +179,9 @@ class Products extends Base
         // 这里的代码可以复用 结束
     }
 
-
     /**
      * 获取价格版本
+     *
      * @param array|int $publisherIds
      */
     public static function getPriceEdition(
@@ -199,12 +194,10 @@ class Products extends Base
         $priceEditionList = [];
         $languages = $languages ? $languages : Languages::GetList();
         if ($languages) {
-
             $priceEditionAll = PriceEditions::query()->where("is_deleted", 1)->where("status", 1)->get()->toArray();
             if (!empty($publisherIds) && !is_array($publisherIds)) {
                 $publisherIds = [$publisherIds];
             }
-
             $editionIdList = [];
             foreach ($publisherIds as $publisherId) {
                 foreach ($priceEditionAll as $key => $priceEditionItem) {
@@ -224,18 +217,19 @@ class Products extends Base
             $priceEditionList = [];
             foreach ($editionIdList as $publisherIdKey => $editionIds) {
                 $rData = [];
-                $editionsValues = PriceEditionValues::query()->select("id", "name", "notice", "sort", "is_logistics", "rules", "language_id")
-                ->where("status", 1)
-                ->where("is_deleted", 1)
-                ->whereIn("language_id", $languagesIds)
-                    ->whereIn("edition_id", $editionIds)
-                    ->orderBy("sort", "asc")
-                    ->get()
-                    ->toArray();
+                $editionsValues = PriceEditionValues::query()->select(
+                    "id", "name", "notice", "sort", "is_logistics", "rules", "language_id"
+                )
+                                                    ->where("status", 1)
+                                                    ->where("is_deleted", 1)
+                                                    ->whereIn("language_id", $languagesIds)
+                                                    ->whereIn("edition_id", $editionIds)
+                                                    ->orderBy("sort", "asc")
+                                                    ->get()
+                                                    ->toArray();
                 foreach ($editionsValues as $key => $priceEditionsItem) {
                     $languageId = $priceEditionsItem['language_id'];
                     $languageName = $languagesNames[$languageId];
-
                     if (!isset($rData[$languageId])) {
                         $rData[$languageId] = [];
                         $rData[$languageId]['language'] = '';
@@ -243,12 +237,12 @@ class Products extends Base
                     }
                     $rData[$languageId]['language'] = $languageName;
                     $rData[$languageId]['data'][] = [
-                        'id' => $priceEditionsItem['id'],
-                        'edition' => $priceEditionsItem['name'],
+                        'id'           => $priceEditionsItem['id'],
+                        'edition'      => $priceEditionsItem['name'],
                         'is_logistics' => $priceEditionsItem['is_logistics'],
-                        'notice' => $priceEditionsItem['notice'],
-                        'sort' => $priceEditionsItem['sort'],
-                        'rules' => $priceEditionsItem['rules'],
+                        'notice'       => $priceEditionsItem['notice'],
+                        'sort'         => $priceEditionsItem['sort'],
+                        'rules'        => $priceEditionsItem['rules'],
                     ];
                 }
                 $priceEditionList[$publisherIdKey] = array_values($rData);
@@ -262,53 +256,53 @@ class Products extends Base
     /**
      * 通过价格和getPriceEdition的价格版本进行计算价格
      */
-    public static function countPriceEditionPrice($priceEditions, $price, $currencyData = [])
-    {
+    public static function countPriceEditionPrice($priceEditions, $price, $currencyData = []) {
         foreach ($priceEditions as $index1 => $priceEditionItem) {
             $priceEditionValues = $priceEditionItem['data'];
             foreach ($priceEditionValues as $index2 => $priceEditionValueItem) {
-                $priceEditions[$index1]['data'][$index2]['price'] = eval("return " . sprintf(
-                    $priceEditionValueItem['rules'],
-                    $price
-                ) . ";");
+                $priceEditions[$index1]['data'][$index2]['price'] = eval(
+                    "return ".sprintf(
+                        $priceEditionValueItem['rules'],
+                        $price
+                    ).";"
+                );
                 unset($priceEditions[$index1]['data'][$index2]['rules']);
                 // 给每个版本添加多种货币的价格
-                if($currencyData && count($currencyData)){
+                if ($currencyData && count($currencyData)) {
                     foreach ($currencyData as $currencyItem) {
                         $currencyKey = strtolower($currencyItem['code']).'_price';
-                        $priceEditions[$index1]['data'][$index2][$currencyKey] = $priceEditions[$index1]['data'][$index2]['price'] * $currencyItem['exchange_rate'];
+                        $priceEditions[$index1]['data'][$index2][$currencyKey]
+                            = $priceEditions[$index1]['data'][$index2]['price'] * $currencyItem['exchange_rate'];
                     }
                 }
             }
         }
+
         return $priceEditions;
     }
-
 
     /**
      * 返回相关产品数据-重定向/相关报告
      */
-    public static function GetRelevantProductResult($id, $keyword, $page = 1, $pageSize = 1,  $searchField = 'url', $selectField = '*')
-    {
+    public static function GetRelevantProductResult(
+        $id, $keyword, $page = 1, $pageSize = 1, $searchField = 'url', $selectField = '*'
+    ) {
         try {
             $hidden = SystemValue::where('key', 'sphinx')->value('hidden');
             if ($hidden == 1) {
                 return self::SearchRelevantForSphinx($id, $keyword, $page, $pageSize, $searchField, $selectField);
             } else {
-
                 return self::SearchRelevantForMysql($id, $keyword, $page, $pageSize, $searchField, $selectField);
             }
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
-            \Log::error('应用端查询失败,异常信息为:' . json_encode([$e->getMessage()]));
+            \Log::error('应用端查询失败,异常信息为:'.json_encode([$e->getMessage()]));
             ReturnJson(false, '请求失败,请稍后再试');
             // return [];
         }
     }
 
-
-    public static function SearchRelevantForSphinx($id, $keyword, $page, $pageSize, $searchField, $selectField)
-    {
+    public static function SearchRelevantForSphinx($id, $keyword, $page, $pageSize, $searchField, $selectField) {
         if (empty($id) || empty($keyword)) {
             return [];
         }
@@ -316,13 +310,12 @@ class Products extends Base
         $conn = $sphinxSrevice->getConnection();
         //报告昵称,英文昵称匹配查询
         $query = (new SphinxQL($conn))->select('id')
-            ->from('products_rt')
-            ->orderBy('sort', 'asc')
-            ->orderBy('published_date', 'desc')
-            ->orderBy('id', 'desc');
+                                      ->from('products_rt')
+                                      ->orderBy('sort', 'asc')
+                                      ->orderBy('published_date', 'desc')
+                                      ->orderBy('id', 'desc');
         $query = $query->where('status', '=', 1);
         $query = $query->where("published_date", "<=", time());
-
         // 排除本报告
         $query = $query->where('id', '<>', intval($id));
         // 精确查询
@@ -330,16 +323,13 @@ class Products extends Base
             $val = addslashes($keyword);
             $query->where($searchField, '=', $val);
         }
-
         //查询结果分页
         $offset = ($page - 1) * $pageSize;
         $query->limit($offset, $pageSize);
         // $query->option('max_matches', $offset + $pageSize);
-
         // $query->setSelect($selectField);
         // $result = $query->execute();
         // $products = $result->fetchAllAssoc();
-
         // 因为有些字段sphinx没有，所以sphinx查出id后再去mysql查询
         $query->setSelect('id');
         $result = $query->execute();
@@ -347,23 +337,23 @@ class Products extends Base
         if (!empty($productsIds) && count($productsIds) > 0) {
             $productsIds = array_column($productsIds, 'id');
             $products = Products::select($selectField)
-                ->whereIn("id", $productsIds)
-                ->get()->toArray();
+                                ->whereIn("id", $productsIds)
+                                ->get()->toArray();
         }
+
         //
         return $products ?? [];
     }
 
-    public static function SearchRelevantForMysql($id, $keyword, $page, $pageSize, $searchField, $selectField)
-    {
-
+    public static function SearchRelevantForMysql($id, $keyword, $page, $pageSize, $searchField, $selectField) {
         $products = Products::select($selectField)
-            ->where([$searchField => $keyword, 'status' => 1])
-            ->where("id", "<>", $id)
-            ->limit($pageSize, ($page - 1) * $pageSize)
-            ->orderBy('published_date', 'desc')
-            ->orderBy('id', 'desc')
-            ->get()->toArray();
+                            ->where([$searchField => $keyword, 'status' => 1])
+                            ->where("id", "<>", $id)
+                            ->limit($pageSize, ($page - 1) * $pageSize)
+                            ->orderBy('published_date', 'desc')
+                            ->orderBy('id', 'desc')
+                            ->get()->toArray();
+
         return $products;
     }
 }

@@ -345,6 +345,8 @@ class OrderController extends Controller {
         //$discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);
         $sum_quantity = 0;
         foreach ($orderGoods as $key => $forOrderGoods) {
+            $product = Products::query()->where('id', $forOrderGoods['product_id'])->first();
+            $orderGoods[$key]['thumb'] = Products::getThumbImgUrl($product);
             $sum_quantity += $forOrderGoods['goods_number'];
             if ($currencyData && count($currencyData)) {
                 foreach ($currencyData as $currencyItem) {
@@ -572,11 +574,13 @@ class OrderController extends Controller {
                     // 分类信息
                     $tempCategoryId = $orderGoodsArr['product_info']['category_id'];
                     $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $tempCategoryId)
-                                                    ->first()->toArray();
-                    $product['category_name'] = isset($categoryData['name']) ? $categoryData['name'] : '';
-                    if (empty($orderGoodsArr['product_info']['thumb'])) {
-                        $orderGoodsArr['product_info']['thumb'] = isset($categoryData['thumb']) ? $categoryData['thumb']
-                            : '';
+                                                    ->first();
+                    if(!empty($categoryData )){
+                        $product['category_name'] = isset($categoryData['name']) ? $categoryData['name'] : '';
+                        if (empty($orderGoodsArr['product_info']['thumb'])) {
+                            $orderGoodsArr['product_info']['thumb'] = isset($categoryData['thumb']) ? $categoryData['thumb']
+                                : '';
+                        }
                     }
                     // 若没有分类图片添加系统默认图片
                     if (empty($orderGoodsArr['product_info']['thumb'])) {

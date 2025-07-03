@@ -163,31 +163,35 @@ class InvoicesController extends Controller {
                 ReturnJson(false, '请先登陆');
             }
             $order_info = Order::query()->where('order_number', $input['order_number'])
-                             ->where("user_id", $user->id)->first();
+                               ->where("user_id", $user->id)->first();
             if (empty($order_info)) {
                 ReturnJson(false, '订单不存在');
             }
-
             if (!in_array($order_info->is_pay, [Order::PAY_FINISH, Order::PAY_SUCCESS])) {
                 ReturnJson(false, '订单还未支付,不能申请');
             }
-
             $order_id = $order_info->id;
             $price = $order_info->actually_paid ?? 0;
             $model = new Invoices();
-            $invoice_id = $model->where("order_id" , $order_id)->where("user_id" , $user->id)->value("id");
-            if(!empty($invoice_id )){
+            $invoice_id = $model->where("order_id", $order_id)->where("user_id", $user->id)->value("id");
+            if (!empty($invoice_id)) {
                 ReturnJson(false, '该订单已经申请过');
             }
-
+            if (empty($input['title'])) {
+                $title = $order_info->getProductNameAttribute();
+            }else{
+                $title = $input['title'];
+            }
             $addData = [
                 'order_id'        => $order_id,
                 'user_id'         => $user->id,
-                'title'           => $input['title'] ?? '',
+                'title'           => $title,
                 'company_name'    => $input['company_name'] ?? '',
                 'company_address' => $input['company_address'] ?? '',
                 'tax_code'        => $input['tax_code'] ?? '',
                 'invoice_type'    => $input['invoice_type'] ?? 1,
+                'contact_person'  => $input['contact_person'] ?? '',
+                'contact_detail'  => $input['contact_detail'] ?? '',
                 'price'           => $price,
                 'apply_status'    => 1,
                 'phone'           => $input['phone'] ?? '',

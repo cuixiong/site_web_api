@@ -61,12 +61,7 @@ class CommonController extends Controller {
         //更多资讯
         $data['news_list'] = $this->getNewsList();
         //报告分类
-        if (checkSiteAccessData(['gircn', 'yhcn', 'lpicn'])) {
-            // 导航分类受sort字段排序
-            $data['product_cagory'] = $this->getProductCagory(true);
-        } else {
-            $data['product_cagory'] = $this->getProductCagory();
-        }
+        $data['product_cagory'] = $this->getProductCagory(true);
         //权威引用
         $data['quote_list'] = $this->getQuoteList($request);
 
@@ -792,7 +787,7 @@ class CommonController extends Controller {
             ->orderBy('sort', 'ASC')
             ->get()
             ->toArray();
-            
+
         foreach ($frontMenus as $key => $frontMenu) {
             $sonMenus = Menu::select([
                 'id',
@@ -810,7 +805,7 @@ class CommonController extends Controller {
                 ->toArray();
             $frontMenus[$key]['menus'] = $sonMenus;
         }
-        
+
         if (checkSiteAccessData(['qycojp'])) {
             // qy.co.jp 要求数据分两部分，分有子菜单和无子菜单两个数组
             $newFrontMenus = [
