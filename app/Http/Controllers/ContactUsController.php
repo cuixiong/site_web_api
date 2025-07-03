@@ -22,7 +22,7 @@ class ContactUsController extends Controller {
             ReturnJson(false, '邮箱格式不正确');
         }
 
-        $productId = $params['product_id'];
+        $productId = $params['product_id']??0;
         $otherProductIds = []; // 新加变量防止影响其它站点
         // 多样本申请,传递的product_id是数组
         if(is_array($productId)){
@@ -36,7 +36,7 @@ class ContactUsController extends Controller {
             $productId = isset($productId) && !empty($productId) ? $productId : 0;
         }
 
-        $priceEdition = $params['price_edition'];
+        $priceEdition = $params['price_edition']??0;
         $otherPriceEdition = [];
         // 多样本申请,传递的 price_edition 是数组
         if(is_array($priceEdition)){

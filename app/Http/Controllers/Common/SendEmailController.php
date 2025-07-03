@@ -511,23 +511,39 @@ class SendEmailController extends Controller {
                 'country'      => $country,
                 'language'     => $ContactUs['language_version'] ?? '',
             ];
+
             $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address'])
-                ->pluck('value', 'key')
-                ->toArray();
+            ->pluck('value', 'key')
+            ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
                 }
             }
-            // 多个电话
-            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
-            if ($sitePhones) {
-                $sitePhones = $sitePhones->toArray();
-                $data['sitePhones'] = [];
-                foreach ($sitePhones as $key => $sitePhoneItem) {
-                    $data['sitePhones'][] = $sitePhoneItem;
+            if (checkSiteAccessData(['lpien'])) {
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+                if ($sitePhones) {
+                    $sitePhones = $sitePhones->toArray();
+                    $data['sitePhones'] = [];
+                    foreach ($sitePhones as $key => $sitePhoneItem) {
+                        $data['sitePhones'][] = $sitePhoneItem;
+                    }
+                }
+            }elseif(checkSiteAccessData(['qycojp'])){
+                
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
+                if ($sitePhones) {
+                    $sitePhones = $sitePhones->toArray();
+                    $data['sitePhones'] = [];
+                    foreach ($sitePhones as $key => $sitePhoneItem) {
+                        $data['sitePhones'][] = $sitePhoneItem;
+                    }
+                    $data['sitePhones'] = implode(';', $data['sitePhones']);
                 }
             }
+            
+
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
                 . $data['siteEmail'] : '';
@@ -906,7 +922,7 @@ class SendEmailController extends Controller {
     }
 
     // 定制报告
-    public function customized($id, $otherIds)
+    public function customized($id, $otherIds = [])
     {
         try {
             $ContactUs = ContactUs::find($id);
