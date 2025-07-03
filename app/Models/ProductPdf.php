@@ -104,7 +104,7 @@ class ProductPdf extends Base {
         $product = array_merge($product, $description ?? []);
         // return $product;
         $adminEmail = SystemValue::where('key', 'siteEmail')->value('value');
-        $adminPhone = SystemValue::where('key', 'sitePhone')->value('value');
+        $adminPhone = SystemValue::where('key', 'sitePhone')->orderBy('id', 'desc')->value('value');
         $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
         // 服务方式/报告格式 文本
         $serviceMethod = SystemValue::where(['key' => 'Service', 'status' => 1])->value('value');
