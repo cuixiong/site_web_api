@@ -143,7 +143,7 @@ a {
 }
 .mainWrapper .reports_info .reports_info_item .info_wrap .ul_box2 .x2_p1,
 .mainWrapper .reports_info .reports_info_item .info_wrap .ul_box2 .x2_p2 {
-  margin-right: 8px;
+  margin-right: 5px;
 }
 .mainWrapper .m_ul_box {
   display: none;
@@ -266,7 +266,7 @@ a {
             <div class="logo">
                 <img class="logo_img" src="<?=env('IMAGE_URL');?>/site/<?=env('APP_NAME');?>/pdf/yeMei.webp" alt="">
                 <p style="margin-top: -34px;margin-bottom: 34px;margin-left:55px;color: #FFFFFF;">
-                    <a style="color:#ffffff;" href="https://www.globalinforesearch.com">https://www.globalinforesearch.com</a>
+                    <a style="color:#ffffff;" href="https://www.globalinforesearch.com">www.globalinforesearch.com</a>
                 </p>
             </div>
             <p style="padding-bottom: 26px;padding-right: 40px;">
@@ -286,11 +286,11 @@ a {
                     </h1>
                     <div>
                         <ul class="ul_box">
-                            <li style="width: 22%;">
+                            <li style="width: 23%;">
                                 <p>Page:</p>&nbsp;
                                 <div class="price"><?= $pages ?></div>
                             </li>
-                            <li style="width: 37%;">
+                            <li style="width: 36%;">
                                 <p>Roboto-Regular:</p>&nbsp;
                                 <div class="price"><?= $published_date ?></div>
                             </li>
@@ -298,11 +298,11 @@ a {
                                 <p>Category:</p>&nbsp;
                                 <div class="price"><?= $category_name ?></div>
                             </li>
-                            <li style="width: 22%;">
+                            <li style="width: 23%;">
                                 <p>Report No.:</p>&nbsp;
                                 <div class="price"><?= $product_id ?></div>
                             </li>
-                            <li style="width: 37%;">
+                            <li style="width: 36%;">
                                 <p>Phone:</p>&nbsp;
                                 <div class="price"> <?= $phone ?></div>
                             </li>
