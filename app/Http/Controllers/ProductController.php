@@ -575,7 +575,11 @@ class ProductController extends Controller {
                         } else {
                             $seo_keyword .= $separator.$product_desc['keywords'].$keyword_suffix;
                         }
-                        $separator = '，';
+                        if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {
+                            $separator = ', ';
+                        } else {
+                            $separator = '，';
+                        }
                     }
                 }
             } else {
@@ -841,7 +845,7 @@ class ProductController extends Controller {
                 } elseif (!empty($row) && strrpos($row, '。') && strpos($row, '（') !== 0) {
                     $result[] = $row;
                     $result[] = "<br />";
-                } elseif (!empty($row) && preg_match('/\.$/', $row) ) {
+                } elseif (!empty($row) && preg_match('/\.$/', $row)) {
                     $result[] = $row;
                     $result[] = "<br />";
                 } elseif ($row == "\n" || $row == "\r" || $row == "\r\n") {
@@ -1434,8 +1438,7 @@ class ProductController extends Controller {
                 $data[$index]['description'] = (new ProductDescription($suffix))->where('product_id', $product['id'])
                                                                                 ->value('description');
                 $data[$index]['description'] = $data[$index]['description'] ? $data[$index]['description'] : '';
-
-                if(checkSiteAccessData(['mrrs' , 'yhen' ,'qyen', 'mmgen', 'lpien', 'giren'])) {
+                if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {
                     //取描述第一段 ,  如果没有\n换行符就取一整段
                     $strIndex = strpos($data[$index]['description'], "\n");
                     if ($strIndex !== false) {
@@ -1444,10 +1447,9 @@ class ProductController extends Controller {
                     } else {
                         $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
                     }
-                }else{
+                } else {
                     $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
                 }
-
                 $data[$index]['id'] = $product['id'];
                 $data[$index]['url'] = $product['url'];
                 $data[$index]['category_name'] = $product['category_name'];
