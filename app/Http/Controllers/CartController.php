@@ -402,6 +402,7 @@ class CartController extends Controller {
                     'category.link as category_link',
                     'category.thumb as category_thumb',
                     'product.name',
+                    'product.english_name',
                     'product.id as goods_id',
                     'product.thumb as thumb',
                     'product.published_date',

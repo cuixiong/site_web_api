@@ -26,6 +26,7 @@ class UserController extends Controller {
         $city_id = $request->city_id;
         $phone = $request->phone;
         $company = $request->company;
+        $department = $request->department??'';
         $password = $request->password;
         DB::beginTransaction();
         $user = User::where('email', $email)->first();
@@ -48,6 +49,7 @@ class UserController extends Controller {
         $model->city_id = $city_id;
         $model->phone = $phone;
         $model->company = $company;
+        $model->department = $department;
         $model->password = Hash::make($password);// 密码使用hash值
         $model->created_at = time();
         $model->status = 0;
@@ -138,6 +140,7 @@ class UserController extends Controller {
             'area_id'           => [$user->province_id, $user->city_id],
             'country_id'        => $user->area_id,
             'company'           => $user->company,// 公司
+            'department'        => $user->department,
             'login_time'        => $user->login_time,// 最近登陆的时间
             'login_time_format' => date('Y-m-d H:i:s', $user->login_time),// 最近登陆的时间
             'token'             => $token,// token
@@ -450,6 +453,7 @@ class UserController extends Controller {
             $user->email = $input['email'];
             $user->phone = $input['phone'];
             $user->company = $input['company'] ?? '';
+            $user->department = $input['department'] ?? '';
             $user->address = $input['address'] ?? '';
             $user->province_id = $input['province_id'] ?? 0;
             $user->city_id = $input['city_id'] ?? 0;
