@@ -287,7 +287,8 @@ class OrderController extends Controller {
         $orderStatus = $order['is_pay'] ?? '';
         $orderNumber = $order['order_number'] ?? '';
         $payTime = !empty($order['pay_time']) ? date('Y-m-d H:i:s', $order['pay_time']) : '';
-        if ($orderStatus == Order::PAY_UNPAID) {
+        // 排除银行转账
+        if ($order->pay_code != PayConst::PAY_TYPE_BANK && $orderStatus == Order::PAY_UNPAID) {
             //未支付,且是paypal支付,需要捕获订单
             $this->capturePaypalOrder($order);
             // 主动查询订单状态

@@ -37,6 +37,7 @@ class CartController extends Controller {
             'products.url',
             'products.thumb',
             'products.name',
+            'products.english_name',
             'products.price',
             'products.discount_type',
             'products.discount',
