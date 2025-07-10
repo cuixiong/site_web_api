@@ -135,6 +135,7 @@ class ProductController extends Controller {
                     }
                     $value['pages'] = $productsData['pages'];
                     $value['thumb'] = $productsData['thumb'];
+                    $value['tables'] = $productsData['tables'];
                     $value['discount'] = $productsData['discount'];
                     $value['discount_amount'] = $productsData['discount_amount'];
                     $value['discount_type'] = $productsData['discount_type'];
@@ -197,7 +198,7 @@ class ProductController extends Controller {
                     $products[] = $value;
                 }
             }
-            if (checkSiteAccessData(['tycn', 'qyen', 'giren'])) {
+            if (checkSiteAccessData(['tycn', 'qyen' , 'giren'])) {
                 $productCagoryId = $this->GetProductCateList($keyword, 0);
                 $productCagory = $this->getProductCagory($productCagoryId);
             } else {
@@ -343,7 +344,7 @@ class ProductController extends Controller {
         )->first();
         //url重定向 如果该文章已删除则切换到url一致的文章，如果没有url一致的则返回报告列表
         if (!empty($product) && $product->published_date->timestamp < time()) {
-            if ($url != $product->url) {
+            if($url != $product->url){
                 ReturnJson(2, '参数错误！', []);
             }
             // 浏览数+1
@@ -397,19 +398,21 @@ class ProductController extends Controller {
                 '=',
                 'p.category_id'
             )
-                                          ->where(['p.id' => $product_id])
-                                          ->where('p.status', 1)
-                                          ->first()->toArray();
+                ->where(['p.id' => $product_id])
+                ->where('p.status', 1)
+                ->first()->toArray();
             if (checkSiteAccessData(['mrrs'])) {
                 $product_desc['publisher'] = Publishers::query()->where("id", $product_desc['publisher_id'])->value(
                     "name"
                 );
             }
+
             $product_desc['year'] = date('Y', strtotime($product_desc['published_date']));
             $product_desc['month'] = date('m', strtotime($product_desc['published_date']));
             $product_desc['month_en'] = date('M', strtotime($product_desc['published_date']));
             $product_desc['day'] = date('d', strtotime($product_desc['published_date']));
             //返回打折信息
+
             $time = time();
             //判断当前报告是否在优惠时间内
             if ($product_desc['discount_time_begin'] <= $time && $product_desc['discount_time_end'] >= $time) {
@@ -449,14 +452,14 @@ class ProductController extends Controller {
             //报告详情数据处理
             $suffix = date('Y', strtotime($product_desc['published_date']));
             $description = (new ProductDescription($suffix))->select([
-                                                                         'description',
-                                                                         'description_en',
-                                                                         'table_of_content',
-                                                                         'table_of_content_en',
-                                                                         'tables_and_figures',
-                                                                         'tables_and_figures_en',
-                                                                         'companies_mentioned',
-                                                                     ])->where('product_id', $product_id)->first();
+                'description',
+                'description_en',
+                'table_of_content',
+                'table_of_content_en',
+                'tables_and_figures',
+                'tables_and_figures_en',
+                'companies_mentioned',
+            ])->where('product_id', $product_id)->first();
             if ($description === null) {
                 $description = [];
                 $description['description'] = '';
@@ -470,18 +473,16 @@ class ProductController extends Controller {
             // lpijp网站动态生成日文详情
             if (checkSiteAccessData(['lpijp'])) {
                 $description['description'] = $this->getDescriptionByTemplate($product_desc, $description);
-                $description['description'] = str_replace(['<p><br /></p>', '<p><br></p>'], "\n",
-                                                          $description['description']);
-                $description['description'] = str_replace(['</p>', '<br />', '<br>'], "\n", $description['description']
-                );
+                $description['description'] = str_replace(['<p><br /></p>', '<p><br></p>'], "\n", $description['description']);
+                $description['description'] = str_replace(['</p>', '<br />', '<br>'], "\n", $description['description']);
                 $description['description'] = str_replace(['<p>'], '', $description['description']);
                 $description['description'] = trim($description['description'], "\n");
             }
             $desc = [];
             if (!empty($product_desc) && !empty($description)) {
                 $description['description'] = str_replace(['<pre>', '</pre>'], '', $description['description']);
-                $_description = $this->setDescriptionLinebreak($description['description']);
-                $_description_en = $this->setDescriptionLinebreak($description['description_en']);
+                $_description = $this->setDescriptionLinebreakOld($description['description']);
+                $_description_en = $this->setDescriptionLinebreakOld($description['description_en']);
                 $product_desc['description'] = $_description;
                 $product_desc['description_en'] = $_description_en;
                 $product_desc['table_of_content'] = $this->titleToDeep($description['table_of_content']);
@@ -532,18 +533,15 @@ class ProductController extends Controller {
                 // 默认版本的多种货币的价格
                 if ($currencyData && count($currencyData)) {
                     foreach ($currencyData as $currencyItem) {
-                        $currencyKey = strtolower($currencyItem['code']).'_price';
+                        $currencyKey = strtolower($currencyItem['code']) . '_price';
                         $product_desc[$currencyKey] = $product_desc['price'] * $currencyItem['exchange_rate'];
-                        $currencyRateKey = strtolower($currencyItem['code']).'_rate';
+                        $currencyRateKey = strtolower($currencyItem['code']) . '_rate';
                         $product_desc[$currencyRateKey] = $currencyItem['exchange_rate'];
                     }
                 }
             }
             $product_desc['description'] = $product_desc['description'];
-            $product_desc['seo_description'] = is_array($product_desc['description'])
-                                               && count(
-                                                      $product_desc['description']
-                                                  ) > 0 ? $product_desc['description'][0] : '';
+            $product_desc['seo_description'] = is_array($product_desc['description']) && count($product_desc['description']) > 0 ? $product_desc['description'][0] : '';
             $product_desc['url'] = $product_desc['url'];
             //$product_desc['thumb'] = Common::cutoffSiteUploadPathPrefix($product->getThumbImgAttribute());
             $product_desc['thumb'] = $product->getThumbImgAttribute();
@@ -567,15 +565,11 @@ class ProductController extends Controller {
                     // echo '<pre>';print_r($keyword_suffixs);exit;
                     foreach ($keyword_suffixs as $keyword_suffix) {
                         if (checkSiteAccessData(['qyen', 'mrrs'])) {
-                            $seo_keyword .= $separator.$product_desc['keywords']." ".$keyword_suffix;
+                            $seo_keyword .= $separator . $product_desc['keywords'] . " " . $keyword_suffix;
                         } else {
-                            $seo_keyword .= $separator.$product_desc['keywords'].$keyword_suffix;
+                            $seo_keyword .= $separator . $product_desc['keywords'] . $keyword_suffix;
                         }
-                        if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {
-                            $separator = ', ';
-                        } else {
-                            $separator = '，';
-                        }
+                        $separator = '，';
                     }
                 }
             } else {
@@ -583,12 +577,15 @@ class ProductController extends Controller {
             }
             $product_desc['seo_keyword'] = $seo_keyword;
             //产品关键词 结束
+
             //产品标签 开始
             $product_desc['tag'] = explode(',', $product_desc['keywords']);
             if ((!$product_desc['tag'] || count($product_desc['tag']) <= 1) && $product_desc['product_tag']) {
                 $product_desc['tag'] = array_merge($product_desc['tag'], explode(',', $product_desc['product_tag']));
             }
             unset($product_desc['product_tag']);
+            //产品标签 结束
+
             $product_desc['isSphinx'] = false;
             //相关报告
             $relevant_products_size = $request->input('relevant_products_size', 2);
@@ -597,6 +594,31 @@ class ProductController extends Controller {
                 $product_id,
                 $relevant_products_size
             );
+            
+            //该报告是否是最新年份、如果不是，查询是否有最新年份的报告id
+            if (checkSiteAccessData(['qycojp'])) {
+                $product_desc['isLatestYear'] = true;
+                $product_desc['latestYearID'] = '';
+                $published_date_copy = strtotime($product_desc['published_date']);
+                $currentYearTimestamp = strtotime(date('Y', time()) . '-01-01'); //今年初的时间戳
+                if ($product_desc['keywords'] && $published_date_copy < $currentYearTimestamp) {
+                    $product_desc['latestYearID'] = Products::query()->select(['id'])
+                        ->where('published_date', '>=',  $currentYearTimestamp)
+                        ->where('keywords' ,$product_desc['keywords'])
+                        ->where('id', '<>' , $product_desc['id'])
+                        ->value('id');
+                    if (!empty($product_desc['latestYearID'])) {
+                        $product_desc['isLatestYear'] = false;
+                    } else {
+                        $product_desc['isLatestYear'] = false;
+                        $product_desc['latestYearID'] = '';
+                    }
+                } else {
+                    $product_desc['isLatestYear'] = true;
+                }
+            }
+
+            // 返回 规模柱状图数据与表格数据，并根据需要将详情分割二至三部分
             if (checkSiteAccessData(['qyen'])) {
                 $product_desc['future_year'] = $product_desc['year'] + 6;
                 $product_desc['current_year'] = $product_desc['year'] + 0;
@@ -634,6 +656,8 @@ class ProductController extends Controller {
                 $product_desc['application'] = array_filter($product_desc['application'], function ($value) {
                     return $value !== "";
                 });
+
+
                 //三个新字段
                 $product_desc['product_class'] = $product_desc['product_class'] ? explode(
                     "\n", str_replace(
@@ -662,6 +686,7 @@ class ProductController extends Controller {
                 $product_desc['division'] = array_filter($product_desc['division'], function ($value) {
                     return $value !== "";
                 });
+
                 //详情
                 $product_desc['seo_description'] = $this->strDescription($description['description']);
                 // 文本、样式替换
@@ -682,7 +707,16 @@ class ProductController extends Controller {
                     $descriptionText
                 );
                 $descriptionText = trim($descriptionText);
-                $product_desc['description'] = $this->spiltDescription($descriptionText);
+                // 分割详情的文本
+                $tableStartTextArray = isset($product_desc_other_set_list['table_spilt_start']) ? explode("\n", str_replace("\r\n", "\n", $product_desc_other_set_list['table_spilt_start'])) : [];
+                $tableEndTextArray = isset($product_desc_other_set_list['table_spilt_end']) ? explode("\n", str_replace("\r\n", "\n", $product_desc_other_set_list['table_spilt_end'])) : [];
+                // 统一返回数组
+                $product_desc['description'] = $this->spiltDescription($descriptionText, $tableStartTextArray, $tableEndTextArray);
+                // 每一段添加换行
+                foreach ($product_desc['description'] as $key => $part) {
+                    $product_desc['description'][$key] = $this->setDescriptionEnLinebreak($part);
+                }
+
                 $product_desc['table_of_content'] = $this->titleToDeep($description['table_of_content']);
                 // 文本、样式替换
                 $tablesAndFiguresText = $description['tables_and_figures'];
@@ -695,8 +729,8 @@ class ProductController extends Controller {
                 $product_desc['tables_and_figures'] = $tablesAndFiguresText;
                 $description['companies_mentioned'] = str_replace(
                     "\t", '', str_replace(
-                            "", '', str_replace("\r\n", "\n", $description['companies_mentioned'])
-                        )
+                    "", '', str_replace("\r\n", "\n", $description['companies_mentioned'])
+                )
                 );
                 if ($description['companies_mentioned']) {
                     $description['companies_mentioned'] = explode("\n", $description['companies_mentioned']);
@@ -711,8 +745,68 @@ class ProductController extends Controller {
                     $product_desc['companies_mentioned'] = implode(',@,', $description['companies_mentioned']);
                     $product_desc['companies_mentioned'] = explode(',@,', $product_desc['companies_mentioned']);
                 }
+            }else{
+                // 其它站点需要一个规模柱状图，类似后台复制图片
+                // logo、单位等数据
+                $product_desc_other_set_list = SystemValue::query()->where("alias", 'product_desc_other_set')->get()->keyBy('key')->toArray();
+                // 水印
+                $watermark = SystemValue::query()->select(['value'])->where('key', 'newsWatermarkImage')->value('value');
+                $product_desc['units'] = isset($product_desc_other_set_list['units']) ? $product_desc_other_set_list['units']['value'] : '';
+                $product_desc['chartsLogo'] = isset($product_desc_other_set_list['chartsLogo']) ? $product_desc_other_set_list['chartsLogo']['value'] : '';
+                $product_desc['watermark'] = isset($watermark) ? $watermark : '';
+                // 其他数据
+                $product_desc['future_year'] = $product_desc['year'] + 6;
+                $product_desc['current_year'] = $product_desc['year'] + 0;
+                $product_desc['old_year'] = $product_desc['year'] - 1;
+
+                // 详情第一段作为柱状图的描述
+                $product_desc['description_first'] = '';
+                $descriptionText = trim($description['description']);
+                $product_desc['description_first'] = mb_substr($descriptionText, 0, mb_strpos($descriptionText, "\n") + 1);
+                $tempLength = 100;
+                if (mb_strlen($product_desc['description_first']) >= $tempLength && mb_strlen($product_desc['description_first']) < $tempLength) {
+                    // 长度不足则截取到第二个换行符
+                    $product_desc['description_first'] = mb_substr($descriptionText, 0, mb_strpos($product_desc['description_first'], "\n", $tempLength) + 1);
+                }
+                // 分割详情
+                $tableStartTextArray = isset($product_desc_other_set_list['table_spilt_start']) ? explode("\n", str_replace("\r\n", "\n", $product_desc_other_set_list['table_spilt_start']['value'])) : [];
+                $tableEndTextArray = isset($product_desc_other_set_list['table_spilt_end']) ? explode("\n", str_replace("\r\n", "\n", $product_desc_other_set_list['table_spilt_end']['value'])) : [];
+                // 统一返回数组
+                $product_desc['description'] = $this->spiltDescription($descriptionText, $tableStartTextArray, $tableEndTextArray);
+                // 每一段添加换行
+                foreach ($product_desc['description'] as $key => $part) {
+                    if (checkSiteAccessData(['qyen', 'giren', 'mmgen', 'lpien', 'mrrs'])) {
+                        $product_desc['description'][$key] = $this->setDescriptionEnLinebreak($part);
+                    } else {
+                        $product_desc['description'][$key] = $this->setDescriptionLinebreak($part);
+                    }
+                    $product_desc['description'][$key] = str_replace("\n", "<br />", $product_desc['description'][$key]);
+                }
+
+                // ==== 处理双语言的另一个详情 ====
+
+                // 详情第一段作为柱状图的描述
+                $product_desc['description_en_first'] = '';
+                $descriptionEnText = trim($description['description_en']);
+                $product_desc['description_en_first'] = mb_substr($descriptionText, 0, mb_strpos($descriptionText, "\n") + 1);
+                $tempLength = 100;
+                if (mb_strlen($product_desc['description_en_first']) >= $tempLength && mb_strlen($product_desc['description_en_first']) < $tempLength) {
+                    // 长度不足则截取到第二个换行符
+                    $product_desc['description_en_first'] = mb_substr($descriptionText, 0, mb_strpos($product_desc['description_en_first'], "\n", $tempLength) + 1);
+                }
+                // 分割详情
+                $tableEnStartTextArray = isset($product_desc_other_set_list['table_en_spilt_start']) ? explode("\n", str_replace("\r\n", "\n", $product_desc_other_set_list['table_en_spilt_start']['value'])) : [];
+                $tableEnEndTextArray = isset($product_desc_other_set_list['table_en_spilt_end']) ? explode("\n", str_replace("\r\n", "\n", $product_desc_other_set_list['table_en_spilt_end']['value'])) : [];
+                // 统一返回数组
+                $product_desc['description_en'] = $this->spiltDescription($descriptionEnText, $tableEnStartTextArray, $tableEnEndTextArray);
+                // 每一段添加换行
+                foreach ($product_desc['description_en'] as $key => $part) {
+                    $product_desc['description_en'][$key] = $this->setDescriptionEnLinebreak($part);
+                    $product_desc['description_en'][$key] = str_replace("\n", "<br />", $product_desc['description_en'][$key]);
+                }
+
+
             }
-            //产品标签 结束
             ReturnJson(true, '', $product_desc);
         } else {
             // 重定向能走sphinx优先执行，减轻数据库压力
@@ -768,13 +862,13 @@ class ProductController extends Controller {
     }
 
     /**
-     * 商品摘要添加换行符
+     * 商品摘要添加换行符(英)
      *
      * @param description 摘要
      *
      * @return  result 处理后的表格目录(含标题、摘要),以及一级目录数组
      */
-    public function setNewDescriptionLinebreak($description) {
+    public function setDescriptionEnLinebreak($description) {
         $result = [];
         if (!empty($description)) {
             $description = trim($description, "\r\n");
@@ -813,7 +907,7 @@ class ProductController extends Controller {
      *
      * @param description 摘要
      *
-     * @return  result 处理后的表格目录(含标题、摘要),以及一级目录数组
+     * @return array $result 处理后的表格目录(含标题、摘要),以及一级目录数组
      */
     public function setDescriptionLinebreak($description) {
         $result = [];
@@ -836,25 +930,21 @@ class ProductController extends Controller {
                        ) !== 0
                 ) {
                     // $row = "&nbsp;&nbsp;".trim($row);
-                    $result[] = $row;
-                    $result[] = "<br />";
+                    $result[] = $row."\n";
                 } elseif (!empty($row) && strrpos($row, '。') && strpos($row, '（') !== 0) {
-                    $result[] = $row;
-                    $result[] = "<br />";
-                } elseif (!empty($row) && preg_match('/\.$/', $row)) {
-                    $result[] = $row;
-                    $result[] = "<br />";
+                    $result[] = $row."\n";
                 } elseif ($row == "\n" || $row == "\r" || $row == "\r\n") {
                     // $descriptionArray[$index] = ""; //清除多余换行
                 } elseif (!empty($row)) {
                     $result[] = $row;
                 } else {
-                    $result[] = "<br />";
+                    $result[] = "\n";
                 }
             }
         }
 
-        return $result;
+        return implode("\n", $result);
+        // return $result;
     }
 
     /**
@@ -1434,18 +1524,7 @@ class ProductController extends Controller {
                 $data[$index]['description'] = (new ProductDescription($suffix))->where('product_id', $product['id'])
                                                                                 ->value('description');
                 $data[$index]['description'] = $data[$index]['description'] ? $data[$index]['description'] : '';
-                if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {
-                    //取描述第一段 ,  如果没有\n换行符就取一整段
-                    $strIndex = strpos($data[$index]['description'], "\n");
-                    if ($strIndex !== false) {
-                        // 使用 substr() 函数获取第一个段落
-                        $data[$index]['description'] = substr($data[$index]['description'], 0, $strIndex);
-                    } else {
-                        $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
-                    }
-                } else {
-                    $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
-                }
+                $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
                 $data[$index]['id'] = $product['id'];
                 $data[$index]['url'] = $product['url'];
                 $data[$index]['category_name'] = $product['category_name'];
@@ -1762,8 +1841,11 @@ class ProductController extends Controller {
      * 将摘要描述拆成多部份,并添加换行符
      *
      * @param description 摘要
+     * @param tableStartTextArray 表格的起始截取文本数组
+     * @param tableEndTextArray   表格的结束截取文本数组
      */
-    public function spiltDescription($description) {
+    public function spiltDescription($description, $tableStartTextArray = [], $tableEndTextArray = [])
+    {
         $result = [];
         if (!empty($description)) {
             $description = trim($description, "\r\n");
@@ -1785,16 +1867,35 @@ class ProductController extends Controller {
                 $row = trim($row, "\r");
                 $row = trim($row, "\r\n");
                 if ($index <= 1) {
-                    $descriptionArrayPart['top'][] = str_replace(chr(194).chr(160), ' ', $row);
+                    $descriptionArrayPart['top'][] = str_replace(chr(194) . chr(160), ' ', $row);
                 } else {
                     $descriptionArrayPart['bottom'][] = $row;
-                    if (strpos($row, 'Company Profiles') !== false || strpos($row, 'By Company') !== false) {
-                        $startIndex = false;
-                        continue; //这一句不记录
-                    }
-                    if (strpos($row, 'Chapter Outline') !== false || strpos($row, 'Core Chapters') !== false) {
-                        $endIndex = true;
-                    }
+
+                    if ($startIndex && count($tableStartTextArray) > 0){
+                        foreach ($tableStartTextArray as $startTextItem) {
+                            if(empty($startTextItem)){
+                                continue;
+                            }
+                            if (strpos($row, $startTextItem) !== false) {
+                                $startIndex = false;
+                                break; 
+                            }
+                        }
+                        if(!$startIndex){
+                            continue; // 定位到开头的这一句不记录
+                        }
+                    } 
+                    if (!$startIndex && !$endIndex && count($tableEndTextArray) > 0){
+                        foreach ($tableEndTextArray as $endTextItem) {
+                            if(empty($endTextItem)){
+                                continue;
+                            }
+                            if (strpos($row, $endTextItem) !== false) {
+                                $endIndex = true;
+                            }
+                        }
+                    } 
+                    
                     if ($startIndex) {
                         $descriptionArrayPart['part1'][] = $row;
                     }
@@ -1804,19 +1905,14 @@ class ProductController extends Controller {
                 }
             }
             // return !$startIndex && $endIndex;
-            if (!$startIndex || $endIndex) {
-                if (($startIndex) || count($descriptionArrayPart['part1']) == 0
-                    || count($descriptionArrayPart['part2']) == 0) {
-                    unset($descriptionArrayPart['part1']);
-                    unset($descriptionArrayPart['part2']);
-                } else {
-                    unset($descriptionArrayPart['bottom']);
-                }
-                foreach ($descriptionArrayPart as $key => $part) {
-                    $result[] = $this->setNewDescriptionLinebreak(implode("\n", $part));
-                }
+            if (count($descriptionArrayPart['part1']) == 0 || count($descriptionArrayPart['part2']) == 0 ) {
+                unset($descriptionArrayPart['part1']);
+                unset($descriptionArrayPart['part2']);
             } else {
-                $result[] = $this->setNewDescriptionLinebreak($description);
+                unset($descriptionArrayPart['bottom']);
+            }
+            foreach ($descriptionArrayPart as $key => $part) {
+                $result[] = implode("\n", $part);
             }
         }
 
@@ -1873,6 +1969,7 @@ class ProductController extends Controller {
         if (empty($product_id)) {
             ReturnJson(false, '产品ID不允许为空！', []);
         }
+
         $product = Products::where(['id' => $product_id, 'status' => 1])->first();
         if (!empty($product) && $product->published_date->timestamp < time()) {
             $time = time();
@@ -1887,12 +1984,14 @@ class ProductController extends Controller {
                 $product['discount_time_begin'] = null;
                 $product['discount_time_end'] = null;
             }
+
             $product['thumb'] = $product->getThumbImgAttribute();
             if (empty($product['thumb'])) {
                 // 若报告图片为空，则使用系统设置的默认报告高清图
                 $defaultImg = SystemValue::where('key', 'default_report_high_img')->value('value');
                 $product['thumb'] = !empty($defaultImg) ? $defaultImg : '';
             }
+
             // 需要额外查询多种货币的价格（日文）
             $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])
                                           ->get()?->toArray() ?? [];
@@ -1910,10 +2009,55 @@ class ProductController extends Controller {
                     }
                 }
             }
-            $product['category'] = ProductsCategory::query()->where("id", $product['category_id'])->value("name");
+            $product['category'] = ProductsCategory::query()->where("id" , $product['category_id'])->value("name");
+
+
             ReturnJson(true, '', $product);
-        } else {
+        }else{
             ReturnJson(false, '产品不存在或未发布！', []);
         }
+
+    }
+
+    public function setDescriptionLinebreakOld($description) {
+        $result = [];
+        if (!empty($description)) {
+            $descriptionArray = explode("\n", $description);
+            foreach ($descriptionArray as $index => $row) {
+                //清除多余换行
+                $row = trim($row, "\n");
+                $row = trim($row, "\r");
+                $row = trim($row, "\r\n");
+                //判断是否换行
+                if (!empty($row) && strpos($row, ' ') === 0) {
+                    $row = "&nbsp;&nbsp;&nbsp;&nbsp;".trim($row);
+                }
+                if (
+                    !empty($row) && strpos($row, ' ') === 0 && ($index + 1) != count($descriptionArray)
+                    && strpos(
+                           $descriptionArray[$index + 1],
+                           ' '
+                       ) !== 0
+                ) {
+                    // $row = "&nbsp;&nbsp;".trim($row);
+                    $result[] = $row;
+                    $result[] = "<br />";
+                } elseif (!empty($row) && strrpos($row, '。') && strpos($row, '（') !== 0) {
+                    $result[] = $row;
+                    $result[] = "<br />";
+                } elseif (!empty($row) && preg_match('/\.$/', $row) ) {
+                    $result[] = $row;
+                    $result[] = "<br />";
+                } elseif ($row == "\n" || $row == "\r" || $row == "\r\n") {
+                    // $descriptionArray[$index] = ""; //清除多余换行
+                } elseif (!empty($row)) {
+                    $result[] = $row;
+                } else {
+                    $result[] = "<br />";
+                }
+            }
+        }
+
+        return $result;
     }
 }
