@@ -1914,6 +1914,28 @@ class SendEmailController extends Controller {
         } else {
             $office_korean_phone = $office_korean;
         }
+
+        if (checkSiteAccessData(['giren'])) {
+            $office_gz = Office::query()->where(['language_alias' => 'GZ', 'status' => 1])->first();
+            $data['office_gz_name'] = '';
+            $data['office_gz_phone'] = '';
+            $data['office_gz_address'] = '';
+            if(!empty($office_gz )){
+                $data['office_gz_name'] = $office_gz->name ?? '';
+                $data['office_gz_phone'] = $office_gz->phone ?? '';
+                $data['office_gz_address'] = $office_gz->address ?? '';
+            }
+            $office_hk = Office::query()->where(['language_alias' => 'HK', 'status' => 1])->first();
+            $data['office_hk_name'] = '';
+            $data['office_hk_phone'] = '';
+            $data['office_hk_address'] = '';
+            if(!empty($office_hk )){
+                $data['office_hk_name'] = $office_hk->name ?? '';
+                $data['office_hk_phone'] = $office_hk->phone ?? '';
+                $data['office_hk_address'] = $office_hk->address ?? '';
+            }
+        }
+
         $data['office_english_name'] = ($office_english['abbreviation'] ?? '').'('.($office_english['city'] ?? '').')';
         $data['office_english_address'] = $office_english['address'] ?? '';
         $data['office_english_phone'] = $office_english_phone ?? '';

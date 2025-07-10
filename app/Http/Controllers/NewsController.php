@@ -122,11 +122,9 @@ class NewsController extends Controller {
             if (!empty($data->upload_at) && $data->upload_at > time()) {
                 ReturnJson(false, '新闻未发布，请稍后查看！');
             }
-
-            if($data->url != $url){
+            if ($data->url != $url) {
                 ReturnJson(2, '参数错误2');
             }
-
             $category = ProductsCategory::select(['id', 'name', 'link'])->where(
                 'id',
                 $data['category_id']
@@ -140,12 +138,10 @@ class NewsController extends Controller {
             News::where(['id' => $id])->increment('hits');
             $data['tags'] = $data['tags'] ? explode(',', $data['tags']) : [];
             $data['upload_at_format'] = $data['upload_at'] ? date('Y-m-d', $data['upload_at']) : '';
-
             $data['year'] = $data['upload_at'] ? date('Y', $data['upload_at']) : '';
             $data['month'] = $data['upload_at'] ? date('m', $data['upload_at']) : '';
             $data['month_en'] = $data['upload_at'] ? date('M', $data['upload_at']) : '';
             $data['day'] = $data['upload_at'] ? date('d', $data['upload_at']) : '';
-
             // list($prevId, $nextId) = $this->getNextPrevId($request, $id); // 暂时注释看看效果
             list($prevId, $nextId) = $this->getNextPrevId2($request, $id, $data['upload_at'], $data['sort']);
             //查询上一篇
@@ -178,9 +174,9 @@ class NewsController extends Controller {
             $data['last_news'] = $this->getLastNews($id);
             //获取相关报告
             //$data['relevant_product'] = $this->getRelevantProduct($data['tags']);
-            $data['relevant_product'] = $this->getNewRelevantByProduct($data['tags'] , 6);
+            $data['relevant_product'] = $this->getNewRelevantByProduct($data['tags'], 6);
             //获取相关新闻
-            if (checkSiteAccessData(['168report', 'yhcn', 'mrrs' , 'mmgen'])) {
+            if (checkSiteAccessData(['168report', 'yhcn', 'mrrs', 'mmgen'])) {
                 //相关新闻
                 $data['relevant_news'] = $this->getRelevantNews($data['tags'], $id);
             }
@@ -396,8 +392,7 @@ class NewsController extends Controller {
      *
      * @return array
      */
-    private function getRelevantProduct($keyword): array
-    {
+    private function getRelevantProduct($keyword): array {
         $data = [];
         if ($keyword) {
             //$begin = strtotime("-2 year", strtotime(date('Y-01-01', time()))); // 前两年
@@ -435,16 +430,24 @@ class NewsController extends Controller {
                 $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
                 // 分类信息
                 $categoryIds = array_column($result, 'category_id');
-                $categoryData = ProductsCategory::select(['id', 'name', 'thumb', 'link', 'product_tag'])->whereIn('id', $categoryIds)->get()->toArray();
+                $categoryData = ProductsCategory::select(['id', 'name', 'thumb', 'link', 'product_tag'])->whereIn(
+                    'id', $categoryIds
+                )->get()->toArray();
                 $categoryData = array_column($categoryData, null, 'id');
                 foreach ($result as $key => $value) {
                     //每个报告加上分类信息
                     $tempCategoryId = $value['category_id'];
                     $data[$key]['categoryId'] = isset($tempCategoryId) ? $tempCategoryId : '';
-                    $data[$key]['categoryName'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
-                    $data[$key]['categoryLink'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['link']) ? $categoryData[$tempCategoryId]['link'] : '';
-                    $data[$key]['tag_list'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['product_tag']) ? explode(",", $categoryData[$tempCategoryId]['product_tag']) : [];
-
+                    $data[$key]['categoryName'] = isset($categoryData[$tempCategoryId])
+                                                  && isset($categoryData[$tempCategoryId]['name'])
+                        ? $categoryData[$tempCategoryId]['name'] : '';
+                    $data[$key]['categoryLink'] = isset($categoryData[$tempCategoryId])
+                                                  && isset($categoryData[$tempCategoryId]['link'])
+                        ? $categoryData[$tempCategoryId]['link'] : '';
+                    $data[$key]['tag_list'] = isset($categoryData[$tempCategoryId])
+                                              && isset($categoryData[$tempCategoryId]['product_tag']) ? explode(
+                        ",", $categoryData[$tempCategoryId]['product_tag']
+                    ) : [];
                     $data[$key]['thumb'] = Products::getThumbImgUrl($value);
                     if (empty($data[$key]['thumb'])) {
                         // 如果报告图片、分类图片为空，使用系统默认图片
@@ -492,12 +495,15 @@ class NewsController extends Controller {
                                 foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
                                     $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
                                     $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['name'];
-                                    $prices[$index]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
+                                    $prices[$index]['data'][$keyPriceEdition]['is_logistics']
+                                        = $priceEdition['is_logistics'];
                                     $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
-                                    $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
-                                        $priceEdition['rules'],
-                                        $value['price']
-                                    ) . ";");
+                                    $prices[$index]['data'][$keyPriceEdition]['price'] = eval(
+                                        "return ".sprintf(
+                                            $priceEdition['rules'],
+                                            $value['price']
+                                        ).";"
+                                    );
                                     if ($index == 0 && $keyPriceEdition == 0) {
                                         // 以第一个价格版本作为显示的价格版本
                                         $data[$key]['price'] = $prices[$index]['data'][$keyPriceEdition]['price'];
@@ -545,12 +551,10 @@ class NewsController extends Controller {
                 'id', $categoryIds
             )->get()->toArray();
             $categoryData = array_column($categoryData, null, 'id');
-
             // 报告数据
             $ids = array_column($result, 'id');
             $productsDataArray = Products::query()->whereIn('id', $ids)->get()->toArray();
             $productsDataArray = array_column($productsDataArray, null, 'id');
-
             foreach ($result as $key => $value) {
                 if (empty($productsDataArray[$value['id']])) {
                     unset($result[$key]);
@@ -581,12 +585,11 @@ class NewsController extends Controller {
                 $data[$key]['english_name'] = $value['english_name'];
                 // $data[$key]['description'] = $value['description_seo'];
                 $data[$key]['date'] = $value['published_date'] ? $value['published_date'] : '';
-
                 $data[$key]['year'] = $value['published_date'] ? date('Y', strtotime($value['published_date'])) : '';
                 $data[$key]['month'] = $value['published_date'] ? date('m', strtotime($value['published_date'])) : '';
-                $data[$key]['month_en'] = $value['published_date'] ? date('M', strtotime($value['published_date'])) : '';
+                $data[$key]['month_en'] = $value['published_date'] ? date('M', strtotime($value['published_date']))
+                    : '';
                 $data[$key]['day'] = $value['published_date'] ? date('d', strtotime($value['published_date'])) : '';
-
                 $data[$key]['discount_type'] = $value['discount_type'];
                 $data[$key]['discount_value'] = $value['discount_amount'];
                 $data[$key]['discount_amount'] = $value['discount_amount']; // 兼容
@@ -608,7 +611,15 @@ class NewsController extends Controller {
                 $data[$key]['description'] = (new ProductDescription(
                     date('Y', strtotime($value['published_date']))
                 ))->where('product_id', $value['id'])->value('description');
-                $data[$key]['description'] = mb_substr($data[$key]['description'], 0, 100, 'UTF-8');
+                //$data[$key]['description'] = mb_substr($data[$key]['description'], 0, 100, 'UTF-8');
+                //取描述第一段 ,  如果没有\n换行符就取一整段
+                $strIndex = strpos($data[$key]['description'], "\n");
+                if ($strIndex !== false) {
+                    // 使用 substr() 函数获取第一个段落
+                    $data[$key]['description'] = substr($data[$key]['description'], 0, $strIndex);
+                } else {
+                    $data[$key]['description'] = mb_substr($data[$key]['description'], 0, 100, 'UTF-8');
+                }
                 // 这里的代码可以复用 开始
                 $prices = [];
                 // 计算报告价格
@@ -652,7 +663,6 @@ class NewsController extends Controller {
         return $data;
     }
 
-
     /**
      * 返回相关产品数据-重定向/相关报告
      */
@@ -686,9 +696,6 @@ class NewsController extends Controller {
             ReturnJson(false, '请求失败,请稍后再试');
         }
     }
-
-
-
 
     public function SearchRelevantForSphinx($id, $keyword, $page, $pageSize, $searchField, $selectField, $order = []) {
         if (empty($id) || empty($keyword)) {
@@ -744,7 +751,6 @@ class NewsController extends Controller {
         return $products ?? [];
     }
 
-
     public function SearchRelevantForMysql($id, $keyword, $page, $pageSize, $searchField, $selectField) {
         $products = Products::select($selectField)
                             ->where([$searchField => $keyword, 'status' => 1])
@@ -756,7 +762,4 @@ class NewsController extends Controller {
 
         return $products;
     }
-
-
-
 }

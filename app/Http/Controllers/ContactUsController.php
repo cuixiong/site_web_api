@@ -6,6 +6,7 @@ use App\Http\Controllers\Common\SendEmailController;
 use App\Models\ContactUs;
 use App\Models\Plate;
 use App\Models\PlateValue;
+use App\Models\PostPlatform;
 use Illuminate\Http\Request;
 use App\Models\DictionaryValue;
 use App\Models\Country;
@@ -82,9 +83,18 @@ class ContactUsController extends Controller {
         $model->consult_type = $params['consult_type'] ?? 0;
 
         $copyModel = clone $model;
-
         $model->product_id = $productId;
         $model->price_edition = $priceEdition;
+
+        $header = request()->header();
+        $ua_info = $header['user-agent'];
+        $model->ua_info = implode("\n", $ua_info);
+        $model->ua_browser_name = $this->getBrowserName($model->ua_info);
+        $HTTP_REFERER = $_SERVER['HTTP_REFERER'] ?? '';
+        $model->referer = $HTTP_REFERER;
+        $alias_id = $this->getAliasId($HTTP_REFERER, $model);
+        $model->referer_alias_id = $alias_id;
+        
         if (!$model->save()) {
             ReturnJson(false, $model->getModelError());
         }
@@ -164,5 +174,53 @@ class ContactUsController extends Controller {
         } catch (\Exception $e) {
             ReturnJson(false, '未知错误', $e->getMessage());
         }
+    }
+
+    /**
+     *
+     * @param mixed     $HTTP_REFERER
+     * @param ContactUs $model
+     *
+     */
+    private function getAliasId($HTTP_REFERER, ContactUs $model) {
+        $aliasId = 0;
+        if (!empty($HTTP_REFERER)) {
+            $keywordsList = PostPlatform::query()->where("status", 1)->pluck('keywords', 'id')->toArray();
+            foreach ($keywordsList as $forid => $forKeyword) {
+                if (strpos($HTTP_REFERER, $forKeyword) !== false) {
+                    $aliasId = $forid;
+                    break;
+                }
+            }
+        }
+
+        return $aliasId;
+    }
+
+    public function getBrowserName($ua_info) {
+        // 浏览器特征正则表达式库
+        $browserPatterns = [
+            'edge'       => '/edg\/[\d\.]+/i',
+            'chrome'     => '/chrome\/[\d\.]+/i',
+            'firefox'    => '/firefox\/[\d\.]+/i',
+            'safari'     => '/safari\/[\d\.]+/i',
+            'opr'        => '/opr\/[\d\.]+/i',    // Opera 新版标识
+            'opr_legacy' => '/opera\/[\d\.]+/i',  // Opera 旧版标识
+            'ie'         => '/trident/i',          // IE 11+ 特征
+            'qqbrowser'  => '/mqbrowser|qqbrowser/i',// QQ浏览器
+            'ucbrowser'  => '/ucbrowser\/[\d\.]+/i',  // UC浏览器
+            'baidubox'   => '/baidubox/i',       // 百度浏览器
+            'sogoumse'   => '/sogoumse/i',       // 搜狗浏览器
+            '360'        => '/(360se|360ee|qihu 360)/i',
+        ];
+        $browser = 'Unknown';
+        // 执行浏览器检测
+        foreach ($browserPatterns as $for_browser => $pattern) {
+            if (preg_match($pattern, $ua_info)) {
+                $browser = ucfirst($for_browser);
+                break;
+            }
+        }
+        return $browser;
     }
 }

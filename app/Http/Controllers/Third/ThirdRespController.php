@@ -99,6 +99,12 @@ class ThirdRespController extends BaseThirdController
             //已下单
             $orderId = Order::query()->orderBy('id', 'asc')->value('id');
             $res = ($sendEmailController)->payment($orderId);
+        } elseif ($code == 'register') {
+            //已下单
+            $res = ($sendEmailController)->register($testEmail);
+        } elseif ($code == 'RegisterSuccess') {
+            //已下单
+            $res = ($sendEmailController)->RegisterSuccess($testEmail);
         } else {
             // 其它
             $id = ContactUs::query()->orderBy('id', 'asc')->value("id");

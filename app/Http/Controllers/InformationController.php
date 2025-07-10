@@ -30,7 +30,7 @@ class InformationController extends Controller {
             'status' => 1,
         ];
         $field = ['thumb', 'title', 'upload_at as release_at', 'tags', 'description', 'category_id', 'id',
-                  'url' , 'hits'];
+                  'url', 'hits'];
         $query = Information::select($field)
                             ->where($where)
                             ->where('upload_at', '<=', time());
@@ -60,7 +60,6 @@ class InformationController extends Controller {
                         ->limit($pageSize)
                         ->get()
                         ->toArray();
-
         $news = [];
         if (!empty($result) && is_array($result)) {
             foreach ($result as $key => $value) {
@@ -99,26 +98,25 @@ class InformationController extends Controller {
         if (!isset($id)) {
             ReturnJson(false, 'id is empty');
         }
-        $data = Information::select(['title', 'upload_at', 'url', 'hits', 'tags', 'content', 'keywords', 'description' , 'category_id'])
+        $data = Information::select(
+            ['title', 'upload_at', 'url', 'hits', 'tags', 'content', 'keywords', 'description', 'category_id']
+        )
                            ->where(['id' => $id, 'status' => 1])
                            ->first();
         if ($data) {
-            if(!empty($data->upload_at ) && $data->upload_at > time()){
+            if (!empty($data->upload_at) && $data->upload_at > time()) {
                 ReturnJson(false, '新闻未发布，请稍后查看！');
             }
-
-            if($data->url != $url){
+            if ($data->url != $url) {
                 ReturnJson(2, '参数错误2');
             }
-
             $category = ProductsCategory::select(['id', 'name', 'link'])->where(
                 'id', $data['category_id']
             )->first();
-            if(!empty($category )){
+            if (!empty($category)) {
                 $category = $category->toArray();
             }
             $data['category'] = $category;
-
             // real_hits + 1
             Information::where(['id' => $id])->increment('real_hits');
             Information::where(['id' => $id])->increment('hits');
@@ -151,7 +149,6 @@ class InformationController extends Controller {
                 $prev_next['next'] = [];
             }
             $data['prev_next'] = $prev_next;
-
             //获取相关资讯
             $data['last_news'] = $this->getLastNews($id);
             //获取相关报告
@@ -161,7 +158,6 @@ class InformationController extends Controller {
                 //相关新闻
                 $data['relevant_news'] = $this->getRelevantNews($data['tags'], $id);
             }
-
             ReturnJson(true, 'success', $data);
         } else {
             $news_relate = Information::select(['id', 'url'])
@@ -224,7 +220,6 @@ class InformationController extends Controller {
         }
         //避免用户,一直点击下一页,导致没有下一篇
         $pageSize += 100;
-
         $keyword = $request->keyword;
         $industry_id = $request->industry_id;
         $tag = trim($request->tag);
@@ -308,75 +303,72 @@ class InformationController extends Controller {
         return $data;
     }
 
-
-
     /**
      *
      * @param array $keyword
      *
      * @return array
      */
-    private function getRelevantProduct(array $keyword)
-    {
+    private function getRelevantProduct(array $keyword) {
         $data = [];
         if ($keyword) {
             //$begin = strtotime("-2 year", strtotime(date('Y-01-01', time()))); // 前两年
             $result = Products::select([
-                'id',
-                'name',
-                'thumb',
-                'english_name',
-                'keywords',
-                'published_date',
-                'category_id',
-                'price',
-                'url',
-                'discount_type',
-                'discount',
-                'discount_amount as discount_value',
-                'discount_time_begin',
-                'discount_time_end',
-                'publisher_id',
-            ])
-                ->whereIn('keywords', $keyword)
-                ->where("status", 1)
+                                           'id',
+                                           'name',
+                                           'thumb',
+                                           'english_name',
+                                           'keywords',
+                                           'published_date',
+                                           'category_id',
+                                           'price',
+                                           'url',
+                                           'discount_type',
+                                           'discount',
+                                           'discount_amount as discount_value',
+                                           'discount_time_begin',
+                                           'discount_time_end',
+                                           'publisher_id',
+                                       ])
+                              ->whereIn('keywords', $keyword)
+                              ->where("status", 1)
                 //->where('published_date', '>', $begin)
-                ->where("published_date", "<=", time())
-                ->orderBy('published_date', 'desc')
-                ->orderBy('id', 'desc')
-                ->limit(2)
-                ->get()
-                ->toArray();
+                              ->where("published_date", "<=", time())
+                              ->orderBy('published_date', 'desc')
+                              ->orderBy('id', 'desc')
+                              ->limit(2)
+                              ->get()
+                              ->toArray();
             if ($result) {
-
                 $time = time();
                 // 默认图片
                 // 若报告图片为空，则使用系统设置的默认报告高清图
                 $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
                 // 分类信息
                 $categoryIds = array_column($result, 'category_id');
-                $categoryData = ProductsCategory::select(['id', 'name', 'thumb', 'link', 'product_tag'])->whereIn('id', $categoryIds)->get()->toArray();
+                $categoryData = ProductsCategory::select(['id', 'name', 'thumb', 'link', 'product_tag'])->whereIn(
+                    'id', $categoryIds
+                )->get()->toArray();
                 $categoryData = array_column($categoryData, null, 'id');
-
                 foreach ($result as $key => $value) {
-
-
                     //每个报告加上分类信息
                     $tempCategoryId = $value['category_id'];
                     $data[$key]['categoryId'] = isset($tempCategoryId) ? $tempCategoryId : '';
-                    $data[$key]['categoryName'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['name']) ? $categoryData[$tempCategoryId]['name'] : '';
-                    $data[$key]['categoryLink'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['link']) ? $categoryData[$tempCategoryId]['link'] : '';
-                    $data[$key]['tag_list'] = isset($categoryData[$tempCategoryId]) && isset($categoryData[$tempCategoryId]['product_tag']) ? explode(",", $categoryData[$tempCategoryId]['product_tag']) : [];
-
+                    $data[$key]['categoryName'] = isset($categoryData[$tempCategoryId])
+                                                  && isset($categoryData[$tempCategoryId]['name'])
+                        ? $categoryData[$tempCategoryId]['name'] : '';
+                    $data[$key]['categoryLink'] = isset($categoryData[$tempCategoryId])
+                                                  && isset($categoryData[$tempCategoryId]['link'])
+                        ? $categoryData[$tempCategoryId]['link'] : '';
+                    $data[$key]['tag_list'] = isset($categoryData[$tempCategoryId])
+                                              && isset($categoryData[$tempCategoryId]['product_tag']) ? explode(
+                        ",", $categoryData[$tempCategoryId]['product_tag']
+                    ) : [];
                     $data[$key]['thumb'] = Products::getThumbImgUrl($value);
-
                     if (empty($data[$key]['thumb'])) {
                         // 如果报告图片、分类图片为空，使用系统默认图片
-                        $data[$key]['thumb']= !empty($defaultImg) ? $defaultImg : '';
+                        $data[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                     }
-
-
-
                     // $data[$key]['thumb'] = Products::getThumbImgUrl($value);
                     $data[$key]['name'] = $value['name'];
                     $data[$key]['keyword'] = $value['keywords'];
@@ -389,8 +381,6 @@ class InformationController extends Controller {
                     $data[$key]['discount'] = $value['discount'];
                     $data[$key]['discount_time_begin'] = $value['discount_time_begin'];
                     $data[$key]['discount_time_end'] = $value['discount_time_end'];
-
-
                     //判断当前报告是否在优惠时间内
                     if ($data[$key]['discount_time_begin'] <= $time && $data[$key]['discount_time_end'] >= $time) {
                         $data[$key]['discount_status'] = 1;
@@ -403,30 +393,39 @@ class InformationController extends Controller {
                         $data[$key]['discount_time_begin'] = null;
                         $data[$key]['discount_time_end'] = null;
                     }
-
                     $data[$key]['description'] = (new ProductDescription(
                         date('Y', strtotime($value['published_date']))
                     ))->where('product_id', $value['id'])->value('description');
-                    $data[$key]['description'] = mb_substr($data[$key]['description'], 0, 100, 'UTF-8');
+                    //$data[$key]['description'] = mb_substr($data[$key]['description'], 0, 100, 'UTF-8');
+                    //取描述第一段 ,  如果没有\n换行符就取一整段
+                    $strIndex = strpos($data[$key]['description'], "\n");
+                    if ($strIndex !== false) {
+                        // 使用 substr() 函数获取第一个段落
+                        $data[$key]['description'] = substr($data[$key]['description'], 0, $strIndex);
+                    } else {
+                        $data[$key]['description'] = mb_substr($data[$key]['description'], 0, 100, 'UTF-8');
+                    }
                     // 这里的代码可以复用 开始
                     $prices = [];
                     // 计算报告价格
                     $languages = Languages::select(['id', 'name'])->get()->toArray();
                     if ($languages) {
                         foreach ($languages as $index => $language) {
-
                             $priceEditions = PriceEditionValues::GetList($language['id'], $value['publisher_id']);
                             if ($priceEditions) {
                                 $prices[$index]['language'] = $language['name'];
                                 foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
                                     $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
                                     $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['name'];
-                                    $prices[$index]['data'][$keyPriceEdition]['is_logistics'] = $priceEdition['is_logistics'];
+                                    $prices[$index]['data'][$keyPriceEdition]['is_logistics']
+                                        = $priceEdition['is_logistics'];
                                     $prices[$index]['data'][$keyPriceEdition]['notice'] = $priceEdition['notice'];
-                                    $prices[$index]['data'][$keyPriceEdition]['price'] = eval("return " . sprintf(
-                                        $priceEdition['rules'],
-                                        $value['price']
-                                    ) . ";");
+                                    $prices[$index]['data'][$keyPriceEdition]['price'] = eval(
+                                        "return ".sprintf(
+                                            $priceEdition['rules'],
+                                            $value['price']
+                                        ).";"
+                                    );
                                 }
                             }
                         }
