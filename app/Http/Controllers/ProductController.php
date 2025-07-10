@@ -752,17 +752,30 @@ class ProductController extends Controller {
             }else{
                 // 其它站点需要一个规模柱状图，类似后台复制图片
                 // logo、单位等数据
-                $product_desc_other_set_list = SystemValue::query()->where("alias", 'product_desc_other_set')->get()->keyBy('key')->toArray();
+                $product_desc_other_set_parent_id = System::query()->select(['id'])->where("alias", 'product_desc_other_set')->get()->value('id');
+                $product_desc_other_set_list = SystemValue::query()->where("parent_id", $product_desc_other_set_parent_id??0)->get()->keyBy('key')->toArray();
                 // 水印
                 $watermark = SystemValue::query()->select(['value'])->where('key', 'newsWatermarkImage')->value('value');
                 $product_desc['units'] = isset($product_desc_other_set_list['units']) ? $product_desc_other_set_list['units']['value'] : '';
+                $product_desc['chartsRate'] = isset($product_desc_other_set_list['chartsRate']) ? $product_desc_other_set_list['chartsRate']['value'] : '';
                 $product_desc['chartsLogo'] = isset($product_desc_other_set_list['chartsLogo']) ? $product_desc_other_set_list['chartsLogo']['value'] : '';
                 $product_desc['watermark'] = isset($watermark) ? $watermark : '';
+                
+                // 详情描述中的单位为亿元，但是规模数据又是百万美元，因此系统设置单位为亿元时，需将规模数据进行换算
+                if (
+                    isset($product_desc['units']) && !empty($product_desc['units']) && $product_desc['units'] == '亿元'
+                    && isset($product_desc['chartsRate']) && !empty($product_desc['chartsRate']) && is_numeric($product_desc['chartsRate'])
+                ) {
+
+                    $product_desc['last_scale'] = !empty($product_desc['last_scale']) ? round(bcdiv(bcmul($product_desc['last_scale'], $product_desc['chartsRate']), 100, 4), 1) : '';
+                    $product_desc['current_scale'] = !empty($product_desc['current_scale']) ? round(bcdiv(bcmul($product_desc['current_scale'], $product_desc['chartsRate']), 100, 4), 1) : '';
+                    $product_desc['future_scale'] = !empty($product_desc['future_scale']) ? round(bcdiv(bcmul($product_desc['future_scale'], $product_desc['chartsRate']), 100, 4), 1) : '';
+                }
+
                 // 其他数据
                 $product_desc['future_year'] = $product_desc['year'] + 6;
                 $product_desc['current_year'] = $product_desc['year'] + 0;
                 $product_desc['old_year'] = $product_desc['year'] - 1;
-
                 // 详情第一段作为柱状图的描述
                 $product_desc['description_first'] = '';
                 $descriptionText = trim($description['description']);
