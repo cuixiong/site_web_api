@@ -111,6 +111,7 @@ class CartController extends Controller {
 
             $shopCartData[$key]['thumb'] = $tempThumb;
             $shopCartData[$key]['name'] = $value['name'];
+            $shopCartData[$key]['english_name'] = $value['english_name'];
             $shopCartData[$key]['goods_id'] = $value['goods_id'];
             $shopCartData[$key]['url'] = $value['url'];
             $shopCartData[$key]['published_date'] = $value['published_date'] ? $value['published_date'] : '';
