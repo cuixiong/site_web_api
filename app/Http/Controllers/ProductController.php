@@ -1537,7 +1537,13 @@ class ProductController extends Controller {
                 $data[$index]['description'] = (new ProductDescription($suffix))->where('product_id', $product['id'])
                                                                                 ->value('description');
                 $data[$index]['description'] = $data[$index]['description'] ? $data[$index]['description'] : '';
-                $data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
+
+                $strIndex = strpos($data[$index]['description'], "\n");
+                if ($strIndex !== false) {
+                    // 使用 substr() 函数获取第一个段落
+                    $data[$index]['description'] = substr($data[$index]['description'], 0, $strIndex);
+                }
+                //$data[$index]['description'] = mb_substr($data[$index]['description'], 0, 100, 'UTF-8');
                 $data[$index]['id'] = $product['id'];
                 $data[$index]['url'] = $product['url'];
                 $data[$index]['category_name'] = $product['category_name'];
