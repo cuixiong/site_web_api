@@ -712,8 +712,8 @@ class ProductController extends Controller {
                 );
                 $descriptionText = trim($descriptionText);
                 // 分割详情的文本
-                $tableStartTextArray = isset($product_desc_other_set_list['table_spilt_start']) ? explode("\n", str_replace("\r\n", "\n", $product_desc_other_set_list['table_spilt_start'])) : [];
-                $tableEndTextArray = isset($product_desc_other_set_list['table_spilt_end']) ? explode("\n", str_replace("\r\n", "\n", $product_desc_other_set_list['table_spilt_end'])) : [];
+                $tableStartTextArray = isset($product_desc_other_set_list['table_spilt_start']) ? explode("\n", str_replace("\r\n", "\n", $product_desc_other_set_list['table_spilt_start']['value'])) : [];
+                $tableEndTextArray = isset($product_desc_other_set_list['table_spilt_end']) ? explode("\n", str_replace("\r\n", "\n", $product_desc_other_set_list['table_spilt_end']['value'])) : [];
                 // 统一返回数组
                 $product_desc['description'] = $this->spiltDescription($descriptionText, $tableStartTextArray, $tableEndTextArray);
                 // 每一段添加换行
