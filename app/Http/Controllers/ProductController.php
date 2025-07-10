@@ -564,11 +564,7 @@ class ProductController extends Controller {
                     $separator = ''; // 分隔符
                     // echo '<pre>';print_r($keyword_suffixs);exit;
                     foreach ($keyword_suffixs as $keyword_suffix) {
-                        if (checkSiteAccessData(['qyen', 'mrrs'])) {
-                            $seo_keyword .= $separator . $product_desc['keywords'] . " " . $keyword_suffix;
-                        } else {
-                            $seo_keyword .= $separator . $product_desc['keywords'] . $keyword_suffix;
-                        }
+                        $seo_keyword .= $separator . $product_desc['keywords'] . " " . $keyword_suffix;
                         if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {
                             $separator = ', ';
                         } else {
@@ -760,7 +756,7 @@ class ProductController extends Controller {
                 $product_desc['chartsRate'] = isset($product_desc_other_set_list['chartsRate']) ? $product_desc_other_set_list['chartsRate']['value'] : '';
                 $product_desc['chartsLogo'] = isset($product_desc_other_set_list['chartsLogo']) ? $product_desc_other_set_list['chartsLogo']['value'] : '';
                 $product_desc['watermark'] = isset($watermark) ? $watermark : '';
-                
+
                 // 详情描述中的单位为亿元，但是规模数据又是百万美元，因此系统设置单位为亿元时，需将规模数据进行换算
                 if (
                     isset($product_desc['units']) && !empty($product_desc['units']) && $product_desc['units'] == '亿元'
