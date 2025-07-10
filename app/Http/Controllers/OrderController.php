@@ -376,6 +376,7 @@ class OrderController extends Controller {
                 'order_status'           => $order_status,
                 // 'pay_type'        => ModelsPay::where('id', $order['pay_type'])->value('name'),
                 'pay_code'               => ModelsPay::where('code', $order['pay_code'])->value('name'),
+                'pay_code_mark'          => $order['pay_code'],
                 'order_number'           => $orderNumber,
                 'pay_time'               => $payTime,
                 'remarks'                => $order['remarks'] ? $order['remarks'] : '',
