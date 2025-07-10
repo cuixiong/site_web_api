@@ -788,7 +788,7 @@ class ProductController extends Controller {
                 $product_desc['description'] = $this->spiltDescription($descriptionText, $tableStartTextArray, $tableEndTextArray);
                 // 每一段添加换行
                 foreach ($product_desc['description'] as $key => $part) {
-                    if (checkSiteAccessData(['qyen', 'giren', 'mmgen', 'lpien', 'mrrs'])) {
+                    if (checkSiteAccessData(['qyen', 'giren', 'mmgen', 'lpien', 'mrrs', 'yhen'])) {
                         $product_desc['description'][$key] = $this->setDescriptionEnLinebreak($part);
                     } else {
                         $product_desc['description'][$key] = $this->setDescriptionLinebreak($part);
