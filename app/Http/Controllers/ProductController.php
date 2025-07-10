@@ -569,7 +569,11 @@ class ProductController extends Controller {
                         } else {
                             $seo_keyword .= $separator . $product_desc['keywords'] . $keyword_suffix;
                         }
-                        $separator = '，';
+                        if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {
+                            $separator = ', ';
+                        } else {
+                            $separator = '，';
+                        }
                     }
                 }
             } else {
@@ -594,7 +598,7 @@ class ProductController extends Controller {
                 $product_id,
                 $relevant_products_size
             );
-            
+
             //该报告是否是最新年份、如果不是，查询是否有最新年份的报告id
             if (checkSiteAccessData(['qycojp'])) {
                 $product_desc['isLatestYear'] = true;
@@ -1878,13 +1882,13 @@ class ProductController extends Controller {
                             }
                             if (strpos($row, $startTextItem) !== false) {
                                 $startIndex = false;
-                                break; 
+                                break;
                             }
                         }
                         if(!$startIndex){
                             continue; // 定位到开头的这一句不记录
                         }
-                    } 
+                    }
                     if (!$startIndex && !$endIndex && count($tableEndTextArray) > 0){
                         foreach ($tableEndTextArray as $endTextItem) {
                             if(empty($endTextItem)){
@@ -1894,8 +1898,8 @@ class ProductController extends Controller {
                                 $endIndex = true;
                             }
                         }
-                    } 
-                    
+                    }
+
                     if ($startIndex) {
                         $descriptionArrayPart['part1'][] = $row;
                     }
