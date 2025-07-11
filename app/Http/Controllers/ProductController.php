@@ -793,7 +793,6 @@ class ProductController extends Controller {
                     } else {
                         $product_desc['description'][$key] = $this->setDescriptionLinebreak($part);
                     }
-                    $product_desc['description'][$key] = str_replace("\n", "<br />", $product_desc['description'][$key]);
                 }
 
                 // ==== 处理双语言的另一个详情 ====
@@ -815,7 +814,6 @@ class ProductController extends Controller {
                 // 每一段添加换行
                 foreach ($product_desc['description_en'] as $key => $part) {
                     $product_desc['description_en'][$key] = $this->setDescriptionEnLinebreak($part);
-                    $product_desc['description_en'][$key] = str_replace("\n", "<br />", $product_desc['description_en'][$key]);
                 }
 
 
@@ -881,7 +879,8 @@ class ProductController extends Controller {
      *
      * @return  result 处理后的表格目录(含标题、摘要),以及一级目录数组
      */
-    public function setDescriptionEnLinebreak($description) {
+    public function setDescriptionEnLinebreak($description)
+    {
         $result = [];
         if (!empty($description)) {
             $description = trim($description, "\r\n");
@@ -893,17 +892,22 @@ class ProductController extends Controller {
                 $row = trim($row, "\n");
                 $row = trim($row, "\r");
                 $row = trim($row, "\r\n");
+
                 //判断是否换行
-                if (!empty($row) && strpos($row, ' ') === 0 && ($index + 1) != count($descriptionArray)
-                    && strpos(
-                           $descriptionArray[$index + 1], ' '
-                       ) !== 0) {
-                    $result[$index] = $row."\n";
-                } elseif (!empty($row) && strrpos($row, '.') === (strlen($row) - 1) && strpos($row, ' ') !== 0
-                          && strpos($row, 'Chapter') !== 0
-                          && ($index + 1) != count($descriptionArray)
-                          && strpos($descriptionArray[$index + 1], 'Chapter') !== 0) {
-                    $result[$index] = $row."\n";
+                if (!empty($row) && strpos($row, ' ') === 0) {
+                    // 添加缩进
+                    $result[$index] = "&nbsp;&nbsp;&nbsp;&nbsp;" . trim($row);
+                    // 企业、类型、应用等 额外换行
+                    if (($index + 1) != count($descriptionArray) && strpos($descriptionArray[$index + 1], ' ') !== 0) {
+                        $result[$index] .= "<br />";
+                    }
+                } elseif (
+                    !empty($row) && strrpos($row, '.') === (strlen($row) - 1) && strpos($row, ' ') !== 0
+                    && strpos($row, 'Chapter') !== 0
+                    && ($index + 1) != count($descriptionArray)
+                    && strpos($descriptionArray[$index + 1], 'Chapter') !== 0
+                ) {
+                    $result[$index] = $row . "<br />";
                 } elseif ($row == "\n" || $row == "\r" || $row == "\r\n") {
                     // $descriptionArray[$index] = ""; //清除多余换行
                 } elseif (!empty($row)) {
@@ -912,7 +916,7 @@ class ProductController extends Controller {
             }
         }
 
-        return implode("\n", $result);
+        return implode("<br />", $result);
     }
 
     /**
@@ -922,7 +926,8 @@ class ProductController extends Controller {
      *
      * @return array $result 处理后的表格目录(含标题、摘要),以及一级目录数组
      */
-    public function setDescriptionLinebreak($description) {
+    public function setDescriptionLinebreak($description)
+    {
         $result = [];
         if (!empty($description)) {
             $descriptionArray = explode("\n", $description);
@@ -933,30 +938,26 @@ class ProductController extends Controller {
                 $row = trim($row, "\r\n");
                 //判断是否换行
                 if (!empty($row) && strpos($row, ' ') === 0) {
-                    $row = "&nbsp;&nbsp;&nbsp;&nbsp;".trim($row);
-                }
-                if (
-                    !empty($row) && strpos($row, ' ') === 0 && ($index + 1) != count($descriptionArray)
-                    && strpos(
-                           $descriptionArray[$index + 1],
-                           ' '
-                       ) !== 0
-                ) {
-                    // $row = "&nbsp;&nbsp;".trim($row);
-                    $result[] = $row."\n";
+                    // 添加缩进
+                    $result[$index] = "&nbsp;&nbsp;&nbsp;&nbsp;" . trim($row);
+                    // 企业、类型、应用等 额外换行
+                    if (($index + 1) != count($descriptionArray) && strpos($descriptionArray[$index + 1], ' ') !== 0) {
+                        // $row = "&nbsp;&nbsp;".trim($row);
+                        $result[$index] = $row . "<br />";
+                    }
                 } elseif (!empty($row) && strrpos($row, '。') && strpos($row, '（') !== 0) {
-                    $result[] = $row."\n";
+                    $result[$index] = $row . "<br />";
                 } elseif ($row == "\n" || $row == "\r" || $row == "\r\n") {
                     // $descriptionArray[$index] = ""; //清除多余换行
                 } elseif (!empty($row)) {
-                    $result[] = $row;
+                    $result[$index] = $row;
                 } else {
-                    $result[] = "\n";
+                    $result[$index] = "<br />";
                 }
             }
         }
 
-        return implode("\n", $result);
+        return implode("<br />", $result);
         // return $result;
     }
 
@@ -2038,7 +2039,8 @@ class ProductController extends Controller {
 
     }
 
-    public function setDescriptionLinebreakOld($description) {
+    public function setDescriptionLinebreakOld($description)
+    {
         $result = [];
         if (!empty($description)) {
             $descriptionArray = explode("\n", $description);
@@ -2047,24 +2049,14 @@ class ProductController extends Controller {
                 $row = trim($row, "\n");
                 $row = trim($row, "\r");
                 $row = trim($row, "\r\n");
-                //判断是否换行
-                if (!empty($row) && strpos($row, ' ') === 0) {
-                    $row = "&nbsp;&nbsp;&nbsp;&nbsp;".trim($row);
-                }
-                if (
-                    !empty($row) && strpos($row, ' ') === 0 && ($index + 1) != count($descriptionArray)
-                    && strpos(
-                           $descriptionArray[$index + 1],
-                           ' '
-                       ) !== 0
-                ) {
+                if (!empty($row) && strpos($row, ' ') === 0 && ($index + 1) != count($descriptionArray) && strpos($descriptionArray[$index + 1], ' ') !== 0) {
                     // $row = "&nbsp;&nbsp;".trim($row);
                     $result[] = $row;
                     $result[] = "<br />";
                 } elseif (!empty($row) && strrpos($row, '。') && strpos($row, '（') !== 0) {
                     $result[] = $row;
                     $result[] = "<br />";
-                } elseif (!empty($row) && preg_match('/\.$/', $row) ) {
+                } elseif (!empty($row) && preg_match('/\.$/', $row)) {
                     $result[] = $row;
                     $result[] = "<br />";
                 } elseif ($row == "\n" || $row == "\r" || $row == "\r\n") {
