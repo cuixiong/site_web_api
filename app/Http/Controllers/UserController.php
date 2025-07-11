@@ -270,6 +270,7 @@ class UserController extends Controller {
         $status = $request->status;
         $scene = $request->scene;
         $price = $request->price;
+        $price_edition_values = $request->price_edition_values ?? '';
         if (!isset($status)) { // 由于允许参数status的值为0，所以这里要用【!isset】
             ReturnJson(false, 'status');
         }
@@ -285,6 +286,7 @@ class UserController extends Controller {
                                          'coupon.time_begin',
                                          'coupon.code',
                                          'coupon.id',
+                                         'coupon.price_edition_values',
                                          'user.is_used'
                                      ])
                             ->leftJoin('coupons as coupon', 'user.coupon_id', '=', 'coupon.id')
@@ -345,6 +347,19 @@ class UserController extends Controller {
                 $data[$key]['day_end_day'] = date('d', $value['time_end']);
                 $data[$key]['code'] = $value['code'];
                 $data[$key]['status'] = $couponStatus;
+                $data[$key]['price_edition_values'] = $value['price_edition_values'];
+
+                //价格版本不可用, 直接过滤
+                if(!empty($value['price_edition_values']) && !empty($price_edition_values)){
+                    $price_edition_value_id_list = explode(',', $price_edition_values);
+                    $db_price_edition_value_id_list = explode(',', $value['price_edition_values']);
+                    foreach ($price_edition_value_id_list as $for_price_edition_value_id) {
+                        if (!in_array($for_price_edition_value_id, $db_price_edition_value_id_list)) {
+                            unset($data[$key]);
+                        }
+                    }
+                }
+
             }
         }
         if (!empty($data)) {

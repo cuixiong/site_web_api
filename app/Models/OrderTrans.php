@@ -92,6 +92,12 @@ class OrderTrans extends Base
         if (!$goods) {
             ReturnJson(false, '商品不存在');
         }
+
+        $checkRes = (new OrderService())->checkCouponPriceVersion($coupon_id, $priceEdition);
+        if ($checkRes) {
+            ReturnJson(false, "当前商品规格不能使用该优惠券");
+        }
+
         $quantity = $inputParams['number'] ?? 0;
         if ($quantity <= 0) {
             ReturnJson(false, '商品数量为0');
@@ -406,6 +412,11 @@ class OrderTrans extends Base
         $actuallyPaidAll = 0;
         foreach ($realShopArr as &$shopItem) {
             $orderAmount = Products::getPrice($shopItem['price_edition'], $shopItem);
+            $checkRes = (new OrderService())->checkCouponPriceVersion($coupon_id, $shopItem['price_edition']);
+            if ($checkRes) {
+                ReturnJson(false, "当前商品规格不能使用该优惠券");
+            }
+
             $actuallyPaid = Products::getPriceBy(
                 $orderAmount,
                 $shopItem,

@@ -499,7 +499,7 @@ class Controller extends BaseController {
         $addData['ip_addr'] = $ipAddr;
         $addData['route'] = $routeUril;
         $addData['ua_info'] = implode("\n", $ua_info);
-        $addData['referer'] = $_SERVER['HTTP_REFERER'] ?? '';
+        $addData['referer'] = $input['http_referer'] ?? '';
         $addData['log_time'] = time();
         $addData['log_date'] = date('Y-m-d');
         AccessLog::create($addData);

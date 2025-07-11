@@ -50,6 +50,8 @@ class OrderController extends Controller {
             $phone = $request->phone;
             $company = $request->company;
             $email = $request->email;
+            $price_edition_values = $request->price_edition_values ?? '';
+            $price_edition_value_id_list = explode(',', $price_edition_values);
             $code = trim($request->code);
             $now = time();
             $coupon = Coupon::where('code', $code)
@@ -60,6 +62,17 @@ class OrderController extends Controller {
             if (empty($coupon)) {
                 ReturnJson(false, '券码错误或已过期');
             } else {
+                if (!empty($coupon['price_edition_values'])) {
+                    if (empty($price_edition_value_id_list)) {
+                        ReturnJson(false, '参数错误!');
+                    }
+                    $db_price_edition_value_id_list = explode(',', $coupon['price_edition_values']);
+                    foreach ($price_edition_value_id_list as $for_price_edition_value_id) {
+                        if (!in_array($for_price_edition_value_id, $db_price_edition_value_id_list)) {
+                            ReturnJson(false, '优惠券不可用(当前商品规格)');
+                        }
+                    }
+                }
                 if (!empty($request->user)) {
                     $userId = $request->user->id;
                 } else {
@@ -575,10 +588,11 @@ class OrderController extends Controller {
                     $tempCategoryId = $orderGoodsArr['product_info']['category_id'];
                     $categoryData = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $tempCategoryId)
                                                     ->first();
-                    if(!empty($categoryData )){
+                    if (!empty($categoryData)) {
                         $product['category_name'] = isset($categoryData['name']) ? $categoryData['name'] : '';
                         if (empty($orderGoodsArr['product_info']['thumb'])) {
-                            $orderGoodsArr['product_info']['thumb'] = isset($categoryData['thumb']) ? $categoryData['thumb']
+                            $orderGoodsArr['product_info']['thumb'] = isset($categoryData['thumb'])
+                                ? $categoryData['thumb']
                                 : '';
                         }
                     }
