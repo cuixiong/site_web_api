@@ -896,7 +896,8 @@ class ProductController extends Controller {
                 //判断是否换行
                 if (!empty($row) && strpos($row, ' ') === 0) {
                     // 添加缩进
-                    $result[$index] = "&nbsp;&nbsp;&nbsp;&nbsp;" . trim($row);
+                    // $result[$index] = "&nbsp;&nbsp;&nbsp;&nbsp;" . trim($row);
+                    $result[$index] = $row;
                     // 企业、类型、应用等 额外换行
                     if (($index + 1) != count($descriptionArray) && strpos($descriptionArray[$index + 1], ' ') !== 0) {
                         $result[$index] .= "<br />";
@@ -939,11 +940,11 @@ class ProductController extends Controller {
                 //判断是否换行
                 if (!empty($row) && strpos($row, ' ') === 0) {
                     // 添加缩进
-                    $result[$index] = "&nbsp;&nbsp;&nbsp;&nbsp;" . trim($row);
+                    // $result[$index] = "&nbsp;&nbsp;&nbsp;&nbsp;" . trim($row);
+                    $result[$index] = $row;
                     // 企业、类型、应用等 额外换行
                     if (($index + 1) != count($descriptionArray) && strpos($descriptionArray[$index + 1], ' ') !== 0) {
-                        // $row = "&nbsp;&nbsp;".trim($row);
-                        $result[$index] = $row . "<br />";
+                        $result[$index] .= "<br />";
                     }
                 } elseif (!empty($row) && strrpos($row, '。') && strpos($row, '（') !== 0) {
                     $result[$index] = $row . "<br />";
