@@ -310,34 +310,45 @@ class NewsController extends Controller {
             $query = $query->where($industryIdWhere);
         }
         if (!empty($tag)) {
-            $query->whereRaw(DB::raw('FIND_IN_SET("'.$tag.'",tags)'));
+            $query->whereRaw(DB::raw('FIND_IN_SET("' . $tag . '",tags)'));
         }
-        $prevId = (clone $query)->where(function ($query) use ($sort, $upload_at) {
-            $query->where('sort', '<', $sort)
-                  ->orWhere(function ($subQuery) use ($sort, $upload_at) {
-                      $subQuery->where('sort', $sort)
-                               ->where('upload_at', '<=', $upload_at);
-                  });
-        })
-                                ->where('id', '<>', $id)
-                                ->orderBy('sort', 'desc')
-                                ->orderBy('upload_at', 'desc')
-                                ->orderBy('id', 'desc')
-                                ->limit(1)
-                                ->value('id');
-        $nextId = (clone $query)->where(function ($query) use ($sort, $upload_at) {
+        $prevId = (clone $query)->where(function ($query) use ($sort, $upload_at, $id) {
             $query->where('sort', '>', $sort)
-                  ->orWhere(function ($subQuery) use ($sort, $upload_at) {
-                      $subQuery->where('sort', $sort)
-                               ->where('upload_at', '>=', $upload_at);
-                  });
+                ->orWhere(function ($subQuery) use ($sort, $upload_at) {
+                    $subQuery->where('sort', $sort)
+                        ->where('upload_at', '<', $upload_at);
+                })
+                ->orWhere(function ($subQuery) use ($sort, $upload_at, $id) {
+                    $subQuery->where('sort', $sort)
+                        ->where('upload_at', '=', $upload_at)
+                        ->where('id', '<', $id);
+                });
         })
-                                ->where('id', '<>', $id)
-                                ->orderBy('sort', 'asc')
-                                ->orderBy('upload_at', 'asc')
-                                ->orderBy('id', 'desc')
-                                ->limit(1)
-                                ->value('id');
+            ->where('id', '<>', $id)
+            ->orderBy('sort', 'asc')
+            ->orderBy('upload_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit(1)
+            ->value('id');
+
+        $nextId = (clone $query)->where(function ($query) use ($sort, $upload_at, $id) {
+            $query->where('sort', '<', $sort)
+                ->orWhere(function ($subQuery) use ($sort, $upload_at) {
+                    $subQuery->where('sort', $sort)
+                        ->where('upload_at', '>', $upload_at);
+                })
+                ->orWhere(function ($subQuery) use ($sort, $upload_at, $id) {
+                    $subQuery->where('sort', $sort)
+                        ->where('upload_at', '=', $upload_at)
+                        ->where('id', '>', $id);
+                });
+        })
+            ->where('id', '<>', $id)
+            ->orderBy('sort', 'desc')
+            ->orderBy('upload_at', 'asc')
+            ->orderBy('id', 'asc')
+            ->limit(1)
+            ->value('id');
         $prevId = !empty($prevId) ? $prevId : 0;
         $nextId = !empty($nextId) ? $nextId : 0;
 

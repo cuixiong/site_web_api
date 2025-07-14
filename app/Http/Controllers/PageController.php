@@ -115,7 +115,7 @@ class PageController extends Controller {
         }
         $data = Authority::select(
             ['name as title', 'body as content', 'description', 'id', 'keyword', 'name', 'created_at as time',
-             'big_image as img', 'hits', 'real_hits', 'category_id', 'type', 'status']
+             'big_image as img', 'hits', 'real_hits', 'category_id', 'type', 'status','sort']
         )->where('id', $id)->first();
         if (empty($data) || $data->status == 0) {
             ReturnJson(true, 'data is empty');
@@ -128,8 +128,79 @@ class PageController extends Controller {
         $data['content'] = str_replace(
             'href="', 'style="word-wrap:break-word;word-break:break-all;" href="', $data['content']
         );
+        
+        list($prevId, $nextId) = $this->getNextPrevId($id, $data['sort']);
+        //查询上一篇
+        if (!empty($prevId)) {
+            $prev = Authority::select(['id', 'name as title', 'category_id'])
+                        ->where("id", $prevId)
+                        ->first();
+        }
+        //查询下一篇
+        if (!empty($nextId)) {
+            $next = Authority::select(['id', 'name as title', 'category_id'])
+                        ->where("id", $nextId)
+                        ->first();
+        }
+        $prev_next = [];
+        if (!empty($prev)) {
+            $prev['routeName'] = $prev['category_id'];
+            $prev_next['prev'] = $prev;
+        } else {
+            $prev_next['prev'] = [];
+        }
+        if (!empty($next)) {
+            $next['routeName'] = $next['category_id'];
+            $prev_next['next'] = $next;
+        } else {
+            $prev_next['next'] = [];
+        }
+        $data['prev_next'] = $prev_next;
+
         ReturnJson(true, '', $data);
     }
+    
+    /**
+     * 查询权威引用上下一篇
+     *
+     * @param Request $request
+     * @param mixed   $id
+     *
+     * @return int[]
+     */
+    private function getNextPrevId($id, $sort = 0) {
+        $baseQuery = Authority::query()->where('status', 1);
+        $prevId = (clone $baseQuery)->where(function ($query) use ($sort, $id) {
+            $query->where('sort', '>', $sort)
+                ->orWhere(function ($subQuery) use ($sort, $id) {
+                    $subQuery->where('sort', $sort)
+                        ->where('id', '<', $id);
+                });
+        })
+            ->where('id', '<>', $id)
+            ->orderBy('sort', 'asc')
+            ->orderBy('id', 'desc')
+            ->limit(1)
+            ->value('id');
+
+        $nextId = (clone $baseQuery)->where(function ($query) use ($sort, $id) {
+            $query->where('sort', '<', $sort)
+                ->orWhere(function ($subQuery) use ($sort, $id) {
+                    $subQuery->where('sort', $sort)
+                        ->where('id', '>', $id);
+                });
+        })
+            ->where('id', '<>', $id)
+            ->orderBy('sort', 'desc')
+            ->orderBy('id', 'asc')
+            ->limit(1)
+            ->value('id');
+        $prevId = !empty($prevId) ? $prevId : 0;
+        $nextId = !empty($nextId) ? $nextId : 0;
+
+        return array($prevId, $nextId);
+    }
+
 
     public function QuoteRelevantProduct(Request $request): array {
         $id = $request->id ? $request->id : null;

@@ -1227,7 +1227,7 @@ class SendEmailController extends Controller {
             $exchange_coupon_amount = bcmul($data['coupon_amount'], $exchange_rate, 2);
             $exchange_order_amount = bcmul($data['order_amount'], $exchange_rate, 2);
             $exchange_order_actually_paid = bcmul($data['actually_paid'], $exchange_rate, 2);
-            $exchange_order_tax = bcmul($exchange_order_actually_paid, $tax_rate, 2);
+            $exchange_order_tax = bcmul($exchange_order_amount, $tax_rate, 2);
 
             $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
             $languageList = Languages::GetListById();
@@ -1466,7 +1466,7 @@ class SendEmailController extends Controller {
             $exchange_coupon_amount = bcmul($data['coupon_amount'], $exchange_rate, 2);
             $exchange_order_amount = bcmul($data['order_amount'], $exchange_rate, 2);
             $exchange_order_actually_paid = bcmul($data['actually_paid'], $exchange_rate, 2);
-            $exchange_order_tax = bcmul($exchange_order_actually_paid, $tax_rate, 2);
+            $exchange_order_tax = bcmul($exchange_order_amount, $tax_rate, 2);
             $orderGoodsList = OrderGoods::where('order_id', $Order['id'])->get()->toArray();
             $languageList = Languages::GetListById();
             $goods_data_list = [];
