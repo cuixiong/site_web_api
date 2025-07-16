@@ -594,23 +594,14 @@ class OrderController extends Controller {
                         $orderGoodsArr['product_info']['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                     }
 
-                    // 添加报告其它信息;名称、出版时间、页码数等
-                    $productData = Products::select(['name', 'published_date', 'pages', 'tables'])
-                    ->where('id', $orderGoodsArr['product_info']['goods_id'])
-                    ->first();
-                    if($productData){
-                        $productData = $productData->toArray();
-                        $orderGoodsArr['product_info'] = array_merge($orderGoodsArr['product_info'],$productData);
-                    }
-
                     if ($currencyData && count($currencyData) > 0) {
                         // 默认版本的多种货币的价格
                         if ($currencyData && count($currencyData)) {
                             foreach ($currencyData as $currencyItem) {
                                 $currencyKey = strtolower($currencyItem['code']).'_goods_original_price';
-                                $orderGoodsArr['product_info'][$currencyKey] = $orderGoodsArr['product_info']['goods_original_price'] * $currencyItem['exchange_rate'];
+                                $orderGoodsArr[$currencyKey] = $orderGoodsArr['goods_original_price'] * $currencyItem['exchange_rate'];
                                 $currencyKey = strtolower($currencyItem['code']).'_goods_present_price';
-                                $orderGoodsArr['product_info'][$currencyKey] = $orderGoodsArr['product_info']['goods_present_price'] * $currencyItem['exchange_rate'];
+                                $orderGoodsArr[$currencyKey] = $orderGoodsArr['goods_present_price'] * $currencyItem['exchange_rate'];
                             }
                         }
                     }
