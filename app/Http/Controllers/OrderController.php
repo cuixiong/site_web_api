@@ -881,7 +881,7 @@ class OrderController extends Controller {
             $shopItem = Products::find($forOrderGoods['goods_id']);
             $orderAmount = Products::getPrice($forOrderGoods['price_edition'], $shopItem);
             $actuallyPaid = Products::getPriceBy(
-                $orderAmount, $shopItem, time()
+                $orderAmount, $shopItem, time() , $forOrderGoods['price_edition']
             );
             $goodsAmount = bcmul($actuallyPaid, $forOrderGoods['goods_number'], 2);
             $actuallyPaidAll = bcadd($actuallyPaidAll, $goodsAmount, 2);

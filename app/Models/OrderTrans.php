@@ -23,7 +23,8 @@ class OrderTrans extends Base
         'discount_time_end',
         'discount_type',
         'discount_amount',
-        'discount'
+        'discount',
+        'price_values',
     ];
 
     public function setUser($user)
@@ -105,12 +106,12 @@ class OrderTrans extends Base
         DB::beginTransaction();
         $timestamp = time();
         $orderAmountSingle = Products::getPrice($priceEdition, $goods); // 单价
-        $actuallyPaidSingle = Products::getPriceBy($orderAmountSingle, $goods, $timestamp); // 单价实付
+        $actuallyPaidSingle = Products::getPriceBy($orderAmountSingle, $goods, $timestamp , $priceEdition); // 单价实付
         $orderAmount = bcmul($quantity, $orderAmountSingle, 2); // 总原价
         $caclueData = $this->calueTaxRate($payCode, $orderAmount); // 换算的数据
         if (empty($coupon_id)) {
             //原价打完折, 乘汇率 = 优惠价 .   然后原价*汇率  -  优惠价 = 实付金额
-            $discountPrice = Products::getPriceBy($orderAmount, $goods, $timestamp);
+            $discountPrice = Products::getPriceBy($orderAmount, $goods, $timestamp, $priceEdition);
             $actually_paid_all = $discountPrice;    // 实付价
             $caclueData['coupon_amount'] = bcsub($orderAmount, $actually_paid_all, 2);
             $caclueData['exchange_coupon_amount'] = bcmul($caclueData['coupon_amount'], $caclueData['exchange_rate'], 2);
@@ -420,8 +421,10 @@ class OrderTrans extends Base
             $actuallyPaid = Products::getPriceBy(
                 $orderAmount,
                 $shopItem,
-                $timestamp
-            ); // 新增一个参数：$coupon_id(优惠券id)
+                $timestamp,
+                $shopItem['price_edition']
+            );
+
             $shopItem['order_amount'] = $orderAmount;
             $shopItem['actually_paid'] = $actuallyPaid;
             $orderAmountAll = bcadd($orderAmountAll, bcmul($orderAmount, $shopItem['number'], 2), 2);

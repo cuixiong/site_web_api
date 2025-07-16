@@ -141,6 +141,7 @@ class ProductController extends Controller {
                     $value['discount_type'] = $productsData['discount_type'];
                     $value['discount_time_begin'] = $productsData['discount_time_begin'];
                     $value['discount_time_end'] = $productsData['discount_time_end'];
+                    $value['price_values'] = $productsData['price_values'];
                     //分类
                     $category = ProductsCategory::select(['id', 'name', 'link', 'thumb'])->find($value['category_id']);
                     if (empty($value['thumb']) && !empty($category)) {
@@ -391,6 +392,7 @@ class ProductController extends Controller {
                 'p.product_class',
                 'p.segment',
                 'p.division',
+                'p.price_values',
             ];
             $product_desc = (new Products)->from('product_routine as p')->select($fieldList)->leftJoin(
                 'product_category as cate',

@@ -48,6 +48,7 @@ class Products extends Base {
         }
         // 若报告图片为空，则使用系统设置的默认报告高清图
         $defaultImg = SystemValue::where('key', 'default_report_high_img')->value('value');
+
         return !empty($defaultImg) ? $defaultImg : '';
     }
 
@@ -98,7 +99,7 @@ class Products extends Base {
     /**
      * 获取订单里的每个商品的原价格（不带折扣或带折扣）
      */
-    public static function getPriceBy($price, $goods, $timestamp = null) {
+    public static function getPriceBy($price, $goods, $timestamp = null, $price_values_id = 0) {
         if ($timestamp !== null) {
             $timestamp = time();
         }
@@ -109,6 +110,14 @@ class Products extends Base {
             $timestamp >= $discount_time_begin
             && ($timestamp <= $discount_time_end)
         ) {
+            $goods_price_values = $goods['price_values'] ?? '';
+            if (!empty($goods_price_values)) {
+                //配置了价格版本, 没有匹配, 不使用优惠
+                $goods_price_id_list = explode(',', $goods_price_values);
+                if (!in_array($price_values_id, $goods_price_id_list)) {
+                    return $actuallyPaid;
+                }
+            }
             // 如果队列不能把discount_time_begin和discount_time_end的值恢复成null，就不能要这句代码了
             if ($goods['discount_type'] == 1) {
                 $actuallyPaid = common::getDiscountPrice($price, $goods['discount']);

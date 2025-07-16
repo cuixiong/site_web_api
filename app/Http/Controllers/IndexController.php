@@ -433,7 +433,7 @@ class IndexController extends Controller {
         // 报告基本查询
         $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',
                           'publisher_id', 'pages','discount_type', 'discount', 'discount_amount', 'discount_time_begin',
-                          'discount_time_end'];
+                          'discount_time_end' , 'price_values'];
         $productCountQuery = Products::where("status", 1)
                                      ->where('show_hot', 1)
                                      ->where("published_date", "<=", time());
@@ -590,7 +590,7 @@ class IndexController extends Controller {
         //$productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',];
         $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',
                           'publisher_id', 'pages', 'discount_type', 'discount', 'discount_amount', 'discount_time_begin',
-                          'discount_time_end'];
+                          'discount_time_end', 'price_values'];
         $productCountQuery = Products::where("status", 1)
                                      ->where('show_recommend', 1)
                                      ->where("published_date", "<=", time());
