@@ -564,6 +564,10 @@ class OrderController extends Controller {
             $ogArrList = [];
             $ogList = $orderGoodsMolde->where("order_id", $orderInfo['id'])->get();
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
+
+            // 需要额外查询多种货币的价格（日文）
+            $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])
+                                          ->get()?->toArray() ?? [];
             foreach ($ogList as $key => $value) {
                 /**
                  * @var $value OrderGoods
@@ -589,6 +593,28 @@ class OrderController extends Controller {
                         // 若报告图片为空，则使用系统设置的默认报告高清图
                         $orderGoodsArr['product_info']['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                     }
+
+                    // 添加报告其它信息;名称、出版时间、页码数等
+                    $productData = Products::select(['name', 'published_date', 'pages', 'tables'])
+                    ->where('id', $orderGoodsArr['product_info']['goods_id'])
+                    ->first();
+                    if($productData){
+                        $productData = $productData->toArray();
+                        $orderGoodsArr['product_info'] = array_merge($orderGoodsArr['product_info'],$productData);
+                    }
+
+                    if ($currencyData && count($currencyData) > 0) {
+                        // 默认版本的多种货币的价格
+                        if ($currencyData && count($currencyData)) {
+                            foreach ($currencyData as $currencyItem) {
+                                $currencyKey = strtolower($currencyItem['code']).'_goods_original_price';
+                                $orderGoodsArr['product_info'][$currencyKey] = $orderGoodsArr['product_info']['goods_original_price'] * $currencyItem['exchange_rate'];
+                                $currencyKey = strtolower($currencyItem['code']).'_goods_present_price';
+                                $orderGoodsArr['product_info'][$currencyKey] = $orderGoodsArr['product_info']['goods_present_price'] * $currencyItem['exchange_rate'];
+                            }
+                        }
+                    }
+
                 }
                 $ogArrList[] = $orderGoodsArr;
             }

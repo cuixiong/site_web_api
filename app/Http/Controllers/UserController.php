@@ -374,6 +374,7 @@ class UserController extends Controller {
             $data['phone'] = $user['phone'];
             $data['company'] = $user['company'];
             $data['address'] = $user['address'];
+            $data['department'] = $user['department'];
             $data['area'] = [
                 $user['province_id'],
                 $user['city_id']
