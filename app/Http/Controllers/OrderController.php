@@ -568,6 +568,18 @@ class OrderController extends Controller {
             // 需要额外查询多种货币的价格（日文）
             $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])
                                           ->get()?->toArray() ?? [];
+                                          
+            if ($currencyData && count($currencyData) > 0) {
+                // 多种货币的价格
+                if ($currencyData && count($currencyData)) {
+                    foreach ($currencyData as $currencyItem) {
+                        $currencyKey = strtolower($currencyItem['code']).'_order_amount';
+                        $orderInfo[$currencyKey] = $orderInfo['order_amount'] * $currencyItem['exchange_rate'];
+                        $currencyKey = strtolower($currencyItem['code']).'_actually_paid';
+                        $orderInfo[$currencyKey] = $orderInfo['_actually_paid'] * $currencyItem['exchange_rate'];
+                    }
+                }
+            }
             foreach ($ogList as $key => $value) {
                 /**
                  * @var $value OrderGoods
@@ -595,7 +607,7 @@ class OrderController extends Controller {
                     }
 
                     if ($currencyData && count($currencyData) > 0) {
-                        // 默认版本的多种货币的价格
+                        // 多种货币的价格
                         if ($currencyData && count($currencyData)) {
                             foreach ($currencyData as $currencyItem) {
                                 $currencyKey = strtolower($currencyItem['code']).'_goods_original_price';
@@ -681,17 +693,18 @@ class OrderController extends Controller {
             //                     ->where("status", 1)
             //                     ->count();
             $payCode = $request->input('pay_code');
-            $isExist = ModelsPay::query()
+            $paymentInfo = ModelsPay::query()
                                 ->where("code", $payCode)
                                 ->where("status", 1)
-                                ->count();
-            if (empty($isExist) || $isExist <= 0) {
+                                ->first();
+            if (!$paymentInfo) {
                 ReturnJson(false, '支付方式不存在');
             }
             // $record->pay_type = $payTypeId;
             // $this->calueOrderData($record, $payTypeId);
             $record->pay_code = $payCode;
-            $this->calueOrderData($record, $payCode);
+            $record->pay_coin_type = $paymentInfo->pay_coin_type;
+            // $this->calueOrderData($record, $payCode);
             if ($record->save()) {
                 ReturnJson(true, '修改成功');
             } else {
