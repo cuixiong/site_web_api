@@ -9,6 +9,8 @@ class Invoices extends Base
     protected $fillable = [
         'company_name',
         'company_address',
+        'email',
+        'department',
         'tax_code',
         'invoice_type',
         'price',

@@ -96,6 +96,8 @@ class InvoicesController extends Controller {
                 'company_address' => $input['company_address'] ?? '',
                 'contact_person'  => $input['contact_person'] ?? '',
                 'contact_detail'  => $input['contact_detail'] ?? '',
+                'email'           => $input['email'] ?? '',
+                'department'      => $input['department'] ?? '',
                 'tax_code'        => $input['tax_code'] ?? '',
                 'invoice_type'    => $input['invoice_type'],
                 'price'           => $orderObj->actually_paid,
