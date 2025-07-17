@@ -512,8 +512,24 @@ class OrderController extends Controller {
                        'pay_code'];
             $model->select($fields);
             $rs = $model->get()->toArray();
+            // 需要额外查询多种货币的价格（日文）
+            $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])
+                                          ->get()?->toArray() ?? [];
+                                         
             foreach ($rs as &$v) {
                 $v['pay_coin_symbol'] = PayConst::$coinTypeSymbol[$v['pay_coin_type']] ?? '';
+                 
+                if ($currencyData && count($currencyData) > 0) {
+                    // 多种货币的价格
+                    if ($currencyData && count($currencyData)) {
+                        foreach ($currencyData as $currencyItem) {
+                            $currencyKey = strtolower($currencyItem['code']).'_order_amount';
+                            $v[$currencyKey] = $v['order_amount'] * $currencyItem['exchange_rate'];
+                            $currencyKey = strtolower($currencyItem['code']).'_actually_paid';
+                            $v[$currencyKey] = $v['actually_paid'] * $currencyItem['exchange_rate'];
+                        }
+                    }
+                }
             }
             $rdata = [];
             $rdata['count'] = $count;
@@ -576,7 +592,7 @@ class OrderController extends Controller {
                         $currencyKey = strtolower($currencyItem['code']).'_order_amount';
                         $orderInfo[$currencyKey] = $orderInfo['order_amount'] * $currencyItem['exchange_rate'];
                         $currencyKey = strtolower($currencyItem['code']).'_actually_paid';
-                        $orderInfo[$currencyKey] = $orderInfo['_actually_paid'] * $currencyItem['exchange_rate'];
+                        $orderInfo[$currencyKey] = $orderInfo['actually_paid'] * $currencyItem['exchange_rate'];
                     }
                 }
             }
