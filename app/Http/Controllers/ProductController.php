@@ -429,6 +429,10 @@ class ProductController extends Controller {
                 $product_desc['discount_time_begin'] = null;
                 $product_desc['discount_time_end'] = null;
             }
+            if(empty($product_desc['price_values'] )){
+                $product_desc['price_values'] = ProductService::getAllPriceValuesIds();
+            }
+
             // //返回相关报告
             // if (!empty($product_desc['keywords'])) {
             //     $relatedProList = Products::query()->select(
@@ -2075,6 +2079,11 @@ class ProductController extends Controller {
             $product['prices'] = Products::CountPrice(
                 $product['price'], $product['publisher_id'], null, null, null, $currencyData
             );
+
+            if(empty($product['price_values'])){
+                $product['price_values'] = ProductService::getAllPriceValuesIds();
+            }
+
             if ($currencyData && count($currencyData) > 0) {
                 // 默认版本的多种货币的价格
                 if ($currencyData && count($currencyData)) {

@@ -19,6 +19,7 @@ use App\Models\Qualification;
 use App\Models\QuoteCategory;
 use App\Models\System;
 use App\Models\SystemValue;
+use App\Services\ProductService;
 use App\Services\SenWordsService;
 use Illuminate\Http\Request;
 use PhpParser\Node\Expr\Cast\Object_;
@@ -58,7 +59,7 @@ class IndexController extends Controller {
                     $priceEdition[$forProduct['publisher_id']], $forProduct['price']
                 ) ?? [];
             }
-        } elseif (checkSiteAccessData(['lpicn' , 'yhen'])) {
+        } elseif (checkSiteAccessData(['lpicn', 'yhen'])) {
             $data['hot_product_list'] = $this->getHotProductList($request);
             // lpicn数据的图片不太一样
             $systemKey = 'hotReportDefaultImg';
@@ -75,11 +76,12 @@ class IndexController extends Controller {
         } elseif (checkSiteAccessData(['lpien'])) {
             $data['hot_product_list'] = $this->getHotProductList($request);
             $systemKey = 'hotReportDefaultImg';
-            $hotReportDefaultImg = SystemValue::where('key', $systemKey)->where('hidden', 1)->select(['value'])->get()->value('value');
+            $hotReportDefaultImg = SystemValue::where('key', $systemKey)->where('hidden', 1)->select(['value'])->get()
+                                              ->value('value');
             foreach ($data['hot_product_list']['products'] as $key => $item) {
                 $data['hot_product_list']['products'][$key]['thumb'] = $hotReportDefaultImg;
             }
-        }else {
+        } else {
             $data['hot_product_list'] = $this->getHotProductList($request);
         }
         //获取推荐报告
@@ -90,7 +92,7 @@ class IndexController extends Controller {
             );
         } else {
             $data['recommend_product_list'] = $this->getRecommendProductList($request);
-            if (checkSiteAccessData(['tycn', 'mrrs' , 'yhen'])) {
+            if (checkSiteAccessData(['tycn', 'mrrs', 'yhen'])) {
                 if ($request->recommend_data_type == 2) {
                     $data['recommend_product_list'] = $this->handlerExtraPlusCateImg($data['recommend_product_list']);
                 } else {
@@ -110,7 +112,7 @@ class IndexController extends Controller {
         }
         // 客户评价
         $data['comment'] = $this->getCustomersComment($request);
-        if (checkSiteAccessData(['yhcn' , 'qyen'])) {
+        if (checkSiteAccessData(['yhcn', 'qyen'])) {
             // 权威引用 默认有分页
             $data['quote_list'] = $this->getQuoteList($request);
             // 资质认证 默认有分页
@@ -187,16 +189,15 @@ class IndexController extends Controller {
             $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
             $value['national_flag'] = Common::cutoffSiteUploadPathPrefix($value['national_flag']);
             //time_zone_copy
-            if(!empty($value['time_zone'] )){
+            if (!empty($value['time_zone'])) {
                 $tz = new \DateTimeZone($value['time_zone']);
                 // 当前时间的DateTime对象
                 $now = new \DateTime('now', $tz);
                 $value['time_zone_copy'] = $now->format('h:i a');
-            }else{
+            } else {
                 $now = new \DateTime('now');
                 $value['time_zone_copy'] = $now->format('h:i a');
             }
-
         }
         ReturnJson(true, '', $list);
     }
@@ -225,7 +226,7 @@ class IndexController extends Controller {
             'product_id',
             $value['id']
         )->value('description');
-        if (checkSiteAccessData(['mrrs' ,'yhen'])) {
+        if (checkSiteAccessData(['mrrs', 'yhen'])) {
             //取描述第一段 ,  如果没有\n换行符就取一整段
             $strIndex = strpos($description, "\n");
             if ($strIndex !== false) {
@@ -432,8 +433,9 @@ class IndexController extends Controller {
         $data = [];
         // 报告基本查询
         $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',
-                          'publisher_id', 'pages','discount_type', 'discount', 'discount_amount', 'discount_time_begin',
-                          'discount_time_end' , 'price_values'];
+                          'publisher_id', 'pages', 'discount_type', 'discount', 'discount_amount',
+                          'discount_time_begin',
+                          'discount_time_end', 'price_values'];
         $productCountQuery = Products::where("status", 1)
                                      ->where('show_hot', 1)
                                      ->where("published_date", "<=", time());
@@ -516,7 +518,8 @@ class IndexController extends Controller {
         }
         if ($dataType == 0 || $dataType == 1) {
             //返回分类名
-            $categoryList = ProductsCategory::query()->select(['id', 'name','icon_hover'])->get()->keyBy('id')->toArray();
+            $categoryList = ProductsCategory::query()->select(['id', 'name', 'icon_hover'])->get()->keyBy('id')
+                                            ->toArray();
             // gir用的两张默认图...
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
             $newProductList = $productQuery->select($productSelect)->get();
@@ -529,20 +532,35 @@ class IndexController extends Controller {
             foreach ($newProductList as $key => $value) {
                 $this->handlerNewProductList($value);
                 $category_name = '';
-                if(!empty($categoryList[$value->category_id]['name'] )){
+                if (!empty($categoryList[$value->category_id]['name'])) {
                     $category_name = $categoryList[$value->category_id]['name'];
                 }
                 $icon_hover = '';
-                if(!empty($categoryList[$value->category_id]['icon_hover'] )){
+                if (!empty($categoryList[$value->category_id]['icon_hover'])) {
                     $icon_hover = $categoryList[$value->category_id]['icon_hover'];
                 }
                 $newProductList[$key]['category_name'] = $category_name;
                 $newProductList[$key]['icon_hover'] = $icon_hover;
-
-                $newProductList[$key]['year'] = $newProductList[$key]['published_date'] ? date('Y', strtotime($newProductList[$key]['published_date'])) : '';
-                $newProductList[$key]['month'] = $newProductList[$key]['published_date'] ? date('m', strtotime($newProductList[$key]['published_date'])) : '';
-                $newProductList[$key]['month_en'] = $newProductList[$key]['published_date'] ? date('M', strtotime($newProductList[$key]['published_date'])) : '';
-                $newProductList[$key]['day'] = $newProductList[$key]['published_date'] ? date('d', strtotime($newProductList[$key]['published_date'])) : '';
+                $newProductList[$key]['year'] = $newProductList[$key]['published_date'] ? date(
+                    'Y', strtotime(
+                    $newProductList[$key]['published_date']
+                )
+                ) : '';
+                $newProductList[$key]['month'] = $newProductList[$key]['published_date'] ? date(
+                    'm', strtotime(
+                    $newProductList[$key]['published_date']
+                )
+                ) : '';
+                $newProductList[$key]['month_en'] = $newProductList[$key]['published_date'] ? date(
+                    'M', strtotime(
+                    $newProductList[$key]['published_date']
+                )
+                ) : '';
+                $newProductList[$key]['day'] = $newProductList[$key]['published_date'] ? date(
+                    'd', strtotime(
+                    $newProductList[$key]['published_date']
+                )
+                ) : '';
                 if (empty($value->thumb)) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
@@ -557,6 +575,27 @@ class IndexController extends Controller {
             }
             $data['products'] = $newProductList;
         }
+
+        if (!empty($data['products'])) {
+            $time = time();
+            foreach ($data['products'] as &$product_value) {
+                if (empty($product_value['price_values'])) {
+                    $product_value['price_values'] = ProductService::getAllPriceValuesIds();
+                }
+                //判断当前报告是否在优惠时间内
+                if ($product_value['discount_time_begin'] <= $time && $product_value['discount_time_end'] >= $time) {
+                    $product_value['discount_status'] = 1;
+                } else {
+                    $product_value['discount_status'] = 0;
+                    // 过期需返回正常的折扣
+                    $product_value['discount_amount'] = 0;
+                    $product_value['discount'] = 100;
+                    $product_value['discount_time_begin'] = null;
+                    $product_value['discount_time_end'] = null;
+                }
+            }
+        }
+
 
         return $data;
     }
@@ -589,7 +628,8 @@ class IndexController extends Controller {
         // 报告基本查询
         //$productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',];
         $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',
-                          'publisher_id', 'pages', 'discount_type', 'discount', 'discount_amount', 'discount_time_begin',
+                          'publisher_id', 'pages', 'discount_type', 'discount', 'discount_amount',
+                          'discount_time_begin',
                           'discount_time_end', 'price_values'];
         $productCountQuery = Products::where("status", 1)
                                      ->where('show_recommend', 1)
@@ -665,7 +705,7 @@ class IndexController extends Controller {
                         $description = (new ProductDescription($year))
                             ->where('product_id', $firstProduct['id'])
                             ->value('description');
-                        if (checkSiteAccessData(['tycn', 'mrrs' , 'yhen' , 'mmgen' ,'giren'])) {
+                        if (checkSiteAccessData(['tycn', 'mrrs', 'yhen', 'mmgen', 'giren'])) {
                             //取描述第一段 ,  如果没有\n换行符就取一整段
                             $strIndex = strpos($description, "\n");
                             if ($strIndex !== false) {
@@ -699,12 +739,26 @@ class IndexController extends Controller {
                 $this->handlerNewProductList($value);
                 $newProductList[$key]['category_name'] = isset($categoryNames[$value->category_id])
                     ? $categoryNames[$value->category_id] : '';
-
-                $newProductList[$key]['year'] = $newProductList[$key]['published_date'] ? date('Y', strtotime($newProductList[$key]['published_date'])) : '';
-                $newProductList[$key]['month'] = $newProductList[$key]['published_date'] ? date('m', strtotime($newProductList[$key]['published_date'])) : '';
-                $newProductList[$key]['month_en'] = $newProductList[$key]['published_date'] ? date('M', strtotime($newProductList[$key]['published_date'])) : '';
-                $newProductList[$key]['day'] = $newProductList[$key]['published_date'] ? date('d', strtotime($newProductList[$key]['published_date'])) : '';
-
+                $newProductList[$key]['year'] = $newProductList[$key]['published_date'] ? date(
+                    'Y', strtotime(
+                    $newProductList[$key]['published_date']
+                )
+                ) : '';
+                $newProductList[$key]['month'] = $newProductList[$key]['published_date'] ? date(
+                    'm', strtotime(
+                    $newProductList[$key]['published_date']
+                )
+                ) : '';
+                $newProductList[$key]['month_en'] = $newProductList[$key]['published_date'] ? date(
+                    'M', strtotime(
+                    $newProductList[$key]['published_date']
+                )
+                ) : '';
+                $newProductList[$key]['day'] = $newProductList[$key]['published_date'] ? date(
+                    'd', strtotime(
+                    $newProductList[$key]['published_date']
+                )
+                ) : '';
                 if (empty($value->thumb)) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
                     $newProductList[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
@@ -718,6 +772,25 @@ class IndexController extends Controller {
                 }
             }
             $data['products'] = $newProductList;
+        }
+        if (!empty($data['products'])) {
+            $time = time();
+            foreach ($data['products'] as &$product_value) {
+                if (empty($product_value['price_values'])) {
+                    $product_value['price_values'] = ProductService::getAllPriceValuesIds();
+                }
+                //判断当前报告是否在优惠时间内
+                if ($product_value['discount_time_begin'] <= $time && $product_value['discount_time_end'] >= $time) {
+                    $product_value['discount_status'] = 1;
+                } else {
+                    $product_value['discount_status'] = 0;
+                    // 过期需返回正常的折扣
+                    $product_value['discount_amount'] = 0;
+                    $product_value['discount'] = 100;
+                    $product_value['discount_time_begin'] = null;
+                    $product_value['discount_time_end'] = null;
+                }
+            }
         }
 
         return $data;
@@ -956,7 +1029,9 @@ class IndexController extends Controller {
                                  ->orderBy('sort', 'asc')->get()->toArray() ?? [];
         array_unshift($category, ['id' => '0', 'name' => '全部']);
         // 数据
-        $query = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id' , 'type'])->where("status", 1);
+        $query = Authority::select(['id', 'name as title', 'thumbnail as img', 'category_id', 'type'])->where(
+            "status", 1
+        );
         if ($category_id) {
             $query = $query->where('category_id', $category_id);
         }

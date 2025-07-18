@@ -462,6 +462,9 @@ class CartController extends Controller {
                         $results[$key]['discount_begin'] = null;
                         $results[$key]['discount_end'] = null;
                     }
+                    if(empty($product['price_values'])){
+                        $results[$key]['price_values'] = ProductService::getAllPriceValuesIds();
+                    }
 
 
                     $results[$key]['number'] = $value['number'];
