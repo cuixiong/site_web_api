@@ -11,6 +11,7 @@ use App\Models\ProductsCategory;
 use App\Models\Common;
 use App\Models\ProductDescription;
 use App\Models\SystemValue;
+use App\Services\ProductService;
 use App\Services\SphinxService;
 use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Http\Request;
@@ -596,6 +597,10 @@ class NewsController extends Controller {
                 $data[$key]['discount'] = $value['discount'];
                 $data[$key]['discount_time_begin'] = $value['discount_time_begin'];
                 $data[$key]['discount_time_end'] = $value['discount_time_end'];
+                $data[$key]['price_values'] = $value['price_values'];
+                if(empty($data[$key]['price_values'] )){
+                    $data[$key]['price_values'] = ProductService::getAllPriceValuesIds();
+                }
                 //判断当前报告是否在优惠时间内
                 if ($data[$key]['discount_time_begin'] <= $time && $data[$key]['discount_time_end'] >= $time) {
                     $data[$key]['discount_status'] = 1;

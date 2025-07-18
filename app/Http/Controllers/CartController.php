@@ -12,6 +12,7 @@ use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\ShopCart;
 use App\Models\SystemValue;
+use App\Services\ProductService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -125,7 +126,9 @@ class CartController extends Controller {
             $shopCartData[$key]['discount_amount'] = $value['discount_amount'];
             $shopCartData[$key]['discount'] = $value['discount'];
             $shopCartData[$key]['price_values'] = $value['price_values'];
-
+            if(empty($shopCartData[$key]['price_values'] )){
+                $shopCartData[$key]['price_values'] = ProductService::getAllPriceValuesIds();
+            }
             $shopCartData[$key]['discount_time_begin'] = $value['discount_time_begin'] ? date(
                 'Y-m-d',
                 $value['discount_time_begin']
