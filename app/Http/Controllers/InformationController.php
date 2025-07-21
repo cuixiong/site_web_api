@@ -354,7 +354,7 @@ class InformationController extends Controller {
                 $product_id_list = array_column($result, 'id');
                 $product_list = Products::query()->whereIn('id', $product_id_list)->get()->keyBy('id')->toArray();
                 foreach ($result as $key => $value) {
-                    $full_product = $product_list[$product['id']] ?? [];
+                    $full_product = $product_list[$value['id']] ?? [];
                     //每个报告加上分类信息
                     $tempCategoryId = $value['category_id'];
                     $data[$key]['categoryId'] = isset($tempCategoryId) ? $tempCategoryId : '';
