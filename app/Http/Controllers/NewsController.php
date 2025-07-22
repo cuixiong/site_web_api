@@ -581,6 +581,7 @@ class NewsController extends Controller {
                     $data[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                 }
                 $data[$key]['name'] = $value['name'];
+                $data[$key]['price'] = $value['price'];
                 $data[$key]['keyword'] = $value['keywords'];
                 $data[$key]['pages'] = $value['pages'];
                 $data[$key]['english_name'] = $value['english_name'];
