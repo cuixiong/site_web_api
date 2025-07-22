@@ -82,6 +82,7 @@ class ProductPdf extends Base {
                                       'product.discount_amount',
                                       'product.publisher_id',
                                       'product.english_name',
+                                      'product.hits',
                                       'category.name as category_name',
                                       'category.thumb as category_thumb',
                                   ])
@@ -133,6 +134,7 @@ class ProductPdf extends Base {
             ) : '',
             'pages'                 => $product['pages'] ?? '',
             'tables'                => $product['tables'] ?? '',
+            'hits'                  => $product['hits'] ?? '',
             'price'                 => $product['price'] ?? '',
             'discount'              => $product['discount'] ?? '',
             'discount_type'         => $product['discount_type'] ?? '',
@@ -159,6 +161,13 @@ class ProductPdf extends Base {
             'homeUrl'               => env('APP_URL'),
             // 'homepage' => parse_url(Yii::$app->params['frontend_domain'])['host'],
         ];
+        if (checkSiteAccessData(['qycojp'])) {
+            // 一些动态文本
+            $firstConsiderationMenuId = Menu::where('link', 'first-consideration')->value('id');
+            $firstConsiderationContent = Page::where('page_id', $firstConsiderationMenuId)->value('content');
+            $viewData['first_consideration'] = $firstConsiderationContent;
+
+        }
         if (checkSiteAccessData(['qyen'])) {
             //取当前报告的不同版本
             $languages = Languages::GetList();

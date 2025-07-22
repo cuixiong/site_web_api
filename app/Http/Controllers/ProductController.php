@@ -617,11 +617,10 @@ class ProductController extends Controller {
                                                             ->where('keywords', $product_desc['keywords'])
                                                             ->where('id', '<>', $product_desc['id'])
                                                             ->value('id');
-                    if (!empty($product_desc['latestYearID'])) {
+                    if (empty($product_desc['latestYearID'])) {
                         $product_desc['isLatestYear'] = false;
                     } else {
-                        $product_desc['isLatestYear'] = false;
-                        $product_desc['latestYearID'] = '';
+                        $product_desc['isLatestYear'] = true;
                     }
                 } else {
                     $product_desc['isLatestYear'] = true;

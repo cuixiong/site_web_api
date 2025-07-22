@@ -136,7 +136,7 @@
     </div>
 
     <div class="title_content3">
-        <pre><?= $tables_and_figures ?></pre>
+        <pre><?= $companies_mentioned ?></pre>
     </div>
 
     

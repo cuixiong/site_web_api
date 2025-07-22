@@ -82,10 +82,6 @@ class ContactUsController extends Controller {
         $model->department = $params['department'] ?? '';
         $model->consult_type = $params['consult_type'] ?? 0;
 
-        $copyModel = clone $model;
-        $model->product_id = $productId;
-        $model->price_edition = $priceEdition;
-
         $header = request()->header();
         $ua_info = $header['user-agent'];
         $model->ua_info = implode("\n", $ua_info);
@@ -95,6 +91,10 @@ class ContactUsController extends Controller {
         $alias_id = $this->getAliasId($HTTP_REFERER, $model);
         $model->referer_alias_id = $alias_id;
         
+        $copyModel = clone $model;
+        $model->product_id = $productId;
+        $model->price_edition = $priceEdition;
+
         if (!$model->save()) {
             ReturnJson(false, $model->getModelError());
         }
