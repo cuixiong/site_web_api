@@ -167,6 +167,9 @@ class ProductPdf extends Base {
             $firstConsiderationContent = Page::where('page_id', $firstConsiderationMenuId)->value('content');
             $viewData['first_consideration'] = $firstConsiderationContent;
 
+            $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])
+                ->get()?->toArray() ?? [];
+            $viewData['prices'] = Products::CountPrice($product['price'], $product['publisher_id'], null, null, null, $currencyData);
         }
         if (checkSiteAccessData(['qyen'])) {
             //取当前报告的不同版本
