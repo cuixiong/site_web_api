@@ -12,6 +12,7 @@ use App\Models\ProductsCategory;
 use App\Models\Common;
 use App\Models\ProductDescription;
 use App\Models\SystemValue;
+use App\Services\ProductService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use function PHPUnit\Framework\lessThanOrEqual;
@@ -350,7 +351,10 @@ class InformationController extends Controller {
                     'id', $categoryIds
                 )->get()->toArray();
                 $categoryData = array_column($categoryData, null, 'id');
+                $product_id_list = array_column($result, 'id');
+                $product_list = Products::query()->whereIn('id', $product_id_list)->get()->keyBy('id')->toArray();
                 foreach ($result as $key => $value) {
+                    $full_product = $product_list[$value['id']] ?? [];
                     //每个报告加上分类信息
                     $tempCategoryId = $value['category_id'];
                     $data[$key]['categoryId'] = isset($tempCategoryId) ? $tempCategoryId : '';
@@ -381,6 +385,11 @@ class InformationController extends Controller {
                     $data[$key]['discount'] = $value['discount'];
                     $data[$key]['discount_time_begin'] = $value['discount_time_begin'];
                     $data[$key]['discount_time_end'] = $value['discount_time_end'];
+                    $data[$key]['price'] = $value['price'];
+                    $data[$key]['price_values'] = $full_product['price_values'] ?? '';
+                    if(empty($data[$key]['price_values'] )){
+                        $data[$key]['price_values'] = ProductService::getAllPriceValuesIds();
+                    }
                     //判断当前报告是否在优惠时间内
                     if ($data[$key]['discount_time_begin'] <= $time && $data[$key]['discount_time_end'] >= $time) {
                         $data[$key]['discount_status'] = 1;

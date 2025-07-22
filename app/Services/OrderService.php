@@ -61,6 +61,24 @@ class OrderService {
         return [$coupon_user, ''];
     }
 
+    public function checkCouponPriceVersion($coupon_id, $price_value_id) {
+        if (empty($coupon_id) || empty($price_value_id)) {
+            return false;
+        }
+        $result = false;
+        $coupon = Coupon::query()->where("id", $coupon_id)
+                        ->where("status", CommonConst::CONST_NORMAL_STATUS)
+                        ->first();
+        if (!empty($coupon) && !empty($coupon->price_edition_values)) {
+            $price_edition_value_list = explode(',', $coupon->price_edition_values);
+            if (!in_array($price_value_id, $price_edition_value_list)) {
+                $result = true;
+            }
+        }
+
+        return $result;
+    }
+
     /**
      * 标记使用优惠券
      *
@@ -168,10 +186,11 @@ class OrderService {
         }
         //已注册的账号
         if (!empty($order['user_id'])) {
-            if(!empty($order['coupon_id'] )){
+            if (!empty($order['coupon_id'])) {
                 //增加用户优惠券(已使用)
                 $this->addUseUserCoupon($order['user_id'], $orderId, $order['coupon_id']);
             }
+
             return true;
         }
         //注册账号
@@ -186,6 +205,7 @@ class OrderService {
         }
         //增加用户优惠券(已使用)
         $this->addUseUserCoupon($user->id, $orderId, $order['coupon_id']);
+
         return true;
     }
 

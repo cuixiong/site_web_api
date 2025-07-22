@@ -12,6 +12,7 @@ use App\Models\Products;
 use App\Models\ProductsCategory;
 use App\Models\ShopCart;
 use App\Models\SystemValue;
+use App\Services\ProductService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -47,6 +48,7 @@ class CartController extends Controller {
             'products.published_date',
             'products.publisher_id',
             'products.category_id',
+            'products.price_values',
         ])
             ->leftJoin('product_routine as products', 'products.id', '=', 'cart.goods_id')
             ->leftJoin('price_edition_values as edition', 'cart.price_edition', '=', 'edition.id')
@@ -71,7 +73,7 @@ class CartController extends Controller {
         $shopCartData = [];
         $languageIdList = Languages::GetListById();
         $time = time();
-        
+
         // 分类信息
         $categoryIds = array_column($shopCart, 'category_id');
         $categoryData = ProductsCategory::select(['id', 'name', 'thumb','link'])->whereIn('id', $categoryIds)->get()->toArray();
@@ -125,7 +127,10 @@ class CartController extends Controller {
             $shopCartData[$key]['discount_type'] = $value['discount_type'];
             $shopCartData[$key]['discount_amount'] = $value['discount_amount'];
             $shopCartData[$key]['discount'] = $value['discount'];
-            
+            $shopCartData[$key]['price_values'] = $value['price_values'];
+            if(empty($shopCartData[$key]['price_values'] )){
+                $shopCartData[$key]['price_values'] = ProductService::getAllPriceValuesIds();
+            }
             $shopCartData[$key]['discount_time_begin'] = $value['discount_time_begin'] ? date(
                 'Y-m-d',
                 $value['discount_time_begin']
@@ -209,7 +214,7 @@ class CartController extends Controller {
         if (!is_array($cartIds) && empty($cartIds)) {
             ReturnJson(false, '请选择需要删除的商品ID');
         }
-        
+
         if (!is_array($cartIds) && !empty($cartIds)) {
             $cartIds = explode(',',$cartIds);
         }
@@ -416,7 +421,8 @@ class CartController extends Controller {
                     'product.discount_time_end as discount_end',
                     'product.price',
                     'product.publisher_id',
-                    'product.url'
+                    'product.url',
+                    'product.price_values',
                 ])
                     ->where([
                         'product.id'     => $value['goods_id'],
@@ -452,12 +458,15 @@ class CartController extends Controller {
                         $results[$key]['discount_status'] = 1;
                     } else {
                         $results[$key]['discount_status'] = 0;
-                        
+
                         // 过期需返回正常的折扣
                         $results[$key]['discount_amount'] = 0;
                         $results[$key]['discount'] = 100;
                         $results[$key]['discount_begin'] = null;
                         $results[$key]['discount_end'] = null;
+                    }
+                    if(empty($product['price_values'])){
+                        $results[$key]['price_values'] = ProductService::getAllPriceValuesIds();
                     }
 
 

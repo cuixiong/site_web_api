@@ -90,7 +90,7 @@ class ContactUsController extends Controller {
         $ua_info = $header['user-agent'];
         $model->ua_info = implode("\n", $ua_info);
         $model->ua_browser_name = $this->getBrowserName($model->ua_info);
-        $HTTP_REFERER = $_SERVER['HTTP_REFERER'] ?? '';
+        $HTTP_REFERER =  $params['http_referer'] ?? '';
         $model->referer = $HTTP_REFERER;
         $alias_id = $this->getAliasId($HTTP_REFERER, $model);
         $model->referer_alias_id = $alias_id;
