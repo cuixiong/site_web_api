@@ -619,6 +619,7 @@ class ProductController extends Controller {
                                                             ->value('id');
                     if (empty($product_desc['latestYearID'])) {
                         $product_desc['isLatestYear'] = false;
+                        $product_desc['latestYearID'] = '';
                     } else {
                         $product_desc['isLatestYear'] = true;
                     }
