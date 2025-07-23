@@ -62,6 +62,9 @@ class PayFactory extends Controller
             case PayConst::PAY_TYPE_GMO_PAYMENT;
                 $pay = new GmoPayment();
                 break;
+            case PayConst::PAY_TYPE_ROBOT_PAYMENT;
+                $pay = new RotbotPayment();
+                break;
         }
 
         return $pay;

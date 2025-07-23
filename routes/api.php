@@ -251,6 +251,10 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::any('notify/gmo-payment', [\App\Http\Controllers\Pay\Notify::class, 'GmoPaymentNotify'])->name(
         'GMO Payment 支付回调'
     );
+    // Robot Payment 支付回调
+    Route::any('notify/robot-payment', [\App\Http\Controllers\Pay\Notify::class, 'RobotPaymentNotify'])->name(
+        'Robot Payment 支付回调'
+    );
     // News控制器
     Route::prefix('news')->group(function () {
         Route::post('index', [\App\Http\Controllers\NewsController::class, 'Index'])->name('新闻列表');
