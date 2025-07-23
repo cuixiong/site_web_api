@@ -138,13 +138,13 @@ class GmoPayment extends Pay
             );
             \Log::error('res结果:' . json_encode([$res]) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
 
-            return false;
+            return true;
         } catch (\Exception $e) {
             \Log::error('支付通知异常:' . json_encode($e->getMessage()) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
             throw $e;
         }
 
-        return false;
+        return true;
     }
     
     protected function curl($method, $url, $headers = [], $params = []) {
