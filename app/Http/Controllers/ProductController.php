@@ -607,6 +607,7 @@ class ProductController extends Controller {
             );
             //该报告是否是最新年份、如果不是，查询是否有最新年份的报告id
             if (checkSiteAccessData(['qycojp'])) {
+                $product_desc['latestYear'] = date('Y', time());
                 $product_desc['isLatestYear'] = true;
                 $product_desc['latestYearID'] = '';
                 $published_date_copy = strtotime($product_desc['published_date']);
@@ -620,7 +621,7 @@ class ProductController extends Controller {
                     if (!empty($product_desc['latestYearID'])) {
                         $product_desc['isLatestYear'] = false;
                     } else {
-                        $product_desc['isLatestYear'] = true;
+                        $product_desc['isLatestYear'] = false;
                         $product_desc['latestYearID'] = '';
                     }
                 } else {
