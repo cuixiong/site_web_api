@@ -368,6 +368,7 @@ class SendEmailController extends Controller {
                 $tempProductsItem['productsName'] = $productsName;
                 $tempProductsItem['productLink'] = $productLink;
                 $tempProductsItem['priceEdition'] = $priceEdition;
+                $tempProductsItem['language_version'] = $ContactUs['language_version'] ?? '';
                 $otherProductsArray[] = $tempProductsItem;
 
                 $otherMessageData = ContactUs::query()->select(['product_id','product_name','price_edition','language_version'])
@@ -689,6 +690,7 @@ class SendEmailController extends Controller {
                 $tempProductsItem['productsName'] = $productsName;
                 $tempProductsItem['productLink'] = $productLink;
                 $tempProductsItem['priceEdition'] = $priceEdition;
+                $tempProductsItem['language_version'] = $ContactUs['language_version'] ?? '';
                 $otherProductsArray[] = $tempProductsItem;
 
                 $otherMessageData = ContactUs::query()->select(['product_id','product_name','price_edition','language_version'])->whereIn('id',$otherIds)->get();
@@ -891,6 +893,7 @@ class SendEmailController extends Controller {
                 $tempProductsItem['productsName'] = $productsName;
                 $tempProductsItem['productLink'] = $productLink;
                 $tempProductsItem['priceEdition'] = $priceEdition;
+                $tempProductsItem['language_version'] = $ContactUs['language_version'] ?? '';
                 $otherProductsArray[] = $tempProductsItem;
 
                 $otherMessageData = ContactUs::query()->select(['product_id','product_name','price_edition','language_version'])->whereIn('id',$otherIds)->get();
@@ -1085,6 +1088,7 @@ class SendEmailController extends Controller {
                 $tempProductsItem['productsName'] = $productsName;
                 $tempProductsItem['productLink'] = $productLink;
                 $tempProductsItem['priceEdition'] = $priceEdition;
+                $tempProductsItem['language_version'] = $ContactUs['language_version'] ?? '';
                 $otherProductsArray[] = $tempProductsItem;
 
                 $otherMessageData = ContactUs::query()->select(['product_id', 'product_name', 'price_edition','language_version'])->whereIn('id', $otherIds)->get();
