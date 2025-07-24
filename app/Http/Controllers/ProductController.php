@@ -1439,6 +1439,12 @@ class ProductController extends Controller {
         if (empty($productInfo['id'])) {
             return false;
         }
+
+        //其他站点都不写入浏览记录
+        if(!checkSiteAccessData(['qycojp'])){
+            return false;
+        }
+
         $view_date_str = date("Y-m-d");
         try {
             $user = JWTAuth::parseToken()->authenticate();
