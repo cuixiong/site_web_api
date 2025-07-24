@@ -370,7 +370,8 @@ class SendEmailController extends Controller {
                 $tempProductsItem['priceEdition'] = $priceEdition;
                 $otherProductsArray[] = $tempProductsItem;
 
-                $otherMessageData = ContactUs::query()->select(['product_id','product_name','price_edition'])->whereIn('id',$otherIds)->get();
+                $otherMessageData = ContactUs::query()->select(['product_id','product_name','price_edition','language_version'])
+                ->whereIn('id',$otherIds)->get();
                 if($otherMessageData){
                     $otherMessageData = $otherMessageData->toArray();
                 }else{
@@ -406,6 +407,9 @@ class SendEmailController extends Controller {
                         }
                     } else {
                         $tempProductsItem['priceEdition'] = '';
+                    }
+                    if (!empty($otherMessage['language_version'])) {
+                        $tempProductsItem['language_version'] = '';
                     }
                     $otherProductsArray[] = $tempProductsItem;
                 }
@@ -685,7 +689,7 @@ class SendEmailController extends Controller {
                 $tempProductsItem['priceEdition'] = $priceEdition;
                 $otherProductsArray[] = $tempProductsItem;
 
-                $otherMessageData = ContactUs::query()->select(['product_id','product_name','price_edition'])->whereIn('id',$otherIds)->get();
+                $otherMessageData = ContactUs::query()->select(['product_id','product_name','price_edition','language_version'])->whereIn('id',$otherIds)->get();
                 if($otherMessageData){
                     $otherMessageData = $otherMessageData->toArray();
                 }else{
@@ -721,6 +725,9 @@ class SendEmailController extends Controller {
                         }
                     } else {
                         $tempProductsItem['priceEdition'] = '';
+                    }
+                    if (!empty($otherMessage['language_version'])) {
+                        $tempProductsItem['language_version'] = '';
                     }
                     $otherProductsArray[] = $tempProductsItem;
                 }
@@ -882,7 +889,7 @@ class SendEmailController extends Controller {
                 $tempProductsItem['priceEdition'] = $priceEdition;
                 $otherProductsArray[] = $tempProductsItem;
 
-                $otherMessageData = ContactUs::query()->select(['product_id','product_name','price_edition'])->whereIn('id',$otherIds)->get();
+                $otherMessageData = ContactUs::query()->select(['product_id','product_name','price_edition','language_version'])->whereIn('id',$otherIds)->get();
                 if($otherMessageData){
                     $otherMessageData = $otherMessageData->toArray();
                 }else{
@@ -918,6 +925,9 @@ class SendEmailController extends Controller {
                         }
                     } else {
                         $tempProductsItem['priceEdition'] = '';
+                    }
+                    if (!empty($otherMessage['language_version'])) {
+                        $tempProductsItem['language_version'] = '';
                     }
                     $otherProductsArray[] = $tempProductsItem;
                 }
