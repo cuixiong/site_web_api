@@ -866,6 +866,10 @@ class SendEmailController extends Controller {
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
             }
 
+            // qycojp的联系我们 存在只填报告名称而不用报告id的表单
+            if(empty($productsName) && !empty($ContactUs['product_name'])){
+                $productsName = $ContactUs['product_name'];
+            }
             
             // 多申请样本提交
             $otherProductsArray = [];
