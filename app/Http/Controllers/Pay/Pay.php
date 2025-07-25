@@ -203,11 +203,14 @@ abstract class Pay implements PayInterface {
         }
 
         // 检查支付的金额是否相符
-        if ($order['actually_paid'] * $rate != $total_amount) { // 网站付款时的币种的订单总金额
-            $paymentMsg .= 'fail amount is wrong'.PHP_EOL;
-            file_put_contents($logName, $paymentMsg, FILE_APPEND);
+        if($order['pay_code'] != 'GMO_PAYMENT'){
 
-            return false;
+            if ($order['actually_paid'] * $rate != $total_amount) { // 网站付款时的币种的订单总金额
+                $paymentMsg .= 'fail amount is wrong'.PHP_EOL;
+                file_put_contents($logName, $paymentMsg, FILE_APPEND);
+    
+                return false;
+            }
         }
         // 改变订单状态
         $order->out_order_num = $trade_no;
