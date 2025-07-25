@@ -429,10 +429,9 @@ class ProductController extends Controller {
                 $product_desc['discount_time_begin'] = null;
                 $product_desc['discount_time_end'] = null;
             }
-            if(empty($product_desc['price_values'] )){
+            if (empty($product_desc['price_values'])) {
                 $product_desc['price_values'] = ProductService::getAllPriceValuesIds();
             }
-
             // //返回相关报告
             // if (!empty($product_desc['keywords'])) {
             //     $relatedProList = Products::query()->select(
@@ -1439,12 +1438,10 @@ class ProductController extends Controller {
         if (empty($productInfo['id'])) {
             return false;
         }
-
         //其他站点都不写入浏览记录
-        if(!checkSiteAccessData(['qycojp'])){
+        if (!checkSiteAccessData(['qycojp'])) {
             return false;
         }
-
         $view_date_str = date("Y-m-d");
         try {
             $user = JWTAuth::parseToken()->authenticate();
@@ -1602,7 +1599,7 @@ class ProductController extends Controller {
                 $data[$index]['discount_time_begin'] = $product['discount_time_begin'];
                 $data[$index]['discount_time_end'] = $product['discount_time_end'];
                 $data[$index]['price_values'] = $full_product['price_values'] ?? '';
-                if(empty($data[$index]['price_values'] )){
+                if (empty($data[$index]['price_values'])) {
                     $data[$index]['price_values'] = ProductService::getAllPriceValuesIds();
                 }
                 $data[$index]['name'] = $product['name'];
@@ -2085,11 +2082,9 @@ class ProductController extends Controller {
             $product['prices'] = Products::CountPrice(
                 $product['price'], $product['publisher_id'], null, null, null, $currencyData
             );
-
-            if(empty($product['price_values'])){
+            if (empty($product['price_values'])) {
                 $product['price_values'] = ProductService::getAllPriceValuesIds();
             }
-
             if ($currencyData && count($currencyData) > 0) {
                 // 默认版本的多种货币的价格
                 if ($currencyData && count($currencyData)) {
@@ -2141,5 +2136,50 @@ class ProductController extends Controller {
         }
 
         return $result;
+    }
+
+    /**
+     *  搜索提示词
+     */
+    public function searchPromptWords(Request $request) {
+        try {
+            $keyword = $request->input('keyword', '');
+            $pageSize = $request->input('pageSize', 10);
+            if (empty($keyword)) {
+                ReturnJson(false, '请输入搜索内容！', []);
+            }
+            $sphinxSrevice = new SphinxService();
+            $conn = $sphinxSrevice->getConnection();
+            //报告昵称,英文昵称匹配查询
+            $query = (new SphinxQL($conn))->select('*')
+                                          ->from('products_rt');
+            $query = $query->where('status', '=', 1);
+            $query = $query->where("published_date", "<", time());
+            //精确搜索, 多字段匹配
+            if (!empty($keyword)) {
+                $keyWordArraySphinx = explode(" ", $keyword);
+                if (count($keyWordArraySphinx) > 0) {
+                    foreach ($keyWordArraySphinx as $val) {
+                        $query = $query->match(['keywords_cn',
+                                                'keywords',
+                                                'keywords_en',
+                                                'keywords_jp',
+                                                'keywords_kr',
+                                                'keywords_de'], '"'.$val.'"', true);
+                    }
+                }
+            }
+            $query = $query->orderBy('degree_keyword', 'asc');
+            $query->groupBy('keywords')->setSelect('keywords');
+            //查询结果分页
+            $query->limit(0, $pageSize);
+            $query->option('max_matches', $pageSize);
+            $result = $query->execute();
+            $cateIdList = $result->fetchAllAssoc();
+            $data = array_column($cateIdList, 'keywords');
+            ReturnJson(true, 'ok', $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage(), []);
+        }
     }
 }

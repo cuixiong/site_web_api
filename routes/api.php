@@ -99,6 +99,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::get('output-pdf', [\App\Http\Controllers\ProductController::class, 'OutputPdf'])->name('下载PDF');
 
         Route::get('customized-info', [\App\Http\Controllers\ProductController::class, 'customizedInfo'])->name('tycn新增接口');
+        Route::get('search-prompt-words', [\App\Http\Controllers\ProductController::class, 'searchPromptWords'])->name('搜索提示词');
     });
     // ContactUs控制器(联系我们)
     Route::prefix('contact-us')->group(function () {
