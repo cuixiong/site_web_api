@@ -104,21 +104,21 @@ class GmoPayment extends Pay
                 return false;
             }
 
-            // 校验 查询订单接口
-            $searchParams = [
-                'ShopID' => $this->shopId,
-                'ShopPass' => $this->shopPwd,
-                'OrderID' => $out_trade_no,
-            ];
-            // \Log::error('回调查询1:' . $this->queryUrl.'/payment/SearchTrade.idPass' .json_encode($searchParams). '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
-            $response = $this->curl('GET', $this->queryUrl.'/payment/SearchTrade.idPass', [], $searchParams);
-            // \Log::error('回调查询2:' . json_encode([$response]) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
-            if (strpos($response,'Status=CAPTURE')===false) {
-                \Log::error('回调查询:' . json_encode([$response]) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
-                return false;
-            }
+            // // 校验 查询订单接口
+            // $searchParams = [
+            //     'ShopID' => $this->shopId,
+            //     'ShopPass' => $this->shopPwd,
+            //     'OrderID' => $out_trade_no,
+            // ];
+            // // \Log::error('回调查询1:' . $this->queryUrl.'/payment/SearchTrade.idPass' .json_encode($searchParams). '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
+            // $response = $this->curl('GET', $this->queryUrl.'/payment/SearchTrade.idPass', [], $searchParams);
+            // // \Log::error('回调查询2:' . json_encode([$response]) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
+            // if (strpos($response,'Status=CAPTURE')===false) {
+            //     \Log::error('回调查询:' . json_encode([$response]) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
+            //     return false;
+            // }
 
-            // 校验结束
+            // // 校验结束
 
             $trade_no = $reqData['TranID'];
             $total_amount = $reqData['Amount'] + $reqData['Tax'];;
