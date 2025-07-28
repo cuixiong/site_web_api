@@ -241,7 +241,7 @@ class ThirdRespController extends BaseThirdController
             return ['code' => 500, 'msg' => '缺少参数'];
         }
 
-        $data = Products::find()->distinct()
+        $data = Products::query()->distinct()
             ->select(['url', 'keywords'])
             ->whereIn('url', $urls)
             ->get();
