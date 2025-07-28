@@ -16,6 +16,7 @@ namespace App\Http\Controllers\Third;
 use App\Http\Controllers\Common\SendEmailController;
 use App\Models\ContactUs;
 use App\Models\Order;
+use App\Models\Products;
 use App\Models\ProductsCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
@@ -228,5 +229,26 @@ class ThirdRespController extends BaseThirdController
         } catch (\Throwable $th) {
             return ['code' => 500, 'msg' => $th->getMessage()];
         }
+    }
+
+    public function getProductKeywords(Request $request)
+    {
+        $params = $request->all();
+        $urls = $params['url_data'] ?? [];
+        if ($urls && !empty($urls)) {
+            $urls = json_decode($urls, true);
+        } else {
+            return ['code' => 500, 'msg' => '缺少参数'];
+        }
+
+        $data = Products::find()->distinct()
+            ->select(['url', 'keywords'])
+            ->where(['in', 'url', $urls])
+            ->get();
+        if ($data) {
+            $data = $data->toArray();
+            $data = array_column($data, 'keywords', 'url');
+        }
+        return ['code' => 200, 'data' => $data ?? []];
     }
 }

@@ -126,6 +126,14 @@ class ProductController extends Controller {
                     //判断当前报告是否在优惠时间内
                     if ($productsData['discount_time_begin'] <= $time && $productsData['discount_time_end'] >= $time) {
                         $value['discount_status'] = 1;
+
+                        // lpicn 有不同的折扣时间格式，拆分让前端自由拼接
+                        $value['discount_time_begin_year'] = date('Y', $productsData['discount_time_begin']);
+                        $value['discount_time_begin_month'] =  date('m', $productsData['discount_time_begin']);
+                        $value['discount_time_begin_day'] =  date('d', $productsData['discount_time_begin']);
+                        $value['discount_time_end_year'] = date('Y', $productsData['discount_time_end']);
+                        $value['discount_time_end_month'] =  date('m', $productsData['discount_time_end']);
+                        $value['discount_time_end_day'] =  date('d', $productsData['discount_time_end']);
                     } else {
                         $value['discount_status'] = 0;
                         // 过期需返回正常的折扣
@@ -421,6 +429,15 @@ class ProductController extends Controller {
             //判断当前报告是否在优惠时间内
             if ($product_desc['discount_time_begin'] <= $time && $product_desc['discount_time_end'] >= $time) {
                 $product_desc['discount_status'] = 1;
+
+                // lpicn 有不同的折扣时间格式，拆分让前端自由拼接
+                $product_desc['discount_time_begin_year'] = date('Y', $product_desc['discount_time_begin']);
+                $product_desc['discount_time_begin_month'] =  date('m', $product_desc['discount_time_begin']);
+                $product_desc['discount_time_begin_day'] =  date('d', $product_desc['discount_time_begin']);
+                $product_desc['discount_time_end_year'] = date('Y', $product_desc['discount_time_end']);
+                $product_desc['discount_time_end_month'] =  date('m', $product_desc['discount_time_end']);
+                $product_desc['discount_time_end_day'] =  date('d', $product_desc['discount_time_end']);
+
             } else {
                 $product_desc['discount_status'] = 0;
                 // 过期需返回正常的折扣
