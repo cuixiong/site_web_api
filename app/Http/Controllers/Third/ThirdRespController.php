@@ -243,7 +243,7 @@ class ThirdRespController extends BaseThirdController
 
         $data = Products::find()->distinct()
             ->select(['url', 'keywords'])
-            ->where(['in', 'url', $urls])
+            ->whereIn('url', $urls)
             ->get();
         if ($data) {
             $data = $data->toArray();
