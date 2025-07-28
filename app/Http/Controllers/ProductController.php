@@ -805,15 +805,12 @@ class ProductController extends Controller {
                     && !empty($product_desc['chartsRate'])
                     && is_numeric($product_desc['chartsRate'])
                 ) {
-                    $product_desc['last_scale'] = !empty($product_desc['last_scale']) ? round(
-                        bcdiv(bcmul($product_desc['last_scale'], $product_desc['chartsRate']), 100, 4), 1
-                    ) : '';
-                    $product_desc['current_scale'] = !empty($product_desc['current_scale']) ? round(
-                        bcdiv(bcmul($product_desc['current_scale'], $product_desc['chartsRate']), 100, 4), 1
-                    ) : '';
-                    $product_desc['future_scale'] = !empty($product_desc['future_scale']) ? round(
-                        bcdiv(bcmul($product_desc['future_scale'], $product_desc['chartsRate']), 100, 4), 1
-                    ) : '';
+                    $product_desc['last_scale'] = !empty($product_desc['last_scale']) ? $this->bcdiv_variable_precision(bcmul($product_desc['last_scale'], $product_desc['chartsRate'],10), 100) : '';
+                    
+                    $product_desc['current_scale'] = !empty($product_desc['current_scale']) ? $this->bcdiv_variable_precision(bcmul($product_desc['current_scale'], $product_desc['chartsRate'],10), 100) : '';
+                    
+                    $product_desc['future_scale'] = !empty($product_desc['future_scale']) ? $this->bcdiv_variable_precision(bcmul($product_desc['future_scale'], $product_desc['chartsRate'],10), 100) : '';
+
                 }
                 // 其他数据
                 $product_desc['future_year'] = $product_desc['year'] + 6;
@@ -919,6 +916,20 @@ class ProductController extends Controller {
                 ReturnJson(2, '请求失败');
             }
         }
+    }
+    // 柱状图规模数据格式
+    private function bcdiv_variable_precision($dividend, $divisor, $max_scale = 10) {
+        $result = bcdiv($dividend, $divisor, $max_scale);
+        
+        // 如果包含小数点
+        if (strpos($result, '.') !== false) {
+            // 去除右侧多余的零
+            $result = rtrim($result, '0');
+            // 如果小数点后没有数字了，去除小数点
+            $result = rtrim($result, '.');
+        }
+        
+        return $result;
     }
 
     // 相关报告
