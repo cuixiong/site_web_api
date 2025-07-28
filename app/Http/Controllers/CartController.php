@@ -459,6 +459,13 @@ class CartController extends Controller {
                     //判断当前报告是否在优惠时间内
                     if ($product['discount_begin'] <= $time && $product['discount_end'] >= $time) {
                         $results[$key]['discount_status'] = 1;
+                        
+                        $results[$key]['discount_time_begin_year'] = date('Y', $product['discount_begin']);
+                        $results[$key]['discount_time_begin_month'] =  date('m', $product['discount_begin']);
+                        $results[$key]['discount_time_begin_day'] =  date('d', $product['discount_begin']);
+                        $results[$key]['discount_time_end_year'] = date('Y', $product['discount_end']);
+                        $results[$key]['discount_time_end_month'] =  date('m', $product['discount_end']);
+                        $results[$key]['discount_time_end_day'] =  date('d', $product['discount_end']);
                     } else {
                         $results[$key]['discount_status'] = 0;
 
