@@ -163,7 +163,7 @@ class ProductPdf extends Base {
         ];
         if (checkSiteAccessData(['qycojp'])) {
             // 一些动态文本
-            $firstConsiderationMenuId = Menu::where('link', 'first-consideration')->value('id');
+            $firstConsiderationMenuId = Menu::where('link', 'reportsDetail')->value('id');
             $firstConsiderationContent = Page::where('page_id', $firstConsiderationMenuId)->value('content');
             $viewData['first_consideration'] = $firstConsiderationContent;
 
