@@ -236,7 +236,7 @@ class ThirdRespController extends BaseThirdController
         $params = $request->all();
         $urls = $params['url_data'] ?? [];
         if ($urls && !empty($urls)) {
-            $urls = json_decode($urls, true);
+            // $urls = json_decode($urls, true);
         } else {
             return ['code' => 500, 'msg' => '缺少参数'];
         }
