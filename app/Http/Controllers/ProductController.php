@@ -805,9 +805,9 @@ class ProductController extends Controller {
                     && is_numeric($product_desc['chartsRate'])
                 ) {
                     $product_desc['last_scale'] = !empty($product_desc['last_scale']) ? $this->bcdiv_variable_precision(bcmul($product_desc['last_scale'], $product_desc['chartsRate'],10), 100) : '';
-                    
+
                     $product_desc['current_scale'] = !empty($product_desc['current_scale']) ? $this->bcdiv_variable_precision(bcmul($product_desc['current_scale'], $product_desc['chartsRate'],10), 100) : '';
-                    
+
                     $product_desc['future_scale'] = !empty($product_desc['future_scale']) ? $this->bcdiv_variable_precision(bcmul($product_desc['future_scale'], $product_desc['chartsRate'],10), 100) : '';
 
                 }
@@ -919,7 +919,7 @@ class ProductController extends Controller {
     // 柱状图规模数据格式
     private function bcdiv_variable_precision($dividend, $divisor, $max_scale = 10) {
         $result = bcdiv($dividend, $divisor, $max_scale);
-        
+
         // 如果包含小数点
         if (strpos($result, '.') !== false) {
             // 去除右侧多余的零
@@ -927,7 +927,7 @@ class ProductController extends Controller {
             // 如果小数点后没有数字了，去除小数点
             $result = rtrim($result, '.');
         }
-        
+
         return $result;
     }
 
@@ -2202,10 +2202,11 @@ class ProductController extends Controller {
             $query->groupBy('keywords')->setSelect('keywords');
             //查询结果分页
             $query->limit(0, $pageSize);
-            $query->option('max_matches', $pageSize);
             $result = $query->execute();
             $cateIdList = $result->fetchAllAssoc();
             $data = array_column($cateIdList, 'keywords');
+            //数组分页
+            $data = array_slice($data, 0, $pageSize);
             ReturnJson(true, 'ok', $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage(), []);

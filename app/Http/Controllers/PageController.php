@@ -26,6 +26,7 @@ use App\Models\Qualification;
 use App\Models\QuoteCategory;
 use App\Models\SystemValue;
 use App\Models\TeamMember;
+use App\Services\ProductService;
 use Illuminate\Http\Request;
 
 class PageController extends Controller {
@@ -128,7 +129,7 @@ class PageController extends Controller {
         $data['content'] = str_replace(
             'href="', 'style="word-wrap:break-word;word-break:break-all;" href="', $data['content']
         );
-        
+
         list($prevId, $nextId) = $this->getNextPrevId($id, $data['sort']);
         //查询上一篇
         if (!empty($prevId)) {
@@ -159,7 +160,7 @@ class PageController extends Controller {
 
         ReturnJson(true, '', $data);
     }
-    
+
     /**
      * 查询权威引用上下一篇
      *
@@ -241,6 +242,7 @@ class PageController extends Controller {
                 // 若报告图片为空，则使用系统设置的默认报告高清图
                 $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
                 foreach ($data as $key => $value) {
+                    $product_info = Products::find($value['id']);
                     //每个报告加上分类信息
                     $tempCategoryId = $value['category_id'];
                     $value['category_name'] = isset($categoryData[$tempCategoryId])
@@ -282,6 +284,10 @@ class PageController extends Controller {
                         $data[$key]['discount'] = 100;
                         $data[$key]['discount_time_begin'] = null;
                         $data[$key]['discount_time_end'] = null;
+                    }
+                    $data[$key]['price_values'] = $product_info['price_values'] ?? '';
+                    if(empty($data[$key]['price_values'] )){
+                        $data[$key]['price_values'] = ProductService::getAllPriceValuesIds();
                     }
                     $data[$key]['description'] = (new ProductDescription(
                         date('Y', strtotime($value['published_date']))
