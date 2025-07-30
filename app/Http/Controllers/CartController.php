@@ -459,7 +459,7 @@ class CartController extends Controller {
                     //判断当前报告是否在优惠时间内
                     if ($product['discount_begin'] <= $time && $product['discount_end'] >= $time) {
                         $results[$key]['discount_status'] = 1;
-                        
+
                         $results[$key]['discount_time_begin_year'] = date('Y', $product['discount_begin']);
                         $results[$key]['discount_time_begin_month'] =  date('m', $product['discount_begin']);
                         $results[$key]['discount_time_begin_day'] =  date('d', $product['discount_begin']);
@@ -540,7 +540,7 @@ class CartController extends Controller {
             $goods_ids = explode(',', $goods_ids);
         }
         if (!empty($goods_ids) && is_array($goods_ids)) {
-            $keywords = Products::whereIn('id', $goods_ids)->pluck('keywords')->toArray();
+                $keywords = Products::whereIn('id', $goods_ids)->pluck('keywords')->toArray();
             if (!empty($keywords) && is_array($keywords)) {
                 $products = Products::select([
                     'id',
@@ -557,6 +557,7 @@ class CartController extends Controller {
                     'publisher_id',
                     'discount_time_begin',
                     'discount_time_end',
+                    'price_values',
                 ])
                     ->whereIn('keywords', $keywords)
                     ->whereNotIn('id', $goods_ids)
@@ -666,6 +667,10 @@ class CartController extends Controller {
                             $data[$index]['discount'] = 100;
                             $data[$index]['discount_time_begin'] = null;
                             $data[$index]['discount_time_end'] = null;
+                        }
+                        $data[$index]['price_values'] = $product['price_values'];
+                        if(empty($data[$index]['price_values'] )){
+                            $data[$index]['price_values'] = ProductService::getAllPriceValuesIds();
                         }
                     }
                 }
