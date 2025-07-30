@@ -623,25 +623,35 @@ class ProductController extends Controller {
             );
             //该报告是否是最新年份、如果不是，查询是否有最新年份的报告id
             if (checkSiteAccessData(['qycojp'])) {
-                $product_desc['latestYear'] = date('Y', time());
-                $product_desc['isLatestYear'] = true;
-                $product_desc['latestYearID'] = '';
+                $product_desc['latestProduct'] = [
+                    'year' =>date('Y', time()),
+                    'isLatestYear' => true,
+                    'id' => '',
+                    'url' => '',
+                    'remarks' => '',
+                ];
                 $published_date_copy = strtotime($product_desc['published_date']);
                 $currentYearTimestamp = strtotime(date('Y', time()).'-01-01'); //今年初的时间戳
                 if ($product_desc['keywords'] && $published_date_copy < $currentYearTimestamp) {
-                    $product_desc['latestYearID'] = Products::query()->select(['id'])
-                                                            ->where('published_date', '>=', $currentYearTimestamp)
-                                                            ->where('keywords', $product_desc['keywords'])
-                                                            ->where('id', '<>', $product_desc['id'])
-                                                            ->value('id');
-                    if (!empty($product_desc['latestYearID'])) {
-                        $product_desc['isLatestYear'] = false;
+                    $latestProductData = Products::query()->select(['id','url'])
+                        ->where('published_date', '>=', $currentYearTimestamp)
+                        ->where('keywords', $product_desc['keywords'])
+                        ->where('id', '<>', $product_desc['id'])
+                        ->first();
+                    
+                    if ($latestProductData) {
+                        $latestProductData= $latestProductData->toArray();
+                        $product_desc['latestProduct']['isLatestYear'] = false;
+                        $product_desc['latestProduct']['id'] = $latestProductData['id'];
+                        $product_desc['latestProduct']['url'] = $latestProductData['url'];
+                        $product_desc['latestProduct']['remarks'] = '有最新报告';
                     } else {
-                        $product_desc['isLatestYear'] = false;
-                        $product_desc['latestYearID'] = '';
+                        $product_desc['latestProduct']['isLatestYear'] = false;
+                        $product_desc['latestProduct']['remarks'] = '无最新报告';
                     }
                 } else {
-                    $product_desc['isLatestYear'] = true;
+                    $product_desc['latestProduct']['isLatestYear'] = true;
+                    $product_desc['latestProduct']['remarks'] = '自己是最新报告';
                 }
             }
             // 返回 规模柱状图数据与表格数据，并根据需要将详情分割二至三部分
