@@ -127,7 +127,7 @@ class SendEmailController extends Controller {
                     }
                 }
             }elseif(checkSiteAccessData(['qycojp'])){
-                
+
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -137,7 +137,7 @@ class SendEmailController extends Controller {
                     }
                 }
             }
-            
+
             //兼容qyen邮件字段
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
@@ -188,7 +188,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            
+
             if (checkSiteAccessData(['lpien'])) {
                 // 多个电话
                 $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
@@ -200,7 +200,7 @@ class SendEmailController extends Controller {
                     }
                 }
             }elseif(checkSiteAccessData(['qycojp'])){
-                
+
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -283,7 +283,7 @@ class SendEmailController extends Controller {
                                    ->pluck('value', 'key')
                                    ->toArray();
             $data = array_merge($data, $siteInfo);
-            
+
             if (checkSiteAccessData(['lpien'])) {
                 // 多个电话
                 $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
@@ -295,7 +295,7 @@ class SendEmailController extends Controller {
                     }
                 }
             }elseif(checkSiteAccessData(['qycojp'])){
-                
+
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -468,7 +468,7 @@ class SendEmailController extends Controller {
                     }
                 }
             }elseif(checkSiteAccessData(['qycojp'])){
-                
+
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -592,7 +592,7 @@ class SendEmailController extends Controller {
                     }
                 }
             }elseif(checkSiteAccessData(['qycojp'])){
-                
+
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -779,7 +779,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            
+
             if (checkSiteAccessData(['lpien'])) {
                 // 多个电话
                 $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
@@ -791,7 +791,7 @@ class SendEmailController extends Controller {
                     }
                 }
             }elseif(checkSiteAccessData(['qycojp'])){
-                
+
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -884,7 +884,7 @@ class SendEmailController extends Controller {
                 $productsName = $ContactUs['product_name'];
                 $productLink = '';
             }
-            
+
             // 多申请样本提交
             $otherProductsArray = [];
             if (count($otherIds) > 0) {
@@ -992,7 +992,7 @@ class SendEmailController extends Controller {
                     }
                 }
             }elseif(checkSiteAccessData(['qycojp'])){
-                
+
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -1182,7 +1182,7 @@ class SendEmailController extends Controller {
                     }
                 }
             }elseif(checkSiteAccessData(['qycojp'])){
-                
+
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -1266,6 +1266,7 @@ class SendEmailController extends Controller {
             $sum_goods_cnt = 0;
             $sum_goods_original_price_all = 0; // 小计原价,不含税
             $sum_goods_present_price_all = 0; // 小计现价,不含税
+            $extra_email_list = [];
             // 默认图片
             // 若报告图片为空，则使用系统设置的默认报告高清图
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
@@ -1315,9 +1316,13 @@ class SendEmailController extends Controller {
                 $sum_goods_present_price_all += $goods_data['goods_sum_price'];
 
                 // 分类信息
-                $category = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $products['category_id'])->first();
+                $category = ProductsCategory::select(['id', 'name', 'thumb' , 'email'])->where('id', $products['category_id'])->first();
                 $goods_data['category_name'] = $category['name'] ?? '';
                 $goods_data['category_thumb'] = $category['thumb'] ?? '';
+                if(!empty($category['email'] )){
+                    $temp_email_list = explode(',', $category['email']);
+                    $extra_email_list = array_merge($extra_email_list, $temp_email_list);
+                }
                 $tempThumb = '';
                 if (!empty($products['thumb'])) {
                     $tempThumb = Common::cutoffSiteUploadPathPrefix($products['thumb']);
@@ -1462,6 +1467,10 @@ class SendEmailController extends Controller {
             $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
+            if(!empty($extra_email_list )){
+                $emails = array_merge($emails, $extra_email_list);
+                $emails = array_unique($emails);
+            }
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
@@ -1509,6 +1518,7 @@ class SendEmailController extends Controller {
             $defaultImg = SystemValue::where('key', 'default_report_img')->value('value');
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
+            $extra_email_list = [];
             foreach ($orderGoodsList as $key => $OrderGoods) {
                 $goods_data = [];
                 $priceEditionId = $OrderGoods['price_edition'];
@@ -1568,10 +1578,15 @@ class SendEmailController extends Controller {
                 $sum_goods_present_price_all += $goods_data['goods_sum_price'];
 
                 // 分类信息
-                $category = ProductsCategory::select(['id', 'name', 'thumb'])->where('id', $products['category_id'])
+                $category = ProductsCategory::select(['id', 'name', 'thumb' , 'email'])->where('id', $products['category_id'])
                                             ->first();
                 $goods_data['category_name'] = $category['name'] ?? '';
                 $goods_data['category_thumb'] = $category['thumb'] ?? '';
+                if(!empty($category['email'] )){
+                    $temp_email_list = explode(',', $category['email']);
+                    $extra_email_list = array_merge($extra_email_list, $temp_email_list);
+                }
+
                 $tempThumb = '';
                 if (!empty($products['thumb'])) {
                     $tempThumb = Common::cutoffSiteUploadPathPrefix($products['thumb']);
@@ -1699,8 +1714,6 @@ class SendEmailController extends Controller {
 //            } else {
 //                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
 //            }
-            // 收件人的数组
-            $emails = explode(',', $scene->email_recipient);
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
@@ -1711,6 +1724,13 @@ class SendEmailController extends Controller {
                 $scene->email_sender_id
             );
             $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
+
+            // 收件人的数组
+            $emails = explode(',', $scene->email_recipient);
+            if(!empty($extra_email_list )){
+                $emails = array_merge($emails, $extra_email_list);
+                $emails = array_unique($emails);
+            }
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
