@@ -172,10 +172,9 @@ class Products extends Base {
                         // 给每个版本添加多种货币的价格
                         if ($currencyData && count($currencyData)) {
                             foreach ($currencyData as $currencyItem) {
-                                $currencyKey = strtolower($currencyItem['code']).'_price';
+                                $currencyKey = strtolower($currencyItem['code']) . '_price';
                                 $prices[$index]['data'][$keyPriceEdition][$currencyKey]
-                                    = $prices[$index]['data'][$keyPriceEdition]['price']
-                                      * $currencyItem['exchange_rate'];
+                                    = Products::bcmul_variable_precision($prices[$index]['data'][$keyPriceEdition]['price'], $currencyItem['exchange_rate']);
                             }
                         }
                     }
@@ -281,7 +280,7 @@ class Products extends Base {
                     foreach ($currencyData as $currencyItem) {
                         $currencyKey = strtolower($currencyItem['code']).'_price';
                         $priceEditions[$index1]['data'][$index2][$currencyKey]
-                            = $priceEditions[$index1]['data'][$index2]['price'] * $currencyItem['exchange_rate'];
+                            = Products::bcmul_variable_precision($priceEditions[$index1]['data'][$index2]['price'] , $currencyItem['exchange_rate']);
                     }
                 }
             }
@@ -364,5 +363,34 @@ class Products extends Base {
                             ->get()->toArray();
 
         return $products;
+    }
+    // 两数相除，格式过滤多余0
+    public static  function bcdiv_variable_precision($dividend, $divisor, $max_scale = 10) {
+        $result = bcdiv($dividend, $divisor, $max_scale);
+
+        // 如果包含小数点
+        if (strpos($result, '.') !== false) {
+            // 去除右侧多余的零
+            $result = rtrim($result, '0');
+            // 如果小数点后没有数字了，去除小数点
+            $result = rtrim($result, '.');
+        }
+
+        return $result;
+    }
+    
+    // 两数相乘，格式过滤多余0
+    public static function bcmul_variable_precision($dividend, $divisor, $max_scale = 10) {
+        $result = bcmul($dividend, $divisor, $max_scale);
+
+        // 如果包含小数点
+        if (strpos($result, '.') !== false) {
+            // 去除右侧多余的零
+            $result = rtrim($result, '0');
+            // 如果小数点后没有数字了，去除小数点
+            $result = rtrim($result, '.');
+        }
+
+        return $result;
     }
 }

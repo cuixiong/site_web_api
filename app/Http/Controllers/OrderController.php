@@ -365,11 +365,9 @@ class OrderController extends Controller {
             if ($currencyData && count($currencyData)) {
                 foreach ($currencyData as $currencyItem) {
                     $currencyKeyOriginalPrice = strtolower($currencyItem['code']).'_original_price';
-                    $orderGoods[$key][$currencyKeyOriginalPrice] = $forOrderGoods['goods_original_price']
-                                                                   * $currencyItem['exchange_rate'];
+                    $orderGoods[$key][$currencyKeyOriginalPrice] = Products::bcmul_variable_precision($forOrderGoods['goods_original_price'],$currencyItem['exchange_rate']);
                     $currencyKeyPresentPrice = strtolower($currencyItem['code']).'_present_price';
-                    $orderGoods[$key][$currencyKeyPresentPrice] = $forOrderGoods['goods_present_price']
-                                                                  * $currencyItem['exchange_rate'];
+                    $orderGoods[$key][$currencyKeyPresentPrice] = Products::bcmul_variable_precision($forOrderGoods['goods_present_price'],$currencyItem['exchange_rate']);
                     $currencyRateKey = strtolower($currencyItem['code']).'_rate';
                     $orderGoods[$key][$currencyRateKey] = $currencyItem['exchange_rate'];
                 }
@@ -401,11 +399,11 @@ class OrderController extends Controller {
         if ($currencyData && count($currencyData)) {
             foreach ($currencyData as $currencyItem) {
                 $currencyKeyOrderAmount = strtolower($currencyItem['code']).'_order_amount';
-                $data['order'][$currencyKeyOrderAmount] = $order['order_amount'] * $currencyItem['exchange_rate'];
+                $data['order'][$currencyKeyOrderAmount] =  Products::bcmul_variable_precision($order['order_amount'],$currencyItem['exchange_rate']);
                 $currencyKeyTax = strtolower($currencyItem['code']).'_tax_rate';
-                $data['order'][$currencyKeyTax] = $data['order'][$currencyKeyOrderAmount] * $currencyItem['tax_rate'];
+                $data['order'][$currencyKeyTax] = Products::bcmul_variable_precision($data['order'][$currencyKeyOrderAmount] , $currencyItem['tax_rate']);
                 $currencyKeyActuallyPaid = strtolower($currencyItem['code']).'_actually_paid';
-                $data['order'][$currencyKeyActuallyPaid] = $order['actually_paid'] * $currencyItem['exchange_rate'];
+                $data['order'][$currencyKeyActuallyPaid] = Products::bcmul_variable_precision($order['actually_paid'] , $currencyItem['exchange_rate']);
                 $currencyRateKey = strtolower($currencyItem['code']).'_rate';
                 $data['order'][$currencyRateKey] = $currencyItem['exchange_rate'];
             }
@@ -537,9 +535,9 @@ class OrderController extends Controller {
                     if ($currencyData && count($currencyData)) {
                         foreach ($currencyData as $currencyItem) {
                             $currencyKey = strtolower($currencyItem['code']).'_order_amount';
-                            $v[$currencyKey] = $v['order_amount'] * $currencyItem['exchange_rate'];
+                            $v[$currencyKey] = Products::bcmul_variable_precision($v['order_amount'] , $currencyItem['exchange_rate']);
                             $currencyKey = strtolower($currencyItem['code']).'_actually_paid';
-                            $v[$currencyKey] = $v['actually_paid'] * $currencyItem['exchange_rate'];
+                            $v[$currencyKey] = Products::bcmul_variable_precision($v['actually_paid'] , $currencyItem['exchange_rate']);
                         }
                     }
                 }
@@ -603,9 +601,9 @@ class OrderController extends Controller {
                 if ($currencyData && count($currencyData)) {
                     foreach ($currencyData as $currencyItem) {
                         $currencyKey = strtolower($currencyItem['code']).'_order_amount';
-                        $orderInfo[$currencyKey] = $orderInfo['order_amount'] * $currencyItem['exchange_rate'];
+                        $orderInfo[$currencyKey] = Products::bcmul_variable_precision($orderInfo['order_amount'] , $currencyItem['exchange_rate']);
                         $currencyKey = strtolower($currencyItem['code']).'_actually_paid';
-                        $orderInfo[$currencyKey] = $orderInfo['actually_paid'] * $currencyItem['exchange_rate'];
+                        $orderInfo[$currencyKey] = Products::bcmul_variable_precision($orderInfo['actually_paid'] , $currencyItem['exchange_rate']);
                     }
                 }
             }
@@ -641,9 +639,9 @@ class OrderController extends Controller {
                         if ($currencyData && count($currencyData)) {
                             foreach ($currencyData as $currencyItem) {
                                 $currencyKey = strtolower($currencyItem['code']).'_goods_original_price';
-                                $orderGoodsArr[$currencyKey] = $orderGoodsArr['goods_original_price'] * $currencyItem['exchange_rate'];
+                                $orderGoodsArr[$currencyKey] = Products::bcmul_variable_precision($orderGoodsArr['goods_original_price'] , $currencyItem['exchange_rate']);
                                 $currencyKey = strtolower($currencyItem['code']).'_goods_present_price';
-                                $orderGoodsArr[$currencyKey] = $orderGoodsArr['goods_present_price'] * $currencyItem['exchange_rate'];
+                                $orderGoodsArr[$currencyKey] = Products::bcmul_variable_precision($orderGoodsArr['goods_present_price'] , $currencyItem['exchange_rate']);
                             }
                         }
                     }

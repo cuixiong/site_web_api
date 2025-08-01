@@ -204,7 +204,7 @@ class ProductController extends Controller {
                         if ($currencyData && count($currencyData)) {
                             foreach ($currencyData as $currencyItem) {
                                 $currencyKey = strtolower($currencyItem['code']).'_price';
-                                $value[$currencyKey] = $value['price'] * $currencyItem['exchange_rate'];
+                                $value[$currencyKey] = Products::bcmul_variable_precision($value['price'] , $currencyItem['exchange_rate']);
                             }
                         }
                     }
@@ -560,7 +560,7 @@ class ProductController extends Controller {
                 if ($currencyData && count($currencyData)) {
                     foreach ($currencyData as $currencyItem) {
                         $currencyKey = strtolower($currencyItem['code']).'_price';
-                        $product_desc[$currencyKey] = $product_desc['price'] * $currencyItem['exchange_rate'];
+                        $product_desc[$currencyKey] = Products::bcmul_variable_precision($product_desc['price'] , $currencyItem['exchange_rate']);
                         $currencyRateKey = strtolower($currencyItem['code']).'_rate';
                         $product_desc[$currencyRateKey] = $currencyItem['exchange_rate'];
                     }
@@ -814,11 +814,11 @@ class ProductController extends Controller {
                     && !empty($product_desc['chartsRate'])
                     && is_numeric($product_desc['chartsRate'])
                 ) {
-                    $product_desc['last_scale'] = !empty($product_desc['last_scale']) ? $this->bcdiv_variable_precision(bcmul($product_desc['last_scale'], $product_desc['chartsRate'],10), 100) : '';
+                    $product_desc['last_scale'] = !empty($product_desc['last_scale']) ? Products::bcdiv_variable_precision(Products::bcmul_variable_precision($product_desc['last_scale'], $product_desc['chartsRate']), 100) : '';
 
-                    $product_desc['current_scale'] = !empty($product_desc['current_scale']) ? $this->bcdiv_variable_precision(bcmul($product_desc['current_scale'], $product_desc['chartsRate'],10), 100) : '';
+                    $product_desc['current_scale'] = !empty($product_desc['current_scale']) ? Products::bcdiv_variable_precision(Products::bcmul_variable_precision($product_desc['current_scale'], $product_desc['chartsRate']), 100) : '';
 
-                    $product_desc['future_scale'] = !empty($product_desc['future_scale']) ? $this->bcdiv_variable_precision(bcmul($product_desc['future_scale'], $product_desc['chartsRate'],10), 100) : '';
+                    $product_desc['future_scale'] = !empty($product_desc['future_scale']) ? Products::bcdiv_variable_precision(Products::bcmul_variable_precision($product_desc['future_scale'], $product_desc['chartsRate']), 100) : '';
 
                 }
                 // 其他数据
@@ -925,20 +925,6 @@ class ProductController extends Controller {
                 ReturnJson(2, '请求失败');
             }
         }
-    }
-    // 柱状图规模数据格式
-    private function bcdiv_variable_precision($dividend, $divisor, $max_scale = 10) {
-        $result = bcdiv($dividend, $divisor, $max_scale);
-
-        // 如果包含小数点
-        if (strpos($result, '.') !== false) {
-            // 去除右侧多余的零
-            $result = rtrim($result, '0');
-            // 如果小数点后没有数字了，去除小数点
-            $result = rtrim($result, '.');
-        }
-
-        return $result;
     }
 
     // 相关报告
@@ -2129,7 +2115,7 @@ class ProductController extends Controller {
                 if ($currencyData && count($currencyData)) {
                     foreach ($currencyData as $currencyItem) {
                         $currencyKey = strtolower($currencyItem['code']).'_price';
-                        $product[$currencyKey] = $product['price'] * $currencyItem['exchange_rate'];
+                        $product[$currencyKey] = Products::bcmul_variable_precision($product['price'] , $currencyItem['exchange_rate']);
                         $currencyRateKey = strtolower($currencyItem['code']).'_rate';
                         $product[$currencyRateKey] = $currencyItem['exchange_rate'];
                     }
