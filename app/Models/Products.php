@@ -174,7 +174,7 @@ class Products extends Base {
                             foreach ($currencyData as $currencyItem) {
                                 $currencyKey = strtolower($currencyItem['code']) . '_price';
                                 $prices[$index]['data'][$keyPriceEdition][$currencyKey]
-                                    = Products::bcmul_variable_precision($prices[$index]['data'][$keyPriceEdition]['price'], $currencyItem['exchange_rate']);
+                                    = self::bcmul_variable_precision($prices[$index]['data'][$keyPriceEdition]['price'], $currencyItem['exchange_rate']);
                             }
                         }
                     }
@@ -280,7 +280,7 @@ class Products extends Base {
                     foreach ($currencyData as $currencyItem) {
                         $currencyKey = strtolower($currencyItem['code']).'_price';
                         $priceEditions[$index1]['data'][$index2][$currencyKey]
-                            = Products::bcmul_variable_precision($priceEditions[$index1]['data'][$index2]['price'] , $currencyItem['exchange_rate']);
+                            = self::bcmul_variable_precision($priceEditions[$index1]['data'][$index2]['price'] , $currencyItem['exchange_rate']);
                     }
                 }
             }
@@ -376,7 +376,7 @@ class Products extends Base {
             $result = rtrim($result, '.');
         }
 
-        return $result;
+        return (float)$result;
     }
     
     // 两数相乘，格式过滤多余0
@@ -391,6 +391,6 @@ class Products extends Base {
             $result = rtrim($result, '.');
         }
 
-        return $result;
+        return (float)$result;
     }
 }
