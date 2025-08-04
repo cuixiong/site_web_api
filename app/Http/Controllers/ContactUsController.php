@@ -200,7 +200,7 @@ class ContactUsController extends Controller {
     public function getBrowserName($ua_info) {
         // 浏览器特征正则表达式库
         $browserPatterns = [
-            'iOS'        => '/(iPhone|iPad|iPod)/i',          // iOS设备检测（优先级最高）
+            'ios'        => '/(iPhone|iPad|iPod)/i',          // iOS设备检测（优先级最高）
             'safari'     => '/safari\/[\d\.]+/i',            // 标准Safari浏览器
             'edge'       => '/edg\/[\d\.]+/i',
             'chrome'     => '/chrome\/[\d\.]+/i',
