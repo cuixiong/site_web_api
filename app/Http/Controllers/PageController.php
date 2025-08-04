@@ -9,12 +9,14 @@ use App\Models\City;
 use App\Models\Comment;
 use App\Models\Common;
 use App\Models\ContactUs;
+use App\Models\Country;
 use App\Models\DictionaryValue;
 use App\Models\FaqCategory;
 use App\Models\History;
 use App\Models\Languages;
 use App\Models\Menu;
 use App\Models\News;
+use App\Models\Office;
 use App\Models\Page;
 use App\Models\Partner;
 use App\Models\PriceEditionValues;
@@ -713,6 +715,45 @@ class PageController extends Controller {
         $data = [
             'result' => $result,
         ];
+        ReturnJson(true, '', $data);
+    }
+
+
+    // 办公室
+    public function officeSplitByCountry(Request $request)
+    {
+        $list = Office::where('status', 1)
+            ->orderBy('sort', 'asc')
+            ->orderBy('id', 'desc')
+            ->get()->toArray();
+        foreach ($list as &$value) {
+            $value['country_name'] = Country::query()->where('id', $value['country_id'])->value('name');
+            $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
+            $value['national_flag'] = Common::cutoffSiteUploadPathPrefix($value['national_flag']);
+            //time_zone_copy
+            if (!empty($value['time_zone'])) {
+                $tz = new \DateTimeZone($value['time_zone']);
+                // 当前时间的DateTime对象
+                $now = new \DateTime('now', $tz);
+                $value['time_zone_copy'] = $now->format('h:i a');
+            } else {
+                $now = new \DateTime('now');
+                $value['time_zone_copy'] = $now->format('h:i a');
+            }
+        }
+        // 通过时区分割国内外
+        $data = [
+            'home' => [],
+            'abroad' => []
+        ];
+        foreach ($list as $key => $item) {
+            if ($item['time_zone'] == 'Asia/Shanghai') {
+                $data['home'][] = $item;
+            } else {
+                $data['abroad'][] = $item;
+            }
+        }
+
         ReturnJson(true, '', $data);
     }
 }

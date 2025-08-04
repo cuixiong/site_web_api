@@ -130,6 +130,8 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         );
         Route::post('custom-reports', [\App\Http\Controllers\PageController::class, 'CustomReports'])->name('定制报告');
         Route::post('contact-us', [\App\Http\Controllers\PageController::class, 'ContactUs'])->name('联系我们');
+
+        Route::get('office-split-by-country', [\App\Http\Controllers\PageController::class, 'officeSplitByCountry'])->name('办公室列表(分国内外)');
     });
     // User控制器(用户模块)
     Route::post('login', [\App\Http\Controllers\UserController::class, 'Login'])->name('账号登陆');
