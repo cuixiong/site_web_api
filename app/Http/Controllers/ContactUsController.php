@@ -90,7 +90,7 @@ class ContactUsController extends Controller {
         $model->referer = $HTTP_REFERER;
         $alias_id = $this->getAliasId($HTTP_REFERER, $model);
         $model->referer_alias_id = $alias_id;
-        
+
         $copyModel = clone $model;
         $model->product_id = $productId;
         $model->price_edition = $priceEdition;
@@ -98,7 +98,7 @@ class ContactUsController extends Controller {
         if (!$model->save()) {
             ReturnJson(false, $model->getModelError());
         }
-        // 
+        //
         $saveIds = [];
         if(count($otherProductIds)>0){
             foreach ($otherProductIds as $key => $otherProductId) {
@@ -200,10 +200,11 @@ class ContactUsController extends Controller {
     public function getBrowserName($ua_info) {
         // 浏览器特征正则表达式库
         $browserPatterns = [
+            'ios'        => '/(iPhone|iPad|iPod)/i',          // iOS设备检测（优先级最高）
+            'safari'     => '/safari\/[\d\.]+/i',            // 标准Safari浏览器
             'edge'       => '/edg\/[\d\.]+/i',
             'chrome'     => '/chrome\/[\d\.]+/i',
             'firefox'    => '/firefox\/[\d\.]+/i',
-            'safari'     => '/safari\/[\d\.]+/i',
             'opr'        => '/opr\/[\d\.]+/i',    // Opera 新版标识
             'opr_legacy' => '/opera\/[\d\.]+/i',  // Opera 旧版标识
             'ie'         => '/trident/i',          // IE 11+ 特征
@@ -219,7 +220,13 @@ class ContactUsController extends Controller {
             if (preg_match($pattern, $ua_info)) {
                 $browser = ucfirst($for_browser);
                 break;
+            }else{
+                // 补充Safari浏览器检测（兼容非标准UA）
+                if (preg_match('/applewebkit/i', $ua_info)) {
+                    return 'Safari';
+                }
             }
+
         }
         return $browser;
     }
