@@ -220,7 +220,13 @@ class ContactUsController extends Controller {
             if (preg_match($pattern, $ua_info)) {
                 $browser = ucfirst($for_browser);
                 break;
+            }else{
+                // 补充Safari浏览器检测（兼容非标准UA）
+                if (preg_match('/applewebkit/i', $ua_info)) {
+                    return 'Safari';
+                }
             }
+
         }
         return $browser;
     }
