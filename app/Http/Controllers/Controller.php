@@ -47,9 +47,9 @@ class Controller extends BaseController {
                 $this->checkUaHeader();
                 //IP限流封禁
                 $this->ipRateLimit();
-            }else{
-                $this->isWhiteIp = true;
             }
+        } else {
+            $this->isWhiteIp = true;
         }
     }
 

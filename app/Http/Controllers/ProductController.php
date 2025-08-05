@@ -1543,7 +1543,7 @@ class ProductController extends Controller {
             $addData = [
                 'ip'            => $ip,
                 'ip_addr'       => $ipAddr,
-                'keyword'       => $info['keywords'],
+                'keywords'       => $info['keywords'],
             ];
             SearchProductsListLog::create($addData);
         } catch (\Exception $e) {
