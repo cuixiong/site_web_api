@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 class Controller extends BaseController {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
+    public $isWhiteIp = false;
     public function __construct() {
         // 排除一些不需要验证的路由
         $excludeRoute = [
@@ -46,6 +47,8 @@ class Controller extends BaseController {
                 $this->checkUaHeader();
                 //IP限流封禁
                 $this->ipRateLimit();
+            }else{
+                $this->isWhiteIp = true;
             }
         }
     }

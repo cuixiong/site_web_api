@@ -29,6 +29,7 @@ use App\Models\ProductDescription;
 use App\Models\ProductPdf;
 use App\Models\Products;
 use App\Models\ProductsCategory;
+use App\Models\SearchProductsListLog;
 use App\Models\SystemValue;
 use App\Models\Template;
 use App\Models\TemplateCategory;
@@ -48,6 +49,10 @@ class ProductController extends Controller {
                 $keyword = phpDecodeURIComponent($keyword);
                 //点击关键词一次, 需要增加一次点击次数
                 SearchRank::query()->where('name', $keyword)->increment('hits');
+                // 添加搜索记录
+                if (checkSiteAccessData(['qycojp']) && isset($this->isWhiteIp) && !$this->isWhiteIp) {
+                    $this->searchLog(['keywords' => $keyword]);
+                }
             }
             $categorySeoInfo = [
                 'category_name'   => '',
@@ -1515,6 +1520,34 @@ class ProductController extends Controller {
                 'view_date_str' => $view_date_str,
             ];
             ViewProductsLog::create($addData);
+        }
+    }
+
+    // 报告列表搜索时记录
+    public function searchLog($info)
+    {
+        try {
+            $request = request();
+            if (!empty($request->header('x-forwarded-for'))) {
+                $ip = $request->header('x-forwarded-for');
+            } elseif (!empty($request->header('client-ip'))) {
+                $ip = $request->header('client-ip');
+            } elseif (!empty($request->ip)) {
+                $ip = $request->ip;
+            } else {
+                $ip = request()->ip();
+            }
+            //调用ip地址库的接口
+            $ipAddr = (new IPAddrService($ip))->getAddrStrByIp();
+            //增加日志
+            $addData = [
+                'ip'            => $ip,
+                'ip_addr'       => $ipAddr,
+                'keyword'       => $info['keywords'],
+            ];
+            SearchProductsListLog::create($addData);
+        } catch (\Exception $e) {
+            \Log::error('记录报告列表搜索,异常信息为:' . json_encode([$e->getMessage()]));
         }
     }
 
