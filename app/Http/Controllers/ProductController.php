@@ -49,8 +49,12 @@ class ProductController extends Controller {
                 $keyword = phpDecodeURIComponent($keyword);
                 //点击关键词一次, 需要增加一次点击次数
                 SearchRank::query()->where('name', $keyword)->increment('hits');
-                // 添加搜索记录
-                if (checkSiteAccessData(['qycojp']) && isset($this->isWhiteIp) && !$this->isWhiteIp) {
+                // 添加搜索记录,qycojp站点、非白名单ip, 非id
+                if (
+                    checkSiteAccessData(['qycojp']) &&
+                    isset($this->isWhiteIp) && !$this->isWhiteIp &&
+                    !is_numeric($keyword)
+                ) {
                     $this->searchLog(['keywords' => $keyword]);
                 }
             }
