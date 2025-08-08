@@ -117,9 +117,8 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -127,8 +126,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            } elseif (checkSiteAccessData(['qycojp'])) {
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -189,9 +189,8 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -199,8 +198,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            } elseif (checkSiteAccessData(['qycojp'])) {
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -284,9 +284,8 @@ class SendEmailController extends Controller {
                                    ->pluck('value', 'key')
                                    ->toArray();
             $data = array_merge($data, $siteInfo);
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -294,8 +293,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            } elseif (checkSiteAccessData(['qycojp'])) {
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -466,9 +466,8 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -476,8 +475,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            } elseif (checkSiteAccessData(['qycojp'])) {
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -589,9 +589,8 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -599,8 +598,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            } elseif (checkSiteAccessData(['qycojp'])) {
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -795,9 +795,8 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -805,8 +804,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            } elseif (checkSiteAccessData(['qycojp'])) {
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -1003,9 +1003,8 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -1013,8 +1012,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            } elseif (checkSiteAccessData(['qycojp'])) {
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -1201,9 +1201,8 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -1211,8 +1210,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            } elseif (checkSiteAccessData(['qycojp'])) {
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
