@@ -73,7 +73,8 @@ class TrendsEmail extends Mailable
      */
     public function content()
     {
-        $name = 'email_'.time();// 文件名
+        //$name = 'email_'.time();// 文件名      宝哥埋大坑啊
+        $name = 'email_'.time().uniqid(); // 生成唯一ID
         $this->templetFile = resource_path('views/emails/'.$name.'.blade.php');
         $view = 'emails.'.$name;// 渲染模板名称
         file_put_contents($this->templetFile,$this->templet);

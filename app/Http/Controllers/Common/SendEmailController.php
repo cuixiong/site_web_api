@@ -107,7 +107,9 @@ class SendEmailController extends Controller {
                 'area'         => City::where('id', $data['city_id'])->value('name'),
                 'dateTime'     => date('Y-m-d', time()),
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
+            $siteInfo = SystemValue::whereIn(
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+            )
                                    ->pluck('value', 'key')
                                    ->toArray();
             if ($siteInfo) {
@@ -115,8 +117,16 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-
-            if (checkSiteAccessData(['lpien'])) {
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
+                if ($sitePhones) {
+                    $sitePhones = $sitePhones->toArray();
+                    $data['sitePhones'] = [];
+                    foreach ($sitePhones as $key => $sitePhoneItem) {
+                        $data['sitePhones'][] = $sitePhoneItem;
+                    }
+                }
+            }else{
                 // 多个电话
                 $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
@@ -126,18 +136,7 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }elseif(checkSiteAccessData(['qycojp'])){
-
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
-                if ($sitePhones) {
-                    $sitePhones = $sitePhones->toArray();
-                    $data['sitePhones'] = [];
-                    foreach ($sitePhones as $key => $sitePhoneItem) {
-                        $data['sitePhones'][] = $sitePhoneItem;
-                    }
-                }
             }
-
             //兼容qyen邮件字段
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
@@ -181,17 +180,17 @@ class SendEmailController extends Controller {
                 'area'         => City::where('id', $data['area_id'])->value('name'),
                 'dateTime'     => date('Y-m-d', time()),
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail','company_address'])->pluck('value', 'key')
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'company_address'])->pluck(
+                'value', 'key'
+            )
                                    ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
                 }
             }
-
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -199,9 +198,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }elseif(checkSiteAccessData(['qycojp'])){
-
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -279,14 +278,14 @@ class SendEmailController extends Controller {
             $data['verifyUrl'] = $verifyUrl;
             $data['dateTime'] = date('Y-m-d', time());
             $data['userName'] = $user['username'];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
+            $siteInfo = SystemValue::whereIn(
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+            )
                                    ->pluck('value', 'key')
                                    ->toArray();
             $data = array_merge($data, $siteInfo);
-
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -294,9 +293,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }elseif(checkSiteAccessData(['qycojp'])){
-
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -322,8 +321,7 @@ class SendEmailController extends Controller {
      * @param string code 对应发邮场景的code
      * @param array otherIds 多样本申请涉及的其它留言id
      */
-    public function sendMessageEmail($id, $code ,$otherIds = [])
-    {
+    public function sendMessageEmail($id, $code, $otherIds = []) {
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
@@ -335,16 +333,16 @@ class SendEmailController extends Controller {
             // $data['country'] = Country::where('id',$data['country_id'])->value('name');
             if (!empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
-                    ->select(
-                        [
-                            'url',
-                            'thumb',
-                            'name',
-                            'id as product_id',
-                            'published_date',
-                            'category_id'
-                        ]
-                    )->first();
+                                        ->select(
+                                            [
+                                                'url',
+                                                'thumb',
+                                                'name',
+                                                'id as product_id',
+                                                'published_date',
+                                                'category_id'
+                                            ]
+                                        )->first();
                 $productsName = $productsInfo->name ?? '';
                 $productLink = $this->getProductUrl($productsInfo);
             } else {
@@ -353,11 +351,14 @@ class SendEmailController extends Controller {
             }
             $priceEdition = '';
             if (!empty($data['price_edition'])) {
-                $priceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where('id', $data['price_edition'])->first();
+                $priceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where(
+                    'id', $data['price_edition']
+                )->first();
                 if ($priceEditionRecord) {
                     $priceEditionData = $priceEditionRecord->toArray();
                     $languageName = Languages::where('id', $priceEditionData['language_id'])->value('name');
-                    $priceEdition =  (!empty($languageName) ? $languageName : '') . ' ' . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
+                    $priceEdition = (!empty($languageName) ? $languageName : '').' '
+                                    .(!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
                 }
             }
             // 多申请样本提交
@@ -370,39 +371,46 @@ class SendEmailController extends Controller {
                 $tempProductsItem['priceEdition'] = $priceEdition;
                 $tempProductsItem['language_version'] = $ContactUs['language_version'] ?? '';
                 $otherProductsArray[] = $tempProductsItem;
-
-                $otherMessageData = ContactUs::query()->select(['product_id','product_name','price_edition','language_version'])
-                ->whereIn('id',$otherIds)->get();
-                if($otherMessageData){
+                $otherMessageData = ContactUs::query()->select(
+                    ['product_id', 'product_name', 'price_edition', 'language_version']
+                )
+                                             ->whereIn('id', $otherIds)->get();
+                if ($otherMessageData) {
                     $otherMessageData = $otherMessageData->toArray();
-                }else{
+                } else {
                     $otherMessageData = [];
                 }
                 foreach ($otherMessageData as $key => $otherMessage) {
                     $tempProductsItem = [];
                     if (!empty($otherMessage['product_id'])) {
                         $otherProductsInfo = Products::query()->where("id", $otherMessage['product_id'])
-                            ->select([
-                                'url',
-                                'thumb',
-                                'name',
-                                'id as product_id',
-                                'published_date',
-                                'category_id'
-                            ])->first();
+                                                     ->select([
+                                                                  'url',
+                                                                  'thumb',
+                                                                  'name',
+                                                                  'id as product_id',
+                                                                  'published_date',
+                                                                  'category_id'
+                                                              ])->first();
                         $tempProductsItem['productsName'] = $otherProductsInfo->name ?? '';
                         $tempProductsItem['productLink'] = $this->getProductUrl($otherProductsInfo);
                     } else {
-                        $tempProductsItem['productsName'] = !empty($otherMessage['product_name']) ? $otherMessage['product_name'] : '';
+                        $tempProductsItem['productsName'] = !empty($otherMessage['product_name'])
+                            ? $otherMessage['product_name'] : '';
                         $tempProductsItem['productLink'] = '';
                     }
-
                     if (!empty($otherMessage['price_edition'])) {
-                        $otherPriceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where('id', $otherMessage['price_edition'])->first();
+                        $otherPriceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where(
+                            'id', $otherMessage['price_edition']
+                        )->first();
                         if ($otherPriceEditionRecord) {
                             $otherPriceEditionData = $otherPriceEditionRecord->toArray();
-                            $otherLanguageName = Languages::where('id', $otherPriceEditionData['language_id'])->value('name');
-                            $tempProductsItem['priceEdition'] =  (!empty($otherLanguageName) ? $otherLanguageName : '') . ' ' . (!empty($otherPriceEditionRecord['name']) ? $otherPriceEditionRecord['name'] : '');
+                            $otherLanguageName = Languages::where('id', $otherPriceEditionData['language_id'])->value(
+                                'name'
+                            );
+                            $tempProductsItem['priceEdition'] = (!empty($otherLanguageName) ? $otherLanguageName : '')
+                                                                .' '.(!empty($otherPriceEditionRecord['name'])
+                                    ? $otherPriceEditionRecord['name'] : '');
                         } else {
                             $tempProductsItem['priceEdition'] = '';
                         }
@@ -411,55 +419,55 @@ class SendEmailController extends Controller {
                     }
                     if (!empty($otherMessage['language_version'])) {
                         $tempProductsItem['language_version'] = $otherMessage['language_version'];
-                    }else{
+                    } else {
                         $tempProductsItem['language_version'] = '';
                     }
                     $otherProductsArray[] = $tempProductsItem;
                 }
             }
-
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
-            $token = $data['email'] . '&' . $data['id'];
+            $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
-            $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
+            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $addressDetail = $data['address'] ?? '';
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
-                'homePage'     => $data['domain'],
-                'myAccountUrl' => rtrim($data['domain'], '/') . '/account/account-infor',
-                'contactUsUrl' => rtrim($data['domain'], '/') . '/contact-us',
-                'homeUrl'      => $data['domain'],
-                'userName'     => $data['name'] ? $data['name'] : '',
-                'email'        => $data['email'],
-                'company'      => $data['company'],
-                'department'   => $data['department'] ?? '',
-                'messageAddress'      => $addressDetail,    // 地址与下方$siteInfo的address做区分
-                'area'         => $data['province'] . $data['city'] . " " . $addressDetail,
-                'phone'        => $data['phone'] ? $data['phone'] : '',
-                'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
-                'content'      => $data['content'],
-                'dateTime'     => date('Y-m-d'),
-                'language'     => $ContactUs['language_version'] ?? '',
-                'backendUrl'   => $imgDomain,
-                'link'         => $productLink,
-                'productsName' => $productsName,
-                'priceEdition' => $priceEdition,
-                'otherProductsData'         => $otherProductsArray,
-                'country'      => $country,
+                'homePage'          => $data['domain'],
+                'myAccountUrl'      => rtrim($data['domain'], '/').'/account/account-infor',
+                'contactUsUrl'      => rtrim($data['domain'], '/').'/contact-us',
+                'homeUrl'           => $data['domain'],
+                'userName'          => $data['name'] ? $data['name'] : '',
+                'email'             => $data['email'],
+                'company'           => $data['company'],
+                'department'        => $data['department'] ?? '',
+                'messageAddress'    => $addressDetail,    // 地址与下方$siteInfo的address做区分
+                'area'              => $data['province'].$data['city']." ".$addressDetail,
+                'phone'             => $data['phone'] ? $data['phone'] : '',
+                'plantTimeBuy'      => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
+                'content'           => $data['content'],
+                'dateTime'          => date('Y-m-d'),
+                'language'          => $ContactUs['language_version'] ?? '',
+                'backendUrl'        => $imgDomain,
+                'link'              => $productLink,
+                'productsName'      => $productsName,
+                'priceEdition'      => $priceEdition,
+                'otherProductsData' => $otherProductsArray,
+                'country'           => $country,
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
-                ->pluck('value', 'key')
-                ->toArray();
+            $siteInfo = SystemValue::whereIn(
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+            )
+                                   ->pluck('value', 'key')
+                                   ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -467,9 +475,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }elseif(checkSiteAccessData(['qycojp'])){
-
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -480,7 +488,7 @@ class SendEmailController extends Controller {
             }
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
-                . $data['siteEmail'] : '';
+                                                                                             .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene($code);
             if (empty($scene)) {
@@ -490,13 +498,13 @@ class SendEmailController extends Controller {
                 ReturnJson(false, trans()->get('lang.email_error'));
             }
             //邮件标题
-            $scene->title = $scene->title . (!empty($productsName) ? (':' . $productsName) : '');
+            $scene->title = $scene->title.(!empty($productsName) ? (':'.$productsName) : '');
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            //$this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
+            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
@@ -508,8 +516,7 @@ class SendEmailController extends Controller {
     }
 
     // 留言
-    public function Message($id, $code = 'productSample')
-    {
+    public function Message($id, $code = 'productSample') {
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
@@ -524,16 +531,16 @@ class SendEmailController extends Controller {
             $categoryEmail = '';
             if (isset($data['product_id']) && !empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
-                    ->select(
-                        [
-                            'url',
-                            'thumb',
-                            'name',
-                            'id as product_id',
-                            'published_date',
-                            'category_id'
-                        ]
-                    )->first();
+                                        ->select(
+                                            [
+                                                'url',
+                                                'thumb',
+                                                'name',
+                                                'id as product_id',
+                                                'published_date',
+                                                'category_id'
+                                            ]
+                                        )->first();
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
@@ -546,42 +553,52 @@ class SendEmailController extends Controller {
             $data['country'] = Country::where('id', $data['country_id'])->value('name');
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
-            $token = $data['email'] . '&' . $data['id'];
+            $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
-            $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
+            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
-                'homePage'     => $data['domain'],
-                'myAccountUrl' => rtrim($data['domain'], '/') . '/account/account-infor',
-                'contactUsUrl' => rtrim($data['domain'], '/') . '/contact-us',
-                'homeUrl'      => $data['domain'],
-                'userName'     => $data['name'] ? $data['name'] : '',
-                'email'        => $data['email'],
-                'company'      => $data['company'],
-                'messageAddress'      => $addressDetail,
-                'area'         => $data['province'] . $data['city'],
-                'phone'        => $data['phone'] ? $data['phone'] : '',
-                'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
-                'content'      => $data['content'],
-                'backendUrl'   => $imgDomain,
-                'link'         => $productLink,
-                'productsName' => $productsName,
-                'dateTime'     => date('Y-m-d'),
-                'url'          => $productLink,
-                'country'      => $country,
-                'language'     => $ContactUs['language_version'] ?? '',
+                'homePage'       => $data['domain'],
+                'myAccountUrl'   => rtrim($data['domain'], '/').'/account/account-infor',
+                'contactUsUrl'   => rtrim($data['domain'], '/').'/contact-us',
+                'homeUrl'        => $data['domain'],
+                'userName'       => $data['name'] ? $data['name'] : '',
+                'email'          => $data['email'],
+                'company'        => $data['company'],
+                'messageAddress' => $addressDetail,
+                'area'           => $data['province'].$data['city'],
+                'phone'          => $data['phone'] ? $data['phone'] : '',
+                'plantTimeBuy'   => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
+                'content'        => $data['content'],
+                'backendUrl'     => $imgDomain,
+                'link'           => $productLink,
+                'productsName'   => $productsName,
+                'dateTime'       => date('Y-m-d'),
+                'url'            => $productLink,
+                'country'        => $country,
+                'language'       => $ContactUs['language_version'] ?? '',
             ];
-
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address'])
-            ->pluck('value', 'key')
-            ->toArray();
+            $siteInfo = SystemValue::whereIn(
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+            )
+                                   ->pluck('value', 'key')
+                                   ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['lpien'])) {
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
+                if ($sitePhones) {
+                    $sitePhones = $sitePhones->toArray();
+                    $data['sitePhones'] = [];
+                    foreach ($sitePhones as $key => $sitePhoneItem) {
+                        $data['sitePhones'][] = $sitePhoneItem;
+                    }
+                }
+            }else{
                 // 多个电话
                 $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
@@ -591,21 +608,10 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }elseif(checkSiteAccessData(['qycojp'])){
-
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
-                if ($sitePhones) {
-                    $sitePhones = $sitePhones->toArray();
-                    $data['sitePhones'] = [];
-                    foreach ($sitePhones as $key => $sitePhoneItem) {
-                        $data['sitePhones'][] = $sitePhoneItem;
-                    }
-                }
             }
-
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
-                . $data['siteEmail'] : '';
+                                                                                             .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene($code);
             // 收件人的数组
@@ -614,6 +620,7 @@ class SendEmailController extends Controller {
             if ($categoryEmail) {
                 $categoryEmail = explode(',', $categoryEmail);
                 $emails = array_merge($emails, $categoryEmail);
+                $emails = array_unique($emails);
             }
             if (empty($scene)) {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
@@ -636,8 +643,7 @@ class SendEmailController extends Controller {
     }
 
     // 申请样本
-    public function productSample($id,$otherIds = [])
-    {
+    public function productSample($id, $otherIds = []) {
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
@@ -648,11 +654,14 @@ class SendEmailController extends Controller {
             }
             $priceEdition = '';
             if (!empty($data['price_edition'])) {
-                $priceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where('id', $data['price_edition'])->first();
+                $priceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where(
+                    'id', $data['price_edition']
+                )->first();
                 if ($priceEditionRecord) {
                     $priceEditionData = $priceEditionRecord->toArray();
                     $languageName = Languages::where('id', $priceEditionData['language_id'])->value('name');
-                    $priceEdition =  (!empty($languageName) ? $languageName : '') . ' ' . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
+                    $priceEdition = (!empty($languageName) ? $languageName : '').' '
+                                    .(!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
                 }
             }
             $productsName = '';
@@ -661,16 +670,16 @@ class SendEmailController extends Controller {
             $categoryName = '';
             if (isset($data['product_id']) && !empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
-                    ->select(
-                        [
-                            'url',
-                            'thumb',
-                            'name',
-                            'id as product_id',
-                            'published_date',
-                            'category_id'
-                        ]
-                    )->first();
+                                        ->select(
+                                            [
+                                                'url',
+                                                'thumb',
+                                                'name',
+                                                'id as product_id',
+                                                'published_date',
+                                                'category_id'
+                                            ]
+                                        )->first();
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
@@ -692,38 +701,45 @@ class SendEmailController extends Controller {
                 $tempProductsItem['priceEdition'] = $priceEdition;
                 $tempProductsItem['language_version'] = $ContactUs['language_version'] ?? '';
                 $otherProductsArray[] = $tempProductsItem;
-
-                $otherMessageData = ContactUs::query()->select(['product_id','product_name','price_edition','language_version'])->whereIn('id',$otherIds)->get();
-                if($otherMessageData){
+                $otherMessageData = ContactUs::query()->select(
+                    ['product_id', 'product_name', 'price_edition', 'language_version']
+                )->whereIn('id', $otherIds)->get();
+                if ($otherMessageData) {
                     $otherMessageData = $otherMessageData->toArray();
-                }else{
+                } else {
                     $otherMessageData = [];
                 }
                 foreach ($otherMessageData as $key => $otherMessage) {
                     $tempProductsItem = [];
                     if (!empty($otherMessage['product_id'])) {
                         $otherProductsInfo = Products::query()->where("id", $otherMessage['product_id'])
-                            ->select([
-                                'url',
-                                'thumb',
-                                'name',
-                                'id as product_id',
-                                'published_date',
-                                'category_id'
-                            ])->first();
+                                                     ->select([
+                                                                  'url',
+                                                                  'thumb',
+                                                                  'name',
+                                                                  'id as product_id',
+                                                                  'published_date',
+                                                                  'category_id'
+                                                              ])->first();
                         $tempProductsItem['productsName'] = $otherProductsInfo->name ?? '';
                         $tempProductsItem['productLink'] = $this->getProductUrl($otherProductsInfo);
                     } else {
-                        $tempProductsItem['productsName'] = !empty($otherMessage['product_name']) ? $otherMessage['product_name'] : '';
+                        $tempProductsItem['productsName'] = !empty($otherMessage['product_name'])
+                            ? $otherMessage['product_name'] : '';
                         $tempProductsItem['productLink'] = '';
                     }
-
                     if (!empty($otherMessage['price_edition'])) {
-                        $otherPriceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where('id', $otherMessage['price_edition'])->first();
+                        $otherPriceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where(
+                            'id', $otherMessage['price_edition']
+                        )->first();
                         if ($otherPriceEditionRecord) {
                             $otherPriceEditionData = $otherPriceEditionRecord->toArray();
-                            $otherLanguageName = Languages::where('id', $otherPriceEditionData['language_id'])->value('name');
-                            $tempProductsItem['priceEdition'] =  (!empty($otherLanguageName) ? $otherLanguageName : '') . ' ' . (!empty($otherPriceEditionRecord['name']) ? $otherPriceEditionRecord['name'] : '');
+                            $otherLanguageName = Languages::where('id', $otherPriceEditionData['language_id'])->value(
+                                'name'
+                            );
+                            $tempProductsItem['priceEdition'] = (!empty($otherLanguageName) ? $otherLanguageName : '')
+                                                                .' '.(!empty($otherPriceEditionRecord['name'])
+                                    ? $otherPriceEditionRecord['name'] : '');
                         } else {
                             $tempProductsItem['priceEdition'] = '';
                         }
@@ -732,57 +748,55 @@ class SendEmailController extends Controller {
                     }
                     if (!empty($otherMessage['language_version'])) {
                         $tempProductsItem['language_version'] = $otherMessage['language_version'];
-                    }else{
+                    } else {
                         $tempProductsItem['language_version'] = '';
                     }
                     $otherProductsArray[] = $tempProductsItem;
                 }
             }
-
-
             $data['province'] = City::where('id', $data['province_id'])->value('name') ?? '';
             $data['city'] = City::where('id', $data['city_id'])->value('name') ?? '';
-            $token = $data['email'] . '&' . $data['id'];
+            $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
-            $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
+            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
-                'homePage'     => $data['domain'],
-                'myAccountUrl' => rtrim($data['domain'], '/') . '/account/account-infor',
-                'contactUsUrl' => rtrim($data['domain'], '/') . '/contact-us',
-                'homeUrl'      => $data['domain'],
-                'userName'     => $data['name'] ? $data['name'] : '',
-                'email'        => $data['email'],
-                'company'      => $data['company'],
-                'department'   => $data['department']??'',
-                'messageAddress'      => $addressDetail,
-                'area'         => $data['province'] . $data['city'] . " " . $addressDetail,
-                'phone'        => $data['phone'] ? $data['phone'] : '',
-                'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
-                'content'      => $data['content'],
-                'backendUrl'   => $imgDomain,
-                'link'         => $productLink,
-                'productsName' => $productsName,
-                'dateTime'     => date('Y-m-d'),
-                'url'          => $productLink,
-                'country'      => $country,
-                'language'     => $ContactUs['language_version'] ?? '',
-                'priceEdition' => $priceEdition,
-                'otherProductsData'         => $otherProductsArray,
+                'homePage'          => $data['domain'],
+                'myAccountUrl'      => rtrim($data['domain'], '/').'/account/account-infor',
+                'contactUsUrl'      => rtrim($data['domain'], '/').'/contact-us',
+                'homeUrl'           => $data['domain'],
+                'userName'          => $data['name'] ? $data['name'] : '',
+                'email'             => $data['email'],
+                'company'           => $data['company'],
+                'department'        => $data['department'] ?? '',
+                'messageAddress'    => $addressDetail,
+                'area'              => $data['province'].$data['city']." ".$addressDetail,
+                'phone'             => $data['phone'] ? $data['phone'] : '',
+                'plantTimeBuy'      => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
+                'content'           => $data['content'],
+                'backendUrl'        => $imgDomain,
+                'link'              => $productLink,
+                'productsName'      => $productsName,
+                'dateTime'          => date('Y-m-d'),
+                'url'               => $productLink,
+                'country'           => $country,
+                'language'          => $ContactUs['language_version'] ?? '',
+                'priceEdition'      => $priceEdition,
+                'otherProductsData' => $otherProductsArray,
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
-                ->pluck('value', 'key')
-                ->toArray();
+            $siteInfo = SystemValue::whereIn(
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+            )
+                                   ->pluck('value', 'key')
+                                   ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
                 }
             }
-
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -790,9 +804,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }elseif(checkSiteAccessData(['qycojp'])){
-
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -803,7 +817,7 @@ class SendEmailController extends Controller {
             }
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
-                . $data['siteEmail'] : '';
+                                                                                             .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene('productSample');
             if (empty($scene)) {
@@ -814,23 +828,23 @@ class SendEmailController extends Controller {
             }
             //邮件标题
             if (!empty($categoryName)) {
-                $scene->title = $categoryName . "-" . $scene->title;
+                $scene->title = $categoryName."-".$scene->title;
             }
             if (!empty($productsName)) {
-                $scene->title = $scene->title . ":  {$productsName}";
+                $scene->title = $scene->title.":  {$productsName}";
             }
-
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             // 收件人额外加上分类邮箱
             if ($categoryEmail) {
                 $categoryEmail = explode(',', $categoryEmail);
                 $emails = array_merge($emails, $categoryEmail);
+                $emails = array_unique($emails);
             }
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            //$this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
+            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
@@ -843,8 +857,7 @@ class SendEmailController extends Controller {
     }
 
     // 联系我们
-    public function contactUs($id,$otherIds = [])
-    {
+    public function contactUs($id, $otherIds = []) {
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
@@ -856,35 +869,36 @@ class SendEmailController extends Controller {
             }
             $priceEdition = '';
             if (!empty($data['price_edition'])) {
-                $priceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where('id', $data['price_edition'])->first();
+                $priceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where(
+                    'id', $data['price_edition']
+                )->first();
                 if ($priceEditionRecord) {
                     $priceEditionData = $priceEditionRecord->toArray();
                     $languageName = Languages::where('id', $priceEditionData['language_id'])->value('name');
-                    $priceEdition =  (!empty($languageName) ? $languageName : '') . ' ' . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
+                    $priceEdition = (!empty($languageName) ? $languageName : '').' '
+                                    .(!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
                 }
             }
             if (isset($data['product_id']) && !empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
-                    ->select(
-                        [
-                            'url',
-                            'thumb',
-                            'name',
-                            'id as product_id',
-                            'published_date',
-                            'category_id'
-                        ]
-                    )->first();
+                                        ->select(
+                                            [
+                                                'url',
+                                                'thumb',
+                                                'name',
+                                                'id as product_id',
+                                                'published_date',
+                                                'category_id'
+                                            ]
+                                        )->first();
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
             }
-
             // qycojp的联系我们 存在只填报告名称而不用报告id的表单
-            if(empty($productsName) && !empty($ContactUs['product_name'])){
+            if (empty($productsName) && !empty($ContactUs['product_name'])) {
                 $productsName = $ContactUs['product_name'];
                 $productLink = '';
             }
-
             // 多申请样本提交
             $otherProductsArray = [];
             if (count($otherIds) > 0) {
@@ -895,38 +909,45 @@ class SendEmailController extends Controller {
                 $tempProductsItem['priceEdition'] = $priceEdition;
                 $tempProductsItem['language_version'] = $ContactUs['language_version'] ?? '';
                 $otherProductsArray[] = $tempProductsItem;
-
-                $otherMessageData = ContactUs::query()->select(['product_id','product_name','price_edition','language_version'])->whereIn('id',$otherIds)->get();
-                if($otherMessageData){
+                $otherMessageData = ContactUs::query()->select(
+                    ['product_id', 'product_name', 'price_edition', 'language_version']
+                )->whereIn('id', $otherIds)->get();
+                if ($otherMessageData) {
                     $otherMessageData = $otherMessageData->toArray();
-                }else{
+                } else {
                     $otherMessageData = [];
                 }
                 foreach ($otherMessageData as $key => $otherMessage) {
                     $tempProductsItem = [];
                     if (!empty($otherMessage['product_id'])) {
                         $otherProductsInfo = Products::query()->where("id", $otherMessage['product_id'])
-                            ->select([
-                                'url',
-                                'thumb',
-                                'name',
-                                'id as product_id',
-                                'published_date',
-                                'category_id'
-                            ])->first();
+                                                     ->select([
+                                                                  'url',
+                                                                  'thumb',
+                                                                  'name',
+                                                                  'id as product_id',
+                                                                  'published_date',
+                                                                  'category_id'
+                                                              ])->first();
                         $tempProductsItem['productsName'] = $otherProductsInfo->name ?? '';
                         $tempProductsItem['productLink'] = $this->getProductUrl($otherProductsInfo);
                     } else {
-                        $tempProductsItem['productsName'] = !empty($otherMessage['product_name']) ? $otherMessage['product_name'] : '';
+                        $tempProductsItem['productsName'] = !empty($otherMessage['product_name'])
+                            ? $otherMessage['product_name'] : '';
                         $tempProductsItem['productLink'] = '';
                     }
-
                     if (!empty($otherMessage['price_edition'])) {
-                        $otherPriceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where('id', $otherMessage['price_edition'])->first();
+                        $otherPriceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where(
+                            'id', $otherMessage['price_edition']
+                        )->first();
                         if ($otherPriceEditionRecord) {
                             $otherPriceEditionData = $otherPriceEditionRecord->toArray();
-                            $otherLanguageName = Languages::where('id', $otherPriceEditionData['language_id'])->value('name');
-                            $tempProductsItem['priceEdition'] =  (!empty($otherLanguageName) ? $otherLanguageName : '') . ' ' . (!empty($otherPriceEditionRecord['name']) ? $otherPriceEditionRecord['name'] : '');
+                            $otherLanguageName = Languages::where('id', $otherPriceEditionData['language_id'])->value(
+                                'name'
+                            );
+                            $tempProductsItem['priceEdition'] = (!empty($otherLanguageName) ? $otherLanguageName : '')
+                                                                .' '.(!empty($otherPriceEditionRecord['name'])
+                                    ? $otherPriceEditionRecord['name'] : '');
                         } else {
                             $tempProductsItem['priceEdition'] = '';
                         }
@@ -935,55 +956,55 @@ class SendEmailController extends Controller {
                     }
                     if (!empty($otherMessage['language_version'])) {
                         $tempProductsItem['language_version'] = $otherMessage['language_version'];
-                    }else{
+                    } else {
                         $tempProductsItem['language_version'] = '';
                     }
                     $otherProductsArray[] = $tempProductsItem;
                 }
             }
-
-            $token = $data['email'] . '&' . $data['id'];
+            $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
-            $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
+            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $area = $this->getAreaName($data);
             $addressDetail = $data['address'] ?? '';
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
-                'homePage'     => $data['domain'],
-                'myAccountUrl' => rtrim($data['domain'], '/') . '/account/account-infor',
-                'contactUsUrl' => rtrim($data['domain'], '/') . '/contact-us',
-                'homeUrl'      => $data['domain'],
-                'userName'     => $data['name'] ? $data['name'] : '',
-                'email'        => $data['email'],
-                'company'      => $data['company'],
-                'department'   => $data['department']??'',
-                'messageAddress'      => $addressDetail,
-                'area'         => $area . " " . $addressDetail,
-                'phone'        => $data['phone'] ?: '',
-                'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
+                'homePage'          => $data['domain'],
+                'myAccountUrl'      => rtrim($data['domain'], '/').'/account/account-infor',
+                'contactUsUrl'      => rtrim($data['domain'], '/').'/contact-us',
+                'homeUrl'           => $data['domain'],
+                'userName'          => $data['name'] ? $data['name'] : '',
+                'email'             => $data['email'],
+                'company'           => $data['company'],
+                'department'        => $data['department'] ?? '',
+                'messageAddress'    => $addressDetail,
+                'area'              => $area." ".$addressDetail,
+                'phone'             => $data['phone'] ?: '',
+                'plantTimeBuy'      => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
                 //'content' => $data['remarks'],
-                'content'      => $data['content'],
-                'backendUrl'   => $imgDomain,
-                'dateTime'     => date('Y-m-d'),
-                'language'     => $ContactUs['language_version'] ?? '',
-                'link'         => $productLink,
-                'productsName' => $productsName,
-                'country'      => $country,
-                'priceEdition' => $priceEdition,
-                'otherProductsData'         => $otherProductsArray,
+                'content'           => $data['content'],
+                'backendUrl'        => $imgDomain,
+                'dateTime'          => date('Y-m-d'),
+                'language'          => $ContactUs['language_version'] ?? '',
+                'link'              => $productLink,
+                'productsName'      => $productsName,
+                'country'           => $country,
+                'priceEdition'      => $priceEdition,
+                'otherProductsData' => $otherProductsArray,
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
-                ->pluck('value', 'key')
-                ->toArray();
+            $siteInfo = SystemValue::whereIn(
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+            )
+                                   ->pluck('value', 'key')
+                                   ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -991,9 +1012,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }elseif(checkSiteAccessData(['qycojp'])){
-
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -1004,7 +1025,7 @@ class SendEmailController extends Controller {
             }
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
-                . $data['siteEmail'] : '';
+                                                                                             .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene('contactUs');
             if (empty($scene)) {
@@ -1018,7 +1039,7 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            //$this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
+            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
@@ -1030,14 +1051,13 @@ class SendEmailController extends Controller {
     }
 
     // 定制报告
-    public function customized($id, $otherIds = [])
-    {
+    public function customized($id, $otherIds = []) {
         try {
             $ContactUs = ContactUs::find($id);
             $data = $ContactUs ? $ContactUs->toArray() : [];
-            $token = $data['email'] . '&' . $data['id'];
+            $token = $data['email'].'&'.$data['id'];
             $data['token'] = base64_encode($token);
-            $data['domain'] = 'http://' . $_SERVER['SERVER_NAME'];
+            $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $addressDetail = $data['address'] ?? '';
             $productsName = '';
             $productLink = '';
@@ -1049,25 +1069,28 @@ class SendEmailController extends Controller {
             }
             $priceEdition = '';
             if (!empty($data['price_edition'])) {
-                $priceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where('id', $data['price_edition'])->first();
+                $priceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where(
+                    'id', $data['price_edition']
+                )->first();
                 if ($priceEditionRecord) {
                     $priceEditionData = $priceEditionRecord->toArray();
                     $languageName = Languages::where('id', $priceEditionData['language_id'])->value('name');
-                    $priceEdition =  (!empty($languageName) ? $languageName : '') . ' ' . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
+                    $priceEdition = (!empty($languageName) ? $languageName : '').' '
+                                    .(!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
                 }
             }
             if (isset($data['product_id']) && !empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
-                    ->select(
-                        [
-                            'url',
-                            'thumb',
-                            'name',
-                            'id as product_id',
-                            'published_date',
-                            'category_id'
-                        ]
-                    )->first();
+                                        ->select(
+                                            [
+                                                'url',
+                                                'thumb',
+                                                'name',
+                                                'id as product_id',
+                                                'published_date',
+                                                'category_id'
+                                            ]
+                                        )->first();
                 $productsName = !empty($productsInfo) ? $productsInfo->name : '';
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
@@ -1079,7 +1102,6 @@ class SendEmailController extends Controller {
                     }
                 }
             }
-
             // 多申请样本提交
             $otherProductsArray = [];
             if (count($otherIds) > 0) {
@@ -1090,8 +1112,9 @@ class SendEmailController extends Controller {
                 $tempProductsItem['priceEdition'] = $priceEdition;
                 $tempProductsItem['language_version'] = $ContactUs['language_version'] ?? '';
                 $otherProductsArray[] = $tempProductsItem;
-
-                $otherMessageData = ContactUs::query()->select(['product_id', 'product_name', 'price_edition','language_version'])->whereIn('id', $otherIds)->get();
+                $otherMessageData = ContactUs::query()->select(
+                    ['product_id', 'product_name', 'price_edition', 'language_version']
+                )->whereIn('id', $otherIds)->get();
                 if ($otherMessageData) {
                     $otherMessageData = $otherMessageData->toArray();
                 } else {
@@ -1101,27 +1124,33 @@ class SendEmailController extends Controller {
                     $tempProductsItem = [];
                     if (!empty($otherMessage['product_id'])) {
                         $otherProductsInfo = Products::query()->where("id", $otherMessage['product_id'])
-                            ->select([
-                                'url',
-                                'thumb',
-                                'name',
-                                'id as product_id',
-                                'published_date',
-                                'category_id'
-                            ])->first();
+                                                     ->select([
+                                                                  'url',
+                                                                  'thumb',
+                                                                  'name',
+                                                                  'id as product_id',
+                                                                  'published_date',
+                                                                  'category_id'
+                                                              ])->first();
                         $tempProductsItem['productsName'] = $otherProductsInfo->name ?? '';
                         $tempProductsItem['productLink'] = $this->getProductUrl($otherProductsInfo);
                     } else {
-                        $tempProductsItem['productsName'] = !empty($otherMessage['product_name']) ? $otherMessage['product_name'] : '';
+                        $tempProductsItem['productsName'] = !empty($otherMessage['product_name'])
+                            ? $otherMessage['product_name'] : '';
                         $tempProductsItem['productLink'] = '';
                     }
-
                     if (!empty($otherMessage['price_edition'])) {
-                        $otherPriceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where('id', $otherMessage['price_edition'])->first();
+                        $otherPriceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where(
+                            'id', $otherMessage['price_edition']
+                        )->first();
                         if ($otherPriceEditionRecord) {
                             $otherPriceEditionData = $otherPriceEditionRecord->toArray();
-                            $otherLanguageName = Languages::where('id', $otherPriceEditionData['language_id'])->value('name');
-                            $tempProductsItem['priceEdition'] =  (!empty($otherLanguageName) ? $otherLanguageName : '') . ' ' . (!empty($otherPriceEditionRecord['name']) ? $otherPriceEditionRecord['name'] : '');
+                            $otherLanguageName = Languages::where('id', $otherPriceEditionData['language_id'])->value(
+                                'name'
+                            );
+                            $tempProductsItem['priceEdition'] = (!empty($otherLanguageName) ? $otherLanguageName : '')
+                                                                .' '.(!empty($otherPriceEditionRecord['name'])
+                                    ? $otherPriceEditionRecord['name'] : '');
                         } else {
                             $tempProductsItem['priceEdition'] = '';
                         }
@@ -1130,50 +1159,50 @@ class SendEmailController extends Controller {
                     }
                     if (!empty($otherMessage['language_version'])) {
                         $tempProductsItem['language_version'] = $otherMessage['language_version'];
-                    }else{
+                    } else {
                         $tempProductsItem['language_version'] = '';
                     }
                     $otherProductsArray[] = $tempProductsItem;
                 }
             }
-
             $area = $this->getAreaName($data);
             // $imgDomain = env('IMAGE_URL');
             $imgDomain = env('IMAGE_URL_BACKUP', '');
             $data2 = [
-                'homePage'     => $data['domain'],
-                'myAccountUrl' => rtrim($data['domain'], '/') . '/account/account-infor',
-                'contactUsUrl' => rtrim($data['domain'], '/') . '/contact-us',
-                'homeUrl'      => $data['domain'],
-                'userName'     => $data['name'] ?: '',
-                'email'        => $data['email'],
-                'company'      => $data['company'],
-                'department'   => $data['department']??'',
-                'messageAddress'      => $addressDetail,
-                'area'         => $area . " " . $addressDetail,
-                'phone'        => $data['phone'] ?: '',
-                'plantTimeBuy' => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
-                'content'      => $data['content'],
-                'backendUrl'   => $imgDomain,
-                'link'         => $productLink,
-                'productsName' => $productsName,
-                'dateTime'     => date('Y-m-d'),
-                'language'     => $ContactUs['language_version'] ?? '',
-                'country'      => $country,
-                'priceEdition' => $priceEdition,
-                'otherProductsData'         => $otherProductsArray,
+                'homePage'          => $data['domain'],
+                'myAccountUrl'      => rtrim($data['domain'], '/').'/account/account-infor',
+                'contactUsUrl'      => rtrim($data['domain'], '/').'/contact-us',
+                'homeUrl'           => $data['domain'],
+                'userName'          => $data['name'] ?: '',
+                'email'             => $data['email'],
+                'company'           => $data['company'],
+                'department'        => $data['department'] ?? '',
+                'messageAddress'    => $addressDetail,
+                'area'              => $area." ".$addressDetail,
+                'phone'             => $data['phone'] ?: '',
+                'plantTimeBuy'      => !empty($data['buy_time']) && $data['buy_time'] != 0 ? $data['buy_time'] : '',
+                'content'           => $data['content'],
+                'backendUrl'        => $imgDomain,
+                'link'              => $productLink,
+                'productsName'      => $productsName,
+                'dateTime'          => date('Y-m-d'),
+                'language'          => $ContactUs['language_version'] ?? '',
+                'country'           => $country,
+                'priceEdition'      => $priceEdition,
+                'otherProductsData' => $otherProductsArray,
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
-                ->pluck('value', 'key')
-                ->toArray();
+            $siteInfo = SystemValue::whereIn(
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+            )
+                                   ->pluck('value', 'key')
+                                   ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['lpien'])) {
-                // 多个电话
-                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+            if (checkSiteAccessData(['qycojp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -1181,9 +1210,9 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }elseif(checkSiteAccessData(['qycojp'])){
-
-                $sitePhones = SystemValue::whereIn('key', ['sitePhone1','sitePhone2'])->pluck('value');
+            }else{
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
                     $data['sitePhones'] = [];
@@ -1194,7 +1223,7 @@ class SendEmailController extends Controller {
             }
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
-                . $data['siteEmail'] : '';
+                                                                                             .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene('customized');
             if (empty($scene)) {
@@ -1205,23 +1234,23 @@ class SendEmailController extends Controller {
             }
             //邮件标题
             if (!empty($categoryName)) {
-                $scene->title = $categoryName . "-" . $scene->title;
+                $scene->title = $categoryName."-".$scene->title;
             }
             if (!empty($productsName)) {
-                $scene->title = $scene->title . ":  {$productsName}";
+                $scene->title = $scene->title.":  {$productsName}";
             }
-
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             // 收件人额外加上分类邮箱
             if ($categoryEmail) {
                 $categoryEmail = explode(',', $categoryEmail);
                 $emails = array_merge($emails, $categoryEmail);
+                $emails = array_unique($emails);
             }
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            //$this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
+            $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             foreach ($emails as $email) {
                 $this->handlerSendEmail($scene, $email, $data, $senderEmail);
             }
@@ -1233,8 +1262,7 @@ class SendEmailController extends Controller {
     }
 
     // 下单后未付款
-    public function placeOrder($orderId)
-    {
+    public function placeOrder($orderId) {
         try {
             $Order = Order::where('id', $orderId)->first();
             $data = $Order ? $Order->toArray() : [];
@@ -1258,7 +1286,6 @@ class SendEmailController extends Controller {
             $exchange_order_amount = bcmul($data['order_amount'], $exchange_rate, 2);
             $exchange_order_actually_paid = bcmul($data['actually_paid'], $exchange_rate, 2);
             $exchange_order_tax = bcmul($exchange_order_amount, $tax_rate, 2);
-
             $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
             $languageList = Languages::GetListById();
             $goods_data_list = [];
@@ -1280,7 +1307,8 @@ class SendEmailController extends Controller {
                     $language = '';
                 }
                 $products = Products::select(
-                    ['url', 'thumb', 'name', 'english_name', 'id as product_id', 'published_date', 'category_id', 'pages']
+                    ['url', 'thumb', 'name', 'english_name', 'id as product_id', 'published_date', 'category_id',
+                     'pages']
                 )->where('id', $OrderGoods['goods_id'])->first();
                 if (empty($products)) {
                     continue;
@@ -1298,28 +1326,32 @@ class SendEmailController extends Controller {
                 // 单个商品现价
                 $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 // 多个同商品现价
-                $goods_data['goods_sum_price'] = bcmul($OrderGoods['goods_present_price'], $OrderGoods['goods_number'], 2);
+                $goods_data['goods_sum_price'] = bcmul(
+                    $OrderGoods['goods_present_price'], $OrderGoods['goods_number'], 2
+                );
                 //$goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
-
                 $goods_data['goods_number'] = $OrderGoods['goods_number'];
                 // 单个商品原价
                 $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
                 // 多个同商品原价
-                $goods_data['sum_original_price'] = bcmul($goods_data['goods_original_price'], $goods_data['goods_number'], 2);
-
+                $goods_data['sum_original_price'] = bcmul(
+                    $goods_data['goods_original_price'], $goods_data['goods_number'], 2
+                );
                 // 多个同商品的汇率转换
-                $goods_data['exchange_sum_original_price'] = bcmul($goods_data['sum_original_price'], $exchange_rate, 2);
+                $goods_data['exchange_sum_original_price'] = bcmul(
+                    $goods_data['sum_original_price'], $exchange_rate, 2
+                );
                 $goods_data['exchange_sum_present_price'] = bcmul($goods_data['goods_sum_price'], $exchange_rate, 2);
-
                 // 商品累加小计
                 $sum_goods_original_price_all += $goods_data['sum_original_price'];
                 $sum_goods_present_price_all += $goods_data['goods_sum_price'];
-
                 // 分类信息
-                $category = ProductsCategory::select(['id', 'name', 'thumb' , 'email'])->where('id', $products['category_id'])->first();
+                $category = ProductsCategory::select(['id', 'name', 'thumb', 'email'])->where(
+                    'id', $products['category_id']
+                )->first();
                 $goods_data['category_name'] = $category['name'] ?? '';
                 $goods_data['category_thumb'] = $category['thumb'] ?? '';
-                if(!empty($category['email'] )){
+                if (!empty($category['email'])) {
                     $temp_email_list = explode(',', $category['email']);
                     $extra_email_list = array_merge($extra_email_list, $temp_email_list);
                 }
@@ -1332,7 +1364,7 @@ class SendEmailController extends Controller {
                     // 如果报告图片、分类图片为空，使用系统默认图片
                     $tempThumb = !empty($defaultImg) ? $defaultImg : '';
                 }
-                $goods_data['thumb'] = rtrim($imgDomain, '/') . $tempThumb;
+                $goods_data['thumb'] = rtrim($imgDomain, '/').$tempThumb;
                 // $goods_data['thumb'] = rtrim($imgDomain, '/') . $products->getThumbImgAttribute();
                 $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;
@@ -1343,13 +1375,11 @@ class SendEmailController extends Controller {
             // 税费计算
             $original_tax = bcmul($sum_goods_original_price_all, $tax_rate, 2);
             $present_tax = bcmul($sum_goods_present_price_all, $tax_rate, 2);
-
             // 税费汇率转换
             $exchange_original_tax = bcmul($original_tax, $exchange_rate, 2);
             $exchange_present_tax = bcmul($present_tax, $exchange_rate, 2);
-
             $areaInfo = $this->getAreaName($data);
-            $addres = $areaInfo . ' ' . $data['address'];
+            $addres = $areaInfo.' '.$data['address'];
             if ($data['pay_coin_type'] == PayConst::COIN_TYPE_USD) {
                 $pay_coin_symbol = PayConst::COIN_TYPE_USD;
             } else {
@@ -1367,64 +1397,68 @@ class SendEmailController extends Controller {
                 $AppName = env('APP_NAME');
                 request()->headers->set('Site', $AppName); // 设置请求头
             }
-            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien' , 'giren'])) {
+            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {
                 $orderStatusText = 'PAY_UNPAID';
             } elseif (checkSiteAccessData(['lpijp'])) {
                 $orderStatusText = '支払い待ち';
+            }elseif(checkSiteAccessData(['qykr'])){
+                $orderStatusText = '미지불';
             } else {
                 $orderStatusText = '未付款';
             }
             $is_bank = false; // 是否线下转账，否则在邮件上没有跳转支付的链接
-            if($Order->pay_code == PayConst::PAY_TYPE_BANK){
+            if ($Order->pay_code == PayConst::PAY_TYPE_BANK) {
                 $is_bank = true;
             }
             $data2 = [
-                'homePage'               => $data['domain'],
-                'myAccountUrl'           => rtrim($data['domain'], '/') . '/account/account-infor',
-                'contactUsUrl'           => rtrim($data['domain'], '/') . '/contact-us',
-                'orderListUrl'           => rtrim($data['domain'], '/') . '/account/order',
-                'homeUrl'                => $data['domain'],
-                'backendUrl'             => $imgDomain,
-                'userName'               => $data['username'] ? $data['username'] : '',
-                'userEmail'              => $data['email'],
-                'userCompany'            => $data['company'],
-                'userDepartment'         => $data['department']??'',
-                'userAddress'            => $addres,
-                'userPhone'              => $data['phone'] ? $data['phone'] : '',
-                'orderStatus'            => $orderStatusText,
-                'paymentMethod'          => $PayName,
-                'orderAmount'            => $data['order_amount'],
-                'preferentialAmount'     => $data['coupon_amount'],
-                'orderActuallyPaid'      => $data['actually_paid'],
-                'exchange_order_amount'  => $exchange_order_amount,
-                'exchange_coupon_amount' => $exchange_coupon_amount,
-                'exchange_order_actually_paid' => $exchange_order_actually_paid,
-                'exchange_order_tax'     => $exchange_order_tax,
-                'pay_coin_symbol'        => $pay_coin_symbol, // 支付符号,
-                'orderNumber'            => $data['order_number'],
-                'paymentLink'            => $data['domain'] . '/api/order/pay?order_id=' . $data['id'],
+                'homePage'                        => $data['domain'],
+                'myAccountUrl'                    => rtrim($data['domain'], '/').'/account/account-infor',
+                'contactUsUrl'                    => rtrim($data['domain'], '/').'/contact-us',
+                'orderListUrl'                    => rtrim($data['domain'], '/').'/account/order',
+                'homeUrl'                         => $data['domain'],
+                'backendUrl'                      => $imgDomain,
+                'userName'                        => $data['username'] ? $data['username'] : '',
+                'userEmail'                       => $data['email'],
+                'userCompany'                     => $data['company'],
+                'userDepartment'                  => $data['department'] ?? '',
+                'userAddress'                     => $addres,
+                'userPhone'                       => $data['phone'] ? $data['phone'] : '',
+                'orderStatus'                     => $orderStatusText,
+                'paymentMethod'                   => $PayName,
+                'orderAmount'                     => $data['order_amount'],
+                'preferentialAmount'              => $data['coupon_amount'],
+                'orderActuallyPaid'               => $data['actually_paid'],
+                'exchange_order_amount'           => $exchange_order_amount,
+                'exchange_coupon_amount'          => $exchange_coupon_amount,
+                'exchange_order_actually_paid'    => $exchange_order_actually_paid,
+                'exchange_order_tax'              => $exchange_order_tax,
+                'pay_coin_symbol'                 => $pay_coin_symbol, // 支付符号,
+                'orderNumber'                     => $data['order_number'],
+                'paymentLink'                     => $data['domain'].'/api/order/pay?order_id='.$data['id'],
                 //'orderDetails'           => $data['domain'].'/account?orderdetails='.$data['id'],
-                'orderDetails'           => $data['domain'] . '/account/order?orderdetails=' . $data['id'],
-                'goods'                  => $goods_data_list,
-                'userId'                 => $data['user_id'],
-                'dateTime'               => date('Y-m-d H:i:s', time()),
-                'orderTime'              => $orderCreatedTime,
-                'sumGoodsCnt'            => $sum_goods_cnt,
-                'sum_goods_original_price_all'      => $sum_goods_original_price_all,
-                'sum_goods_present_price_all'       => $sum_goods_present_price_all,
-                'exchange_sum_original_price_all'   => $exchange_sum_original_price_all,
-                'exchange_sum_present_price_all'    => $exchange_sum_present_price_all,
-                'original_tax'           => $original_tax,
-                'present_tax'            => $present_tax,
-                'exchange_original_tax'  => $exchange_original_tax,
-                'exchange_present_tax'   => $exchange_present_tax,
-                'content'                => $Order['remarks'],
-                'is_bank'                => $is_bank,
+                'orderDetails'                    => $data['domain'].'/account/order?orderdetails='.$data['id'],
+                'goods'                           => $goods_data_list,
+                'userId'                          => $data['user_id'],
+                'dateTime'                        => date('Y-m-d H:i:s', time()),
+                'orderTime'                       => $orderCreatedTime,
+                'sumGoodsCnt'                     => $sum_goods_cnt,
+                'sum_goods_original_price_all'    => $sum_goods_original_price_all,
+                'sum_goods_present_price_all'     => $sum_goods_present_price_all,
+                'exchange_sum_original_price_all' => $exchange_sum_original_price_all,
+                'exchange_sum_present_price_all'  => $exchange_sum_present_price_all,
+                'original_tax'                    => $original_tax,
+                'present_tax'                     => $present_tax,
+                'exchange_original_tax'           => $exchange_original_tax,
+                'exchange_present_tax'            => $exchange_present_tax,
+                'content'                         => $Order['remarks'],
+                'is_bank'                         => $is_bank,
             ];
             $data['country'] = Country::where('id', $Order['country_id'])->value('name');
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
-                ->pluck('value', 'key')
-                ->toArray();
+            $siteInfo = SystemValue::whereIn(
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+            )
+                                   ->pluck('value', 'key')
+                                   ->toArray();
             if ($siteInfo) {
                 foreach ($siteInfo as $key => $value) {
                     $data[$key] = $value;
@@ -1432,7 +1466,7 @@ class SendEmailController extends Controller {
             }
             // 多个电话
             $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
-            if($sitePhones){
+            if ($sitePhones) {
                 $sitePhones = $sitePhones->toArray();
                 $data['sitePhones'] = [];
                 foreach ($sitePhones as $key => $sitePhoneItem) {
@@ -1441,7 +1475,7 @@ class SendEmailController extends Controller {
             }
             $data = $this->officeData($data);
             $data['toSiteEmail'] = isset($data['siteEmail']) && !empty($data['siteEmail']) ? 'mailto:'
-                . $data['siteEmail'] : '';
+                                                                                             .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene('placeOrder');
             if (empty($scene)) {
@@ -1453,7 +1487,7 @@ class SendEmailController extends Controller {
             $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                 $scene->email_sender_id
             );
-            $scene->title = $scene->title . ": {$productsName}";
+            $scene->title = $scene->title.": {$productsName}";
             $siteName = request()->header('Site');
             if (empty($siteName)) {
                 $siteName = env('APP_NAME');
@@ -1463,11 +1497,10 @@ class SendEmailController extends Controller {
             //            } else {
             //                $scene->title = $scene->title.", 订单号是 {$data['order_number']}";
             //            }
-
             $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
-            if(!empty($extra_email_list )){
+            if (!empty($extra_email_list)) {
                 $emails = array_merge($emails, $extra_email_list);
                 $emails = array_unique($emails);
             }
@@ -1529,13 +1562,14 @@ class SendEmailController extends Controller {
                     $language = '';
                 }
                 $products = Products::select(
-                    ['url', 'thumb', 'name', 'english_name', 'id as product_id', 'published_date', 'category_id', 'pages']
+                    ['url', 'thumb', 'name', 'english_name', 'id as product_id', 'published_date', 'category_id',
+                     'pages']
                 )->where('id', $OrderGoods['goods_id'])->first();
                 if (empty($products)) {
                     continue;
                 }
                 //拼接产品名称
-                if (!empty($products->name) && empty($productsName )) {
+                if (!empty($products->name) && empty($productsName)) {
                     $productsName = $products->name;//." ";
                 }
                 $goods_data = $products->toArray();
@@ -1555,38 +1589,37 @@ class SendEmailController extends Controller {
                     $OrderGoods['goods_number'],
                     2
                 );
-
                 $goods_data['goods_number'] = $OrderGoods['goods_number'];
                 $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
                 $goods_data['sum_original_price'] = bcmul(
                     $goods_data['goods_original_price'], $goods_data['goods_number'], 2
                 );
-
-
                 $goods_data['goods_number'] = $OrderGoods['goods_number'];
                 // 单个商品原价
                 $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
                 // 多个同商品原价
-                $goods_data['sum_original_price'] = bcmul($goods_data['goods_original_price'], $goods_data['goods_number'], 2);
-
+                $goods_data['sum_original_price'] = bcmul(
+                    $goods_data['goods_original_price'], $goods_data['goods_number'], 2
+                );
                 // 多个同商品的汇率转换
-                $goods_data['exchange_sum_original_price'] = bcmul($goods_data['sum_original_price'], $exchange_rate, 2);
+                $goods_data['exchange_sum_original_price'] = bcmul(
+                    $goods_data['sum_original_price'], $exchange_rate, 2
+                );
                 $goods_data['exchange_sum_present_price'] = bcmul($goods_data['goods_sum_price'], $exchange_rate, 2);
-
                 // 商品累加小计
                 $sum_goods_original_price_all += $goods_data['sum_original_price'];
                 $sum_goods_present_price_all += $goods_data['goods_sum_price'];
-
                 // 分类信息
-                $category = ProductsCategory::select(['id', 'name', 'thumb' , 'email'])->where('id', $products['category_id'])
+                $category = ProductsCategory::select(['id', 'name', 'thumb', 'email'])->where(
+                    'id', $products['category_id']
+                )
                                             ->first();
                 $goods_data['category_name'] = $category['name'] ?? '';
                 $goods_data['category_thumb'] = $category['thumb'] ?? '';
-                if(!empty($category['email'] )){
+                if (!empty($category['email'])) {
                     $temp_email_list = explode(',', $category['email']);
                     $extra_email_list = array_merge($extra_email_list, $temp_email_list);
                 }
-
                 $tempThumb = '';
                 if (!empty($products['thumb'])) {
                     $tempThumb = Common::cutoffSiteUploadPathPrefix($products['thumb']);
@@ -1601,18 +1634,15 @@ class SendEmailController extends Controller {
                 $goods_data['link'] = $this->getProductUrl($products);
                 $goods_data_list[] = $goods_data;
             }
-
             // 小计汇率转换
             $exchange_sum_original_price_all = bcmul($sum_goods_original_price_all, $exchange_rate, 2);
             $exchange_sum_present_price_all = bcmul($sum_goods_present_price_all, $exchange_rate, 2);
             // 税费计算
             $original_tax = bcmul($sum_goods_original_price_all, $tax_rate, 2);
             $present_tax = bcmul($sum_goods_present_price_all, $tax_rate, 2);
-
             // 税费汇率转换
             $exchange_original_tax = bcmul($original_tax, $exchange_rate, 2);
             $exchange_present_tax = bcmul($present_tax, $exchange_rate, 2);
-
             $cityName = City::where('id', $data['city_id'])->value('name');
             $provinceName = City::where('id', $data['province_id'])->value('name');
             $addres = $provinceName.' '.$cityName.' '.$data['address'];
@@ -1629,58 +1659,61 @@ class SendEmailController extends Controller {
             } elseif (isset($data['created_at']) && !empty($data['created_at']) && is_string($data['created_at'])) {
                 $orderCreatedTime = $data['created_at'];
             }
-
             if (empty($siteName)) {
                 $AppName = env('APP_NAME');
                 request()->headers->set('Site', $AppName); // 设置请求头
             }
-            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien' ,'giren'])) {
+            if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {
                 $orderStatusText = 'PAY_SUCCESS';
+            }elseif(checkSiteAccessData(['qykr'])){
+                $orderStatusText = '지불됨';
             } else {
                 $orderStatusText = '已付款';
             }
             $data2 = [
-                'homePage'               => $data['domain'],
-                'myAccountUrl'           => rtrim($data['domain'], '/').'/account/account-infor',
-                'contactUsUrl'           => rtrim($data['domain'], '/').'/contact-us',
-                'orderListUrl'           => rtrim($data['domain'], '/').'/account/order',
-                'homeUrl'                => $data['domain'],
-                'backendUrl'             => $imgDomain,
-                'userName'               => $data['username'] ?: '',
-                'userEmail'              => $data['email'],
-                'userCompany'            => $data['company'],
-                'userAddress'            => $addres,
-                'userPhone'              => $data['phone'] ?: '',
-                'orderStatus'            => $orderStatusText,
-                'paymentMethod'          => $PayName,
-                'orderAmount'            => $data['order_amount'],
-                'preferentialAmount'     => $data['coupon_amount'],
-                'orderActuallyPaid'      => $data['actually_paid'],
-                'pay_coin_symbol'        => $pay_coin_symbol, // 支付符号,
-                'exchange_order_amount'  => $exchange_order_amount,
-                'exchange_coupon_amount' => $exchange_coupon_amount,
-                'exchange_order_actually_paid' => $exchange_order_actually_paid,
-                'exchange_order_tax'     => $exchange_order_tax,
-                'orderNumber'            => $data['order_number'],
-                'paymentLink'            => $data['domain'].'/api/order/pay?order_id='.$data['id'],
-                'orderDetails'           => $data['domain'].'/account?orderdetails='.$data['id'],
-                'goods'                  => $goods_data_list,
-                'userId'                 => $data['user_id'],
-                'dateTime'               => date('Y-m-d H:i:s', time()),
-                'orderTime'              => $orderCreatedTime,
-                'sumGoodsCnt'            => $sum_goods_cnt,
-                'sum_goods_original_price_all'      => $sum_goods_original_price_all,
-                'sum_goods_present_price_all'       => $sum_goods_present_price_all,
-                'exchange_sum_original_price_all'   => $exchange_sum_original_price_all,
-                'exchange_sum_present_price_all'    => $exchange_sum_present_price_all,
-                'original_tax'           => $original_tax,
-                'present_tax'            => $present_tax,
-                'exchange_original_tax'  => $exchange_original_tax,
-                'exchange_present_tax'   => $exchange_present_tax,
-                'content'                => $Order['remarks'],
+                'homePage'                        => $data['domain'],
+                'myAccountUrl'                    => rtrim($data['domain'], '/').'/account/account-infor',
+                'contactUsUrl'                    => rtrim($data['domain'], '/').'/contact-us',
+                'orderListUrl'                    => rtrim($data['domain'], '/').'/account/order',
+                'homeUrl'                         => $data['domain'],
+                'backendUrl'                      => $imgDomain,
+                'userName'                        => $data['username'] ?: '',
+                'userEmail'                       => $data['email'],
+                'userCompany'                     => $data['company'],
+                'userAddress'                     => $addres,
+                'userPhone'                       => $data['phone'] ?: '',
+                'orderStatus'                     => $orderStatusText,
+                'paymentMethod'                   => $PayName,
+                'orderAmount'                     => $data['order_amount'],
+                'preferentialAmount'              => $data['coupon_amount'],
+                'orderActuallyPaid'               => $data['actually_paid'],
+                'pay_coin_symbol'                 => $pay_coin_symbol, // 支付符号,
+                'exchange_order_amount'           => $exchange_order_amount,
+                'exchange_coupon_amount'          => $exchange_coupon_amount,
+                'exchange_order_actually_paid'    => $exchange_order_actually_paid,
+                'exchange_order_tax'              => $exchange_order_tax,
+                'orderNumber'                     => $data['order_number'],
+                'paymentLink'                     => $data['domain'].'/api/order/pay?order_id='.$data['id'],
+                'orderDetails'                    => $data['domain'].'/account?orderdetails='.$data['id'],
+                'goods'                           => $goods_data_list,
+                'userId'                          => $data['user_id'],
+                'dateTime'                        => date('Y-m-d H:i:s', time()),
+                'orderTime'                       => $orderCreatedTime,
+                'sumGoodsCnt'                     => $sum_goods_cnt,
+                'sum_goods_original_price_all'    => $sum_goods_original_price_all,
+                'sum_goods_present_price_all'     => $sum_goods_present_price_all,
+                'exchange_sum_original_price_all' => $exchange_sum_original_price_all,
+                'exchange_sum_present_price_all'  => $exchange_sum_present_price_all,
+                'original_tax'                    => $original_tax,
+                'present_tax'                     => $present_tax,
+                'exchange_original_tax'           => $exchange_original_tax,
+                'exchange_present_tax'            => $exchange_present_tax,
+                'content'                         => $Order['remarks'],
             ];
             $data['country'] = Country::where('id', $Order['country_id'])->value('name');
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address','company_address'])
+            $siteInfo = SystemValue::whereIn(
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+            )
                                    ->pluck('value', 'key')
                                    ->toArray();
             if ($siteInfo) {
@@ -1690,7 +1723,7 @@ class SendEmailController extends Controller {
             }
             // 多个电话
             $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
-            if($sitePhones){
+            if ($sitePhones) {
                 $sitePhones = $sitePhones->toArray();
                 $data['sitePhones'] = [];
                 foreach ($sitePhones as $key => $sitePhoneItem) {
@@ -1707,7 +1740,6 @@ class SendEmailController extends Controller {
             if (empty($siteName)) {
                 $siteName = env('APP_NAME');
             }
-
             $scene->title = $scene->title.": {$productsName}";
 //            if (in_array($siteName, ['mrrs', 'yhen', 'qyen'])) {
 //                $scene->title = $scene->title.", order number is: {$data['order_number']}";
@@ -1724,10 +1756,9 @@ class SendEmailController extends Controller {
                 $scene->email_sender_id
             );
             $this->handlerSendEmail($scene, $data['email'], $data, $senderEmail);
-
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
-            if(!empty($extra_email_list )){
+            if (!empty($extra_email_list)) {
                 $emails = array_merge($emails, $extra_email_list);
                 $emails = array_unique($emails);
             }
@@ -1964,13 +1995,12 @@ class SendEmailController extends Controller {
         } else {
             $office_korean_phone = $office_korean;
         }
-
         if (checkSiteAccessData(['giren'])) {
             $office_gz = Office::query()->where(['language_alias' => 'GZ', 'status' => 1])->first();
             $data['office_gz_name'] = '';
             $data['office_gz_phone'] = '';
             $data['office_gz_address'] = '';
-            if(!empty($office_gz )){
+            if (!empty($office_gz)) {
                 $data['office_gz_name'] = $office_gz->name ?? '';
                 $data['office_gz_phone'] = $office_gz->phone ?? '';
                 $data['office_gz_address'] = $office_gz->address ?? '';
@@ -1979,13 +2009,12 @@ class SendEmailController extends Controller {
             $data['office_hk_name'] = '';
             $data['office_hk_phone'] = '';
             $data['office_hk_address'] = '';
-            if(!empty($office_hk )){
+            if (!empty($office_hk)) {
                 $data['office_hk_name'] = $office_hk->name ?? '';
                 $data['office_hk_phone'] = $office_hk->phone ?? '';
                 $data['office_hk_address'] = $office_hk->address ?? '';
             }
         }
-
         $data['office_english_name'] = ($office_english['abbreviation'] ?? '').'('.($office_english['city'] ?? '').')';
         $data['office_english_address'] = $office_english['address'] ?? '';
         $data['office_english_phone'] = $office_english_phone ?? '';
