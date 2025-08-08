@@ -1401,6 +1401,8 @@ class SendEmailController extends Controller {
                 $orderStatusText = 'PAY_UNPAID';
             } elseif (checkSiteAccessData(['lpijp'])) {
                 $orderStatusText = '支払い待ち';
+            }elseif(checkSiteAccessData(['qykr'])){
+                $orderStatusText = '미지불';
             } else {
                 $orderStatusText = '未付款';
             }
@@ -1663,6 +1665,8 @@ class SendEmailController extends Controller {
             }
             if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {
                 $orderStatusText = 'PAY_SUCCESS';
+            }elseif(checkSiteAccessData(['qykr'])){
+                $orderStatusText = '지불됨';
             } else {
                 $orderStatusText = '已付款';
             }
