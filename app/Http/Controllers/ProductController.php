@@ -1265,8 +1265,10 @@ class ProductController extends Controller {
             } else {
                 if ($input_params['orderBy'] == 'time') {
                     $query = $query->orderBy('sort', 'asc')
-                                   ->orderBy('published_date', 'desc')
-                                   ->orderBy('id', 'desc');
+                        ->orderBy('year', 'desc')
+                        ->orderBy('degree_keyword', 'asc')
+                        ->orderBy('published_date', 'desc')
+                        ->orderBy('id', 'desc');
                 } elseif ($input_params['orderBy'] == 'price') {
                     $query = $query->orderBy('sort', 'asc')
                                    ->orderBy('price', 'asc')
