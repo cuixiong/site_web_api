@@ -51,9 +51,10 @@ class ProductController extends Controller {
                 SearchRank::query()->where('name', $keyword)->increment('hits');
                 // 添加搜索记录,qycojp站点、非白名单ip, 非id
                 if (
-                    checkSiteAccessData(['qycojp']) &&
-                    isset($this->isWhiteIp) && !$this->isWhiteIp &&
-                    !is_numeric($keyword)
+                    checkSiteAccessData(['qycojp']) && isset($this->isWhiteIp) && !$this->isWhiteIp
+                    && !is_numeric(
+                        $keyword
+                    )
                 ) {
                     $this->searchLog(['keywords' => $keyword]);
                 }
@@ -135,14 +136,13 @@ class ProductController extends Controller {
                     //判断当前报告是否在优惠时间内
                     if ($productsData['discount_time_begin'] <= $time && $productsData['discount_time_end'] >= $time) {
                         $value['discount_status'] = 1;
-
                         // lpicn 有不同的折扣时间格式，拆分让前端自由拼接
                         $value['discount_time_begin_year'] = date('Y', $productsData['discount_time_begin']);
-                        $value['discount_time_begin_month'] =  date('m', $productsData['discount_time_begin']);
-                        $value['discount_time_begin_day'] =  date('d', $productsData['discount_time_begin']);
+                        $value['discount_time_begin_month'] = date('m', $productsData['discount_time_begin']);
+                        $value['discount_time_begin_day'] = date('d', $productsData['discount_time_begin']);
                         $value['discount_time_end_year'] = date('Y', $productsData['discount_time_end']);
-                        $value['discount_time_end_month'] =  date('m', $productsData['discount_time_end']);
-                        $value['discount_time_end_day'] =  date('d', $productsData['discount_time_end']);
+                        $value['discount_time_end_month'] = date('m', $productsData['discount_time_end']);
+                        $value['discount_time_end_day'] = date('d', $productsData['discount_time_end']);
                     } else {
                         $value['discount_status'] = 0;
                         // 过期需返回正常的折扣
@@ -213,7 +213,9 @@ class ProductController extends Controller {
                         if ($currencyData && count($currencyData)) {
                             foreach ($currencyData as $currencyItem) {
                                 $currencyKey = strtolower($currencyItem['code']).'_price';
-                                $value[$currencyKey] = Products::bcmul_variable_precision($value['price'] , $currencyItem['exchange_rate']);
+                                $value[$currencyKey] = Products::bcmul_variable_precision(
+                                    $value['price'], $currencyItem['exchange_rate']
+                                );
                             }
                         }
                     }
@@ -438,15 +440,13 @@ class ProductController extends Controller {
             //判断当前报告是否在优惠时间内
             if ($product_desc['discount_time_begin'] <= $time && $product_desc['discount_time_end'] >= $time) {
                 $product_desc['discount_status'] = 1;
-
                 // lpicn 有不同的折扣时间格式，拆分让前端自由拼接
                 $product_desc['discount_time_begin_year'] = date('Y', $product_desc['discount_time_begin']);
-                $product_desc['discount_time_begin_month'] =  date('m', $product_desc['discount_time_begin']);
-                $product_desc['discount_time_begin_day'] =  date('d', $product_desc['discount_time_begin']);
+                $product_desc['discount_time_begin_month'] = date('m', $product_desc['discount_time_begin']);
+                $product_desc['discount_time_begin_day'] = date('d', $product_desc['discount_time_begin']);
                 $product_desc['discount_time_end_year'] = date('Y', $product_desc['discount_time_end']);
-                $product_desc['discount_time_end_month'] =  date('m', $product_desc['discount_time_end']);
-                $product_desc['discount_time_end_day'] =  date('d', $product_desc['discount_time_end']);
-
+                $product_desc['discount_time_end_month'] = date('m', $product_desc['discount_time_end']);
+                $product_desc['discount_time_end_day'] = date('d', $product_desc['discount_time_end']);
             } else {
                 $product_desc['discount_status'] = 0;
                 // 过期需返回正常的折扣
@@ -569,7 +569,9 @@ class ProductController extends Controller {
                 if ($currencyData && count($currencyData)) {
                     foreach ($currencyData as $currencyItem) {
                         $currencyKey = strtolower($currencyItem['code']).'_price';
-                        $product_desc[$currencyKey] = Products::bcmul_variable_precision($product_desc['price'] , $currencyItem['exchange_rate']);
+                        $product_desc[$currencyKey] = Products::bcmul_variable_precision(
+                            $product_desc['price'], $currencyItem['exchange_rate']
+                        );
                         $currencyRateKey = strtolower($currencyItem['code']).'_rate';
                         $product_desc[$currencyRateKey] = $currencyItem['exchange_rate'];
                     }
@@ -633,23 +635,22 @@ class ProductController extends Controller {
             //该报告是否是最新年份、如果不是，查询是否有最新年份的报告id
             if (checkSiteAccessData(['qycojp'])) {
                 $product_desc['latestProduct'] = [
-                    'year' =>date('Y', time()),
+                    'year'         => date('Y', time()),
                     'isLatestYear' => true,
-                    'id' => '',
-                    'url' => '',
-                    'remarks' => '',
+                    'id'           => '',
+                    'url'          => '',
+                    'remarks'      => '',
                 ];
                 $published_date_copy = strtotime($product_desc['published_date']);
                 $currentYearTimestamp = strtotime(date('Y', time()).'-01-01'); //今年初的时间戳
                 if ($product_desc['keywords'] && $published_date_copy < $currentYearTimestamp) {
-                    $latestProductData = Products::query()->select(['id','url'])
-                        ->where('published_date', '>=', $currentYearTimestamp)
-                        ->where('keywords', $product_desc['keywords'])
-                        ->where('id', '<>', $product_desc['id'])
-                        ->first();
-                    
+                    $latestProductData = Products::query()->select(['id', 'url'])
+                                                 ->where('published_date', '>=', $currentYearTimestamp)
+                                                 ->where('keywords', $product_desc['keywords'])
+                                                 ->where('id', '<>', $product_desc['id'])
+                                                 ->first();
                     if ($latestProductData) {
-                        $latestProductData= $latestProductData->toArray();
+                        $latestProductData = $latestProductData->toArray();
                         $product_desc['latestProduct']['isLatestYear'] = false;
                         $product_desc['latestProduct']['id'] = $latestProductData['id'];
                         $product_desc['latestProduct']['url'] = $latestProductData['url'];
@@ -823,12 +824,24 @@ class ProductController extends Controller {
                     && !empty($product_desc['chartsRate'])
                     && is_numeric($product_desc['chartsRate'])
                 ) {
-                    $product_desc['last_scale'] = !empty($product_desc['last_scale']) ? Products::bcdiv_variable_precision(Products::bcmul_variable_precision($product_desc['last_scale'], $product_desc['chartsRate']), 100) : '';
-
-                    $product_desc['current_scale'] = !empty($product_desc['current_scale']) ? Products::bcdiv_variable_precision(Products::bcmul_variable_precision($product_desc['current_scale'], $product_desc['chartsRate']), 100) : '';
-
-                    $product_desc['future_scale'] = !empty($product_desc['future_scale']) ? Products::bcdiv_variable_precision(Products::bcmul_variable_precision($product_desc['future_scale'], $product_desc['chartsRate']), 100) : '';
-
+                    $product_desc['last_scale'] = !empty($product_desc['last_scale'])
+                        ? Products::bcdiv_variable_precision(
+                            Products::bcmul_variable_precision(
+                                $product_desc['last_scale'], $product_desc['chartsRate']
+                            ), 100
+                        ) : '';
+                    $product_desc['current_scale'] = !empty($product_desc['current_scale'])
+                        ? Products::bcdiv_variable_precision(
+                            Products::bcmul_variable_precision(
+                                $product_desc['current_scale'], $product_desc['chartsRate']
+                            ), 100
+                        ) : '';
+                    $product_desc['future_scale'] = !empty($product_desc['future_scale'])
+                        ? Products::bcdiv_variable_precision(
+                            Products::bcmul_variable_precision(
+                                $product_desc['future_scale'], $product_desc['chartsRate']
+                            ), 100
+                        ) : '';
                 }
                 // 其他数据
                 $product_desc['future_year'] = $product_desc['year'] + 6;
@@ -1265,10 +1278,10 @@ class ProductController extends Controller {
             } else {
                 if ($input_params['orderBy'] == 'time') {
                     $query = $query->orderBy('sort', 'asc')
-                        ->orderBy('year', 'desc')
-                        ->orderBy('degree_keyword', 'asc')
-                        ->orderBy('published_date', 'desc')
-                        ->orderBy('id', 'desc');
+                                   ->orderBy('year', 'desc')
+                                   ->orderBy('degree_keyword', 'asc')
+                                   ->orderBy('published_date', 'desc')
+                                   ->orderBy('id', 'desc');
                 } elseif ($input_params['orderBy'] == 'price') {
                     $query = $query->orderBy('sort', 'asc')
                                    ->orderBy('price', 'asc')
@@ -1298,12 +1311,16 @@ class ProductController extends Controller {
         }
         //精确搜索, 多字段匹配
         if (!empty($keyword)) {
-//            $val = '"'.$keyword.'"';
-//            $query->match(['name', 'english_name'], $val, true);
+            //$val = '"'.$keyword.'"';
+            //$query->match(['name', 'english_name'], $val, true);
             $keyWordArraySphinx = explode(" ", $keyword);
             if (count($keyWordArraySphinx) > 0) {
                 foreach ($keyWordArraySphinx as $val) {
-                    $query->match(['name', 'english_name'], '"'.$val.'"', true);
+                    $query->match([
+                                      'name', 'english_name',
+                                      'keywords',
+                                      'keywords_en',
+                                      ], '"'.$val.'"', true);
                 }
             }
         }
@@ -1530,8 +1547,7 @@ class ProductController extends Controller {
     }
 
     // 报告列表搜索时记录
-    public function searchLog($info)
-    {
+    public function searchLog($info) {
         try {
             $request = request();
             if (!empty($request->header('x-forwarded-for'))) {
@@ -1547,13 +1563,13 @@ class ProductController extends Controller {
             $ipAddr = (new IPAddrService($ip))->getAddrStrByIp();
             //增加日志
             $addData = [
-                'ip'            => $ip,
-                'ip_addr'       => $ipAddr,
-                'keywords'       => $info['keywords'],
+                'ip'       => $ip,
+                'ip_addr'  => $ipAddr,
+                'keywords' => $info['keywords'],
             ];
             SearchProductsListLog::create($addData);
         } catch (\Exception $e) {
-            \Log::error('记录报告列表搜索,异常信息为:' . json_encode([$e->getMessage()]));
+            \Log::error('记录报告列表搜索,异常信息为:'.json_encode([$e->getMessage()]));
         }
     }
 
@@ -2154,7 +2170,9 @@ class ProductController extends Controller {
                 if ($currencyData && count($currencyData)) {
                     foreach ($currencyData as $currencyItem) {
                         $currencyKey = strtolower($currencyItem['code']).'_price';
-                        $product[$currencyKey] = Products::bcmul_variable_precision($product['price'] , $currencyItem['exchange_rate']);
+                        $product[$currencyKey] = Products::bcmul_variable_precision(
+                            $product['price'], $currencyItem['exchange_rate']
+                        );
                         $currencyRateKey = strtolower($currencyItem['code']).'_rate';
                         $product[$currencyRateKey] = $currencyItem['exchange_rate'];
                     }
@@ -2209,9 +2227,6 @@ class ProductController extends Controller {
         try {
             $keyword = $request->input('keyword', '');
             $pageSize = $request->input('pageSize', 10);
-            if (empty($keyword)) {
-                ReturnJson(false, '请输入搜索内容！', []);
-            }
             $sphinxSrevice = new SphinxService();
             $conn = $sphinxSrevice->getConnection();
             //报告昵称,英文昵称匹配查询
@@ -2234,14 +2249,33 @@ class ProductController extends Controller {
                 }
             }
             $query = $query->orderBy('degree_keyword', 'asc');
-            $query->groupBy('keywords')->setSelect('keywords');
+            $query->groupBy('keywords')->setSelect(['keywords_cn',
+                               'keywords',
+                               'keywords_en',
+                               'keywords_jp',
+                               'keywords_kr',
+                               'keywords_de']);
             //查询结果分页
             $query->limit(0, $pageSize);
             $result = $query->execute();
-            $cateIdList = $result->fetchAllAssoc();
-            $data = array_column($cateIdList, 'keywords');
+            $keywordList = $result->fetchAllAssoc();
+            $handler_keyword_list = [];
+            foreach ($keywordList as $for_data) {
+                if (strpos($for_data['keywords_cn'], $keyword) !== false) {
+                    $handler_keyword_list[] = $for_data['keywords_cn'];
+                } elseif (strpos($for_data['keywords_en'], $keyword) !== false) {
+                    $handler_keyword_list[] = $for_data['keywords_en'];
+                } elseif (strpos($for_data['keywords_jp'], $keyword) !== false) {
+                    $handler_keyword_list[] = $for_data['keywords_jp'];
+                } elseif (strpos($for_data['keywords_kr'], $keyword) !== false) {
+                    $handler_keyword_list[] = $for_data['keywords_kr'];
+                } elseif (strpos($for_data['keywords_de'], $keyword) !== false) {
+                    $handler_keyword_list[] = $for_data['keywords_de'];
+                }
+            }
             //数组分页
-            $data = array_slice($data, 0, $pageSize);
+            $handler_keyword_list= array_unique($handler_keyword_list);
+            $data = array_slice($handler_keyword_list, 0, $pageSize);
             ReturnJson(true, 'ok', $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage(), []);
