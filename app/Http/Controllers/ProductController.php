@@ -1317,9 +1317,10 @@ class ProductController extends Controller {
             if (count($keyWordArraySphinx) > 0) {
                 foreach ($keyWordArraySphinx as $val) {
                     $query->match([
-                                      'name', 'english_name',
+                                      'name',
+                                      'english_name',
                                       'keywords',
-                                      'keywords_en',
+                                      //'keywords_en',
                                       ], '"'.$val.'"', true);
                 }
             }
