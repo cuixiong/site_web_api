@@ -1321,7 +1321,7 @@ class ProductController extends Controller {
                                       'english_name',
                                       'keywords',
                                       //'keywords_en',
-                                      ], '"'.$val.'"', true);
+                                  ], '"'.$val.'"', true);
                 }
             }
         }
@@ -2226,60 +2226,139 @@ class ProductController extends Controller {
      */
     public function searchPromptWords(Request $request) {
         try {
+            // 获取关键词，默认为空字符串
             $keyword = $request->input('keyword', '');
+            //$conver_result = $this->detectKeywordLanguage($keyword);
+            $field_language = 'degree_keyword';
+            $select_field = 'keywords';
+            //dd([$select_field, $field_language]);
             $pageSize = $request->input('pageSize', 10);
-            $sphinxSrevice = new SphinxService();
-            $conn = $sphinxSrevice->getConnection();
-            //报告昵称,英文昵称匹配查询
-            $query = (new SphinxQL($conn))->select('*')
-                                          ->from('products_rt');
-            $query = $query->where('status', '=', 1);
-            $query = $query->where("published_date", "<", time());
-            //精确搜索, 多字段匹配
-            if (!empty($keyword)) {
-                $keyWordArraySphinx = explode(" ", $keyword);
-                if (count($keyWordArraySphinx) > 0) {
-                    foreach ($keyWordArraySphinx as $val) {
-                        $query = $query->match(['keywords_cn',
-                                                'keywords',
-                                                'keywords_en',
-                                                'keywords_jp',
-                                                'keywords_kr',
-                                                'keywords_de'], '"'.$val.'"', true);
-                    }
+            $keywordList = $this->getKeywordList($pageSize, $keyword, $select_field, $field_language);
+            if(empty($keywordList )){
+                if($field_language != 'degree_keywords_en' && $select_field != 'keywords_en'){
+                    $field_language = 'degree_keywords_en';
+                    $select_field = 'keywords_en';
+                    $keywordList = $this->getKeywordList($pageSize, $keyword, $select_field , $field_language);
                 }
             }
-            $query = $query->orderBy('degree_keyword', 'asc');
-            $query->groupBy('keywords')->setSelect(['keywords_cn',
-                               'keywords',
-                               'keywords_en',
-                               'keywords_jp',
-                               'keywords_kr',
-                               'keywords_de']);
-            //查询结果分页
-            $query->limit(0, $pageSize);
-            $result = $query->execute();
-            $keywordList = $result->fetchAllAssoc();
             $handler_keyword_list = [];
             foreach ($keywordList as $for_data) {
-                if (strpos($for_data['keywords_cn'], $keyword) !== false) {
-                    $handler_keyword_list[] = $for_data['keywords_cn'];
-                } elseif (strpos($for_data['keywords_en'], $keyword) !== false) {
-                    $handler_keyword_list[] = $for_data['keywords_en'];
-                } elseif (strpos($for_data['keywords_jp'], $keyword) !== false) {
-                    $handler_keyword_list[] = $for_data['keywords_jp'];
-                } elseif (strpos($for_data['keywords_kr'], $keyword) !== false) {
-                    $handler_keyword_list[] = $for_data['keywords_kr'];
-                } elseif (strpos($for_data['keywords_de'], $keyword) !== false) {
-                    $handler_keyword_list[] = $for_data['keywords_de'];
-                }
+                $handler_keyword_list[] = $for_data[$select_field];
             }
-            //数组分页
-            $handler_keyword_list= array_unique($handler_keyword_list);
             $data = array_slice($handler_keyword_list, 0, $pageSize);
             ReturnJson(true, 'ok', $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage(), []);
         }
+    }
+
+    function detectKeywordLanguage($keyword) {
+        // 检查关键词是否为空或非字符串
+        if (empty($keyword) || !is_string($keyword)) {
+            return [
+                'field_language' => 'degree_keyword',
+                'select_field'   => 'keywords'
+            ];
+        }
+        // 动态检测编码并转换为 UTF-8
+        $encoding = mb_detect_encoding($keyword, ['UTF-8', 'GBK', 'BIG5', 'Shift_JIS', 'EUC-KR'], true);
+        if ($encoding && $encoding !== 'UTF-8') {
+            $keyword = mb_convert_encoding($keyword, 'UTF-8', $encoding);
+        }
+        // 语言检测规则
+        $languageRules = [
+            // 中文：仅匹配汉字
+            'cn' => [
+                'pattern'        => '/^[\p{Han}]+$/u',
+                'field_language' => 'degree_keywords_cn',
+                'select_field'   => 'keywords_cn'
+            ],
+            // 日语：匹配汉字、平假名、片假名
+            'jp' => [
+                'pattern'        => '/^[\p{Han}\p{Hiragana}\p{Katakana}]+$/u',
+                'field_language' => 'degree_keywords_jp',
+                'select_field'   => 'keywords_jp'
+            ],
+            // 韩语：匹配谚文和汉字
+            'kr' => [
+                'pattern'        => '/^[\p{Hangul}\p{Han}]+$/u',
+                'field_language' => 'degree_keywords_kr',
+                'select_field'   => 'keywords_kr'
+            ],
+            // 英语：匹配拉丁字母、空格、连字符
+            'en' => [
+                'pattern'        => '/^[a-zA-Z\s\-]+$/u',
+                'field_language' => 'degree_keywords_en',
+                'select_field'   => 'keywords_en'
+            ],
+            // 德语：必须包含德语特殊字符，且只含拉丁字母、德语字符、空格、连字符
+            'de' => [
+                'pattern'           => '/[äöüßÄÖÜ]/u', // 必须包含德语特殊字符
+                'secondary_pattern' => '/^[a-zA-ZäöüßÄÖÜ\s\-]+$/u', // 整体匹配
+                'field_language'    => 'degree_keywords_de',
+                'select_field'      => 'keywords_de'
+            ]
+        ];
+        // 遍历规则，检测语言
+        foreach ($languageRules as $lang => $rule) {
+            if ($lang === 'de') {
+                // 德语需要同时满足主正则（包含特殊字符）和次正则（整体格式）
+                if (preg_match($rule['pattern'], $keyword) && preg_match($rule['secondary_pattern'], $keyword)) {
+                    return [
+                        'field_language' => $rule['field_language'],
+                        'select_field'   => $rule['select_field']
+                    ];
+                }
+            } else {
+                // 其他语言直接匹配主正则
+                if (preg_match($rule['pattern'], $keyword)) {
+                    return [
+                        'field_language' => $rule['field_language'],
+                        'select_field'   => $rule['select_field']
+                    ];
+                }
+            }
+        }
+        // 默认值：无法识别的语言
+        // error_log("Unrecognized keyword language: $keyword");
+        return [
+            'field_language' => 'degree_keyword',
+            'select_field'   => 'keywords'
+        ];
+    }
+
+    /**
+     *
+     * @param int    $pageSize
+     * @param mixed  $keyword
+     * @param string $select_field
+     * @param string $field_language
+     *
+     * @return array
+     */
+    private function getKeywordList($pageSize, mixed $keyword, string $select_field, string $field_language): array {
+        $sphinxSrevice = new SphinxService();
+        $conn = $sphinxSrevice->getConnection();
+        //报告昵称,英文昵称匹配查询
+        $query = (new SphinxQL($conn))->select('*')
+                                      ->from('products_rt');
+        $query = $query->where('status', '=', 1);
+        $query = $query->where("published_date", "<", time());
+        //精确搜索, 多字段匹配
+        if (!empty($keyword)) {
+            $keyWordArraySphinx = explode(" ", $keyword);
+            if (count($keyWordArraySphinx) > 0) {
+                foreach ($keyWordArraySphinx as $val) {
+                    $query = $query->match([$select_field], '"'.$val.'"', true);
+                }
+            }
+        }
+        $query = $query->orderBy($field_language, 'asc');
+        $query->groupBy($select_field)->setSelect([$select_field]);
+        //查询结果分页
+        $query->limit(0, $pageSize);
+        $result = $query->execute();
+        $keywordList = $result->fetchAllAssoc();
+        return $keywordList;
     }
 }
