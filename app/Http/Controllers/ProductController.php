@@ -609,7 +609,7 @@ class ProductController extends Controller {
                     // echo '<pre>';print_r($keyword_suffixs);exit;
                     foreach ($keyword_suffixs as $keyword_suffix) {
                         $seo_keyword .= $separator.$product_desc['keywords']." ".$keyword_suffix;
-                        if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {CountPrice
+                        if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {
                             $separator = ', ';
                         } else {
                             $separator = '，';
