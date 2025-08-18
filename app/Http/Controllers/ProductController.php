@@ -51,9 +51,10 @@ class ProductController extends Controller {
                 SearchRank::query()->where('name', $keyword)->increment('hits');
                 // 添加搜索记录,qycojp站点、非白名单ip, 非id
                 if (
-                    checkSiteAccessData(['qycojp']) &&
-                    isset($this->isWhiteIp) && !$this->isWhiteIp &&
-                    !is_numeric($keyword)
+                    checkSiteAccessData(['qycojp']) && isset($this->isWhiteIp) && !$this->isWhiteIp
+                    && !is_numeric(
+                        $keyword
+                    )
                 ) {
                     $this->searchLog(['keywords' => $keyword]);
                 }
@@ -135,14 +136,13 @@ class ProductController extends Controller {
                     //判断当前报告是否在优惠时间内
                     if ($productsData['discount_time_begin'] <= $time && $productsData['discount_time_end'] >= $time) {
                         $value['discount_status'] = 1;
-
                         // lpicn 有不同的折扣时间格式，拆分让前端自由拼接
                         $value['discount_time_begin_year'] = date('Y', $productsData['discount_time_begin']);
-                        $value['discount_time_begin_month'] =  date('m', $productsData['discount_time_begin']);
-                        $value['discount_time_begin_day'] =  date('d', $productsData['discount_time_begin']);
+                        $value['discount_time_begin_month'] = date('m', $productsData['discount_time_begin']);
+                        $value['discount_time_begin_day'] = date('d', $productsData['discount_time_begin']);
                         $value['discount_time_end_year'] = date('Y', $productsData['discount_time_end']);
-                        $value['discount_time_end_month'] =  date('m', $productsData['discount_time_end']);
-                        $value['discount_time_end_day'] =  date('d', $productsData['discount_time_end']);
+                        $value['discount_time_end_month'] = date('m', $productsData['discount_time_end']);
+                        $value['discount_time_end_day'] = date('d', $productsData['discount_time_end']);
                     } else {
                         $value['discount_status'] = 0;
                         // 过期需返回正常的折扣
@@ -213,7 +213,9 @@ class ProductController extends Controller {
                         if ($currencyData && count($currencyData)) {
                             foreach ($currencyData as $currencyItem) {
                                 $currencyKey = strtolower($currencyItem['code']).'_price';
-                                $value[$currencyKey] = Products::bcmul_variable_precision($value['price'] , $currencyItem['exchange_rate']);
+                                $value[$currencyKey] = Products::bcmul_variable_precision(
+                                    $value['price'], $currencyItem['exchange_rate']
+                                );
                             }
                         }
                     }
@@ -438,15 +440,13 @@ class ProductController extends Controller {
             //判断当前报告是否在优惠时间内
             if ($product_desc['discount_time_begin'] <= $time && $product_desc['discount_time_end'] >= $time) {
                 $product_desc['discount_status'] = 1;
-
                 // lpicn 有不同的折扣时间格式，拆分让前端自由拼接
                 $product_desc['discount_time_begin_year'] = date('Y', $product_desc['discount_time_begin']);
-                $product_desc['discount_time_begin_month'] =  date('m', $product_desc['discount_time_begin']);
-                $product_desc['discount_time_begin_day'] =  date('d', $product_desc['discount_time_begin']);
+                $product_desc['discount_time_begin_month'] = date('m', $product_desc['discount_time_begin']);
+                $product_desc['discount_time_begin_day'] = date('d', $product_desc['discount_time_begin']);
                 $product_desc['discount_time_end_year'] = date('Y', $product_desc['discount_time_end']);
-                $product_desc['discount_time_end_month'] =  date('m', $product_desc['discount_time_end']);
-                $product_desc['discount_time_end_day'] =  date('d', $product_desc['discount_time_end']);
-
+                $product_desc['discount_time_end_month'] = date('m', $product_desc['discount_time_end']);
+                $product_desc['discount_time_end_day'] = date('d', $product_desc['discount_time_end']);
             } else {
                 $product_desc['discount_status'] = 0;
                 // 过期需返回正常的折扣
@@ -573,7 +573,9 @@ class ProductController extends Controller {
                 if ($currencyData && count($currencyData)) {
                     foreach ($currencyData as $currencyItem) {
                         $currencyKey = strtolower($currencyItem['code']).'_price';
-                        $product_desc[$currencyKey] = Products::bcmul_variable_precision($product_desc['price'] , $currencyItem['exchange_rate']);
+                        $product_desc[$currencyKey] = Products::bcmul_variable_precision(
+                            $product_desc['price'], $currencyItem['exchange_rate']
+                        );
                         $currencyRateKey = strtolower($currencyItem['code']).'_rate';
                         $product_desc[$currencyRateKey] = $currencyItem['exchange_rate'];
                     }
@@ -637,23 +639,22 @@ class ProductController extends Controller {
             //该报告是否是最新年份、如果不是，查询是否有最新年份的报告id
             if (checkSiteAccessData(['qycojp'])) {
                 $product_desc['latestProduct'] = [
-                    'year' =>date('Y', time()),
+                    'year'         => date('Y', time()),
                     'isLatestYear' => true,
-                    'id' => '',
-                    'url' => '',
-                    'remarks' => '',
+                    'id'           => '',
+                    'url'          => '',
+                    'remarks'      => '',
                 ];
                 $published_date_copy = strtotime($product_desc['published_date']);
                 $currentYearTimestamp = strtotime(date('Y', time()).'-01-01'); //今年初的时间戳
                 if ($product_desc['keywords'] && $published_date_copy < $currentYearTimestamp) {
-                    $latestProductData = Products::query()->select(['id','url'])
-                        ->where('published_date', '>=', $currentYearTimestamp)
-                        ->where('keywords', $product_desc['keywords'])
-                        ->where('id', '<>', $product_desc['id'])
-                        ->first();
-                    
+                    $latestProductData = Products::query()->select(['id', 'url'])
+                                                 ->where('published_date', '>=', $currentYearTimestamp)
+                                                 ->where('keywords', $product_desc['keywords'])
+                                                 ->where('id', '<>', $product_desc['id'])
+                                                 ->first();
                     if ($latestProductData) {
-                        $latestProductData= $latestProductData->toArray();
+                        $latestProductData = $latestProductData->toArray();
                         $product_desc['latestProduct']['isLatestYear'] = false;
                         $product_desc['latestProduct']['id'] = $latestProductData['id'];
                         $product_desc['latestProduct']['url'] = $latestProductData['url'];
@@ -827,12 +828,24 @@ class ProductController extends Controller {
                     && !empty($product_desc['chartsRate'])
                     && is_numeric($product_desc['chartsRate'])
                 ) {
-                    $product_desc['last_scale'] = !empty($product_desc['last_scale']) ? Products::bcdiv_variable_precision(Products::bcmul_variable_precision($product_desc['last_scale'], $product_desc['chartsRate']), 100) : '';
-
-                    $product_desc['current_scale'] = !empty($product_desc['current_scale']) ? Products::bcdiv_variable_precision(Products::bcmul_variable_precision($product_desc['current_scale'], $product_desc['chartsRate']), 100) : '';
-
-                    $product_desc['future_scale'] = !empty($product_desc['future_scale']) ? Products::bcdiv_variable_precision(Products::bcmul_variable_precision($product_desc['future_scale'], $product_desc['chartsRate']), 100) : '';
-
+                    $product_desc['last_scale'] = !empty($product_desc['last_scale'])
+                        ? Products::bcdiv_variable_precision(
+                            Products::bcmul_variable_precision(
+                                $product_desc['last_scale'], $product_desc['chartsRate']
+                            ), 100
+                        ) : '';
+                    $product_desc['current_scale'] = !empty($product_desc['current_scale'])
+                        ? Products::bcdiv_variable_precision(
+                            Products::bcmul_variable_precision(
+                                $product_desc['current_scale'], $product_desc['chartsRate']
+                            ), 100
+                        ) : '';
+                    $product_desc['future_scale'] = !empty($product_desc['future_scale'])
+                        ? Products::bcdiv_variable_precision(
+                            Products::bcmul_variable_precision(
+                                $product_desc['future_scale'], $product_desc['chartsRate']
+                            ), 100
+                        ) : '';
                 }
                 // 其他数据
                 $product_desc['future_year'] = $product_desc['year'] + 6;
@@ -1270,10 +1283,10 @@ class ProductController extends Controller {
             } else {
                 if ($input_params['orderBy'] == 'time') {
                     $query = $query->orderBy('sort', 'asc')
-                        ->orderBy('year', 'desc')
-                        ->orderBy('degree_keyword', 'asc')
-                        ->orderBy('published_date', 'desc')
-                        ->orderBy('id', 'desc');
+                                   ->orderBy('year', 'desc')
+                                   ->orderBy('degree_keyword', 'asc')
+                                   ->orderBy('published_date', 'desc')
+                                   ->orderBy('id', 'desc');
                 } elseif ($input_params['orderBy'] == 'price') {
                     $query = $query->orderBy('sort', 'asc')
                                    ->orderBy('price', 'asc')
@@ -1303,12 +1316,17 @@ class ProductController extends Controller {
         }
         //精确搜索, 多字段匹配
         if (!empty($keyword)) {
-//            $val = '"'.$keyword.'"';
-//            $query->match(['name', 'english_name'], $val, true);
+            //$val = '"'.$keyword.'"';
+            //$query->match(['name', 'english_name'], $val, true);
             $keyWordArraySphinx = explode(" ", $keyword);
             if (count($keyWordArraySphinx) > 0) {
                 foreach ($keyWordArraySphinx as $val) {
-                    $query->match(['name', 'english_name'], '"'.$val.'"', true);
+                    $query->match([
+                                      'name',
+                                      'english_name',
+                                      'keywords',
+                                      //'keywords_en',
+                                  ], '"'.$val.'"', true);
                 }
             }
         }
@@ -1535,8 +1553,7 @@ class ProductController extends Controller {
     }
 
     // 报告列表搜索时记录
-    public function searchLog($info)
-    {
+    public function searchLog($info) {
         try {
             $request = request();
             if (!empty($request->header('x-forwarded-for'))) {
@@ -1552,13 +1569,13 @@ class ProductController extends Controller {
             $ipAddr = (new IPAddrService($ip))->getAddrStrByIp();
             //增加日志
             $addData = [
-                'ip'            => $ip,
-                'ip_addr'       => $ipAddr,
-                'keywords'       => $info['keywords'],
+                'ip'       => $ip,
+                'ip_addr'  => $ipAddr,
+                'keywords' => $info['keywords'],
             ];
             SearchProductsListLog::create($addData);
         } catch (\Exception $e) {
-            \Log::error('记录报告列表搜索,异常信息为:' . json_encode([$e->getMessage()]));
+            \Log::error('记录报告列表搜索,异常信息为:'.json_encode([$e->getMessage()]));
         }
     }
 
@@ -2159,7 +2176,9 @@ class ProductController extends Controller {
                 if ($currencyData && count($currencyData)) {
                     foreach ($currencyData as $currencyItem) {
                         $currencyKey = strtolower($currencyItem['code']).'_price';
-                        $product[$currencyKey] = Products::bcmul_variable_precision($product['price'] , $currencyItem['exchange_rate']);
+                        $product[$currencyKey] = Products::bcmul_variable_precision(
+                            $product['price'], $currencyItem['exchange_rate']
+                        );
                         $currencyRateKey = strtolower($currencyItem['code']).'_rate';
                         $product[$currencyRateKey] = $currencyItem['exchange_rate'];
                     }
@@ -2212,44 +2231,139 @@ class ProductController extends Controller {
      */
     public function searchPromptWords(Request $request) {
         try {
+            // 获取关键词，默认为空字符串
             $keyword = $request->input('keyword', '');
+            //$conver_result = $this->detectKeywordLanguage($keyword);
+            $field_language = 'degree_keyword';
+            $select_field = 'keywords';
+            //dd([$select_field, $field_language]);
             $pageSize = $request->input('pageSize', 10);
-            if (empty($keyword)) {
-                ReturnJson(false, '请输入搜索内容！', []);
-            }
-            $sphinxSrevice = new SphinxService();
-            $conn = $sphinxSrevice->getConnection();
-            //报告昵称,英文昵称匹配查询
-            $query = (new SphinxQL($conn))->select('*')
-                                          ->from('products_rt');
-            $query = $query->where('status', '=', 1);
-            $query = $query->where("published_date", "<", time());
-            //精确搜索, 多字段匹配
-            if (!empty($keyword)) {
-                $keyWordArraySphinx = explode(" ", $keyword);
-                if (count($keyWordArraySphinx) > 0) {
-                    foreach ($keyWordArraySphinx as $val) {
-                        $query = $query->match(['keywords_cn',
-                                                'keywords',
-                                                'keywords_en',
-                                                'keywords_jp',
-                                                'keywords_kr',
-                                                'keywords_de'], '"'.$val.'"', true);
-                    }
+            $keywordList = $this->getKeywordList($pageSize, $keyword, $select_field, $field_language);
+            if(empty($keywordList )){
+                if($field_language != 'degree_keywords_en' && $select_field != 'keywords_en'){
+                    $field_language = 'degree_keywords_en';
+                    $select_field = 'keywords_en';
+                    $keywordList = $this->getKeywordList($pageSize, $keyword, $select_field , $field_language);
                 }
             }
-            $query = $query->orderBy('degree_keyword', 'asc');
-            $query->groupBy('keywords')->setSelect('keywords');
-            //查询结果分页
-            $query->limit(0, $pageSize);
-            $result = $query->execute();
-            $cateIdList = $result->fetchAllAssoc();
-            $data = array_column($cateIdList, 'keywords');
-            //数组分页
-            $data = array_slice($data, 0, $pageSize);
+            $handler_keyword_list = [];
+            foreach ($keywordList as $for_data) {
+                $handler_keyword_list[] = $for_data[$select_field];
+            }
+            $data = array_slice($handler_keyword_list, 0, $pageSize);
             ReturnJson(true, 'ok', $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage(), []);
         }
+    }
+
+    function detectKeywordLanguage($keyword) {
+        // 检查关键词是否为空或非字符串
+        if (empty($keyword) || !is_string($keyword)) {
+            return [
+                'field_language' => 'degree_keyword',
+                'select_field'   => 'keywords'
+            ];
+        }
+        // 动态检测编码并转换为 UTF-8
+        $encoding = mb_detect_encoding($keyword, ['UTF-8', 'GBK', 'BIG5', 'Shift_JIS', 'EUC-KR'], true);
+        if ($encoding && $encoding !== 'UTF-8') {
+            $keyword = mb_convert_encoding($keyword, 'UTF-8', $encoding);
+        }
+        // 语言检测规则
+        $languageRules = [
+            // 中文：仅匹配汉字
+            'cn' => [
+                'pattern'        => '/^[\p{Han}]+$/u',
+                'field_language' => 'degree_keywords_cn',
+                'select_field'   => 'keywords_cn'
+            ],
+            // 日语：匹配汉字、平假名、片假名
+            'jp' => [
+                'pattern'        => '/^[\p{Han}\p{Hiragana}\p{Katakana}]+$/u',
+                'field_language' => 'degree_keywords_jp',
+                'select_field'   => 'keywords_jp'
+            ],
+            // 韩语：匹配谚文和汉字
+            'kr' => [
+                'pattern'        => '/^[\p{Hangul}\p{Han}]+$/u',
+                'field_language' => 'degree_keywords_kr',
+                'select_field'   => 'keywords_kr'
+            ],
+            // 英语：匹配拉丁字母、空格、连字符
+            'en' => [
+                'pattern'        => '/^[a-zA-Z\s\-]+$/u',
+                'field_language' => 'degree_keywords_en',
+                'select_field'   => 'keywords_en'
+            ],
+            // 德语：必须包含德语特殊字符，且只含拉丁字母、德语字符、空格、连字符
+            'de' => [
+                'pattern'           => '/[äöüßÄÖÜ]/u', // 必须包含德语特殊字符
+                'secondary_pattern' => '/^[a-zA-ZäöüßÄÖÜ\s\-]+$/u', // 整体匹配
+                'field_language'    => 'degree_keywords_de',
+                'select_field'      => 'keywords_de'
+            ]
+        ];
+        // 遍历规则，检测语言
+        foreach ($languageRules as $lang => $rule) {
+            if ($lang === 'de') {
+                // 德语需要同时满足主正则（包含特殊字符）和次正则（整体格式）
+                if (preg_match($rule['pattern'], $keyword) && preg_match($rule['secondary_pattern'], $keyword)) {
+                    return [
+                        'field_language' => $rule['field_language'],
+                        'select_field'   => $rule['select_field']
+                    ];
+                }
+            } else {
+                // 其他语言直接匹配主正则
+                if (preg_match($rule['pattern'], $keyword)) {
+                    return [
+                        'field_language' => $rule['field_language'],
+                        'select_field'   => $rule['select_field']
+                    ];
+                }
+            }
+        }
+        // 默认值：无法识别的语言
+        // error_log("Unrecognized keyword language: $keyword");
+        return [
+            'field_language' => 'degree_keyword',
+            'select_field'   => 'keywords'
+        ];
+    }
+
+    /**
+     *
+     * @param int    $pageSize
+     * @param mixed  $keyword
+     * @param string $select_field
+     * @param string $field_language
+     *
+     * @return array
+     */
+    private function getKeywordList($pageSize, mixed $keyword, string $select_field, string $field_language): array {
+        $sphinxSrevice = new SphinxService();
+        $conn = $sphinxSrevice->getConnection();
+        //报告昵称,英文昵称匹配查询
+        $query = (new SphinxQL($conn))->select('*')
+                                      ->from('products_rt');
+        $query = $query->where('status', '=', 1);
+        $query = $query->where("published_date", "<", time());
+        //精确搜索, 多字段匹配
+        if (!empty($keyword)) {
+            $keyWordArraySphinx = explode(" ", $keyword);
+            if (count($keyWordArraySphinx) > 0) {
+                foreach ($keyWordArraySphinx as $val) {
+                    $query = $query->match([$select_field], '"'.$val.'"', true);
+                }
+            }
+        }
+        $query = $query->orderBy($field_language, 'asc');
+        $query->groupBy($select_field)->setSelect([$select_field]);
+        //查询结果分页
+        $query->limit(0, $pageSize);
+        $result = $query->execute();
+        $keywordList = $result->fetchAllAssoc();
+        return $keywordList;
     }
 }
