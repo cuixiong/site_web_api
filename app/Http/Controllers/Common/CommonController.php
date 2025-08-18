@@ -136,7 +136,7 @@ class CommonController extends Controller {
         }
 
         // qycojp 多处需要显示汇率
-        if (checkSiteAccessData(['qycojp'])) {
+        if (checkSiteAccessData(['qycojp','yhcojp'])) {
             $data['rate'] = [];
             $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])
                                           ->get()?->toArray() ?? [];

@@ -566,7 +566,7 @@ class ProductController extends Controller {
             );
             // yhcojp需要调整价格版本的结构
             if (checkSiteAccessData(['yhcojp'])) {
-                $product_desc['prices'] = Products::reverseEditionByCountPrice($product_desc['prices']);
+                $product_desc['prices_reverse'] = Products::reverseEditionByCountPrice($product_desc['prices']);
             }
             if ($currencyData && count($currencyData) > 0) {
                 // 默认版本的多种货币的价格
@@ -886,7 +886,7 @@ class ProductController extends Controller {
                 );
                 // 每一段添加换行
                 foreach ($product_desc['description'] as $key => $part) {
-                    if (checkSiteAccessData(['qyen', 'giren', 'mmgen', 'lpien', 'mrrs', 'yhen'])) {
+                    if (checkSiteAccessData(['qyen', 'giren', 'mmgen', 'lpien', 'mrrs', 'yhen', 'qykr'])) {
                         $product_desc['description'][$key] = $this->setDescriptionEnLinebreak($part);
                     } else {
                         $product_desc['description'][$key] = $this->setDescriptionLinebreak($part);
