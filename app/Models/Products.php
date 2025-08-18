@@ -187,6 +187,50 @@ class Products extends Base {
         // 这里的代码可以复用 结束
     }
 
+
+    /**
+     * 翻转CountPrice函数中的企业版本与价格版本
+     */
+    public static function reverseEditionByCountPrice($pricesArray)
+    {
+        $data = [];
+        $languageColumn = [];
+        $editionColumn = [];
+        if (count($pricesArray) > 0) {
+
+            foreach ($pricesArray as $group) {
+                $language = $group['language'];
+                if (!in_array($language, $languageColumn)) {
+                    $languageColumn[] = $language;
+                }
+                $editionData = $group['data'];
+
+                foreach ($editionData as $editionItem) {
+                    if (!isset($data[$editionItem['edition']])) {
+                        $editionColumn[] = $editionItem['edition'];
+                        $data[$editionItem['edition']] = [
+                            'edition' => $editionItem['edition'],
+                            'notice' => $editionItem['notice'],
+                            'data' => [],
+                        ];
+                    }
+                    $temp = $editionItem;
+                    $temp['language'] = $language;
+                    unset($temp['edition']);
+                    unset($temp['notice']);
+                    $data[$editionItem['edition']]['data'][] = $temp;
+                }
+            }
+        }
+        $data = array_values($data);
+        return [
+            'languageColumn' => $languageColumn,
+            'editionColumn' => $editionColumn,
+            'data' => $data
+        ];
+    }
+
+
     /**
      * 获取价格版本
      *

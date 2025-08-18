@@ -564,6 +564,10 @@ class ProductController extends Controller {
             $product_desc['prices'] = Products::CountPrice(
                 $product_desc['price'], $product_desc['publisher_id'], null, null, null, $currencyData
             );
+            // yhcojp需要调整价格版本的结构
+            if (checkSiteAccessData(['yhcojp'])) {
+                $product_desc['prices'] = Products::reverseEditionByCountPrice($product_desc['prices']);
+            }
             if ($currencyData && count($currencyData) > 0) {
                 // 默认版本的多种货币的价格
                 if ($currencyData && count($currencyData)) {
@@ -603,7 +607,7 @@ class ProductController extends Controller {
                     // echo '<pre>';print_r($keyword_suffixs);exit;
                     foreach ($keyword_suffixs as $keyword_suffix) {
                         $seo_keyword .= $separator.$product_desc['keywords']." ".$keyword_suffix;
-                        if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {
+                        if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {CountPrice
                             $separator = ', ';
                         } else {
                             $separator = '，';
@@ -1246,6 +1250,7 @@ class ProductController extends Controller {
         //报告昵称,英文昵称匹配查询
         $query = (new SphinxQL($conn))->select('*')
                                       ->from('products_rt');
+        // $orderType = isset($input_params['orderType']) && !empty($input_params['orderType']) ? $input_params['orderType'] : 'asc';
         if (!empty($input_params['orderBy'])) {
             // $query = $query->orderBy($input_params['orderBy'], 'asc');
             if (checkSiteAccessData(['mrrs'])) {
