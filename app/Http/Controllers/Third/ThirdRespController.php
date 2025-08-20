@@ -159,6 +159,8 @@ class ThirdRespController extends BaseThirdController
 
     public function getProductData(Request $request)
     {
+        ini_set('max_execution_time', '0'); // no time limit，不设置超时时间（根据实际情况使用）
+        ini_set("memory_limit", -1);
         try {
             $params = $request->all();
             $startTimestamp = $params['startTimestamp'] ?? 0;
@@ -177,31 +179,37 @@ class ThirdRespController extends BaseThirdController
 
             // 使用时间戳并且使用固定数量可能导致获取不完整，因此加入标记的报告id多查询一次
             $lastproductData = [];
+            $isLast = true;
             if (!empty($startProductId)) {
                 $lastbaseQuery = clone ($baseQuery);
                 $lastbaseQuery->where(function ($query) use ($startTimestamp) {
                     $query->Where('updated_at', $startTimestamp); // 等于
                 })
                     ->where('id', '>', $startProductId);
+
+                $lastCount = (clone $lastbaseQuery)->count();
+                if($lastCount && $lastCount > 100){
+                    $lastbaseQuery = $lastbaseQuery->limit(100);
+                    // 同一修改时间的报告数据未取尽，需等下一轮请求获取，并将此标志返回请求方，下次依旧以该修改时间请求
+                    $isLast = false; 
+                }
                 $lastproductData = $lastbaseQuery->get()?->toArray() ?? [];
                 if (!$lastproductData) {
                     $lastproductData = [];
                 }
-                // if($num - count($lastproductData)>0){
-                //     $num = $num - count($lastproductData);
-                // }else{
-                //     $num = 0;
-                // }
             }
 
-
-            $baseQuery->where(function ($query) use ($startTimestamp) {
-                $query->Where('updated_at', '>', $startTimestamp); // 大于
-            });
-            $productData = $baseQuery->limit($num)->get()?->toArray() ?? [];
+            $productData = [];
+            if($isLast){
+                $baseQuery->where(function ($query) use ($startTimestamp) {
+                    $query->Where('updated_at', '>', $startTimestamp); // 大于
+                });
+                $productData = $baseQuery->limit($num)->get()?->toArray() ?? [];
+            }
             $productData = array_merge($lastproductData, $productData);
 
             $productNameArray = [];
+
             if ($productData) {
                 foreach ($productData as $key => $product) {
 
@@ -222,7 +230,7 @@ class ThirdRespController extends BaseThirdController
                     $productData[$key]['category_link'] = $categoryData[$product['category_id']] ?? 0;
                 }
             }
-            return ['code' => 200, 'data' => $productData];
+            return ['code' => 200, 'data' => $productData, 'isLast'=> $isLast];
 
             // ReturnJson(true, '', $productData);
             //code...
