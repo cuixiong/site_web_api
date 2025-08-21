@@ -168,6 +168,7 @@ class IndexController extends Controller {
 
     // 合作伙伴
     public function partners(Request $request) {
+        $request->type = 2;
         $list = $this->getPartnerList($request);
         ReturnJson(true, '', $list);
     }
@@ -543,23 +544,23 @@ class IndexController extends Controller {
                 $newProductList[$key]['icon_hover'] = $icon_hover;
                 $newProductList[$key]['year'] = $newProductList[$key]['published_date'] ? date(
                     'Y', strtotime(
-                    $newProductList[$key]['published_date']
-                )
+                           $newProductList[$key]['published_date']
+                       )
                 ) : '';
                 $newProductList[$key]['month'] = $newProductList[$key]['published_date'] ? date(
                     'm', strtotime(
-                    $newProductList[$key]['published_date']
-                )
+                           $newProductList[$key]['published_date']
+                       )
                 ) : '';
                 $newProductList[$key]['month_en'] = $newProductList[$key]['published_date'] ? date(
                     'M', strtotime(
-                    $newProductList[$key]['published_date']
-                )
+                           $newProductList[$key]['published_date']
+                       )
                 ) : '';
                 $newProductList[$key]['day'] = $newProductList[$key]['published_date'] ? date(
                     'd', strtotime(
-                    $newProductList[$key]['published_date']
-                )
+                           $newProductList[$key]['published_date']
+                       )
                 ) : '';
                 if (empty($value->thumb)) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
@@ -575,7 +576,6 @@ class IndexController extends Controller {
             }
             $data['products'] = $newProductList;
         }
-
         if (!empty($data['products'])) {
             $time = time();
             foreach ($data['products'] as &$product_value) {
@@ -595,7 +595,6 @@ class IndexController extends Controller {
                 }
             }
         }
-
 
         return $data;
     }
@@ -741,23 +740,23 @@ class IndexController extends Controller {
                     ? $categoryNames[$value->category_id] : '';
                 $newProductList[$key]['year'] = $newProductList[$key]['published_date'] ? date(
                     'Y', strtotime(
-                    $newProductList[$key]['published_date']
-                )
+                           $newProductList[$key]['published_date']
+                       )
                 ) : '';
                 $newProductList[$key]['month'] = $newProductList[$key]['published_date'] ? date(
                     'm', strtotime(
-                    $newProductList[$key]['published_date']
-                )
+                           $newProductList[$key]['published_date']
+                       )
                 ) : '';
                 $newProductList[$key]['month_en'] = $newProductList[$key]['published_date'] ? date(
                     'M', strtotime(
-                    $newProductList[$key]['published_date']
-                )
+                           $newProductList[$key]['published_date']
+                       )
                 ) : '';
                 $newProductList[$key]['day'] = $newProductList[$key]['published_date'] ? date(
                     'd', strtotime(
-                    $newProductList[$key]['published_date']
-                )
+                           $newProductList[$key]['published_date']
+                       )
                 ) : '';
                 if (empty($value->thumb)) {
                     // 若报告图片为空，则使用系统设置的默认报告高清图
@@ -790,6 +789,8 @@ class IndexController extends Controller {
                     $product_value['discount_time_begin'] = null;
                     $product_value['discount_time_end'] = null;
                 }
+                $product_value['icon_hover'] = ProductsCategory::query()->where('id', $product_value['category_id'])
+                                                               ->value('icon_hover');
             }
         }
 
@@ -862,16 +863,18 @@ class IndexController extends Controller {
      */
     private function getPartnerList(Request $request): array {
         $limit = $request->partner_size ?? 20;
-        $list = Partner::where('status', 1)
-                       ->select(['id', 'name', 'logo',])
-                       ->orderBy('sort', 'asc')
-                       ->orderBy('id', 'desc')
-                       ->limit($limit)
-                       ->get()
-                       ->toArray();
-        //        foreach ($list as &$item) {
-        //            $item['logo'] = Common::cutoffSiteUploadPathPrefix($item['logo']);
-        //        }
+        $type = $request->type ?? 1;
+        $query = Partner::where('status', 1);
+        if (checkSiteAccessData(['qykr'])) {
+            $query->where('type', $type);
+        }
+        $list = $query->select(['id', 'name', 'logo',])
+                      ->orderBy('sort', 'asc')
+                      ->orderBy('id', 'desc')
+                      ->limit($limit)
+                      ->get()
+                      ->toArray();
+
         return $list;
     }
 

@@ -476,7 +476,7 @@ class PageController extends Controller {
      * 团队成员
      */
     public function TeamMember(Request $request) {
-        if (checkSiteAccessData(['qyen'])) {
+        if (checkSiteAccessData(['qyen' , 'qykr'])) {
             $leaders = TeamMember::query()
                                  ->where('status', 1)
                                  ->where('region_name', '<>', '')
@@ -613,7 +613,7 @@ class PageController extends Controller {
                 if (!empty($facateGoryList)) {
                     $category_id_list = array_column($facateGoryList, 'id');
                     $problemList = Problem::query()->whereIn("category_id", $category_id_list)->selectRaw(
-                        'id , category_id , problem as question , reply as answer'
+                        'id , category_id , img,  problem as question , reply as answer'
                     )->get()->toArray();
                     $problemList = array_reduce($problemList, function ($carry, $item) {
                         $carry[$item['category_id']][] = $item;
@@ -626,7 +626,7 @@ class PageController extends Controller {
                     $data = $facateGoryList;
                 }
             } else {
-                $data = Problem::select(['problem as question', 'reply as answer'])->where('status', 1)->orderBy(
+                $data = Problem::select(['problem as question', 'reply as answer' , 'img'])->where('status', 1)->orderBy(
                     'sort', 'asc'
                 )->get()->toArray();
             }
