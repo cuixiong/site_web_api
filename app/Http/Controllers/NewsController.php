@@ -177,7 +177,7 @@ class NewsController extends Controller {
             //$data['relevant_product'] = $this->getRelevantProduct($data['tags']);
             $data['relevant_product'] = $this->getNewRelevantByProduct($data['tags'], 6);
             //获取相关新闻
-            if (checkSiteAccessData(['168report', 'yhcn', 'mrrs', 'mmgen'])) {
+            if (checkSiteAccessData(['168report', 'yhcn', 'mrrs', 'mmgen' ,'qykr'])) {
                 //相关新闻
                 $data['relevant_news'] = $this->getRelevantNews($data['tags'], $id);
             }

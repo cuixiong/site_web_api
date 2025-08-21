@@ -33,7 +33,7 @@ class Languages extends Base
     // 上面前同事写的，这一个是直接去数据库拿
     public static function GetList()
     {
-        return self::select('id', 'name')->where(['status' => 1])->get()->toArray();
+        return self::select('id', 'name')->where(['status' => 1])->orderBy('sort', 'asc')->get()->toArray();
     }
 
     public static function GetListById()
