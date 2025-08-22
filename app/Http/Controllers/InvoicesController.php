@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Const\PayConst;
 use App\Http\Requests\InvoicesRequest;
 use App\Models\Invoices;
 use App\Models\Order;
@@ -34,7 +35,7 @@ class InvoicesController extends Controller {
             $rs = [];
             if ($count > 0) {
                 $model->leftJoin('orders', 'orders.id', '=', 'invoices.order_id');
-                $model->selectRaw('invoices.* , orders.order_number');
+                $model->selectRaw('invoices.* , orders.order_number, orders.pay_coin_type');
                 // 查询偏移量
                 if (!empty($request->pageNum) && !empty($request->pageSize)) {
                     $model->offset(($request->pageNum - 1) * $request->pageSize);
@@ -46,6 +47,14 @@ class InvoicesController extends Controller {
                     $model->limit(15);
                 }
                 $rs = $model->get();
+                
+                if($rs){
+                    $pay_coin_symbol_list = PayConst::$coinTypeSymbol;
+                    foreach ($rs as &$value) {
+                        $value['pay_coin_symbol'] = $pay_coin_symbol_list[$value['pay_coin_type']] ?? '';
+                        unset($value['pay_coin_type']);
+                    }
+                }
             }
             $rdata = [];
             $rdata['data'] = $rs;

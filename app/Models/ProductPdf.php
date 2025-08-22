@@ -161,7 +161,7 @@ class ProductPdf extends Base {
             'homeUrl'               => env('APP_URL'),
             // 'homepage' => parse_url(Yii::$app->params['frontend_domain'])['host'],
         ];
-        if (checkSiteAccessData(['qycojp'])) {
+        if (checkSiteAccessData(['qycojp','yhcojp'])) {
             // 一些动态文本
             $firstConsiderationMenuId = Menu::where('link', 'reportsDetail')->value('id');
             $firstConsiderationContent = Page::where('page_id', $firstConsiderationMenuId)->value('content');

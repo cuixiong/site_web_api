@@ -830,6 +830,8 @@ class SendEmailController extends Controller {
             if (!empty($categoryName)) {
                 $scene->title = $categoryName."-".$scene->title;
             }
+            $data['categoryName'] = $categoryName ?? '';  // yhcojp
+
             if (!empty($productsName)) {
                 $scene->title = $scene->title.":  {$productsName}";
             }
@@ -1236,6 +1238,8 @@ class SendEmailController extends Controller {
             if (!empty($categoryName)) {
                 $scene->title = $categoryName."-".$scene->title;
             }
+            $data['categoryName'] = $categoryName ?? '';  // yhcojp
+
             if (!empty($productsName)) {
                 $scene->title = $scene->title.":  {$productsName}";
             }
