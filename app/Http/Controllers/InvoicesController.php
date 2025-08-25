@@ -109,7 +109,7 @@ class InvoicesController extends Controller {
                 'department'      => $input['department'] ?? '',
                 'tax_code'        => $input['tax_code'] ?? '',
                 'invoice_type'    => $input['invoice_type'],
-                'price'           => $orderObj->actually_paid,
+                'price'           => isset($input['price']) && !empty($input['price']) ? $input['price'] : $orderObj->actually_paid,
                 'user_id'         => $userId,
                 'order_id'        => $input['order_id'],
                 'title'           => $orderObj->product_name,
