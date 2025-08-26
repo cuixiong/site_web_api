@@ -687,17 +687,18 @@ class PageController extends Controller {
     /**
      * 公司发展历程
      */
-    public function CompanyHistory(Request $request) {
+    public function CompanyHistory(Request $request)
+    {
         $params = $request->all();
         $type = isset($params['type']) ? $params['type'] : 0;
         $result = History::select([
-                                      'year',
-                                      'body as content',
-                                  ])
-                         ->orderBy('sort', 'asc')
-                         ->where('status', 1)
-                         ->get()
-                         ->toArray();
+            'year',
+            'body as content',
+        ])
+            ->orderBy('sort', 'asc')
+            ->where('status', 1)
+            ->get()
+            ->toArray();
         if ($type == 1 && $result) {
             $historyData = [
                 'up'   => [],
@@ -711,6 +712,20 @@ class PageController extends Controller {
                 }
             }
             $result = $historyData;
+        } elseif ($type == 2 && $result) {
+            $data = [];
+            $tempArray = array_chunk($result, 2);
+            if ($tempArray) {
+                foreach ($tempArray as $key => $group) {
+                    $title = array_column($group, 'year');
+                    $title = implode('-', $title);
+                    $data[] = [
+                        'title' => $title,
+                        'content' => $group,
+                    ];
+                }
+            }
+            $result = $data;
         }
         $data = [
             'result' => $result,
