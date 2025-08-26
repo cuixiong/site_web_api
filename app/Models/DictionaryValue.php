@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Redis;
 class DictionaryValue extends Base {
     // 获取某一个code字典的全部选项
     public static function GetDicOptions($code) {
-        if (checkSiteAccessData(['mrrs', 'yhen', 'qyen' ,'mmgen' , 'giren'])) {
+        if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'giren'])) {
             $field_list = ['english_name as label', 'value'];
         } else {
             $field_list = ['name as label', 'value'];
@@ -18,6 +18,11 @@ class DictionaryValue extends Base {
                     ->orderBy('sort', 'ASC')
                     ->get()
                     ->toArray();
+        if (checkSiteAccessData(['qykr'])) {
+            foreach ($list as &$item){
+                $item['label'] = $item['value']."일 이내";
+            }
+        }
 
         return $list;
     }

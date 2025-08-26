@@ -167,7 +167,13 @@ function currentLimit($request, $second = 10, $site = '', $userId = '') {
     $currentLimitKey = $currentLimitKey."_{$site}_{$userId}";
     $isExist = Redis::get($currentLimitKey);
     if (!empty($isExist)) {
-        ReturnJson(false, '请求频率过快');
+        $err_msg = '频繁请求';
+        if(checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])){
+            $err_msg = 'Frequent requests';
+        }elseif (checkSiteAccessData(['lpijp', 'qycojp'])){
+            $err_msg = '頻繁なリクエスト';
+        }
+        ReturnJson(false, $err_msg);
     }
     Redis::setex($currentLimitKey, $second, 1);
 }

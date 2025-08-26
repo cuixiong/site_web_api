@@ -65,6 +65,9 @@ class CommonController extends Controller {
         $data['product_cagory'] = $this->getProductCagory(true);
         //权威引用
         $data['quote_list'] = $this->getQuoteList($request);
+        //货币汇率
+        $data['currency_data'] = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])
+                                      ->get()?->toArray() ?? [];
 
         if(checkSiteAccessData(['mrrs' , 'yhen' ,'qyen', 'mmgen', 'lpien', 'giren'])){
             //国家数据
@@ -152,7 +155,7 @@ class CommonController extends Controller {
         }
         // 留言咨询种类
         if (checkSiteAccessData(['qycojp'])) {
-            
+
             $messageConsultTypeKey = 'message_consult_type';
             $messageConsultTypeSetId = System::select(['id'])
                 ->where('status', 1)

@@ -28,6 +28,16 @@ class Order extends Base {
             self::PAY_FAILED  => 'PAY_FAILED',
         ];
 
+    //韩文
+    const PAY_STATUS_TYPE_KR
+        = [
+            self::PAY_UNPAID  => '미지급',
+            self::PAY_SUCCESS => '지불됨',
+            self::PAY_CANCEL  => '취소됨',
+            self::PAY_FINISH  => '완료됨',
+            self::PAY_FAILED  => '결제 실패',
+        ];
+
     protected $table       = 'orders';
     protected $appends     = ['is_pay_text', 'create_date', 'is_invoice', 'order_product'];
     protected $addressInfo = [];
@@ -59,6 +69,8 @@ class Order extends Base {
     public function getIsPayTextAttribute() {
         if(checkSiteAccessData(['mrrs' , 'yhen' , 'qyen', 'lpien'])){
             return self::PAY_STATUS_TYPE_EN[$this->attributes['is_pay']] ?? '';
+        }elseif (checkSiteAccessData(['qykr'])){
+            return self::PAY_STATUS_TYPE_KR[$this->attributes['is_pay']] ?? '';
         }else {
             return self::PAY_STATUS_TYPE[$this->attributes['is_pay']] ?? '';
         }

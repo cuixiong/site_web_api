@@ -171,7 +171,7 @@ class ProductPdf extends Base {
                 ->get()?->toArray() ?? [];
             $viewData['prices'] = Products::CountPrice($product['price'], $product['publisher_id'], null, null, null, $currencyData);
         }
-        if (checkSiteAccessData(['qyen'])) {
+        if (checkSiteAccessData(['qyen' ,'qykr'])) {
             //取当前报告的不同版本
             $languages = Languages::GetList();
             $priceEdition = Products::getPriceEdition([$product['publisher_id']], $languages);
