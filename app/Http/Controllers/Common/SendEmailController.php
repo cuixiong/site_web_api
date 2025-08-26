@@ -1633,10 +1633,10 @@ class SendEmailController extends Controller {
             $exchange_sum_original_price_all = bcmul($sum_goods_original_price_all, $exchange_rate, 2);
             $exchange_sum_present_price_all = bcmul($sum_goods_present_price_all, $exchange_rate, 2);
             // 税费计算
-            $original_tax = bcmul($sum_goods_original_price_all, $tax_rate, 2);
-            $present_tax = bcmul($sum_goods_present_price_all, $tax_rate, 2);
+            // $original_tax = bcmul($sum_goods_original_price_all, $tax_rate, 2);
+            $present_tax = bcmul(($sum_goods_present_price_all - $data['coupon_amount']), $tax_rate, 2);
             // 税费汇率转换
-            $exchange_original_tax = bcmul($original_tax, $exchange_rate, 2);
+            // $exchange_original_tax = bcmul($original_tax, $exchange_rate, 2);
             $exchange_present_tax = bcmul($present_tax, $exchange_rate, 2);
             $cityName = City::where('id', $data['city_id'])->value('name');
             $provinceName = City::where('id', $data['province_id'])->value('name');
@@ -1699,9 +1699,9 @@ class SendEmailController extends Controller {
                 'sum_goods_present_price_all'     => $sum_goods_present_price_all,
                 'exchange_sum_original_price_all' => $exchange_sum_original_price_all,
                 'exchange_sum_present_price_all'  => $exchange_sum_present_price_all,
-                'original_tax'                    => $original_tax,
+                // 'original_tax'                    => $original_tax,
                 'present_tax'                     => $present_tax,
-                'exchange_original_tax'           => $exchange_original_tax,
+                // 'exchange_original_tax'           => $exchange_original_tax,
                 'exchange_present_tax'            => $exchange_present_tax,
                 'content'                         => $Order['remarks'],
             ];
