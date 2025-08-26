@@ -1329,30 +1329,25 @@ class SendEmailController extends Controller {
                     ? $priceEdition['name'] : '';
                 // 单个商品现价
                 $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
-                // 多个同商品现价
-                $goods_data['goods_sum_price'] = bcmul(
-                    $OrderGoods['goods_present_price'], $OrderGoods['goods_number'], 2
-                );
+                // 单个同商品现价*数量
+                $goods_data['goods_sum_price'] = bcmul($OrderGoods['goods_present_price'], $OrderGoods['goods_number'], 2);
                 //$goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 $goods_data['goods_number'] = $OrderGoods['goods_number'];
                 // 单个商品原价
                 $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
-                // 多个同商品原价
-                $goods_data['sum_original_price'] = bcmul(
-                    $goods_data['goods_original_price'], $goods_data['goods_number'], 2
-                );
+                // 单个同商品原价*数量
+                $goods_data['sum_original_price'] = bcmul($goods_data['goods_original_price'], $goods_data['goods_number'], 2);
                 // 多个同商品的汇率转换
-                $goods_data['exchange_sum_original_price'] = bcmul(
-                    $goods_data['sum_original_price'], $exchange_rate, 2
-                );
+                $goods_data['exchange_sum_original_price'] = bcmul($goods_data['sum_original_price'], $exchange_rate, 2);
                 $goods_data['exchange_sum_present_price'] = bcmul($goods_data['goods_sum_price'], $exchange_rate, 2);
-                // 商品累加小计
+                // 商品累加小计-原价
                 $sum_goods_original_price_all += $goods_data['sum_original_price'];
+                // 商品累加小计-现价(折扣价)
                 $sum_goods_present_price_all += $goods_data['goods_sum_price'];
                 // 分类信息
-                $category = ProductsCategory::select(['id', 'name', 'thumb', 'email'])->where(
-                    'id', $products['category_id']
-                )->first();
+                $category = ProductsCategory::select(['id', 'name', 'thumb', 'email'])
+                    ->where('id', $products['category_id'])
+                    ->first();
                 $goods_data['category_name'] = $category['name'] ?? '';
                 $goods_data['category_thumb'] = $category['thumb'] ?? '';
                 if (!empty($category['email'])) {
@@ -1376,11 +1371,9 @@ class SendEmailController extends Controller {
             // 小计汇率转换
             $exchange_sum_original_price_all = bcmul($sum_goods_original_price_all, $exchange_rate, 2);
             $exchange_sum_present_price_all = bcmul($sum_goods_present_price_all, $exchange_rate, 2);
-            // 税费计算
-            $original_tax = bcmul($sum_goods_original_price_all, $tax_rate, 2);
-            $present_tax = bcmul($sum_goods_present_price_all, $tax_rate, 2);
+            // 税费计算-需扣除可能的优惠券
+            $present_tax = bcmul(($sum_goods_present_price_all - $data['coupon_amount']), $tax_rate, 2);
             // 税费汇率转换
-            $exchange_original_tax = bcmul($original_tax, $exchange_rate, 2);
             $exchange_present_tax = bcmul($present_tax, $exchange_rate, 2);
             $areaInfo = $this->getAreaName($data);
             $addres = $areaInfo.' '.$data['address'];
@@ -1450,9 +1443,7 @@ class SendEmailController extends Controller {
                 'sum_goods_present_price_all'     => $sum_goods_present_price_all,
                 'exchange_sum_original_price_all' => $exchange_sum_original_price_all,
                 'exchange_sum_present_price_all'  => $exchange_sum_present_price_all,
-                'original_tax'                    => $original_tax,
                 'present_tax'                     => $present_tax,
-                'exchange_original_tax'           => $exchange_original_tax,
                 'exchange_present_tax'            => $exchange_present_tax,
                 'content'                         => $Order['remarks'],
                 'is_bank'                         => $is_bank,
