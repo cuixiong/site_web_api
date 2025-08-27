@@ -22,42 +22,36 @@ class ContactUsController extends Controller {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             ReturnJson(false, '邮箱格式不正确');
         }
-
-        $productId = $params['product_id']??0;
+        $productId = $params['product_id'] ?? 0;
         $otherProductIds = []; // 新加变量防止影响其它站点
         // 多样本申请,传递的product_id是数组
-        if(is_array($productId)){
-            if(count($productId) > 0){
+        if (is_array($productId)) {
+            if (count($productId) > 0) {
                 $otherProductIds = $productId;
                 unset($otherProductIds[0]);
                 $otherProductIds = array_values($otherProductIds);
             }
             $productId = isset($productId[0]) && !empty($productId[0]) ? $productId[0] : 0;
-        }else{
+        } else {
             $productId = isset($productId) && !empty($productId) ? $productId : 0;
         }
-
-        $priceEdition = $params['price_edition']??0;
+        $priceEdition = $params['price_edition'] ?? 0;
         $otherPriceEdition = [];
         // 多样本申请,传递的 price_edition 是数组
-        if(is_array($priceEdition)){
-            if(count($priceEdition) > 0){
+        if (is_array($priceEdition)) {
+            if (count($priceEdition) > 0) {
                 $otherPriceEdition = $priceEdition;
                 unset($otherPriceEdition[0]);
                 $otherPriceEdition = array_values($otherPriceEdition);
             }
             $priceEdition = isset($priceEdition[0]) && !empty($priceEdition[0]) ? $priceEdition[0] : 0;
-        }else{
+        } else {
             $priceEdition = isset($priceEdition) && !empty($priceEdition) ? $priceEdition : 0;
         }
-
         $appName = env('APP_NAME', '');
-        currentLimit($request, 60, $appName, $email . $productId);
-
+        currentLimit($request, 60, $appName, $email.$productId);
         $sceneCode = $params['code'] ?? '';
         $category_id = MessageCategory::where('code', $sceneCode)->value('id');
-
-
         $model = new ContactUs();
         $model->name = $params['name'] ?? '';
         $model->product_name = !empty($params['product_name']) ? $params['product_name'] : '';
@@ -68,7 +62,6 @@ class ContactUsController extends Controller {
         } else {
             $model->buy_time = $params['plan_buy_time'] ?? '';
         }
-
         $model->country_id = $params['country_id'] ?? 0;
         $model->province_id = $params['province_id'] ?? 0;
         $model->city_id = $params['city_id'] ?? 0;
@@ -81,38 +74,34 @@ class ContactUsController extends Controller {
         $model->channel_name = $params['channel_name'] ?? '';
         $model->department = $params['department'] ?? '';
         $model->consult_type = $params['consult_type'] ?? 0;
-
         $header = request()->header();
         $ua_info = $header['user-agent'];
         $model->ua_info = implode("\n", $ua_info);
         $model->ua_browser_name = $this->getBrowserName($model->ua_info);
-        $HTTP_REFERER =  $params['http_referer'] ?? '';
+        $HTTP_REFERER = $params['http_referer'] ?? '';
         $model->referer = $HTTP_REFERER;
         $alias_id = $this->getAliasId($HTTP_REFERER, $model);
         $model->referer_alias_id = $alias_id;
-
         $copyModel = clone $model;
         $model->product_id = $productId;
         $model->price_edition = $priceEdition;
-
         if (!$model->save()) {
             ReturnJson(false, $model->getModelError());
         }
         //
         $saveIds = [];
-        if(count($otherProductIds)>0){
+        if (count($otherProductIds) > 0) {
             foreach ($otherProductIds as $key => $otherProductId) {
                 $tempModel = clone $copyModel;
                 $tempModel->product_id = $otherProductId;
                 $tempModel->price_edition = $otherPriceEdition[$key] ?? 0;
                 if (!$tempModel->save()) {
                     ReturnJson(false, $tempModel->getModelError());
-                }else{
+                } else {
                     $saveIds[] = $tempModel->id;
                 }
             }
         }
-
         // 根据code发送对应场景
         $sceneCode = $params['code'] ?? '';
         if ($sceneCode == 'productSample') {
@@ -201,7 +190,6 @@ class ContactUsController extends Controller {
         // 浏览器特征正则表达式库
         $browserPatterns = [
             'ios'        => '/(iPhone|iPad|iPod)/i',          // iOS设备检测（优先级最高）
-            'safari'     => '/safari\/[\d\.]+/i',            // 标准Safari浏览器
             'edge'       => '/edg\/[\d\.]+/i',
             'chrome'     => '/chrome\/[\d\.]+/i',
             'firefox'    => '/firefox\/[\d\.]+/i',
@@ -213,6 +201,7 @@ class ContactUsController extends Controller {
             'baidubox'   => '/baidubox/i',       // 百度浏览器
             'sogoumse'   => '/sogoumse/i',       // 搜狗浏览器
             '360'        => '/(360se|360ee|qihu 360)/i',
+            'safari'     => '/safari\/[\d\.]+/i',            // 标准Safari浏览器
         ];
         $browser = 'Unknown';
         // 执行浏览器检测
@@ -220,14 +209,14 @@ class ContactUsController extends Controller {
             if (preg_match($pattern, $ua_info)) {
                 $browser = ucfirst($for_browser);
                 break;
-            }else{
+            } else {
                 // 补充Safari浏览器检测（兼容非标准UA）
                 if (preg_match('/applewebkit/i', $ua_info)) {
                     return 'Safari';
                 }
             }
-
         }
+
         return $browser;
     }
 }
