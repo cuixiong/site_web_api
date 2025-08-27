@@ -1281,10 +1281,14 @@ class ProductController extends Controller {
                                    ->orderBy('id', 'desc');
                 }
             } else {
-                if ($input_params['orderBy'] == 'time') {
+                if ($input_params['orderBy'] == 'time' && !empty($keyword)) {
                     $query = $query->orderBy('sort', 'asc')
                                    ->orderBy('year', 'desc')
                                    ->orderBy('degree_keyword', 'asc')
+                                   ->orderBy('published_date', 'desc')
+                                   ->orderBy('id', 'desc');
+                } elseif ($input_params['orderBy'] == 'time' && empty($keyword)) {
+                    $query = $query->orderBy('sort', 'asc')
                                    ->orderBy('published_date', 'desc')
                                    ->orderBy('id', 'desc');
                 } elseif ($input_params['orderBy'] == 'price') {
