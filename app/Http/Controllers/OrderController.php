@@ -580,7 +580,9 @@ class OrderController extends Controller {
                     'actually_paid',
                     'coupon_id',
                     'coupon_amount',
-                    'pay_coin_type'
+                    'pay_coin_type',
+                    'exchange_rate',
+                    'tax_rate',
                 ]
             );
             $orderInfo['pay_type_text'] = $payTypeText;
@@ -595,18 +597,12 @@ class OrderController extends Controller {
             // 需要额外查询多种货币的价格（日文）
             $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])
                                           ->get()?->toArray() ?? [];
-                                          
-            if ($currencyData && count($currencyData) > 0) {
-                // 多种货币的价格
-                if ($currencyData && count($currencyData)) {
-                    foreach ($currencyData as $currencyItem) {
-                        $currencyKey = strtolower($currencyItem['code']).'_order_amount';
-                        $orderInfo[$currencyKey] = Products::bcmul_variable_precision($orderInfo['order_amount'] , $currencyItem['exchange_rate']);
-                        $currencyKey = strtolower($currencyItem['code']).'_actually_paid';
-                        $orderInfo[$currencyKey] = Products::bcmul_variable_precision($orderInfo['actually_paid'] , $currencyItem['exchange_rate']);
-                    }
-                }
-            }
+                     
+            // 商品累加小计-原价
+            $sum_goods_original_price_all = 0;
+            // 商品累加小计-现价(折扣价)
+            $sum_goods_present_price_all = 0;
+
             foreach ($ogList as $key => $value) {
                 /**
                  * @var $value OrderGoods
@@ -633,7 +629,7 @@ class OrderController extends Controller {
                         // 若报告图片为空，则使用系统设置的默认报告高清图
                         $orderGoodsArr['product_info']['thumb'] = !empty($defaultImg) ? $defaultImg : '';
                     }
-
+                    
                     if ($currencyData && count($currencyData) > 0) {
                         // 多种货币的价格
                         if ($currencyData && count($currencyData)) {
@@ -646,9 +642,44 @@ class OrderController extends Controller {
                         }
                     }
 
+                    $sum_goods_original_price_all += bcmul($orderGoodsArr['goods_original_price'], $orderGoodsArr['goods_number'], 2);
+                    $sum_goods_present_price_all += bcmul($orderGoodsArr['goods_present_price'], $orderGoodsArr['goods_number'], 2);
+
                 }
                 $ogArrList[] = $orderGoodsArr;
             }
+            
+            // 优惠金额
+            $preferentialAmount = 0;
+            if($orderInfo['coupon_amount'] > 0){
+                $preferentialAmount = $orderInfo['coupon_amount'];
+            }else{
+                $preferentialAmount = $sum_goods_original_price_all - $sum_goods_present_price_all;
+            }
+            
+            if ($currencyData && count($currencyData) > 0) {
+                // 多种货币的价格
+                if ($currencyData && count($currencyData)) {
+                    foreach ($currencyData as $currencyItem) {
+                        // 已支付的保留之前的汇率以及税率
+                        if($orderInfo['is_pay'] == Order::PAY_SUCCESS && $currencyItem['code'] == $orderInfo['pay_coin_type']){
+                            $currencyItem['exchange_rate'] = $orderInfo['exchange_rate'];
+                            $currencyItem['tax_rate'] = $orderInfo['tax_rate'];
+                        }
+                        $currencyKey = strtolower($currencyItem['code']).'_order_amount';
+                        $orderInfo[$currencyKey] = Products::bcmul_variable_precision($orderInfo['order_amount'] , $currencyItem['exchange_rate']);
+                        $currencyKey = strtolower($currencyItem['code']).'_actually_paid';
+                        $orderInfo[$currencyKey] = Products::bcmul_variable_precision($orderInfo['actually_paid'] , $currencyItem['exchange_rate']);
+                        $currencyKey = strtolower($currencyItem['code']).'_preferential_amount';
+                        $orderInfo[$currencyKey] = Products::bcmul_variable_precision($preferentialAmount, $currencyItem['exchange_rate']);
+
+                        $currencyKey = strtolower($currencyItem['code']).'_tax_amount';
+                        $taxAmount = Products::bcmul_variable_precision($sum_goods_original_price_all - $preferentialAmount, $currencyItem['tax_rate']);
+                        $orderInfo[$currencyKey] = Products::bcmul_variable_precision($taxAmount, $currencyItem['exchange_rate']);
+                    }
+                }
+            }
+            
             $orderInfo['order_goods'] = $ogArrList;
             $orderInfo['order_addr'] = $addressInfo;
             ReturnJson(true, '获取成功', $orderInfo);

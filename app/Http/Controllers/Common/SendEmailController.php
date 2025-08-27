@@ -1371,11 +1371,16 @@ class SendEmailController extends Controller {
             // 小计汇率转换
             $exchange_sum_original_price_all = bcmul($sum_goods_original_price_all, $exchange_rate, 2);
             $exchange_sum_present_price_all = bcmul($sum_goods_present_price_all, $exchange_rate, 2);
-            // 税费计算-需扣除可能的优惠券
-            $present_tax = bcmul(($sum_goods_present_price_all - $data['coupon_amount']), $tax_rate, 2);
-            // 税费汇率转换
+            // 税费计算
+            if($data['coupon_amount'] > 0) {
+                // 折扣与优惠券不同享，在下单做好最优优惠的情况下，有优惠券金额则说明不享用本身折扣，税额为（原价-优惠价）*税率
+                $present_tax = bcmul(($sum_goods_original_price_all - $data['coupon_amount']), $tax_rate, 2);
+            } else {
+                $present_tax = bcmul($sum_goods_present_price_all, $tax_rate, 2);
+            }
             $exchange_present_tax = bcmul($present_tax, $exchange_rate, 2);
             $areaInfo = $this->getAreaName($data);
+            // 税费汇率转换
             $addres = $areaInfo.' '.$data['address'];
             if ($data['pay_coin_type'] == PayConst::COIN_TYPE_USD) {
                 $pay_coin_symbol = PayConst::COIN_TYPE_USD;
@@ -1396,7 +1401,7 @@ class SendEmailController extends Controller {
             }
             if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {
                 $orderStatusText = 'PAY_UNPAID';
-            } elseif (checkSiteAccessData(['lpijp'])) {
+            } elseif (checkSiteAccessData(['lpijp', 'qycojp', 'yhcojp', 'girjp', 'qyjp'])) {
                 $orderStatusText = '支払い待ち';
             }elseif(checkSiteAccessData(['qykr'])){
                 $orderStatusText = '미지불';
@@ -1634,7 +1639,11 @@ class SendEmailController extends Controller {
             $exchange_sum_present_price_all = bcmul($sum_goods_present_price_all, $exchange_rate, 2);
             // 税费计算
             // $original_tax = bcmul($sum_goods_original_price_all, $tax_rate, 2);
-            $present_tax = bcmul(($sum_goods_present_price_all - $data['coupon_amount']), $tax_rate, 2);
+            if($data['coupon_amount'] > 0) {
+                $present_tax = bcmul(($sum_goods_original_price_all - $data['coupon_amount']), $tax_rate, 2);
+            } else {
+                $present_tax = bcmul($sum_goods_present_price_all, $tax_rate, 2);
+            }
             // 税费汇率转换
             // $exchange_original_tax = bcmul($original_tax, $exchange_rate, 2);
             $exchange_present_tax = bcmul($present_tax, $exchange_rate, 2);
@@ -1660,7 +1669,9 @@ class SendEmailController extends Controller {
             }
             if (checkSiteAccessData(['mrrs', 'yhen', 'qyen', 'mmgen', 'lpien', 'giren'])) {
                 $orderStatusText = 'PAY_SUCCESS';
-            }elseif(checkSiteAccessData(['qykr'])){
+            } elseif (checkSiteAccessData(['lpijp', 'qycojp', 'yhcojp', 'girjp', 'qyjp'])) {
+                $orderStatusText = '注文完了';
+            } elseif (checkSiteAccessData(['qykr'])){
                 $orderStatusText = '지불됨';
             } else {
                 $orderStatusText = '已付款';
