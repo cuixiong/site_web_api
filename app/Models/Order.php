@@ -28,6 +28,14 @@ class Order extends Base {
             self::PAY_FAILED  => 'PAY_FAILED',
         ];
 
+    const PAY_STATUS_TYPE_JP = [
+        self::PAY_UNPAID  => '支払い待ち',
+        self::PAY_SUCCESS => '注文完了',
+        self::PAY_CANCEL  => '失敗',
+        self::PAY_FINISH  => '完成',
+        self::PAY_FAILED  => '支払いに失敗します',
+    ];
+
     //韩文
     const PAY_STATUS_TYPE_KR
         = [
@@ -69,6 +77,8 @@ class Order extends Base {
     public function getIsPayTextAttribute() {
         if(checkSiteAccessData(['mrrs' , 'yhen' , 'qyen', 'lpien'])){
             return self::PAY_STATUS_TYPE_EN[$this->attributes['is_pay']] ?? '';
+        }elseif (checkSiteAccessData(['lpijp', 'qycojp', 'yhcojp', 'girjp', 'qyjp'])){
+            return self::PAY_STATUS_TYPE_JP[$this->attributes['is_pay']] ?? '';
         }elseif (checkSiteAccessData(['qykr'])){
             return self::PAY_STATUS_TYPE_KR[$this->attributes['is_pay']] ?? '';
         }else {
