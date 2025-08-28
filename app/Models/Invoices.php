@@ -45,6 +45,12 @@ class Invoices extends Base
         self::applyInvoiceStatus   => 'Invoice Awaiting',
         self::alreadyInvoiceStatus => 'Invoiced',
     ];
+    
+    const invoiceStatusJp  = [
+        self::applyInvoiceStatus   => '申請中',
+        self::alreadyInvoiceStatus => '請求書発行済み',
+    ];
+
     protected $table   = 'invoices';
     protected $appends = ['invoice_type_text', 'apply_status_text', 'apply_date'];
 
@@ -69,6 +75,8 @@ class Invoices extends Base
         if (isset($this->attributes['apply_status'])) {
             if (checkSiteAccessData(['lpien'])) {
                 $text = self::invoiceStatusEn[$this->attributes['apply_status']];
+            }elseif (checkSiteAccessData(['lpijp', 'qycojp', 'yhcojp', 'girjp', 'qyjp'])){
+                $text = self::invoiceStatusJp[$this->attributes['apply_status']];
             }else{
                 $text = self::invoiceStatus[$this->attributes['apply_status']];
             }
