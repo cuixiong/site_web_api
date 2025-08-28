@@ -424,11 +424,11 @@ class OrderController extends Controller {
                 $data['order'][$currencyRateKey] = $currencyItem['exchange_rate'];
 
                 $currencyKey = strtolower($currencyItem['code']) . '_preferential_amount';
-                $orderInfo[$currencyKey] = Products::bcmul_variable_precision($preferentialAmount, $currencyItem['exchange_rate']);
+                $data['order'][$currencyKey] = Products::bcmul_variable_precision($preferentialAmount, $currencyItem['exchange_rate']);
 
                 $currencyKey = strtolower($currencyItem['code']) . '_tax_amount';
                 $taxAmount = Products::bcmul_variable_precision($sum_goods_original_price_all - $preferentialAmount, $currencyItem['tax_rate']);
-                $orderInfo[$currencyKey] = Products::bcmul_variable_precision($taxAmount, $currencyItem['exchange_rate']);
+                $data['order'][$currencyKey] = Products::bcmul_variable_precision($taxAmount, $currencyItem['exchange_rate']);
             }
         }
         ReturnJson(true, '', $data);
