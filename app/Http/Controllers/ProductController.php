@@ -857,17 +857,13 @@ class ProductController extends Controller {
                 $product_desc['description_first'] = mb_substr(
                     $descriptionText, 0, mb_strpos($descriptionText, "\n") + 1
                 );
-                $tempLength = 100;
+                $tempLength = 20;
                 if (mb_strlen($product_desc['description_first']) >= $tempLength
                     && mb_strlen(
                            $product_desc['description_first']
                        ) < $tempLength) {
                     // 长度不足则截取到第二个换行符
-                    $product_desc['description_first'] = mb_substr(
-                        $descriptionText, 0, mb_strpos(
-                                                 $product_desc['description_first'], "\n", $tempLength
-                                             ) + 1
-                    );
+                    $product_desc['description_first'] = mb_substr($descriptionText, 0, mb_strpos($product_desc['description_first'], "\n", $tempLength) + 1);
                 }
                 // 分割详情
                 $tableStartTextArray = isset($product_desc_other_set_list['table_spilt_start']) ? explode(

@@ -320,21 +320,21 @@ class OrderController extends Controller {
             }
         }
         $orderGoods = OrderGoods::from('order_goods')->select([
-                                                                  'product.name',
-                                                                  'language.name as language',
-                                                                  'edition.name as edition',
-                                                                  'order_goods.goods_number',
-                                                                  'order_goods.goods_original_price',
-                                                                  'order_goods.goods_present_price',
-                                                                  'order_goods.goods_id as product_id',
-                                                                  'product.url',
-                                                                  // 'order_goods.price_edition',
-                                                              ])
-                                ->leftJoin('product_routine as product', 'product.id', 'order_goods.goods_id')
-                                ->leftJoin('price_edition_values as edition', 'edition.id', 'order_goods.price_edition')
-                                ->leftJoin('languages as language', 'language.id', 'edition.language_id')
-                                ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
-                                ->get()->toArray();
+            'product.name',
+            'language.name as language',
+            'edition.name as edition',
+            'order_goods.goods_number',
+            'order_goods.goods_original_price',
+            'order_goods.goods_present_price',
+            'order_goods.goods_id as product_id',
+            'product.url',
+            // 'order_goods.price_edition',
+        ])
+            ->leftJoin('product_routine as product', 'product.id', 'order_goods.goods_id')
+            ->leftJoin('price_edition_values as edition', 'edition.id', 'order_goods.price_edition')
+            ->leftJoin('languages as language', 'language.id', 'edition.language_id')
+            ->where(['order_goods.order_id' => $orderId, 'product.status' => 1])
+            ->get()->toArray();
         // if (!empty($order['user_id'])) {
         //     $user = User::select(['username', 'email', 'phone', 'company', 'province_id', 'city_id', 'address'])->where(
         //         'id',
@@ -358,6 +358,10 @@ class OrderController extends Controller {
         // }
         //$discount_value = bcsub($order['order_amount'], $order['actually_paid'], 2);
         $sum_quantity = 0;
+        // 商品累加小计-原价
+        $sum_goods_original_price_all = 0;
+        // 商品累加小计-现价(折扣价)
+        $sum_goods_present_price_all = 0;
         foreach ($orderGoods as $key => $forOrderGoods) {
             $product = Products::query()->where('id', $forOrderGoods['product_id'])->first();
             $orderGoods[$key]['thumb'] = Products::getThumbImgUrl($product);
@@ -372,6 +376,8 @@ class OrderController extends Controller {
                     $orderGoods[$key][$currencyRateKey] = $currencyItem['exchange_rate'];
                 }
             }
+            $sum_goods_original_price_all += bcmul($forOrderGoods['goods_original_price'], $forOrderGoods['goods_number'], 2);
+            $sum_goods_present_price_all += bcmul($forOrderGoods['goods_present_price'], $forOrderGoods['goods_number'], 2);
         }
         $order_status = $order['is_pay_text']; //Order::PAY_STATUS_TYPE[$order['is_pay']] ?? '';
         $data = [
@@ -396,16 +402,33 @@ class OrderController extends Controller {
             'user'   => $_user,           // 用户的初始账户信息
             'is_pay' => $orderStatus,
         ];
+
+        // 优惠金额
+        $preferentialAmount = 0;
+        if($order['coupon_amount'] > 0){
+            $preferentialAmount = $order['coupon_amount'];
+        }else{
+            $preferentialAmount = $sum_goods_original_price_all - $sum_goods_present_price_all;
+        }
         if ($currencyData && count($currencyData)) {
             foreach ($currencyData as $currencyItem) {
-                $currencyKeyOrderAmount = strtolower($currencyItem['code']).'_order_amount';
-                $data['order'][$currencyKeyOrderAmount] =  Products::bcmul_variable_precision($order['order_amount'],$currencyItem['exchange_rate']);
-                $currencyKeyTax = strtolower($currencyItem['code']).'_tax_rate';
-                $data['order'][$currencyKeyTax] = Products::bcmul_variable_precision($data['order'][$currencyKeyOrderAmount] , $currencyItem['tax_rate']);
-                $currencyKeyActuallyPaid = strtolower($currencyItem['code']).'_actually_paid';
-                $data['order'][$currencyKeyActuallyPaid] = Products::bcmul_variable_precision($order['actually_paid'] , $currencyItem['exchange_rate']);
-                $currencyRateKey = strtolower($currencyItem['code']).'_rate';
+                $currencyKeyOrderAmount = strtolower($currencyItem['code']) . '_order_amount';
+                $data['order'][$currencyKeyOrderAmount] =  Products::bcmul_variable_precision($order['order_amount'], $currencyItem['exchange_rate']);
+                // 参数名写错了待删除 s
+                $currencyKeyTax = strtolower($currencyItem['code']) . '_tax_rate';
+                $data['order'][$currencyKeyTax] = Products::bcmul_variable_precision($data['order'][$currencyKeyOrderAmount], $currencyItem['tax_rate']);
+                // 待删除 e
+                $currencyKeyActuallyPaid = strtolower($currencyItem['code']) . '_actually_paid';
+                $data['order'][$currencyKeyActuallyPaid] = Products::bcmul_variable_precision($order['actually_paid'], $currencyItem['exchange_rate']);
+                $currencyRateKey = strtolower($currencyItem['code']) . '_rate';
                 $data['order'][$currencyRateKey] = $currencyItem['exchange_rate'];
+
+                $currencyKey = strtolower($currencyItem['code']) . '_preferential_amount';
+                $orderInfo[$currencyKey] = Products::bcmul_variable_precision($preferentialAmount, $currencyItem['exchange_rate']);
+
+                $currencyKey = strtolower($currencyItem['code']) . '_tax_amount';
+                $taxAmount = Products::bcmul_variable_precision($sum_goods_original_price_all - $preferentialAmount, $currencyItem['tax_rate']);
+                $orderInfo[$currencyKey] = Products::bcmul_variable_precision($taxAmount, $currencyItem['exchange_rate']);
             }
         }
         ReturnJson(true, '', $data);
