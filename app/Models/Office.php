@@ -17,14 +17,14 @@ class Office extends Base
     ];
 
     // 办公室是否处于营业时间
-    public static function isWithinBusinessHours($businessString, int $now)
+    public static function isWithinBusinessHours($businessString, \DateTime $now)
     {
         if(empty($businessString)){
             return false;
         }
 
-        $currentDay = date('l', $now);
-        $currentTime = date('H:i', $now);
+        $currentDay  = $now->format('l');
+        $currentTime = $now->format('H:i');
 
         // 正则表达式  Monday to Friday, 09:00 am - 06:00 pm
         $pattern = '/([A-Za-z]+)\s+to\s+([A-Za-z]+)[,\s]+(\d{1,2}:\d{2}\s*[ap]m)\s*-\s*(\d{1,2}:\d{2}\s*[ap]m)/i';
@@ -65,7 +65,7 @@ class Office extends Base
         }
 
         // 检查时间范围
-        if ($currentTime < $startTime24 && $currentTime > $endTime24) {
+        if ($currentTime < $startTime24 || $currentTime > $endTime24) {
             return false;
         }
 
