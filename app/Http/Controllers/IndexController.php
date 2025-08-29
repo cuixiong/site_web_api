@@ -201,7 +201,7 @@ class IndexController extends Controller {
             }
 
             // 判断办公室是否正处于营业时间
-            $value['is_within_business_hours'] = Office::isWithinBusinessHours($value['working_time'], $now->getTimestamp());
+            $value['is_within_business_hours'] = Office::isWithinBusinessHours($value['working_time'], $now);
 
         }
         ReturnJson(true, '', $list);
