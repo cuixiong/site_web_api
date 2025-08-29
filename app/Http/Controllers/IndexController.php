@@ -199,6 +199,10 @@ class IndexController extends Controller {
                 $now = new \DateTime('now');
                 $value['time_zone_copy'] = $now->format('h:i a');
             }
+
+            // 判断办公室是否正处于营业时间
+            $value['is_within_business_hours'] = Office::isWithinBusinessHours($value['working_time'], $now->getTimestamp());
+
         }
         ReturnJson(true, '', $list);
     }
