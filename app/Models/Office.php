@@ -6,7 +6,7 @@ use App\Models\Base;
 
 class Office extends Base
 {
-    public $daysMapEn = [
+    public static $daysMapEn = [
         'Sunday' => 0,
         'Monday' => 1,
         'Tuesday' => 2,
