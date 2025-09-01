@@ -30,6 +30,8 @@ class ThirdRespController extends BaseThirdController
 
     public function sendEmail()
     {
+        $AppName = env('APP_NAME');
+        request()->headers->set('Site', $AppName); // 设置请求头
         $inputParams = request()->input();
         \Log::error('返回结果数据:' . json_encode([$inputParams]) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
         $code = $inputParams['code'];
@@ -191,7 +193,7 @@ class ThirdRespController extends BaseThirdController
                 if($lastCount && $lastCount > 100){
                     $lastbaseQuery = $lastbaseQuery->limit(100);
                     // 同一修改时间的报告数据未取尽，需等下一轮请求获取，并将此标志返回请求方，下次依旧以该修改时间请求
-                    $isLast = false; 
+                    $isLast = false;
                 }
                 $lastproductData = $lastbaseQuery->get()?->toArray() ?? [];
                 if (!$lastproductData) {
