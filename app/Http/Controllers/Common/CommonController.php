@@ -134,8 +134,13 @@ class CommonController extends Controller {
         if (checkSiteAccessData(['qyen'])) {
             // 显示报告侧栏的分析师
             // 分析师追加是否在营业时间的设定，新增工作时间与工作时区字段
-            $data['team_member_list'] = TeamMember::query()->where("status" , 1)->where("show_product" , 1)->get()->toArray();
-            if($data['team_member_list']) {
+            $data['team_member_list'] = TeamMember::query()
+                ->where("status", 1)
+                ->where("show_product", 1)
+                ->orderBy('sort', 'ASC')
+                ->orderBy('id', 'desc')
+                ->get()->toArray();
+            if ($data['team_member_list']) {
                 foreach ($data['team_member_list'] as &$value) {
                     if (!empty($value['time_zone'])) {
                         $tz = new \DateTimeZone($value['time_zone']);
@@ -148,7 +153,6 @@ class CommonController extends Controller {
                     $value['is_within_business_hours'] = Office::isWithinBusinessHours($value['working_time'], $now);
                 }
             }
-
         }
 
         // qycojp 多处需要显示汇率
