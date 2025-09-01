@@ -33,7 +33,7 @@ class ThirdRespController extends BaseThirdController
         $AppName = env('APP_NAME');
         request()->headers->set('Site', $AppName); // 设置请求头
         $inputParams = request()->input();
-        \Log::error('返回结果数据:' . json_encode([$inputParams]) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
+        //\Log::error('返回结果数据:' . json_encode([$inputParams]) . '  文件路径:' . __CLASS__ . '  行号:' . __LINE__);
         $code = $inputParams['code'];
         $res = false;
         $id = $inputParams['id'];
