@@ -181,6 +181,7 @@ class IndexController extends Controller {
 
     // 办公室
     public function office(Request $request) {
+        setHeaderRobotsTag();
         $list = Office::where('status', 1)
                       ->orderBy('sort', 'asc')
                       ->orderBy('id', 'desc')

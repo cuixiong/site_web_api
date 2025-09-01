@@ -178,6 +178,12 @@ function currentLimit($request, $second = 10, $site = '', $userId = '') {
     Redis::setex($currentLimitKey, $second, 1);
 }
 
+function setHeaderRobotsTag(){
+    if(checkSiteAccessData(['qyen'])){
+        header('X-Robots-Tag:noindex');// 设置返回类型
+    }
+}
+
 
 
 

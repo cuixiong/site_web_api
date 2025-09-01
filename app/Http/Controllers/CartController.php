@@ -23,6 +23,7 @@ class CartController extends Controller {
      */
     public function List(Request $request)
     {
+        setHeaderRobotsTag();
         $time = time();
         $shopCart = ShopCart::from('shop_carts as cart')
         ->select([
@@ -180,6 +181,7 @@ class CartController extends Controller {
      * 购物车添加
      */
     public function Add(Request $request) {
+        setHeaderRobotsTag();
         $goods_id = $request->goods_id; // id 改为
         $number = $request->number ?? 0; // num 改为
         $price_edition = $request->price_edition;
@@ -210,6 +212,7 @@ class CartController extends Controller {
      * 购物车删除
      */
     public function Delete(Request $request) {
+        setHeaderRobotsTag();
         $cartIds = $request->ids;
         if (!is_array($cartIds) && empty($cartIds)) {
             ReturnJson(false, '请选择需要删除的商品ID');
@@ -233,6 +236,7 @@ class CartController extends Controller {
      * 购物车添加或减少商品数量
      */
     public function UpdataGoodsNumber(Request $request) {
+        setHeaderRobotsTag();
         $id = $request->id;
         $number = $request->number;
         if (empty($id) || $number < 1) {
@@ -253,6 +257,7 @@ class CartController extends Controller {
      * @param interger price_edition 价格版本号
      */
     public function ChangeEdition(Request $request) {
+        setHeaderRobotsTag();
         $id = $request->id;
         $price_edition = $request->price_edition;
         if (empty($id)) {
@@ -282,6 +287,7 @@ class CartController extends Controller {
      */
     public function Sync(Request $request)
     {
+        setHeaderRobotsTag();
         $user = $request->user;
         if (is_null($user)) {
             ReturnJson(false, '用户未登录');
@@ -387,6 +393,7 @@ class CartController extends Controller {
      */
     public function Share(Request $request)
     {
+        setHeaderRobotsTag();
         $cart = $request->cart;
         $cart_array = json_decode($cart, true);   // 把接收到的参数通过英文分号分割成一个或多个数组
         $results = [];
@@ -534,6 +541,7 @@ class CartController extends Controller {
      */
     public function Relevant(Request $request)
     {
+        setHeaderRobotsTag();
         $goods_ids = $request->goods_ids;
         $data = [];
         if (!empty($goods_ids) && !is_array($goods_ids)) {
@@ -713,6 +721,7 @@ class CartController extends Controller {
     }
 
     public function goodsExist(Request $request) {
+        setHeaderRobotsTag();
         $goods_id_list = $request->goods_id_list ?? [];
         if(empty($goods_id_list )){
             ReturnJson(false, '参数异常');
