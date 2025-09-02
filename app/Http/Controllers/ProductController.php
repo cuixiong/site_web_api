@@ -1279,18 +1279,22 @@ class ProductController extends Controller {
             } else {
                 if ($input_params['orderBy'] == 'time' && !empty($keyword)) {
                     $query = $query->orderBy('sort', 'asc')
-                                   ->orderBy('year', 'desc')
-                                   ->orderBy('degree_keyword', 'asc')
-                                   ->orderBy('published_date', 'desc')
-                                   ->orderBy('id', 'desc');
+                        ->orderBy('year', 'desc')
+                        ->orderBy('degree_keyword', 'asc')
+                        ->orderBy('published_date', 'desc')
+                        ->orderBy('id', 'desc');
                 } elseif ($input_params['orderBy'] == 'time' && empty($keyword)) {
                     $query = $query->orderBy('sort', 'asc')
-                                   ->orderBy('published_date', 'desc')
-                                   ->orderBy('id', 'desc');
-                } elseif ($input_params['orderBy'] == 'price') {
+                        ->orderBy('published_date', 'desc')
+                        ->orderBy('id', 'desc');
+                } elseif ($input_params['orderBy'] == 'price_desc') {
                     $query = $query->orderBy('sort', 'asc')
-                                   ->orderBy('price', 'asc')
-                                   ->orderBy('id', 'desc');
+                        ->orderBy('price', 'desc')
+                        ->orderBy('id', 'desc');
+                } elseif ($input_params['orderBy'] == 'price' || $input_params['orderBy'] == 'price_asc') {
+                    $query = $query->orderBy('sort', 'asc')
+                        ->orderBy('price', 'asc')
+                        ->orderBy('id', 'desc');
                 } else {
                     $query = $query->orderBy($input_params['orderBy'], 'asc');
                 }
