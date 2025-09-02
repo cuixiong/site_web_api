@@ -1259,7 +1259,7 @@ class ProductController extends Controller {
         //报告昵称,英文昵称匹配查询
         $query = (new SphinxQL($conn))->select('*')
                                       ->from('products_rt');
-        // $orderType = isset($input_params['orderType']) && !empty($input_params['orderType']) ? $input_params['orderType'] : 'asc';
+        $orderType = isset($input_params['orderType']) && !empty($input_params['orderType']) ? $input_params['orderType'] : 'asc';
         if (!empty($input_params['orderBy'])) {
             // $query = $query->orderBy($input_params['orderBy'], 'asc');
             if (checkSiteAccessData(['mrrs'])) {
@@ -1287,13 +1287,9 @@ class ProductController extends Controller {
                     $query = $query->orderBy('sort', 'asc')
                         ->orderBy('published_date', 'desc')
                         ->orderBy('id', 'desc');
-                } elseif ($input_params['orderBy'] == 'price_desc') {
+                } elseif ($input_params['orderBy'] == 'price') {
                     $query = $query->orderBy('sort', 'asc')
-                        ->orderBy('price', 'desc')
-                        ->orderBy('id', 'desc');
-                } elseif ($input_params['orderBy'] == 'price' || $input_params['orderBy'] == 'price_asc') {
-                    $query = $query->orderBy('sort', 'asc')
-                        ->orderBy('price', 'asc')
+                        ->orderBy('price', $orderType)
                         ->orderBy('id', 'desc');
                 } else {
                     $query = $query->orderBy($input_params['orderBy'], 'asc');
