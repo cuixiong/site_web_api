@@ -1642,11 +1642,15 @@ class SendEmailController extends Controller {
             $exchange_sum_original_price_all = bcmul($sum_goods_original_price_all, $exchange_rate, 2);
             $exchange_sum_present_price_all = bcmul($sum_goods_present_price_all, $exchange_rate, 2);
             // 税费计算
-            // $original_tax = bcmul($sum_goods_original_price_all, $tax_rate, 2);
+            // 税费计算、优惠金额转换
+            $exchange_preferential_amount = 0;
             if($data['coupon_amount'] > 0) {
+                // 折扣与优惠券不同享，在下单做好最优优惠的情况下，有优惠券金额则说明不享用本身折扣，税额为（原价-优惠价）*税率
                 $present_tax = bcmul(($sum_goods_original_price_all - $data['coupon_amount']), $tax_rate, 2);
+                $exchange_preferential_amount = bcmul($data['coupon_amount'], $exchange_rate, 2);
             } else {
                 $present_tax = bcmul($sum_goods_present_price_all, $tax_rate, 2);
+                $exchange_preferential_amount = bcmul($sum_goods_original_price_all - $sum_goods_present_price_all, $exchange_rate, 2);
             }
             // 税费汇率转换
             // $exchange_original_tax = bcmul($original_tax, $exchange_rate, 2);
@@ -1714,6 +1718,7 @@ class SendEmailController extends Controller {
                 'sum_goods_present_price_all'     => $sum_goods_present_price_all,
                 'exchange_sum_original_price_all' => $exchange_sum_original_price_all,
                 'exchange_sum_present_price_all'  => $exchange_sum_present_price_all,
+                'exchange_preferential_amount'    => $exchange_preferential_amount,
                 // 'original_tax'                    => $original_tax,
                 'present_tax'                     => $present_tax,
                 // 'exchange_original_tax'           => $exchange_original_tax,
