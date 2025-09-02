@@ -260,6 +260,7 @@ class OrderController extends Controller {
      * 支付方式
      */
     public function Payment() {
+        setHeaderRobotsTag();
         $data = ModelsPay::select(['id', 'name', 'image as img', 'content as notice', 'code'])
                          ->where('status', 1)
                          ->orderBy('sort', 'asc')
@@ -549,10 +550,10 @@ class OrderController extends Controller {
             // 需要额外查询多种货币的价格（日文）
             $currencyData = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])
                                           ->get()?->toArray() ?? [];
-                                         
+
             foreach ($rs as &$v) {
                 $v['pay_coin_symbol'] = PayConst::$coinTypeSymbol[$v['pay_coin_type']] ?? '';
-                 
+
                 if ($currencyData && count($currencyData) > 0) {
                     // 多种货币的价格
                     if ($currencyData && count($currencyData)) {

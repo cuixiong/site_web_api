@@ -2138,6 +2138,7 @@ class ProductController extends Controller {
     }
 
     public function simpleDescription(Request $request) {
+        setHeaderRobotsTag();
         $product_id = $request->product_id;
         if (empty($product_id)) {
             ReturnJson(false, '产品ID不允许为空！', []);

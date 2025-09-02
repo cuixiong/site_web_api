@@ -18,6 +18,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 class UserController extends Controller {
     // 账号注册
     public function Register(Request $request) {
+        setHeaderRobotsTag();
         $username = $request->name;
         $email = $request->email;
         $country_id = $request->country_id;
@@ -105,6 +106,7 @@ class UserController extends Controller {
 
     // 账号登陆
     public function Login(Request $request) {
+        setHeaderRobotsTag();
         $email = $request->email;
         $password = $request->password;
         if (trim($email) == '' || trim($password) == '') {
