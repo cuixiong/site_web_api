@@ -525,6 +525,18 @@ class SendEmailController extends Controller {
             if (!empty($data['country_id'])) {
                 $country = Country::where('id', $data['country_id'])->value('name');
             }
+            $priceEdition = '';
+            if (!empty($data['price_edition'])) {
+                $priceEditionRecord = PriceEditionValues::query()->select(['name', 'language_id'])->where(
+                    'id', $data['price_edition']
+                )->first();
+                if ($priceEditionRecord) {
+                    $priceEditionData = $priceEditionRecord->toArray();
+                    $languageName = Languages::where('id', $priceEditionData['language_id'])->value('name');
+                    $priceEdition = (!empty($languageName) ? $languageName : '').' '
+                                    .(!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
+                }
+            }
             //$result['country'] = DictionaryValue::GetDicOptions('Country');
             $productsName = '';
             $productLink = '';
@@ -545,9 +557,11 @@ class SendEmailController extends Controller {
                 $productLink = !empty($productsInfo) ? $this->getProductUrl($productsInfo) : '';
                 // 分类邮箱
                 if (!empty($productsInfo)) {
-                    $categoryEmail = ProductsCategory::query()->where('id', $productsInfo['category_id'])->value(
-                        'email'
-                    );
+                    $categoryInfo = ProductsCategory::query()->where('id', $productsInfo['category_id'])->first();
+                    if (!empty($categoryInfo)) {
+                        $categoryEmail = $categoryInfo->email ?? '';
+                        $categoryName = $categoryInfo->name ?? '';
+                    }
                 }
             }
             $data['country'] = Country::where('id', $data['country_id'])->value('name');
@@ -578,6 +592,7 @@ class SendEmailController extends Controller {
                 'url'            => $productLink,
                 'country'        => $country,
                 'language'       => $ContactUs['language_version'] ?? '',
+                'priceEdition'      => $priceEdition,
             ];
             $siteInfo = SystemValue::whereIn(
                 'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
@@ -614,6 +629,14 @@ class SendEmailController extends Controller {
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene($code);
+            
+            //邮件标题
+            $data['categoryName'] = '';  // yhcojp
+            if (!empty($categoryName)) {
+                $scene->title = $categoryName."-".$scene->title;
+                $data['categoryName'] = $categoryName;  // yhcojp
+            }
+            
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             // 收件人额外加上分类邮箱
@@ -827,10 +850,11 @@ class SendEmailController extends Controller {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
             //邮件标题
+            $data['categoryName'] = '';  // yhcojp
             if (!empty($categoryName)) {
                 $scene->title = $categoryName."-".$scene->title;
+                $data['categoryName'] = $categoryName;  // yhcojp
             }
-            $data['categoryName'] = $categoryName ?? '';  // yhcojp
 
             if (!empty($productsName)) {
                 $scene->title = $scene->title.":  {$productsName}";
@@ -1235,10 +1259,11 @@ class SendEmailController extends Controller {
                 ReturnJson(false, trans()->get('lang.eamail_error'));
             }
             //邮件标题
+            $data['categoryName'] = '';  // yhcojp
             if (!empty($categoryName)) {
                 $scene->title = $categoryName."-".$scene->title;
+                $data['categoryName'] = $categoryName;  // yhcojp
             }
-            $data['categoryName'] = $categoryName ?? '';  // yhcojp
 
             if (!empty($productsName)) {
                 $scene->title = $scene->title.":  {$productsName}";
