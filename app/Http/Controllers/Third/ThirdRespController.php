@@ -246,15 +246,13 @@ class ThirdRespController extends BaseThirdController
         $params = $request->all();
         $urls = $params['url_data'] ?? [];
         if ($urls && !empty($urls)) {
-            // $urls = json_decode($urls, true);
+            if (!is_array($urls)) {
+                $urls = json_decode($urls, true);
+            }
         } else {
             return ['code' => 500, 'msg' => '缺少参数'];
         }
         
-        if (!is_array($urls) || count($urls)== 0) {
-            return ['code' => 500, 'msg' => '参数为空'];
-        }
-
         $data = Products::query()->distinct()
             ->select(['url', 'keywords'])
             ->whereIn('url', $urls)
