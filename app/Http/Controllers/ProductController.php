@@ -1078,6 +1078,12 @@ class ProductController extends Controller {
      * @return  result 处理后的表格目录(含标题、摘要),以及一级目录数组
      */
     public function titleToDeep($toc) {
+
+        $titleColor = '#333';
+        // yhcojp 标题需要高亮
+        if (checkSiteAccessData(['yhcojp'])) {
+            $titleColor = '#295eca';
+        }
         $pattern
             = '/(( {0,}(?<!\.)\d{1,2}(\.\d{1,2}){0,3})|(第(.{0,6}|\d{1,2})章)|( {0,}(?<!\.).{3,6}))( |\t).{0,}\n/u';
         $result = [];
@@ -1114,7 +1120,7 @@ class ProductController extends Controller {
                     preg_match('/(?<!.)\d{1,2}( |\t)/', trim($value, "\n"), $matchTitle);
                     $value = trim($value, "\r\n");
                     $value = trim($value, "\n");
-                    $result[$count]['content'] .= '<span style="line-height:28px;font-size:16px;color:#333;font-weight:600;">'
+                    $result[$count]['content'] .= '<span style="line-height:28px;font-size:16px;color:'.$titleColor.';font-weight:600;">'
                                                   .trim($value, "\n").'</span><br />';
                 } else {
                     if (!isset($result[$count])) {
