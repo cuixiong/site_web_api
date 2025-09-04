@@ -37,27 +37,29 @@ class ThirdRespController extends BaseThirdController
         $code = $inputParams['code'];
         $res = false;
         $id = $inputParams['id'];
+        $sendEmailController = new SendEmailController();
+        $sendEmailController->isUseQueue = false;
         if ($code == 'placeOrder') {
             $orderId = $inputParams['id'];
-            $res = (new SendEmailController())->placeOrder($orderId);
+            $res = $sendEmailController->placeOrder($orderId);
         } elseif ($code == 'paySuccess') {
             $orderId = $inputParams['id'];
-            $res = (new SendEmailController())->payment($orderId);
+            $res = $sendEmailController->payment($orderId);
         } elseif ($code == 'contactUs') {
             //联系我们
-            $res = (new SendEmailController())->contactUs($id);
+            $res = $sendEmailController->contactUs($id);
         } elseif ($code == 'productSample') {
             //留言
-            $res = (new SendEmailController())->productSample($id);
+            $res = $sendEmailController->productSample($id);
         } elseif ($code == 'sampleRequest') {
             //申请样本
-            $res = (new SendEmailController())->productSample($id);
+            $res = $sendEmailController->productSample($id);
         } elseif ($code == 'customized') {
             //定制报告
-            $res = (new SendEmailController())->customized($id);
+            $res = $sendEmailController->customized($id);
         } else {
             //其它
-            $res = (new SendEmailController)->sendMessageEmail($id);
+            //$res = $sendEmailController->sendMessageEmail($id);
         }
         ReturnJson($res);
     }
@@ -252,7 +254,7 @@ class ThirdRespController extends BaseThirdController
         } else {
             return ['code' => 500, 'msg' => '缺少参数'];
         }
-        
+
         $data = Products::query()->distinct()
             ->select(['url', 'keywords'])
             ->whereIn('url', $urls)
