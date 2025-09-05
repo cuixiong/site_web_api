@@ -33,7 +33,7 @@ use Illuminate\Support\Facades\Redis;
 class SendEmailController extends Controller {
     public $testEmail   = '';
     public $testSendcnt = 0; //测试邮箱发送次数
-
+    public $isUseQueue = true;
     /**
      * 动态配置邮箱参数
      *
@@ -629,14 +629,14 @@ class SendEmailController extends Controller {
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene($code);
-            
+
             //邮件标题
             $data['categoryName'] = '';  // yhcojp
             if (!empty($categoryName)) {
                 $scene->title = $categoryName."-".$scene->title;
                 $data['categoryName'] = $categoryName;  // yhcojp
             }
-            
+
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             // 收件人额外加上分类邮箱
@@ -1841,7 +1841,7 @@ class SendEmailController extends Controller {
                 return true;
             }
         }
-        if (!$isQueue) {
+        if ($this->isUseQueue && !$isQueue) {
             //让队列执行, 需要放入队列
             $app_name = env('APP_NAME');
             HandlerEmailJob::dispatch($scene, $email, $data, $senderEmail, $this->testEmail)->onQueue($app_name);
