@@ -565,7 +565,7 @@ class ProductController extends Controller {
                 $product_desc['price'], $product_desc['publisher_id'], null, null, null, $currencyData
             );
             // yhcojp需要调整价格版本的结构
-            if (checkSiteAccessData(['yhcojp'])) {
+            if (checkSiteAccessData(['yhcojp','girjp'])) {
                 $product_desc['prices_reverse'] = Products::reverseEditionByCountPrice($product_desc['prices']);
             }
             if ($currencyData && count($currencyData) > 0) {

@@ -114,6 +114,10 @@ class PageController extends Controller {
     public function Quote(Request $request) {
         $id = $request->id;
         if (empty($id)) {
+            // 无数据重定向回列表
+            if (checkSiteAccessData(['yhcojp' ])) {
+                ReturnJson(2, '');
+            }
             ReturnJson(false, 'id is empty');
         }
         $data = Authority::select(
@@ -121,6 +125,10 @@ class PageController extends Controller {
              'big_image as img', 'hits', 'real_hits', 'category_id', 'type', 'status','sort']
         )->where('id', $id)->first();
         if (empty($data) || $data->status == 0) {
+            // 无数据重定向回列表
+            if (checkSiteAccessData(['yhcojp' ])) {
+                ReturnJson(2, '');
+            }
             ReturnJson(true, 'data is empty');
         }
         //增加点击次数

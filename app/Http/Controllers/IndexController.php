@@ -109,7 +109,9 @@ class IndexController extends Controller {
                 ->where('status', 1)
                 ->where('pid', 0)
                 ->orderBy('sort', 'asc')
-                ->orderBy('id', 'desc');
+                ->orderBy('id', 'desc')
+                ->get()
+                ->toArray();
         }
 
         //合作伙伴接口
