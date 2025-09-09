@@ -102,6 +102,18 @@ class IndexController extends Controller {
                 }
             }
         }
+
+        // 单独的报告分类
+        if(checkSiteAccessData(['girjp',])){
+            $data['industry'] = ProductsCategory::select(['id', 'name', 'link', 'thumb', 'icon', 'icon_hover'])
+                ->where('status', 1)
+                ->where('pid', 0)
+                ->orderBy('sort', 'asc')
+                ->orderBy('id', 'desc')
+                ->get()
+                ->toArray();
+        }
+
         //合作伙伴接口
         $data['partner_list'] = $this->getPartnerList($request);
         //行业新闻 默认无分页 前端传hasPagination
