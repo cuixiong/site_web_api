@@ -20,6 +20,7 @@ class Controller extends BaseController {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
     public $isWhiteIp = false;
+
     public function __construct() {
         // 排除一些不需要验证的路由
         $excludeRoute = [
@@ -35,8 +36,12 @@ class Controller extends BaseController {
             return;
         }
         // 签名检查 (系统配置那一个)
-        $checkRes = $this->checkWhiteIp();
-        if (!$checkRes) {
+        $checkIpRes = $this->checkWhiteIp();
+        $checkUaRes = $this->checkWhiteUa();
+        //只有满足其中一个条件就是白名单
+        if ($checkIpRes || $checkUaRes) {
+            $this->isWhiteIp = true;
+        } else {
             //签名检查
             $this->signCheck();
             // TODO: cuizhixiong 2025/2/6 新增需求
@@ -48,8 +53,6 @@ class Controller extends BaseController {
                 //IP限流封禁
                 $this->ipRateLimit();
             }
-        } else {
-            $this->isWhiteIp = true;
         }
     }
 
@@ -530,6 +533,34 @@ class Controller extends BaseController {
         return $checkRes;
     }
 
+    public function checkWhiteUa() {
+        $checkRes = false;
+        $header = request()->header();
+        $user_agent = $header['user-agent'] ?? [];
+        $banStrs = BanWhiteList::query()->where("type", 2)
+                               ->where("status", 1)
+                               ->pluck('ban_str')
+                               ->toArray();
+        $banUaList = [];
+        foreach ($banStrs as $banjsonStr) {
+            $forBanIpList = @json_decode($banjsonStr, true);
+            if (!empty($forBanIpList) && is_array($forBanIpList)) {
+                $banUaList = array_merge($banUaList, $forBanIpList);
+            }
+        }
+//        if(empty($banUaList )){
+//            return true;
+//        }
+
+        foreach ($user_agent as $forUserAgent) {
+            if (in_array($forUserAgent, $banUaList)) {
+                $checkRes = true;
+                break;
+            }
+        }
+        return $checkRes;
+    }
+
     /**
      *
      * @param mixed  $real_ip
@@ -567,7 +598,10 @@ class Controller extends BaseController {
      * @param string $routeUril
      *
      */
-    private function addBanHeadlerLog(mixed $real_ip, mixed $ban_time, mixed $ban_cnt, string $routeUril): void {
+    private
+    function addBanHeadlerLog(
+        mixed $real_ip, mixed $ban_time, mixed $ban_cnt, string $routeUril
+    ): void {
         $header = request()->header();
         $user_agent = $header['user-agent'] ?? [];
         $data = [
