@@ -72,11 +72,18 @@ class NewsController extends Controller {
                         ->limit($pageSize)
                         ->get()
                         ->toArray();
+        
+        // 若新闻图片为空，则使用系统设置的默认报告高清图
+        $defaultImg = SystemValue::where('key', 'default_news_thumb')->value('value');
         $news = [];
         if (!empty($result) && is_array($result)) {
             foreach ($result as $key => $value) {
                 $news[$key]['thumb'] = $value['thumb'];
                 $news[$key]['thumb'] = Common::cutoffSiteUploadPathPrefix($news[$key]['thumb']);
+                if (empty($news[$key]['thumb'])) {
+                    // 如果新闻为空，使用系统默认图片
+                    $news[$key]['thumb'] = !empty($defaultImg) ? $defaultImg : '';
+                }
                 $news[$key]['title'] = $value['title'];
                 $news[$key]['create_time_format'] = $value['release_at'] ? date('Y-m-d', $value['release_at']) : '';
                 $news[$key]['month_day'] = $value['release_at'] ? date('m-d', $value['release_at']) : '';

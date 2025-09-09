@@ -450,7 +450,7 @@ class IndexController extends Controller {
         $categoryID = $request->hot_category_id ?? 0;
         $data = [];
         // 报告基本查询
-        $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',
+        $productSelect = ['id', 'thumb', 'name', 'english_name', 'keywords', 'category_id', 'published_date', 'price', 'url',
                           'publisher_id', 'pages', 'discount_type', 'discount', 'discount_amount',
                           'discount_time_begin',
                           'discount_time_end', 'price_values'];
@@ -643,7 +643,7 @@ class IndexController extends Controller {
         $data = [];
         // 报告基本查询
         //$productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',];
-        $productSelect = ['id', 'thumb', 'name', 'keywords', 'category_id', 'published_date', 'price', 'url',
+        $productSelect = ['id', 'thumb', 'name', 'english_name', 'keywords', 'category_id', 'published_date', 'price', 'url',
                           'publisher_id', 'pages', 'discount_type', 'discount', 'discount_amount',
                           'discount_time_begin',
                           'discount_time_end', 'price_values'];

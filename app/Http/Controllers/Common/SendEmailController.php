@@ -108,7 +108,7 @@ class SendEmailController extends Controller {
                 'dateTime'     => date('Y-m-d', time()),
             ];
             $siteInfo = SystemValue::whereIn(
-                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address', 'company_name']
             )
                                    ->pluck('value', 'key')
                                    ->toArray();
@@ -180,7 +180,7 @@ class SendEmailController extends Controller {
                 'area'         => City::where('id', $data['area_id'])->value('name'),
                 'dateTime'     => date('Y-m-d', time()),
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'company_address'])->pluck(
+            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'company_address', 'company_name'])->pluck(
                 'value', 'key'
             )
                                    ->toArray();
@@ -279,7 +279,7 @@ class SendEmailController extends Controller {
             $data['dateTime'] = date('Y-m-d', time());
             $data['userName'] = $user['username'];
             $siteInfo = SystemValue::whereIn(
-                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address', 'company_name']
             )
                                    ->pluck('value', 'key')
                                    ->toArray();
@@ -457,7 +457,7 @@ class SendEmailController extends Controller {
                 'country'           => $country,
             ];
             $siteInfo = SystemValue::whereIn(
-                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address', 'company_name']
             )
                                    ->pluck('value', 'key')
                                    ->toArray();
@@ -595,7 +595,7 @@ class SendEmailController extends Controller {
                 'priceEdition'      => $priceEdition,
             ];
             $siteInfo = SystemValue::whereIn(
-                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address', 'company_name']
             )
                                    ->pluck('value', 'key')
                                    ->toArray();
@@ -809,7 +809,7 @@ class SendEmailController extends Controller {
                 'otherProductsData' => $otherProductsArray,
             ];
             $siteInfo = SystemValue::whereIn(
-                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address', 'company_name']
             )
                                    ->pluck('value', 'key')
                                    ->toArray();
@@ -1020,7 +1020,7 @@ class SendEmailController extends Controller {
                 'otherProductsData' => $otherProductsArray,
             ];
             $siteInfo = SystemValue::whereIn(
-                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address', 'company_name']
             )
                                    ->pluck('value', 'key')
                                    ->toArray();
@@ -1218,7 +1218,7 @@ class SendEmailController extends Controller {
                 'otherProductsData' => $otherProductsArray,
             ];
             $siteInfo = SystemValue::whereIn(
-                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address', 'company_name']
             )
                                    ->pluck('value', 'key')
                                    ->toArray();
@@ -1484,7 +1484,7 @@ class SendEmailController extends Controller {
             ];
             $data['country'] = Country::where('id', $Order['country_id'])->value('name');
             $siteInfo = SystemValue::whereIn(
-                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address', 'company_name']
             )
                                    ->pluck('value', 'key')
                                    ->toArray();
@@ -1752,7 +1752,7 @@ class SendEmailController extends Controller {
             ];
             $data['country'] = Country::where('id', $Order['country_id'])->value('name');
             $siteInfo = SystemValue::whereIn(
-                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address']
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address', 'company_name']
             )
                                    ->pluck('value', 'key')
                                    ->toArray();
