@@ -637,7 +637,7 @@ class ProductController extends Controller {
                 $relevant_products_size
             );
             //该报告是否是最新年份、如果不是，查询是否有最新年份的报告id
-            if (checkSiteAccessData(['qycojp'])) {
+            if (checkSiteAccessData(['qycojp', 'yhcojp'])) {
                 $product_desc['latestProduct'] = [
                     'year'         => date('Y', time()),
                     'isLatestYear' => true,

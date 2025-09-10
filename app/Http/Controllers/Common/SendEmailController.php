@@ -1911,7 +1911,8 @@ class SendEmailController extends Controller {
                     'subscribe',
                     'sampleExcerpt',
                     'sampleLastest',
-                    'customerVoice'
+                    'customerVoice',
+                    'requestArea',
                 ])) {
                     //存入留言邮件发送记录
                     ContactUs::query()->where("id", $data['id'])->update(['send_email_time' => time()]);
