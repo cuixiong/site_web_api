@@ -553,10 +553,16 @@ class Controller extends BaseController {
 //        }
 
         foreach ($user_agent as $forUserAgent) {
-            if (in_array($forUserAgent, $banUaList)) {
-                $checkRes = true;
-                break;
+            foreach ($banUaList as $forBanUa){
+                if (strpos($forUserAgent, $forBanUa) !== false) {
+                    $checkRes = true;
+                    break;
+                }
             }
+//            if (in_array($forUserAgent, $banUaList)) {
+//                $checkRes = true;
+//                break;
+//            }
         }
         return $checkRes;
     }

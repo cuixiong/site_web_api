@@ -59,7 +59,7 @@ class ThirdRespController extends BaseThirdController
             $res = $sendEmailController->customized($id);
         } else {
             //其它
-            //$res = $sendEmailController->sendMessageEmail($id);
+            $res = $sendEmailController->sendMessageEmail($id , $code);
         }
         ReturnJson($res);
     }
