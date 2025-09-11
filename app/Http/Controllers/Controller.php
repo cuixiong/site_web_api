@@ -430,6 +430,7 @@ class Controller extends BaseController {
     }
 
     public function checkRoute() {
+        return true;
         //新增需求,只记录/封禁 报告详情, 新闻详情
         $route = request()->route();
         $routeUril = '';
