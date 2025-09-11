@@ -504,7 +504,7 @@ class ProductController extends Controller {
                 $description['table_of_content_en'] = '';
             }
             // lpijp网站动态生成日文详情
-            if (checkSiteAccessData(['lpijp'])) {
+            if (checkSiteAccessData(['lpijp', 'girjp', 'qyjp'])) {
                 $description['description'] = $this->getDescriptionByTemplate($product_desc, $description);
                 $description['description'] = str_replace(['<p><br /></p>', '<p><br></p>'], "\n",
                                                           $description['description']);
