@@ -33,7 +33,8 @@ use Illuminate\Support\Facades\Redis;
 class SendEmailController extends Controller {
     public $testEmail   = '';
     public $testSendcnt = 0; //测试邮箱发送次数
-    public $isUseQueue = true;
+    public $isUseQueue  = true;
+
     /**
      * 动态配置邮箱参数
      *
@@ -126,7 +127,7 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }else{
+            } else {
                 // 多个电话
                 $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
@@ -180,7 +181,9 @@ class SendEmailController extends Controller {
                 'area'         => City::where('id', $data['area_id'])->value('name'),
                 'dateTime'     => date('Y-m-d', time()),
             ];
-            $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail', 'company_address', 'company_name'])->pluck(
+            $siteInfo = SystemValue::whereIn(
+                'key', ['siteName', 'sitePhone', 'siteEmail', 'company_address', 'company_name']
+            )->pluck(
                 'value', 'key'
             )
                                    ->toArray();
@@ -198,7 +201,7 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }else{
+            } else {
                 // 多个电话
                 $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
@@ -293,7 +296,7 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }else{
+            } else {
                 // 多个电话
                 $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
@@ -475,7 +478,7 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }else{
+            } else {
                 // 多个电话
                 $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
@@ -592,7 +595,7 @@ class SendEmailController extends Controller {
                 'url'            => $productLink,
                 'country'        => $country,
                 'language'       => $ContactUs['language_version'] ?? '',
-                'priceEdition'      => $priceEdition,
+                'priceEdition'   => $priceEdition,
             ];
             $siteInfo = SystemValue::whereIn(
                 'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address', 'company_name']
@@ -613,7 +616,7 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }else{
+            } else {
                 // 多个电话
                 $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
@@ -629,14 +632,12 @@ class SendEmailController extends Controller {
                                                                                              .$data['siteEmail'] : '';
             $data = array_merge($data2, $data);
             $scene = $this->getScene($code);
-
             //邮件标题
             $data['categoryName'] = '';  // yhcojp
             if (!empty($categoryName)) {
                 $scene->title = $categoryName."-".$scene->title;
                 $data['categoryName'] = $categoryName;  // yhcojp
             }
-
             // 收件人的数组
             $emails = explode(',', $scene->email_recipient);
             // 收件人额外加上分类邮箱
@@ -827,7 +828,7 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }else{
+            } else {
                 // 多个电话
                 $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
@@ -855,7 +856,6 @@ class SendEmailController extends Controller {
                 $scene->title = $categoryName."-".$scene->title;
                 $data['categoryName'] = $categoryName;  // yhcojp
             }
-
             if (!empty($productsName)) {
                 $scene->title = $scene->title.":  {$productsName}";
             }
@@ -1038,7 +1038,7 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }else{
+            } else {
                 // 多个电话
                 $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
@@ -1236,7 +1236,7 @@ class SendEmailController extends Controller {
                         $data['sitePhones'][] = $sitePhoneItem;
                     }
                 }
-            }else{
+            } else {
                 // 多个电话
                 $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
                 if ($sitePhones) {
@@ -1264,7 +1264,6 @@ class SendEmailController extends Controller {
                 $scene->title = $categoryName."-".$scene->title;
                 $data['categoryName'] = $categoryName;  // yhcojp
             }
-
             if (!empty($productsName)) {
                 $scene->title = $scene->title.":  {$productsName}";
             }
@@ -1355,15 +1354,21 @@ class SendEmailController extends Controller {
                 // 单个商品现价
                 $goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 // 单个同商品现价*数量
-                $goods_data['goods_sum_price'] = bcmul($OrderGoods['goods_present_price'], $OrderGoods['goods_number'], 2);
+                $goods_data['goods_sum_price'] = bcmul(
+                    $OrderGoods['goods_present_price'], $OrderGoods['goods_number'], 2
+                );
                 //$goods_data['goods_present_price'] = $OrderGoods['goods_present_price'];
                 $goods_data['goods_number'] = $OrderGoods['goods_number'];
                 // 单个商品原价
                 $goods_data['goods_original_price'] = $OrderGoods['goods_original_price'];
                 // 单个同商品原价*数量
-                $goods_data['sum_original_price'] = bcmul($goods_data['goods_original_price'], $goods_data['goods_number'], 2);
+                $goods_data['sum_original_price'] = bcmul(
+                    $goods_data['goods_original_price'], $goods_data['goods_number'], 2
+                );
                 // 多个同商品的汇率转换
-                $goods_data['exchange_sum_original_price'] = bcmul($goods_data['sum_original_price'], $exchange_rate, 2);
+                $goods_data['exchange_sum_original_price'] = bcmul(
+                    $goods_data['sum_original_price'], $exchange_rate, 2
+                );
                 $goods_data['exchange_sum_present_price'] = bcmul($goods_data['goods_sum_price'], $exchange_rate, 2);
                 // 商品累加小计-原价
                 $sum_goods_original_price_all += $goods_data['sum_original_price'];
@@ -1371,8 +1376,8 @@ class SendEmailController extends Controller {
                 $sum_goods_present_price_all += $goods_data['goods_sum_price'];
                 // 分类信息
                 $category = ProductsCategory::select(['id', 'name', 'thumb', 'email'])
-                    ->where('id', $products['category_id'])
-                    ->first();
+                                            ->where('id', $products['category_id'])
+                                            ->first();
                 $goods_data['category_name'] = $category['name'] ?? '';
                 $goods_data['category_thumb'] = $category['thumb'] ?? '';
                 if (!empty($category['email'])) {
@@ -1398,13 +1403,15 @@ class SendEmailController extends Controller {
             $exchange_sum_present_price_all = bcmul($sum_goods_present_price_all, $exchange_rate, 2);
             // 税费计算、优惠金额转换
             $exchange_preferential_amount = 0;
-            if($data['coupon_amount'] > 0) {
+            if ($data['coupon_amount'] > 0) {
                 // 折扣与优惠券不同享，在下单做好最优优惠的情况下，有优惠券金额则说明不享用本身折扣，税额为（原价-优惠价）*税率
                 $present_tax = bcmul(($sum_goods_original_price_all - $data['coupon_amount']), $tax_rate, 2);
                 $exchange_preferential_amount = bcmul($data['coupon_amount'], $exchange_rate, 2);
             } else {
                 $present_tax = bcmul($sum_goods_present_price_all, $tax_rate, 2);
-                $exchange_preferential_amount = bcmul($sum_goods_original_price_all - $sum_goods_present_price_all, $exchange_rate, 2);
+                $exchange_preferential_amount = bcmul(
+                    $sum_goods_original_price_all - $sum_goods_present_price_all, $exchange_rate, 2
+                );
             }
             $exchange_present_tax = bcmul($present_tax, $exchange_rate, 2);
             $areaInfo = $this->getAreaName($data);
@@ -1431,10 +1438,14 @@ class SendEmailController extends Controller {
                 $orderStatusText = 'PAY_UNPAID';
             } elseif (checkSiteAccessData(['lpijp', 'qycojp', 'yhcojp', 'girjp', 'qyjp'])) {
                 $orderStatusText = '支払い待ち';
-            }elseif(checkSiteAccessData(['qykr'])){
+            } elseif (checkSiteAccessData(['qykr'])) {
                 $orderStatusText = '미지불';
             } else {
                 $orderStatusText = '未付款';
+            }
+            $pay_time_str = '';
+            if ($data['pay_time'] > 0) {
+                $pay_time_str = date('Y-m-d H:i:s', $data['pay_time']);
             }
             $is_bank = false; // 是否线下转账，否则在邮件上没有跳转支付的链接
             if ($Order->pay_code == PayConst::PAY_TYPE_BANK) {
@@ -1471,6 +1482,7 @@ class SendEmailController extends Controller {
                 'userId'                          => $data['user_id'],
                 'dateTime'                        => date('Y-m-d H:i:s', time()),
                 'orderTime'                       => $orderCreatedTime,
+                'payTime'                         => $pay_time_str,
                 'sumGoodsCnt'                     => $sum_goods_cnt,
                 'sum_goods_original_price_all'    => $sum_goods_original_price_all,
                 'sum_goods_present_price_all'     => $sum_goods_present_price_all,
@@ -1669,13 +1681,15 @@ class SendEmailController extends Controller {
             // 税费计算
             // 税费计算、优惠金额转换
             $exchange_preferential_amount = 0;
-            if($data['coupon_amount'] > 0) {
+            if ($data['coupon_amount'] > 0) {
                 // 折扣与优惠券不同享，在下单做好最优优惠的情况下，有优惠券金额则说明不享用本身折扣，税额为（原价-优惠价）*税率
                 $present_tax = bcmul(($sum_goods_original_price_all - $data['coupon_amount']), $tax_rate, 2);
                 $exchange_preferential_amount = bcmul($data['coupon_amount'], $exchange_rate, 2);
             } else {
                 $present_tax = bcmul($sum_goods_present_price_all, $tax_rate, 2);
-                $exchange_preferential_amount = bcmul($sum_goods_original_price_all - $sum_goods_present_price_all, $exchange_rate, 2);
+                $exchange_preferential_amount = bcmul(
+                    $sum_goods_original_price_all - $sum_goods_present_price_all, $exchange_rate, 2
+                );
             }
             // 税费汇率转换
             // $exchange_original_tax = bcmul($original_tax, $exchange_rate, 2);
@@ -1696,6 +1710,10 @@ class SendEmailController extends Controller {
             } elseif (isset($data['created_at']) && !empty($data['created_at']) && is_string($data['created_at'])) {
                 $orderCreatedTime = $data['created_at'];
             }
+            $pay_time_str = '';
+            if ($data['pay_time'] > 0) {
+                $pay_time_str = date('Y-m-d H:i:s', $data['pay_time']);
+            }
             if (empty($siteName)) {
                 $AppName = env('APP_NAME');
                 request()->headers->set('Site', $AppName); // 设置请求头
@@ -1704,7 +1722,7 @@ class SendEmailController extends Controller {
                 $orderStatusText = 'PAY_SUCCESS';
             } elseif (checkSiteAccessData(['lpijp', 'qycojp', 'yhcojp', 'girjp', 'qyjp'])) {
                 $orderStatusText = '注文完了';
-            } elseif (checkSiteAccessData(['qykr'])){
+            } elseif (checkSiteAccessData(['qykr'])) {
                 $orderStatusText = '지불됨';
             } else {
                 $orderStatusText = '已付款';
@@ -1738,6 +1756,7 @@ class SendEmailController extends Controller {
                 'userId'                          => $data['user_id'],
                 'dateTime'                        => date('Y-m-d H:i:s', time()),
                 'orderTime'                       => $orderCreatedTime,
+                'payTime'                         => $pay_time_str,
                 'sumGoodsCnt'                     => $sum_goods_cnt,
                 'sum_goods_original_price_all'    => $sum_goods_original_price_all,
                 'sum_goods_present_price_all'     => $sum_goods_present_price_all,
