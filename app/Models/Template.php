@@ -103,9 +103,35 @@ class Template extends Base {
         $tempContent = self::writeTempWord($tempContent, '{{link}}', $productArrData['url']);
         $tempContent = self::handlerMuchLine($tempContent);
 
+        
+        $publishedYear = Products::publishedDateFormatYear($productArrData['published_date']);
+        $tempContent = str_replace('{{published_year}}', $publishedYear, $tempContent);
+        if(strpos($tempContent,'{{published_year') !== false){
+            $tempContent = self::replaceYearCalculations($tempContent,$publishedYear);
+        }
+
         return $tempContent;
     }
 
+    private static function replaceYearCalculations($text, $baseYear) {
+        return preg_replace_callback(
+            '/{{published_year([+-])(\d+)}}/',
+            function ($matches) use ($baseYear) {
+                $operator = $matches[1];
+                $number = (int)$matches[2];
+                
+                switch ($operator) {
+                    case '+':
+                        return $baseYear + $number;
+                    case '-':
+                        return $baseYear - $number;
+                    default:
+                        return $baseYear;
+                }
+            },
+            $text
+        );
+    }
     /**
      *
      * @param $sourceContent  string 源串
@@ -190,6 +216,9 @@ class Template extends Base {
         }
         //访问url
         $productArrData['url'] = self::getReportUrl($product);
+        //出版时间
+        $productArrData['published_date'] = $product['published_date'];
+
         $pdArrData = [];
         //描述第一段
         if (!empty($desc['description_en'])) {

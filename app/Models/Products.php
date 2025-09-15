@@ -437,4 +437,14 @@ class Products extends Base {
 
         return (float)$result;
     }
+
+    
+    public static function publishedDateFormatYear($timestamp) {
+        $year = is_numeric($timestamp) ? date('Y', $timestamp) : date('Y', strtotime($timestamp));
+        if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
+            return false;
+        }
+
+        return $year;
+    }
 }

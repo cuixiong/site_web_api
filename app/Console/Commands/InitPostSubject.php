@@ -65,7 +65,7 @@ class InitPostSubject extends Command {
         foreach ($data as $idGroup) {
             // 查询产品数据
             $productData = DB::table('product_routine')
-                             ->select(['id', 'name', 'category_id', 'price', 'author', 'keywords', 'cagr'])
+                             ->select(['id', 'name', 'category_id', 'published_date', 'price', 'author', 'keywords', 'cagr'])
                              ->whereIn('id', $idGroup)
                              ->get();
             // dd($productData);
