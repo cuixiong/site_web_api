@@ -555,7 +555,8 @@ class Controller extends BaseController {
 
         foreach ($user_agent as $forUserAgent) {
             foreach ($banUaList as $forBanUa){
-                if (strpos($forUserAgent, $forBanUa) !== false) {
+                //if (strpos($forUserAgent, $forBanUa) !== false) {
+                if (strpos(strtolower($forUserAgent), strtolower($forBanUa)) !== false) {
                     $checkRes = true;
                     break;
                 }
