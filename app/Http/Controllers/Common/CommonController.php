@@ -171,7 +171,7 @@ class CommonController extends Controller {
             }
         }
         // 留言咨询种类
-        if (checkSiteAccessData(['qycojp'])) {
+        if (checkSiteAccessData(['qycojp','qyjp'])) {
 
             $messageConsultTypeKey = 'message_consult_type';
             $messageConsultTypeSetId = System::select(['id'])

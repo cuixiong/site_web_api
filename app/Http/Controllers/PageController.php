@@ -63,7 +63,7 @@ class PageController extends Controller {
         }
 
         // 追加图片域名, 因为前端想加在内容上...
-        if (checkSiteAccessData(['girjp'])) {
+        if (checkSiteAccessData(['girjp','qyjp'])) {
             $imgDomain = env('IMAGE_URL', '');
             if(!empty($imgDomain)){
                 $content = str_replace('src="/', 'src="'.$imgDomain.'/', $content);
