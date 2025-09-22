@@ -19,6 +19,7 @@ use App\Models\Menu;
 use App\Models\MessageLanguageVersion;
 use App\Models\News;
 use App\Models\Office;
+use App\Models\OfficePhone;
 use App\Models\PlateValue;
 use App\Models\Position;
 use App\Models\PriceEditions;
@@ -118,6 +119,10 @@ class CommonController extends Controller {
         } elseif (checkSiteAccessData(['lpicn'])) {
             // 办公室
             $data['offices'] = $this->getofficeRegion($request);
+        }elseif (checkSiteAccessData(['qycn', 'qyjp'])) {
+            // 办公室, 多个不同联系方式
+            $data['offices'] = $this->getofficeRegion($request);
+            $data['offices'] = $this->getofficePhone($data['offices']??[]);
         }
 
         if (checkSiteAccessData(['yhen'])) {
@@ -889,10 +894,29 @@ class CommonController extends Controller {
             ->orderBy('id', 'desc')
             ->get();
         foreach ($list as &$value) {
+            $value['phone_array'] = OfficePhone::select('attribute', 'value')->where('status', 1)
+                ->where('office_id', $value['id'])
+                ->orderBy('sort', 'desc')
+                ->orderBy('id', 'desc')
+                ->get()?->toArray() ?? [];
+
             $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
             $value['national_flag'] = Common::cutoffSiteUploadPathPrefix($value['national_flag']);
         }
         return $list;
+    }
+    // 办公室 附加联系方式数组
+    public function getofficePhone(array $offices)
+    {
+        foreach ($offices as &$value) {
+            $value['phone_array'] = OfficePhone::select('attribute', 'value')->where('status', 1)
+                ->where('office_id', $value['id'])
+                ->orderBy('sort', 'desc')
+                ->orderBy('id', 'desc')
+                ->get()?->toArray() ?? [];
+
+        }
+        return $offices;
     }
 
     /**
