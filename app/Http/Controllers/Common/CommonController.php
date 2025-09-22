@@ -992,8 +992,8 @@ class CommonController extends Controller {
         return $data;
     }
 
-    private function getPriceEdition(){
-        
+    private function getPriceEdition()
+    {
         $prices = [];
         $publisherId = Products::select('publisher_id')
             ->where('publisher_id', '>', 0)
@@ -1001,20 +1001,26 @@ class CommonController extends Controller {
         $languages = Languages::select(['id', 'name'])->get()->toArray();
         if ($languages) {
             foreach ($languages as $index => $language) {
-                // $priceEditions = PriceEditionValues::select(
-                //     ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
-                // )->where(['status' => 1, 'is_deleted'=> 1, 'language_id' => $language['id']])->orderBy("sort", "asc")->get()->toArray();
                 $priceEditions = PriceEditionValues::GetList($language['id'], $publisherId);
                 if ($priceEditions) {
-                    $prices[$index]['language'] = $language['name'];
+                    $priceEditions = array_values($priceEditions);
                     foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
-                        $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
-                        $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['name'];
+                        $priceEditionName = $priceEdition['name'];
+                        if (!isset($prices[$priceEditionName])) {
+                            $prices[$priceEditionName] = [];
+                            $prices[$priceEditionName]['edition'] = $priceEditionName;
+                            $prices[$priceEditionName]['data'] = [];
+                        }
+
+                        $prices[$priceEditionName]['data'][] = [
+                            'id' => $priceEdition['id'],
+                            'language' => $language['name'],
+                        ];
                     }
                 }
             }
         }
-        return $prices;
+        return array_values($prices);
     }
 
 }
