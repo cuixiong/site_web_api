@@ -17,6 +17,7 @@ use App\Models\Languages;
 use App\Models\Menu;
 use App\Models\News;
 use App\Models\Office;
+use App\Models\OfficePhone;
 use App\Models\Page;
 use App\Models\Partner;
 use App\Models\PriceEditionValues;
@@ -772,6 +773,12 @@ class PageController extends Controller {
                 $now = new \DateTime('now');
                 $value['time_zone_copy'] = $now->format('h:i a');
             }
+            
+            $value['phone_array'] = OfficePhone::select('attribute', 'value')->where('status', 1)
+                ->where('office_id', $value['id'])
+                ->orderBy('sort', 'asc')
+                ->orderBy('id', 'desc')
+                ->get()?->toArray() ?? [];
         }
         // 通过时区分割国内外
         $data = [
