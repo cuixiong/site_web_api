@@ -58,7 +58,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     });
     // index控制器(首页)
     Route::prefix('index')->group(function () {
-        Route::get('main-data', [\App\Http\Controllers\IndexController::class, 'index'])->name('首页接口主要数据');
+        Route::any('main-data', [\App\Http\Controllers\IndexController::class, 'index'])->name('首页接口主要数据');
         Route::get('news-product', [\App\Http\Controllers\IndexController::class, 'NewsProduct'])->name('最新报告');
         Route::get('recommend-product', [\App\Http\Controllers\IndexController::class, 'RecommendProduct'])->name(
             '推荐报告'
