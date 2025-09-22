@@ -26,6 +26,7 @@ use App\Models\PriceEditions;
 use App\Models\PriceEditionValues;
 use App\Models\Products;
 use App\Models\ProductsCategory;
+use App\Models\System;
 use App\Models\SystemValue;
 use App\Models\User;
 use Illuminate\Support\Facades\Redis;
@@ -905,6 +906,26 @@ class SendEmailController extends Controller {
                                     .(!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
                 }
             }
+
+            // qycojp、qyjp联系我们疑问咨询种类
+            $consultTypeName = '';
+            if (checkSiteAccessData(['qyjp']) && !empty($data['consult_type'])) {
+
+                $messageConsultTypeKey = 'message_consult_type';
+                $messageConsultTypeSetId = System::select(['id'])
+                    ->where('status', 1)
+                    ->where('alias', $messageConsultTypeKey)
+                    ->get()
+                    ->value('id');
+                $consultTypeList = SystemValue::where('parent_id', $messageConsultTypeSetId)
+                    ->where('hidden', 1)
+                    ->select(['name', 'value'])
+                    ->get()?->toArray() ?? [];
+                $consultTypeList = array_column($consultTypeList, 'value', 'name');
+                $consultTypeName = $consultTypeList[$data['consult_type']] ?? '';
+            }
+
+
             if (isset($data['product_id']) && !empty($data['product_id'])) {
                 $productsInfo = Products::query()->where("id", $data['product_id'])
                                         ->select(
@@ -1018,6 +1039,7 @@ class SendEmailController extends Controller {
                 'country'           => $country,
                 'priceEdition'      => $priceEdition,
                 'otherProductsData' => $otherProductsArray,
+                'consultTypeName'      => $consultTypeName,
             ];
             $siteInfo = SystemValue::whereIn(
                 'key', ['siteName', 'sitePhone', 'siteEmail', 'postCode', 'address', 'company_address', 'company_name']

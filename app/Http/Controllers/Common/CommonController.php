@@ -1012,19 +1012,10 @@ class CommonController extends Controller {
             foreach ($languages as $index => $language) {
                 $priceEditions = PriceEditionValues::GetList($language['id'], $publisherId);
                 if ($priceEditions) {
-                    $priceEditions = array_values($priceEditions);
+                    $prices[$index]['language'] = $language['name'];
                     foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
-                        $priceEditionName = $priceEdition['name'];
-                        if (!isset($prices[$priceEditionName])) {
-                            $prices[$priceEditionName] = [];
-                            $prices[$priceEditionName]['edition'] = $priceEditionName;
-                            $prices[$priceEditionName]['data'] = [];
-                        }
-
-                        $prices[$priceEditionName]['data'][] = [
-                            'id' => $priceEdition['id'],
-                            'language' => $language['name'],
-                        ];
+                        $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
+                        $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['name'];
                     }
                 }
             }
