@@ -921,7 +921,7 @@ class SendEmailController extends Controller {
                     ->where('hidden', 1)
                     ->select(['name', 'value'])
                     ->get()?->toArray() ?? [];
-                $consultTypeList = array_column($consultTypeList, 'value', 'name');
+                $consultTypeList = array_column($consultTypeList, 'name', 'value');
                 $consultTypeName = $consultTypeList[$data['consult_type']] ?? '';
             }
 
