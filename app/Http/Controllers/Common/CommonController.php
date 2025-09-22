@@ -914,7 +914,7 @@ class CommonController extends Controller {
         foreach ($offices as &$value) {
             $value['phone_array'] = OfficePhone::select('attribute', 'value')->where('status', 1)
                 ->where('office_id', $value['id'])
-                ->orderBy('sort', 'desc')
+                ->orderBy('sort', 'asc')
                 ->orderBy('id', 'desc')
                 ->get()?->toArray() ?? [];
 
