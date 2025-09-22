@@ -171,7 +171,7 @@ class CommonController extends Controller {
             }
         }
         // 留言咨询种类
-        if (checkSiteAccessData(['qycojp','qyjp'])) {
+        if (checkSiteAccessData(['qycojp', 'qyjp'])) {
 
             $messageConsultTypeKey = 'message_consult_type';
             $messageConsultTypeSetId = System::select(['id'])
@@ -183,6 +183,10 @@ class CommonController extends Controller {
                 ->where('hidden', 1)
                 ->select(['name', 'value'])
                 ->get()?->toArray()??[];
+        }
+        // qyjp 联系我们显示价格版本
+        if(checkSiteAccessData([ 'qyjp'])){
+            $data['price_edition'] = $this->getPriceEdition();
         }
 
         ReturnJson(true, '', $data);
@@ -987,4 +991,30 @@ class CommonController extends Controller {
         $data = Languages::query()->select(['id', 'name'])->whereIn('id', $languageIds)->orderBy('sort', 'ASC')->get()?->toArray() ?? [];
         return $data;
     }
+
+    private function getPriceEdition(){
+        
+        $prices = [];
+        $publisherId = Products::select('publisher_id')
+            ->where('publisher_id', '>', 0)
+            ->value('publisher_id');
+        $languages = Languages::select(['id', 'name'])->get()->toArray();
+        if ($languages) {
+            foreach ($languages as $index => $language) {
+                // $priceEditions = PriceEditionValues::select(
+                //     ['id', 'name as edition', 'rules as rule', 'is_logistics', 'notice']
+                // )->where(['status' => 1, 'is_deleted'=> 1, 'language_id' => $language['id']])->orderBy("sort", "asc")->get()->toArray();
+                $priceEditions = PriceEditionValues::GetList($language['id'], $publisherId);
+                if ($priceEditions) {
+                    $prices[$index]['language'] = $language['name'];
+                    foreach ($priceEditions as $keyPriceEdition => $priceEdition) {
+                        $prices[$index]['data'][$keyPriceEdition]['id'] = $priceEdition['id'];
+                        $prices[$index]['data'][$keyPriceEdition]['edition'] = $priceEdition['name'];
+                    }
+                }
+            }
+        }
+        return $prices;
+    }
+
 }
