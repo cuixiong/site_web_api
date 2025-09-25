@@ -119,7 +119,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['qycojp'])) {
+            if (checkSiteAccessData(['qycojp','qyjp'])) {
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -193,7 +193,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['qycojp'])) {
+            if (checkSiteAccessData(['qycojp','qyjp'])) {
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -288,7 +288,7 @@ class SendEmailController extends Controller {
                                    ->pluck('value', 'key')
                                    ->toArray();
             $data = array_merge($data, $siteInfo);
-            if (checkSiteAccessData(['qycojp'])) {
+            if (checkSiteAccessData(['qycojp','qyjp'])) {
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -470,7 +470,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['qycojp'])) {
+            if (checkSiteAccessData(['qycojp','qyjp'])) {
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -608,7 +608,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['qycojp'])) {
+            if (checkSiteAccessData(['qycojp','qyjp'])) {
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -820,7 +820,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['qycojp'])) {
+            if (checkSiteAccessData(['qycojp','qyjp'])) {
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -1051,7 +1051,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['qycojp'])) {
+            if (checkSiteAccessData(['qycojp', 'qyjp'])) {
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
@@ -1249,7 +1249,7 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            if (checkSiteAccessData(['qycojp'])) {
+            if (checkSiteAccessData(['qycojp','qyjp'])) {
                 $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
                 if ($sitePhones) {
                     $sitePhones = $sitePhones->toArray();
