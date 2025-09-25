@@ -14,6 +14,7 @@ use App\Http\Middleware\JwtMiddleware;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -57,7 +58,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     });
     // index控制器(首页)
     Route::prefix('index')->group(function () {
-        Route::get('main-data', [\App\Http\Controllers\IndexController::class, 'index'])->name('首页接口主要数据');
+        Route::any('main-data', [\App\Http\Controllers\IndexController::class, 'index'])->name('首页接口主要数据');
         Route::get('news-product', [\App\Http\Controllers\IndexController::class, 'NewsProduct'])->name('最新报告');
         Route::get('recommend-product', [\App\Http\Controllers\IndexController::class, 'RecommendProduct'])->name(
             '推荐报告'
@@ -80,9 +81,9 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
             '页面板块子级的值列表'
         );
         Route::get('plate-value-list-by-link', [\App\Http\Controllers\PlateController::class, 'PlateValueByLink'])
-             ->name(
-                 '页面板块子级的值列表-通过页面link'
-             );
+            ->name(
+                '页面板块子级的值列表-通过页面link'
+            );
         Route::get('form', [\App\Http\Controllers\PlateController::class, 'Form'])->name('页面板块（包含父级和子级）');
     });
     // Product控制器(报告)
@@ -113,7 +114,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::get('quotes', [\App\Http\Controllers\PageController::class, 'Quotes'])->name('权威引用列表');
         Route::get('quote', [\App\Http\Controllers\PageController::class, 'Quote'])->name('权威引用');
         Route::get('quote-relevant-product', [\App\Http\Controllers\PageController::class, 'QuoteRelevantProduct'])
-             ->name('权威引用相关报告');
+            ->name('权威引用相关报告');
         Route::get('team-member', [\App\Http\Controllers\PageController::class, 'TeamMember'])->name('团队成员');
         Route::get('analyst-group', [\App\Http\Controllers\PageController::class, 'AnalystGroup'])->name('分析师团队');
         Route::get('qualification', [\App\Http\Controllers\PageController::class, 'Qualification'])->name('资质认证');
@@ -148,20 +149,22 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::get('check-email', [\App\Http\Controllers\UserController::class, 'CheckEmail'])->name('验证邮箱');
     Route::post('exists-email', [\App\Http\Controllers\UserController::class, 'ExistsEmail'])->name('邮箱是否存在');
     Route::middleware(JwtMiddleware::class)->get('loginout', [\App\Http\Controllers\UserController::class, 'loginout'])
-         ->name('退出登陆');
+        ->name('退出登陆');
     Route::prefix('user')->group(function () {
         Route::middleware(JwtMiddleware::class)->get('info', [\App\Http\Controllers\UserController::class, 'Info'])
-             ->name('Info接口');
+            ->name('Info接口');
         Route::middleware(JwtMiddleware::class)->post(
-            'coupons', [\App\Http\Controllers\UserController::class, 'Coupons']
+            'coupons',
+            [\App\Http\Controllers\UserController::class, 'Coupons']
         )->name('查询用户优惠卷');
         Route::post('verify-email', [\App\Http\Controllers\UserController::class, 'VerifyEmail'])->name('注册验证邮箱');
         Route::middleware(JwtMiddleware::class)->post('update', [\App\Http\Controllers\UserController::class, 'update'])
-             ->name('用户信息修改');
+            ->name('用户信息修改');
         Route::middleware(JwtMiddleware::class)->post(
-            'change-password', [\App\Http\Controllers\UserController::class, 'changePassword']
+            'change-password',
+            [\App\Http\Controllers\UserController::class, 'changePassword']
         )
-             ->name('修改密码');
+            ->name('修改密码');
     });
     //user-address 用户收货地址
     Route::prefix('user-address')->middleware(JwtMiddleware::class)->group(function () {
@@ -177,12 +180,14 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     //user-invoices 用户发票
     Route::prefix('user-invoices')->group(function () {
         Route::middleware(JwtMiddleware::class)->get('list', [\App\Http\Controllers\InvoicesController::class, 'list'])
-             ->name('发票列表');
+            ->name('发票列表');
         Route::middleware(JwtMiddleware::class)->get(
-            'form/{id}', [\App\Http\Controllers\InvoicesController::class, 'form']
+            'form/{id}',
+            [\App\Http\Controllers\InvoicesController::class, 'form']
         )->name('发票详情');
         Route::middleware(JwtMiddleware::class)->post(
-            'apply', [\App\Http\Controllers\InvoicesController::class, 'apply']
+            'apply',
+            [\App\Http\Controllers\InvoicesController::class, 'apply']
         )->name('申请发票');
         Route::post('apply-single-page', [\App\Http\Controllers\InvoicesController::class, 'applySinglePage'])->name(
             '申请发票(单页)'
@@ -203,7 +208,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
             '购物车修改版本'
         );
         Route::post('sync', [\App\Http\Controllers\CartController::class, 'Sync'])
-             ->name('购物车同步');
+            ->name('购物车同步');
     });
     Route::post('cart/goods-exist', [\App\Http\Controllers\CartController::class, 'goodsExist'])->name('购物车添加');
     Route::get('cart/relevant', [\App\Http\Controllers\CartController::class, 'Relevant'])->name('相关报告');
@@ -211,20 +216,25 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     // Order控制器
     Route::prefix('order')->group(function () {
         Route::middleware(JwtMiddleware::class)->get('list', [\App\Http\Controllers\OrderController::class, 'list'])
-             ->name('用户订单列表');
-        Route::middleware(JwtMiddleware::class)->get('form/{id}', [\App\Http\Controllers\OrderController::class, 'form']
+            ->name('用户订单列表');
+        Route::middleware(JwtMiddleware::class)->get(
+            'form/{id}',
+            [\App\Http\Controllers\OrderController::class, 'form']
         )->name('订单详情');
         Route::middleware(JwtMiddleware::class)->get(
-            'del/{id}', [\App\Http\Controllers\OrderController::class, 'delete']
+            'del/{id}',
+            [\App\Http\Controllers\OrderController::class, 'delete']
         )->name('订单删除');
         Route::middleware(JwtMiddleware::class)->post(
-            'change-pay-type', [\App\Http\Controllers\OrderController::class, 'changePayType']
+            'change-pay-type',
+            [\App\Http\Controllers\OrderController::class, 'changePayType']
         )
-             ->name('更换支付方式');
+            ->name('更换支付方式');
         Route::middleware(JwtMiddleware::class)->get(
-            'pull-pay', [\App\Http\Controllers\OrderController::class, 'pullPay']
+            'pull-pay',
+            [\App\Http\Controllers\OrderController::class, 'pullPay']
         )
-             ->name('拉起支付');
+            ->name('拉起支付');
         Route::post('coupon', [\App\Http\Controllers\OrderController::class, 'Coupon'])->name('查询优惠卷');
         Route::post('create-and-pay', [\App\Http\Controllers\OrderController::class, 'CreateAndPay'])->name(
             '购物车结算产品列表'
@@ -321,7 +331,9 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
             'lpijp同步关键词'
         );
     });
+
     Route::get('get/client-ip', [\App\Http\Controllers\PublicController::class, 'getClientIp'])->name('获取客户端IP');
+    Route::get('get/force-refresh-ip', [\App\Http\Controllers\PublicController::class, 'forceRefreshIp'])->name('强制刷新IP');
     Route::get('xunsearch/clean', [\App\Http\Controllers\XunSearchTestController::class, 'clean'])->name(
         '讯搜清空数据'
     );

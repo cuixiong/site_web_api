@@ -430,7 +430,7 @@ class Controller extends BaseController {
     }
 
     public function checkRoute() {
-        return true;
+        //return true;
         //新增需求,只记录/封禁 报告详情, 新闻详情
         $route = request()->route();
         $routeUril = '';
@@ -451,6 +451,8 @@ class Controller extends BaseController {
             $url_id = $input['id'] ?? '';
 
             return "/information/{$url_id}/{$url_view}";
+        } elseif ($routeUril == 'api/index/main-data') {
+            return "/index/main-data";
         } else {
             return false;
         }
@@ -552,9 +554,8 @@ class Controller extends BaseController {
 //        if(empty($banUaList )){
 //            return true;
 //        }
-
         foreach ($user_agent as $forUserAgent) {
-            foreach ($banUaList as $forBanUa){
+            foreach ($banUaList as $forBanUa) {
                 //if (strpos($forUserAgent, $forBanUa) !== false) {
                 if (strpos(strtolower($forUserAgent), strtolower($forBanUa)) !== false) {
                     $checkRes = true;
@@ -566,6 +567,7 @@ class Controller extends BaseController {
 //                break;
 //            }
         }
+
         return $checkRes;
     }
 

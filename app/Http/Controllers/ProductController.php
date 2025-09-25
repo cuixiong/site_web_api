@@ -47,6 +47,10 @@ class ProductController extends Controller {
             $keyword = trim($request->keyword) ?? null; // 搜索关键词
             if (!empty($keyword)) {
                 $keyword = phpDecodeURIComponent($keyword);
+                // 统一半角与全角形式，避免日文关键词匹配不一致
+                if (function_exists('mb_convert_kana')) {
+                    $keyword = mb_convert_kana($keyword, 'a', 'UTF-8');
+                }
                 //点击关键词一次, 需要增加一次点击次数
                 SearchRank::query()->where('name', $keyword)->increment('hits');
                 // 添加搜索记录,qycojp站点、非白名单ip, 非id
@@ -2240,6 +2244,11 @@ class ProductController extends Controller {
         try {
             // 获取关键词，默认为空字符串
             $keyword = $request->input('keyword', '');
+            //$keyword = phpDecodeURIComponent($keyword);
+            // 统一半角与全角形式，避免日文关键词匹配不一致
+            if (function_exists('mb_convert_kana')) {
+                $keyword = mb_convert_kana($keyword, 'a', 'UTF-8');
+            }
             //$conver_result = $this->detectKeywordLanguage($keyword);
             $field_language = 'degree_keyword';
             $select_field = 'keywords';

@@ -14,9 +14,7 @@ class MakeSiteMap extends Command {
     protected $signature = 'task:make_site_map';
 
     public function handle() {
-        (new SitemapController())->CliMakeSiteMap();
-        echo "生成站点地图成功".PHP_EOL;
+        echo "执行站点地图, 执行结果:".PHP_EOL;
+       (new SitemapController())->CliMakeSiteMap();
     }
-
-
 }
