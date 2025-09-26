@@ -19,6 +19,7 @@ use App\Models\Menu;
 use App\Models\MessageLanguageVersion;
 use App\Models\News;
 use App\Models\Office;
+use App\Models\OfficePhone;
 use App\Models\PlateValue;
 use App\Models\Position;
 use App\Models\PriceEditions;
@@ -903,11 +904,11 @@ class CommonController extends Controller {
         if ($list) {
             $list = $list->toArray();
             foreach ($list as &$value) {
-                $value['phone_array'] = OfficePhone::select('attribute', 'value')->where('status', 1)
-                    ->where('office_id', $value['id'])
-                    ->orderBy('sort', 'desc')
-                    ->orderBy('id', 'desc')
-                    ->get()?->toArray() ?? [];
+                // $value['phone_array'] = OfficePhone::select('attribute', 'value')->where('status', 1)
+                //     ->where('office_id', $value['id'])
+                //     ->orderBy('sort', 'desc')
+                //     ->orderBy('id', 'desc')
+                //     ->get()?->toArray() ?? [];
 
                 $value['image'] = Common::cutoffSiteUploadPathPrefix($value['image']);
                 $value['national_flag'] = Common::cutoffSiteUploadPathPrefix($value['national_flag']);
