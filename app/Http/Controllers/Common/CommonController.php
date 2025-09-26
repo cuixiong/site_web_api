@@ -182,7 +182,19 @@ class CommonController extends Controller {
             $data['message_consult_type'] = SystemValue::where('parent_id', $messageConsultTypeSetId)
                 ->where('hidden', 1)
                 ->select(['name', 'value'])
-                ->get()?->toArray()??[];
+                ->get()?->toArray() ?? [];
+
+            $messageBuyTimeKey = 'message_buy_time';
+            $messageBuyTimeSetId = System::select(['id'])
+                ->where('status', 1)
+                ->where('alias', $messageBuyTimeKey)
+                ->get()
+                ->value('id');
+            // $data['buy_time']
+            $data['message_buy_time'] = SystemValue::where('parent_id', $messageBuyTimeSetId)
+                ->where('hidden', 1)
+                ->select(['name', 'value'])
+                ->get()?->toArray() ?? [];
         }
         // qyjp 联系我们显示价格版本
         if(checkSiteAccessData([ 'qyjp'])){

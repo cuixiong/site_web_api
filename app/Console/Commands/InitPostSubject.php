@@ -34,6 +34,7 @@ class InitPostSubject extends Command {
         $data = DB::table('product_routine as p')
                   ->select('p.id')
                   ->where('p.published_date', '>=', 1735660800) // 2025年
+                  ->where('p.name', '<>', '') 
                   ->whereNotExists(function ($query) {
                 $query->select(DB::raw(1))
                       ->from('post_subject as ps')
@@ -83,6 +84,7 @@ class InitPostSubject extends Command {
                     'updated_at'          => time(),
                     'keywords'            => $item->keywords,
                     'has_cagr'            => !empty($item->cagr) ? 1 : 0,
+                    'published_date'      => is_numeric($item->published_date) ? $item->published_date : strtotime($item->published_date),
                 ];
                 $rows[] = $row;
                 $index++;
