@@ -283,13 +283,16 @@ class SitemapController extends Controller {
     }
 
     public function sitemapMain() {
-        // 修改：从临时目录读取文件列表
+        // 修改：从临时目录读取文件列表（排除主sitemap文件自身，避免自引用）
+        $files = array_filter(glob($this->tempDir.'/*.xml'), function ($item) {
+            return basename($item) !== 'sitemap.xml';
+        });
         $locs = array_map(function ($item) {
             if (php_sapi_name() == 'cli') {
                 chmod($item, 0777);
             }
             return '/'.basename($item);
-        }, glob($this->tempDir.'/*.xml'));
+        }, $files);
 
         $str = $this->createMap($locs);
         // 修改：写入临时目录
@@ -382,21 +385,33 @@ class SitemapController extends Controller {
         // 2. 清除旧文件
         array_map('unlink', glob($this->dir.'/*.xml'));
 
-        // 3. 移动新文件到正式目录
+        // 3. 移动新文件到正式目录（排除主sitemap.xml，稍后单独处理）
         foreach (glob($this->tempDir.'/*.xml') as $tempFile) {
-            $newFile = $this->dir . '/' . basename($tempFile);
+            $base = basename($tempFile);
+            if ($base === 'sitemap.xml') {
+                continue;
+            }
+            $newFile = $this->dir . '/' . $base;
             rename($tempFile, $newFile);
             if (php_sapi_name() == 'cli') {
                 chmod($newFile, 0777);
             }
         }
 
-        // 4. 特殊处理主sitemap文件
-        if (file_exists($this->tempDir . '/sitemap.xml')) {
+        // 4. 特殊处理主sitemap文件：原子替换根目录文件，并复制一份到目录下
+        $tempMain = $this->tempDir . '/sitemap.xml';
+        if (file_exists($tempMain)) {
             $mainSitemapPath = base_path() . '/public/sitemap.xml';
-            rename($this->tempDir . '/sitemap.xml', $mainSitemapPath);
+            // 原子替换根目录的 sitemap.xml
+            rename($tempMain, $mainSitemapPath);
             if (php_sapi_name() == 'cli') {
                 chmod($mainSitemapPath, 0777);
+            }
+            // 同步一份到 /public/sitemap/sitemap.xml
+            $dirMain = $this->dir . '/sitemap.xml';
+            copy($mainSitemapPath, $dirMain);
+            if (php_sapi_name() == 'cli') {
+                chmod($dirMain, 0777);
             }
         }
 
