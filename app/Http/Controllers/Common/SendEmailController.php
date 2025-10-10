@@ -1462,6 +1462,8 @@ class SendEmailController extends Controller {
                 $orderStatusText = '支払い待ち';
             } elseif (checkSiteAccessData(['qykr'])) {
                 $orderStatusText = '미지불';
+            } elseif (checkSiteAccessData(['qyde'])) {
+                $orderStatusText = 'BEZAHLT';
             } else {
                 $orderStatusText = '未付款';
             }
@@ -1746,6 +1748,8 @@ class SendEmailController extends Controller {
                 $orderStatusText = '注文完了';
             } elseif (checkSiteAccessData(['qykr'])) {
                 $orderStatusText = '지불됨';
+            } elseif (checkSiteAccessData(['qyde'])) {
+                $orderStatusText = 'BEZAHLT';
             } else {
                 $orderStatusText = '已付款';
             }

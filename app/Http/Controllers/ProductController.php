@@ -266,6 +266,7 @@ class ProductController extends Controller {
                 return $this->SearchForMysql($category_id, $keyword, $page, $pageSize, $input_params);
             }
         } catch (\Exception $e) {
+            dd($e->getMessage());
             \Log::error('应用端查询失败,异常信息为:'.json_encode([$e->getMessage()]));
             ReturnJson(false, '请求失败,请稍后再试');
         }
@@ -1278,7 +1279,7 @@ class ProductController extends Controller {
                 } else {
                     $query = $query->orderBy($input_params['orderBy'], 'desc');
                 }
-            } elseif (checkSiteAccessData(['mmgen'])) {
+            } elseif (checkSiteAccessData(['mmgen' ,'qyde'])) {
                 if ($input_params['orderBy'] == 'price') {
                     $query = $query->orderBy($input_params['orderBy'], 'asc');
                 } elseif ($input_params['orderBy'] == 'time') {

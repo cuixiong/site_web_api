@@ -70,7 +70,7 @@ class CommonController extends Controller {
         $data['currency_data'] = CurrencyConfig::query()->select(['id', 'code', 'is_first', 'exchange_rate', 'tax_rate'])
                                       ->get()?->toArray() ?? [];
 
-        if(checkSiteAccessData(['mrrs' , 'yhen' ,'qyen', 'mmgen', 'lpien', 'giren'])){
+        if(checkSiteAccessData(['mrrs' , 'yhen' ,'qyen', 'mmgen', 'lpien', 'giren' , 'qyde'])){
             //国家数据
             $data['country_list'] = $this->getCountryData();
             //来源数据
