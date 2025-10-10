@@ -68,6 +68,7 @@ class PageController extends Controller {
             $imgDomain = env('IMAGE_URL', '');
             if(!empty($imgDomain)){
                 $content = str_replace('src="/', 'src="'.$imgDomain.'/', $content);
+                $content = str_replace('url(\'/', 'url(\''.$imgDomain.'/', $content);
             }
         }
 
