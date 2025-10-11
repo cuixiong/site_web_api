@@ -67,4 +67,9 @@ class PayConst {
             self::COIN_TYPE_AUD => 'AU$',
             self::COIN_TYPE_CAD => 'CA$',
         ];
+
+    
+    public static $coinTypeSymbolAfter = [
+            self::COIN_TYPE_JPY => '円',
+        ];
 }

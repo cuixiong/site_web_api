@@ -1439,8 +1439,12 @@ class SendEmailController extends Controller {
             $areaInfo = $this->getAreaName($data);
             // 税费汇率转换
             $addres = $areaInfo.' '.$data['address'];
+            $pay_coin_symbol_after = '';
             if ($data['pay_coin_type'] == PayConst::COIN_TYPE_USD) {
                 $pay_coin_symbol = PayConst::COIN_TYPE_USD;
+            } elseif($data['pay_coin_type'] == PayConst::COIN_TYPE_JPY){
+                $pay_coin_symbol = '';
+                $pay_coin_symbol_after = PayConst::$coinTypeSymbolAfter[PayConst::COIN_TYPE_JPY]??'円';
             } else {
                 $pay_coin_symbol = PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '';
             }
@@ -1496,6 +1500,7 @@ class SendEmailController extends Controller {
                 'exchange_order_actually_paid'    => $exchange_order_actually_paid,
                 'exchange_order_tax'              => $exchange_order_tax,
                 'pay_coin_symbol'                 => $pay_coin_symbol, // 支付符号,
+                'pay_coin_symbol_after'           => $pay_coin_symbol_after, // 支付符号(放后面),
                 'orderNumber'                     => $data['order_number'],
                 'paymentLink'                     => $data['domain'].'/api/order/pay?order_id='.$data['id'],
                 //'orderDetails'           => $data['domain'].'/account?orderdetails='.$data['id'],
@@ -1527,13 +1532,25 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            // 多个电话
-            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
-            if ($sitePhones) {
-                $sitePhones = $sitePhones->toArray();
-                $data['sitePhones'] = [];
-                foreach ($sitePhones as $key => $sitePhoneItem) {
-                    $data['sitePhones'][] = $sitePhoneItem;
+            
+            if (checkSiteAccessData(['qycojp','qyjp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
+                if ($sitePhones) {
+                    $sitePhones = $sitePhones->toArray();
+                    $data['sitePhones'] = [];
+                    foreach ($sitePhones as $key => $sitePhoneItem) {
+                        $data['sitePhones'][] = $sitePhoneItem;
+                    }
+                }
+            } else {
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+                if ($sitePhones) {
+                    $sitePhones = $sitePhones->toArray();
+                    $data['sitePhones'] = [];
+                    foreach ($sitePhones as $key => $sitePhoneItem) {
+                        $data['sitePhones'][] = $sitePhoneItem;
+                    }
                 }
             }
             $data = $this->officeData($data);
@@ -1719,8 +1736,12 @@ class SendEmailController extends Controller {
             $cityName = City::where('id', $data['city_id'])->value('name');
             $provinceName = City::where('id', $data['province_id'])->value('name');
             $addres = $provinceName.' '.$cityName.' '.$data['address'];
+            $pay_coin_symbol_after = '';
             if ($data['pay_coin_type'] == PayConst::COIN_TYPE_USD) {
                 $pay_coin_symbol = PayConst::COIN_TYPE_USD;
+            } elseif($data['pay_coin_type'] == PayConst::COIN_TYPE_JPY){
+                $pay_coin_symbol = '';
+                $pay_coin_symbol_after = PayConst::$coinTypeSymbolAfter[PayConst::COIN_TYPE_JPY]??'円';
             } else {
                 $pay_coin_symbol = PayConst::$coinTypeSymbol[$data['pay_coin_type']] ?? '';
             }
@@ -1767,6 +1788,7 @@ class SendEmailController extends Controller {
                 'preferentialAmount'              => $data['coupon_amount'],
                 'orderActuallyPaid'               => $data['actually_paid'],
                 'pay_coin_symbol'                 => $pay_coin_symbol, // 支付符号,
+                'pay_coin_symbol_after'           => $pay_coin_symbol_after, // 支付符号(放后面),
                 'exchange_order_amount'           => $exchange_order_amount,
                 'exchange_coupon_amount'          => $exchange_coupon_amount,
                 'exchange_order_actually_paid'    => $exchange_order_actually_paid,
@@ -1802,13 +1824,24 @@ class SendEmailController extends Controller {
                     $data[$key] = $value;
                 }
             }
-            // 多个电话
-            $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
-            if ($sitePhones) {
-                $sitePhones = $sitePhones->toArray();
-                $data['sitePhones'] = [];
-                foreach ($sitePhones as $key => $sitePhoneItem) {
-                    $data['sitePhones'][] = $sitePhoneItem;
+            if (checkSiteAccessData(['qycojp','qyjp'])) {
+                $sitePhones = SystemValue::whereIn('key', ['sitePhone1', 'sitePhone2'])->pluck('value');
+                if ($sitePhones) {
+                    $sitePhones = $sitePhones->toArray();
+                    $data['sitePhones'] = [];
+                    foreach ($sitePhones as $key => $sitePhoneItem) {
+                        $data['sitePhones'][] = $sitePhoneItem;
+                    }
+                }
+            } else {
+                // 多个电话
+                $sitePhones = SystemValue::where('key', 'sitePhone')->pluck('value');
+                if ($sitePhones) {
+                    $sitePhones = $sitePhones->toArray();
+                    $data['sitePhones'] = [];
+                    foreach ($sitePhones as $key => $sitePhoneItem) {
+                        $data['sitePhones'][] = $sitePhoneItem;
+                    }
                 }
             }
             $data = $this->officeData($data);
