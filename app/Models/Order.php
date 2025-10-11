@@ -46,6 +46,16 @@ class Order extends Base {
             self::PAY_FAILED  => '결제 실패',
         ];
 
+    //德文
+    const PAY_STATUS_TYPE_DE
+        = [
+            self::PAY_UNPAID  => 'NICHT_BEZAHLT',
+            self::PAY_SUCCESS => 'BEZAHLT',
+            self::PAY_CANCEL  => 'GEKANCELT',
+            self::PAY_FINISH  => 'ABGESCHLOSSEN',
+            self::PAY_FAILED  => 'ZAHLUNG_FEHLGESCHLAGEN',
+        ];
+
     protected $table       = 'orders';
     protected $appends     = ['is_pay_text', 'create_date', 'is_invoice', 'order_product'];
     protected $addressInfo = [];
@@ -81,6 +91,8 @@ class Order extends Base {
             return self::PAY_STATUS_TYPE_JP[$this->attributes['is_pay']] ?? '';
         }elseif (checkSiteAccessData(['qykr'])){
             return self::PAY_STATUS_TYPE_KR[$this->attributes['is_pay']] ?? '';
+        }elseif (checkSiteAccessData(['qyde'])){
+            return self::PAY_STATUS_TYPE_DE[$this->attributes['is_pay']] ?? '';
         }else {
             return self::PAY_STATUS_TYPE[$this->attributes['is_pay']] ?? '';
         }
