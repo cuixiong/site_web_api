@@ -14,7 +14,6 @@ use App\Http\Middleware\JwtMiddleware;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -70,7 +69,9 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
             '客户评价'
         );
         Route::get('quotes', [\App\Http\Controllers\IndexController::class, 'quotes'])->name('权威引用');
-        Route::get('qualifications', [\App\Http\Controllers\IndexController::class, 'qualifications'])->name('资质认证');
+        Route::get('qualifications', [\App\Http\Controllers\IndexController::class, 'qualifications'])->name(
+            '资质认证'
+        );
     });
     // Plate控制器(页面板块)
     Route::prefix('plate')->group(function () {
@@ -81,16 +82,18 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
             '页面板块子级的值列表'
         );
         Route::get('plate-value-list-by-link', [\App\Http\Controllers\PlateController::class, 'PlateValueByLink'])
-            ->name(
-                '页面板块子级的值列表-通过页面link'
-            );
+             ->name(
+                 '页面板块子级的值列表-通过页面link'
+             );
         Route::get('form', [\App\Http\Controllers\PlateController::class, 'Form'])->name('页面板块（包含父级和子级）');
     });
     // Product控制器(报告)
     Route::prefix('product')->group(function () {
         Route::get('list', [\App\Http\Controllers\ProductController::class, 'List'])->name('报告列表');
         Route::any('description', [\App\Http\Controllers\ProductController::class, 'Description'])->name('报告详情');
-        Route::any('simple-description', [\App\Http\Controllers\ProductController::class, 'simpleDescription'])->name('报告简单详情');
+        Route::any('simple-description', [\App\Http\Controllers\ProductController::class, 'simpleDescription'])->name(
+            '报告简单详情'
+        );
         Route::get('view-log', [\App\Http\Controllers\ProductController::class, 'viewProductLog'])->name(
             '详情浏览记录'
         );
@@ -98,15 +101,20 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::get('news', [\App\Http\Controllers\ProductController::class, 'News'])->name('更多资讯');
         Route::get('filters', [\App\Http\Controllers\ProductController::class, 'Filters'])->name('筛选条件');
         Route::get('output-pdf', [\App\Http\Controllers\ProductController::class, 'OutputPdf'])->name('下载PDF');
-
-        Route::get('customized-info', [\App\Http\Controllers\ProductController::class, 'customizedInfo'])->name('tycn新增接口');
-        Route::get('search-prompt-words', [\App\Http\Controllers\ProductController::class, 'searchPromptWords'])->name('搜索提示词');
+        Route::get('customized-info', [\App\Http\Controllers\ProductController::class, 'customizedInfo'])->name(
+            'tycn新增接口'
+        );
+        Route::get('search-prompt-words', [\App\Http\Controllers\ProductController::class, 'searchPromptWords'])->name(
+            '搜索提示词'
+        );
     });
     // ContactUs控制器(联系我们)
     Route::prefix('contact-us')->group(function () {
         Route::post('add', [\App\Http\Controllers\ContactUsController::class, 'Add'])->name('新增数据');
         Route::get('dictionary', [\App\Http\Controllers\ContactUsController::class, 'Dictionary'])->name('字典数据');
-        Route::get('company-overview', [\App\Http\Controllers\ContactUsController::class, 'companyOverview'])->name('公司信息');
+        Route::get('company-overview', [\App\Http\Controllers\ContactUsController::class, 'companyOverview'])->name(
+            '公司信息'
+        );
     });
     // System控制器(网站设置)
     Route::prefix('page')->group(function () {
@@ -114,12 +122,14 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::get('quotes', [\App\Http\Controllers\PageController::class, 'Quotes'])->name('权威引用列表');
         Route::get('quote', [\App\Http\Controllers\PageController::class, 'Quote'])->name('权威引用');
         Route::get('quote-relevant-product', [\App\Http\Controllers\PageController::class, 'QuoteRelevantProduct'])
-            ->name('权威引用相关报告');
+             ->name('权威引用相关报告');
         Route::get('team-member', [\App\Http\Controllers\PageController::class, 'TeamMember'])->name('团队成员');
         Route::get('analyst-group', [\App\Http\Controllers\PageController::class, 'AnalystGroup'])->name('分析师团队');
         Route::get('qualification', [\App\Http\Controllers\PageController::class, 'Qualification'])->name('资质认证');
         Route::get('faqs', [\App\Http\Controllers\PageController::class, 'Faqs'])->name('常见问题');
-        Route::get('company-history', [\App\Http\Controllers\PageController::class, 'CompanyHistory'])->name('发展历程');
+        Route::get('company-history', [\App\Http\Controllers\PageController::class, 'CompanyHistory'])->name(
+            '发展历程'
+        );
         Route::get('customer-evaluations', [\App\Http\Controllers\PageController::class, 'CustomerEvaluations'])->name(
             '客户评价-列表'
         );
@@ -131,8 +141,8 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         );
         Route::post('custom-reports', [\App\Http\Controllers\PageController::class, 'CustomReports'])->name('定制报告');
         Route::post('contact-us', [\App\Http\Controllers\PageController::class, 'ContactUs'])->name('联系我们');
-
-        Route::get('office-split-by-country', [\App\Http\Controllers\PageController::class, 'officeSplitByCountry'])->name('办公室列表(分国内外)');
+        Route::get('office-split-by-country', [\App\Http\Controllers\PageController::class, 'officeSplitByCountry'])
+             ->name('办公室列表(分国内外)');
     });
     // User控制器(用户模块)
     Route::post('login', [\App\Http\Controllers\UserController::class, 'Login'])->name('账号登陆');
@@ -149,22 +159,22 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::get('check-email', [\App\Http\Controllers\UserController::class, 'CheckEmail'])->name('验证邮箱');
     Route::post('exists-email', [\App\Http\Controllers\UserController::class, 'ExistsEmail'])->name('邮箱是否存在');
     Route::middleware(JwtMiddleware::class)->get('loginout', [\App\Http\Controllers\UserController::class, 'loginout'])
-        ->name('退出登陆');
+         ->name('退出登陆');
     Route::prefix('user')->group(function () {
         Route::middleware(JwtMiddleware::class)->get('info', [\App\Http\Controllers\UserController::class, 'Info'])
-            ->name('Info接口');
+             ->name('Info接口');
         Route::middleware(JwtMiddleware::class)->post(
             'coupons',
             [\App\Http\Controllers\UserController::class, 'Coupons']
         )->name('查询用户优惠卷');
         Route::post('verify-email', [\App\Http\Controllers\UserController::class, 'VerifyEmail'])->name('注册验证邮箱');
         Route::middleware(JwtMiddleware::class)->post('update', [\App\Http\Controllers\UserController::class, 'update'])
-            ->name('用户信息修改');
+             ->name('用户信息修改');
         Route::middleware(JwtMiddleware::class)->post(
             'change-password',
             [\App\Http\Controllers\UserController::class, 'changePassword']
         )
-            ->name('修改密码');
+             ->name('修改密码');
     });
     //user-address 用户收货地址
     Route::prefix('user-address')->middleware(JwtMiddleware::class)->group(function () {
@@ -180,7 +190,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     //user-invoices 用户发票
     Route::prefix('user-invoices')->group(function () {
         Route::middleware(JwtMiddleware::class)->get('list', [\App\Http\Controllers\InvoicesController::class, 'list'])
-            ->name('发票列表');
+             ->name('发票列表');
         Route::middleware(JwtMiddleware::class)->get(
             'form/{id}',
             [\App\Http\Controllers\InvoicesController::class, 'form']
@@ -192,9 +202,10 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::post('apply-single-page', [\App\Http\Controllers\InvoicesController::class, 'applySinglePage'])->name(
             '申请发票(单页)'
         );
-        Route::post('apply-single-page-old', [\App\Http\Controllers\InvoicesController::class, 'oldApplySinglePage'])->name(
-            '申请发票(旧单页)'
-        );
+        Route::post('apply-single-page-old', [\App\Http\Controllers\InvoicesController::class, 'oldApplySinglePage'])
+             ->name(
+                 '申请发票(旧单页)'
+             );
     });
     // Cart控制器(购物车模块)
     Route::prefix('cart')->middleware(JwtMiddleware::class)->group(function () {
@@ -208,7 +219,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
             '购物车修改版本'
         );
         Route::post('sync', [\App\Http\Controllers\CartController::class, 'Sync'])
-            ->name('购物车同步');
+             ->name('购物车同步');
     });
     Route::post('cart/goods-exist', [\App\Http\Controllers\CartController::class, 'goodsExist'])->name('购物车添加');
     Route::get('cart/relevant', [\App\Http\Controllers\CartController::class, 'Relevant'])->name('相关报告');
@@ -216,7 +227,7 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     // Order控制器
     Route::prefix('order')->group(function () {
         Route::middleware(JwtMiddleware::class)->get('list', [\App\Http\Controllers\OrderController::class, 'list'])
-            ->name('用户订单列表');
+             ->name('用户订单列表');
         Route::middleware(JwtMiddleware::class)->get(
             'form/{id}',
             [\App\Http\Controllers\OrderController::class, 'form']
@@ -229,12 +240,12 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
             'change-pay-type',
             [\App\Http\Controllers\OrderController::class, 'changePayType']
         )
-            ->name('更换支付方式');
+             ->name('更换支付方式');
         Route::middleware(JwtMiddleware::class)->get(
             'pull-pay',
             [\App\Http\Controllers\OrderController::class, 'pullPay']
         )
-            ->name('拉起支付');
+             ->name('拉起支付');
         Route::post('coupon', [\App\Http\Controllers\OrderController::class, 'Coupon'])->name('查询优惠卷');
         Route::post('create-and-pay', [\App\Http\Controllers\OrderController::class, 'CreateAndPay'])->name(
             '购物车结算产品列表'
@@ -290,17 +301,17 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
     Route::prefix('case-share')->group(function () {
         Route::get('list', [\App\Http\Controllers\CaseShareController::class, 'list'])->name('案列分享列表');
     });
-
     // question 问答接口
     Route::prefix('question')->group(function () {
         Route::get('list', [\App\Http\Controllers\QuestionsController::class, 'list'])->name('问答接口列表');
         Route::get('detail', [\App\Http\Controllers\QuestionsController::class, 'detail'])->name('问答接口详情');
         Route::post('answer', [\App\Http\Controllers\QuestionsController::class, 'answer'])->name('回答问题');
     });
-
     // publisher 控制器
     Route::prefix('publisher')->group(function () {
-        Route::get('alphabetic-search', [\App\Http\Controllers\PublisherController::class, 'alphabeticSearch'])->name('新闻列表');
+        Route::get('alphabetic-search', [\App\Http\Controllers\PublisherController::class, 'alphabeticSearch'])->name(
+            '新闻列表'
+        );
         Route::any('publishers', [\App\Http\Controllers\PublisherController::class, 'publishers'])->name('新闻详情');
         Route::get('search-auto', [\App\Http\Controllers\PublisherController::class, 'searchAuto'])->name('相关新闻');
     });
@@ -319,21 +330,23 @@ Route::middleware(['api', LanguageMiddleware::class])->group(function () {
         Route::post('sync-redis-val', [\App\Http\Controllers\Third\ThirdRespController::class, 'syncRedisVal'])->name(
             '发送邮件'
         );
-
         Route::post('clear-ban', [\App\Http\Controllers\Third\ThirdRespController::class, 'clearBan'])->name(
             '清除封禁'
         );
-
-        Route::post('get-product-data', [\App\Http\Controllers\Third\ThirdRespController::class, 'getProductData'])->name(
-            'lpijp同步数据'
-        );
-        Route::post('get-product-keywords', [\App\Http\Controllers\Third\ThirdRespController::class, 'getProductKeywords'])->name(
+        Route::post('get-product-data', [\App\Http\Controllers\Third\ThirdRespController::class, 'getProductData'])
+             ->name(
+                 'lpijp同步数据'
+             );
+        Route::post(
+            'get-product-keywords', [\App\Http\Controllers\Third\ThirdRespController::class, 'getProductKeywords']
+        )->name(
             'lpijp同步关键词'
         );
     });
-
     Route::get('get/client-ip', [\App\Http\Controllers\PublicController::class, 'getClientIp'])->name('获取客户端IP');
-    Route::get('get/force-refresh-ip', [\App\Http\Controllers\PublicController::class, 'forceRefreshIp'])->name('强制刷新IP');
+    Route::get('get/force-refresh-ip', [\App\Http\Controllers\PublicController::class, 'forceRefreshIp'])->name(
+        '强制刷新IP'
+    );
     Route::get('xunsearch/clean', [\App\Http\Controllers\XunSearchTestController::class, 'clean'])->name(
         '讯搜清空数据'
     );
