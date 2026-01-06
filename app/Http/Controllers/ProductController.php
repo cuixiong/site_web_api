@@ -570,7 +570,7 @@ class ProductController extends Controller {
                 $product_desc['price'], $product_desc['publisher_id'], null, null, null, $currencyData
             );
             // yhcojp需要调整价格版本的结构
-            if (checkSiteAccessData(['yhcojp','girjp'])) {
+            if (checkSiteAccessData(['yhcojp', 'girjp'])) {
                 $product_desc['prices_reverse'] = Products::reverseEditionByCountPrice($product_desc['prices']);
             }
             if ($currencyData && count($currencyData) > 0) {
@@ -868,7 +868,11 @@ class ProductController extends Controller {
                            $product_desc['description_first']
                        ) < $tempLength) {
                     // 长度不足则截取到第二个换行符
-                    $product_desc['description_first'] = mb_substr($descriptionText, 0, mb_strpos($product_desc['description_first'], "\n", $tempLength) + 1);
+                    $product_desc['description_first'] = mb_substr(
+                        $descriptionText, 0, mb_strpos(
+                                                 $product_desc['description_first'], "\n", $tempLength
+                                             ) + 1
+                    );
                 }
                 // 分割详情
                 $tableStartTextArray = isset($product_desc_other_set_list['table_spilt_start']) ? explode(
@@ -1083,7 +1087,6 @@ class ProductController extends Controller {
      * @return  result 处理后的表格目录(含标题、摘要),以及一级目录数组
      */
     public function titleToDeep($toc) {
-
         $titleColor = '#333';
         // yhcojp 标题需要高亮
         if (checkSiteAccessData(['yhcojp'])) {
@@ -1125,7 +1128,8 @@ class ProductController extends Controller {
                     preg_match('/(?<!.)\d{1,2}( |\t)/', trim($value, "\n"), $matchTitle);
                     $value = trim($value, "\r\n");
                     $value = trim($value, "\n");
-                    $result[$count]['content'] .= '<span style="line-height:28px;font-size:16px;color:'.$titleColor.';font-weight:600;">'
+                    $result[$count]['content'] .= '<span style="line-height:28px;font-size:16px;color:'.$titleColor
+                                                  .';font-weight:600;">'
                                                   .trim($value, "\n").'</span><br />';
                 } else {
                     if (!isset($result[$count])) {
@@ -1270,7 +1274,8 @@ class ProductController extends Controller {
         //报告昵称,英文昵称匹配查询
         $query = (new SphinxQL($conn))->select('*')
                                       ->from('products_rt');
-        $orderType = isset($input_params['orderType']) && !empty($input_params['orderType']) ? $input_params['orderType'] : 'asc';
+        $orderType = isset($input_params['orderType']) && !empty($input_params['orderType'])
+            ? $input_params['orderType'] : 'asc';
         if (!empty($input_params['orderBy'])) {
             // $query = $query->orderBy($input_params['orderBy'], 'asc');
             if (checkSiteAccessData(['mrrs'])) {
@@ -1279,7 +1284,7 @@ class ProductController extends Controller {
                 } else {
                     $query = $query->orderBy($input_params['orderBy'], 'desc');
                 }
-            } elseif (checkSiteAccessData(['mmgen' ,'qyde'])) {
+            } elseif (checkSiteAccessData(['mmgen', 'qyde'])) {
                 if ($input_params['orderBy'] == 'price') {
                     $query = $query->orderBy($input_params['orderBy'], 'asc');
                 } elseif ($input_params['orderBy'] == 'time') {
@@ -1290,18 +1295,18 @@ class ProductController extends Controller {
             } else {
                 if ($input_params['orderBy'] == 'time' && !empty($keyword)) {
                     $query = $query->orderBy('sort', 'asc')
-                        ->orderBy('year', 'desc')
-                        ->orderBy('degree_keyword', 'asc')
-                        ->orderBy('published_date', 'desc')
-                        ->orderBy('id', 'desc');
+                                   ->orderBy('year', 'desc')
+                                   ->orderBy('degree_keyword', 'asc')
+                                   ->orderBy('published_date', 'desc')
+                                   ->orderBy('id', 'desc');
                 } elseif ($input_params['orderBy'] == 'time' && empty($keyword)) {
                     $query = $query->orderBy('sort', 'asc')
-                        ->orderBy('published_date', 'desc')
-                        ->orderBy('id', 'desc');
+                                   ->orderBy('published_date', 'desc')
+                                   ->orderBy('id', 'desc');
                 } elseif ($input_params['orderBy'] == 'price') {
                     $query = $query->orderBy('sort', 'asc')
-                        ->orderBy('price', $orderType)
-                        ->orderBy('id', 'desc');
+                                   ->orderBy('price', $orderType)
+                                   ->orderBy('id', 'desc');
                 } else {
                     $query = $query->orderBy($input_params['orderBy'], 'asc');
                 }
@@ -1359,6 +1364,8 @@ class ProductController extends Controller {
         $query->limit($offset, $pageSize);
         $query->option('max_matches', $offset + $pageSize);
         $query->setSelect('*');
+//        $a = $query->getCompiled();
+//        dd($a);
         $result = $query->execute();
         $products = $result->fetchAllAssoc();
         if (!empty($idProducts)) {
@@ -1443,13 +1450,13 @@ class ProductController extends Controller {
 
     /**
      *
-     * @param Connection|bool $conn
-     * @param                 $category_id
-     * @param                 $keyword
+     * @param                   $conn
+     * @param                   $category_id
+     * @param                   $keyword
      *
      * @return array
      */
-    private function getProductById(Connection|bool $conn, $category_id, $keyword, $input_params = []): array {
+    private function getProductById($conn, $category_id, $keyword, $input_params = []): array {
         //无关键词 或者关键词不是数字时，不返回数据
         if (empty($keyword) || !is_numeric($keyword)) {
             return [];
@@ -2256,11 +2263,11 @@ class ProductController extends Controller {
             //dd([$select_field, $field_language]);
             $pageSize = $request->input('pageSize', 10);
             $keywordList = $this->getKeywordList($pageSize, $keyword, $select_field, $field_language);
-            if(empty($keywordList )){
-                if($field_language != 'degree_keywords_en' && $select_field != 'keywords_en'){
+            if (empty($keywordList)) {
+                if ($field_language != 'degree_keywords_en' && $select_field != 'keywords_en') {
                     $field_language = 'degree_keywords_en';
                     $select_field = 'keywords_en';
-                    $keywordList = $this->getKeywordList($pageSize, $keyword, $select_field , $field_language);
+                    $keywordList = $this->getKeywordList($pageSize, $keyword, $select_field, $field_language);
                 }
             }
             $handler_keyword_list = [];
@@ -2381,6 +2388,7 @@ class ProductController extends Controller {
         $query->limit(0, $pageSize);
         $result = $query->execute();
         $keywordList = $result->fetchAllAssoc();
+
         return $keywordList;
     }
 }

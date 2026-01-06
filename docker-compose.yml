@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+    # PHP 环境
+    app_php:
+        # 把 image: php:8.2-fpm-alpine 换成 build
+        build: .               # 告诉 Docker 用当前目录下的 Dockerfile 构建
+        container_name: ${PROJECT_NAME:-my_app}_php
+        volumes:
+            - ./:/app  # 直接挂载当前项目目录
+        networks:
+            - dev_network       # 接入公共开发网络
+
+    # Web 服务
+    app_nginx:
+        image: nginx:alpine
+        container_name: ${PROJECT_NAME:-my_app}_nginx
+        ports:
+            - "8081:80"         # 映射一个唯一的端口给这个项目
+        volumes:
+            - ./:/app
+            - ./docker/nginx:/etc/nginx/conf.d # 项目专用的 Nginx 配置
+        depends_on:
+            - app_php
+        networks:
+            - dev_network
+
+networks:
+    dev_network:
+        external: true       # 关键：手动指定连接已存在的公共网络

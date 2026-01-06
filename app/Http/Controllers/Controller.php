@@ -43,7 +43,7 @@ class Controller extends BaseController {
             $this->isWhiteIp = true;
         } else {
             //签名检查
-            $this->signCheck();
+            //$this->signCheck();
             // TODO: cuizhixiong 2025/2/6 新增需求
             if ($this->checkRoute()) {
                 //请求日志记录

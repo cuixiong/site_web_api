@@ -14,7 +14,7 @@ namespace App\Services;
 
 use App\Models\System;
 use App\Models\SystemValue;
-use Foolz\SphinxQL\Drivers\Mysqli\Connection;
+use Foolz\SphinxQL\Drivers\Pdo\Connection;
 use Foolz\SphinxQL\SphinxQL;
 
 class SphinxService {
